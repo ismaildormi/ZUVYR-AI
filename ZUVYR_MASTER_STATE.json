@@ -571,13 +571,6 @@
                     "live_billing_allowed":  false,
                     "next_pack":  "041"
                 },
-    "generated_at":  "2026-09-13T18:09:37.3886559+01:00",
-    "pack_id":  "041",
-    "pack_title":  "Universal Content Object",
-    "status":  "LOCKED_VERIFIED",
-    "next_pack_allowed":  true,
-    "next_external_gate":  null,
-    "next_pack":  "042",
     "pack041":  {
                     "status":  "LOCKED_VERIFIED",
                     "source_commit":  "b32f6fdb58cc39c65dc0dab60aeaef0a088c2249",
@@ -592,5 +585,30 @@
                     "blob_duplication":  false,
                     "live_billing_allowed":  false,
                     "next_pack":  "042"
+                },
+    "generated_at":  "2026-09-13T18:24:47.9339929+01:00",
+    "pack_id":  "042",
+    "pack_title":  "Asset Storage / Ownership / Lineage",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "043",
+    "pack042":  {
+                    "status":  "LOCKED_VERIFIED",
+                    "source_commit":  "258ce1f4df2e3a4630cfc87069668f073c0dee79",
+                    "receipt_sha256":  "BBE20F871B29B50EE40292CF71B29A88C95459B0F41E60CA9973A449C219B2A5",
+                    "migration_version":  "20260913171942",
+                    "migration_sha256":  "C6458B9F28F016ACC28919D7984F96FBD4427140E79A7DE6062556288A22EDCB",
+                    "signed_upload":  "PASS",
+                    "signed_download":  "PASS",
+                    "two_account_isolation":  "PASS",
+                    "owner_dedupe_replay":  "PASS",
+                    "exact_source_version_lineage":  "PASS",
+                    "retention":  "PASS",
+                    "egress_replay":  "PASS",
+                    "egress_pricing_state":  "unpriced",
+                    "charged_credits":  0,
+                    "live_billing_allowed":  false,
+                    "next_pack":  "043"
                 }
 }
