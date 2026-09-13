@@ -1,0 +1,46 @@
+{
+  "version": "pack-041.universal-content.v1",
+  "kinds": [
+    "text",
+    "image",
+    "video",
+    "audio",
+    "document",
+    "code",
+    "3d",
+    "web",
+    "research"
+  ],
+  "sourceSystems": [
+    "durable_task_step",
+    "generation_job",
+    "conversation_asset",
+    "audio_artifact",
+    "code_project",
+    "workspace_item",
+    "api"
+  ],
+  "versioning": {
+    "identity": "content_id + source_version_key",
+    "currentVersionPointer": true,
+    "immutableVersions": true
+  },
+  "ownership": {
+    "ownerRequired": true,
+    "projectOptional": true,
+    "rls": true
+  },
+  "producerBindings": {
+    "durableTaskStep": true,
+    "generationJob": true,
+    "conversationAsset": true,
+    "audioArtifact": true,
+    "codeProjectVersion": true,
+    "workspaceItem": true
+  },
+  "storage": {
+    "blobsDuplicated": false,
+    "pack042OwnsStorageUnification": true
+  },
+  "liveBillingAllowed": false
+}
