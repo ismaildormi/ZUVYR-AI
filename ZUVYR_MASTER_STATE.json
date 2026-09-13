@@ -203,17 +203,9 @@
                 "deferral_revision":  "REV1.2",
                 "deferral_policy":  "TEST_MODE_ALLOWS_PACK020_DEVELOPMENT_LIVE_REMAINS_LAUNCH_GATE"
             },
-    "generated_at":  "2026-09-13T13:13:12.5350280+01:00",
     "commit":  "c60a45ce9349d0b84ea2d7153a3f39a4254bbd3b",
     "source_commit":  "c60a45ce9349d0b84ea2d7153a3f39a4254bbd3b",
-    "pack_id":  "020",
-    "pack_title":  "Money Checkpoint B",
-    "status":  "SOURCE_VERIFIED_AWAITING_M09",
-    "next_pack_allowed":  false,
-    "next_external_gate":  "M09",
-    "next_pack":  "021",
     "pack020":  {
-                    "status":  "SOURCE_VERIFIED_AWAITING_M09",
                     "source_commit":  "c60a45ce9349d0b84ea2d7153a3f39a4254bbd3b",
                     "receipt_sha256":  "A9F281C4D46D0C8A202765C633C030FF8BBB1AF6FB244661B965CBAF78FBB0CE",
                     "mode":  "stripe_test_mode_only",
@@ -222,7 +214,29 @@
                     "billing_ui_db_contract":  "PASS",
                     "profitability_receipt_contract":  "PASS",
                     "live_verification":  "PASS",
-                    "actual_owner_e2e":  "PENDING_M09",
-                    "external_gate":  "M09"
-                }
+                    "external_gate":  "M09",
+                    "status":  "LOCKED_VERIFIED_TEST_MODE",
+                    "actual_owner_e2e":  "VERIFIED_TEST_MODE",
+                    "m09_receipt_sha256":  "9653A683C556A1F1530F1DDCBBA8AAA72B2CD1AFAE2A98EADA39A622A45F863F",
+                    "locked_at":  "2026-09-13T13:33:50.3986819+01:00"
+                },
+    "generated_at":  "2026-09-13T13:33:50.3986819+01:00",
+    "pack_id":  "020",
+    "pack_title":  "Money Checkpoint B",
+    "status":  "LOCKED_VERIFIED_TEST_MODE",
+    "next_pack_allowed":  true,
+    "next_external_gate":  "M08_LIVE_BEFORE_REAL_MONEY_LAUNCH",
+    "next_pack":  "021",
+    "m09":  {
+                "status":  "VERIFIED_TEST_MODE",
+                "verified_at":  "2026-09-13T13:33:50.3986819+01:00",
+                "receipt_sha256":  "9653A683C556A1F1530F1DDCBBA8AAA72B2CD1AFAE2A98EADA39A622A45F863F",
+                "owner_fixture":  "EPHEMERAL_ISOLATED_ADMIN_TEST_USER",
+                "real_money":  false,
+                "live_billing_allowed":  false,
+                "production_db_lasting_mutation":  false,
+                "stripe_mutation":  "TEST_MODE_ONLY",
+                "provider_calls":  false,
+                "pack020":  "LOCKED_VERIFIED_TEST_MODE"
+            }
 }
