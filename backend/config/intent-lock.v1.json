@@ -1,0 +1,55 @@
+{
+  "version": "pack-033.intent-lock.v1",
+  "inputContracts": [
+    "zuvyr.universal-request.v1",
+    "pack-032.requirement-extraction.v1"
+  ],
+  "lockedFields": [
+    "goal",
+    "hardRequirements",
+    "softPreferences",
+    "unknowns",
+    "outputCriteria",
+    "unclassifiedConstraints"
+  ],
+  "minimalTechnicalAssumptions": {
+    "allowedScopes": [
+      "execution.timeout",
+      "execution.retry_bound",
+      "execution.idempotency",
+      "execution.dependency_order",
+      "transport.encoding",
+      "transport.serialization",
+      "runtime.temporary_workspace"
+    ],
+    "requiredFields": [
+      "scope",
+      "value",
+      "rationale"
+    ],
+    "source": "system_technical_default",
+    "mayChangeUserRequirement": false,
+    "mayChangeOutputCriteria": false,
+    "mayChangeGoal": false
+  },
+  "validation": {
+    "proposalMustCarryIntentFingerprint": true,
+    "changedLockedField": "REJECT",
+    "missingLockedField": "REJECT",
+    "additionalUserRequirement": "REJECT",
+    "nonAllowlistedTechnicalAssumption": "REJECT",
+    "allowlistedTechnicalAssumption": "ALLOW_AND_RECORD"
+  },
+  "privacy": {
+    "fingerprint": "sha256",
+    "fingerprintStoresRawContent": false
+  },
+  "invariants": {
+    "noRequirementInvention": true,
+    "noConstraintMutation": true,
+    "noSilentIntentDrift": true,
+    "noModelCall": true,
+    "noDatabaseMutation": true,
+    "noBillingMutation": true
+  }
+}
