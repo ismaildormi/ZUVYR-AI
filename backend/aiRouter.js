@@ -15,6 +15,8 @@ const { canRoute, reportOutcome } = require('./lib/modelHealth');
 const { recordFallback, recordModelLatency, recordModelOutcome } = require('./lib/metrics');
 const { estimateCostUsd, costTier } = require('./lib/modelCosts');
 const intelligenceRegistry = require('./lib/intelligenceRegistry');
+/* ZUVYR_PACK026_ROUTER_HARD_FILTERS */
+const { routerHardFilters } = require('./lib/routerHardFilters');
 // Providers (anthropic/openrouter/openai/google/groq/local/custom) are no
 // longer called directly from this file â€” see src/modules/ai/providers.
 // This is what makes providers interchangeable: adding one, swapping one,
@@ -62,7 +64,7 @@ const MULTIMODAL_ROUTE = {
 // ZUVYR V1 text routing starts with the two models confirmed on the
 // organization's Groq free tier. Chat uses 20B first for speed, while
 // Code uses 120B first for stronger generation. The other Groq model
-// and the existing OpenRouter free routes remain reliability fallbacks.
+// Legacy OpenRouter entries stay listed for compatibility, but Pack026 hard filters remove them unless registry/cost/authorization eligibility is verified.
 //
 // getEffectiveChain() preserves load-aware ordering without excluding
 // Groq according to the legacy Pro flag. Subscription, unified usage,
@@ -134,9 +136,54 @@ async function routeRequest(feature, messages, opts = {}) {
       part => multimodalTypes.has(part?.type)
     )
   );
-  const chain = hasMultimodalInput
+  const candidateChain = hasMultimodalInput
     ? [MULTIMODAL_ROUTE]
     : getEffectiveChain(feature, loadLevel, isPro);
+
+  const capability = hasMultimodalInput
+    ? 'multimodal_chat'
+    : (feature === 'code' ? 'code' : 'chat');
+
+  // Existing server entrypoints already enforce plan/permission/billing upstream.
+  // Pack026 keeps that compatibility when the legacy caller omits these booleans,
+  // but an explicit false is fail-closed. Pack028 will supply measured margin receipts.
+  const entitlementAllowed =
+    opts.entitlementAllowed === undefined ? true : opts.entitlementAllowed === true;
+  const permissionAllowed =
+    opts.permissionAllowed === undefined ? true : opts.permissionAllowed === true;
+  const minimumGrossMarginBps =
+    Number.isSafeInteger(Number(opts.minimumGrossMarginBps))
+      ? Number(opts.minimumGrossMarginBps)
+      : 5000;
+  const quotedGrossMarginBps =
+    Number.isSafeInteger(Number(opts.quotedGrossMarginBps))
+      ? Number(opts.quotedGrossMarginBps)
+      : minimumGrossMarginBps;
+
+  const hardFilterResult = routerHardFilters.filterLegacyChain({
+    capability,
+    chain: candidateChain,
+    inputModality: hasMultimodalInput
+      ? (opts.inputModality || null)
+      : 'text',
+    outputModality: 'text',
+    language: opts.language || null,
+    minimumContextTokens:
+      opts.minimumContextTokens == null ? null : opts.minimumContextTokens,
+    region: opts.region || null,
+    entitlementAllowed,
+    permissionAllowed,
+    minimumGrossMarginBps,
+    quotedGrossMarginBps
+  });
+
+  const chain = hardFilterResult.routes;
+  const hardFilterAttempts = hardFilterResult.filtered.map(item => ({
+    model: item.route.model,
+    provider: item.route.provider,
+    status: 'skipped_hard_filter',
+    reasons: item.decision.reasons
+  }));
   const chainReordered = chain[0]?.model !== originalChain[0]?.model;
 
   const timeoutMs =
@@ -149,7 +196,7 @@ async function routeRequest(feature, messages, opts = {}) {
               ? HIGH_LOAD_TIMEOUT_MS
               : PRIMARY_TIMEOUT_MS
           );
-  const attempts = [];
+  const attempts = [...hardFilterAttempts];
 
   for (let i = 0; i < chain.length; i++) {
     const route = chain[i];

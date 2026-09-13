@@ -1,0 +1,72 @@
+{
+  "version": "pack-026.router-hard-filters.v1",
+  "authority": "backend/lib/routerHardFilters.js",
+  "modelRegistryAuthority": "backend/lib/modelRegistry.js",
+  "providerRegistryAuthority": "backend/lib/providerRegistry.js",
+  "providerHealthQuotaAuthority": "backend/lib/providerHealthQuotaState.js",
+  "costAuthority": "backend/lib/modelCosts.js",
+  "filterOrder": [
+    "ENTITLEMENT",
+    "PERMISSION",
+    "REGISTRY_BASE_ELIGIBILITY",
+    "MODALITY",
+    "LANGUAGE",
+    "CONTEXT",
+    "REGION",
+    "PROVIDER_HEALTH",
+    "PROVIDER_QUOTA",
+    "VERIFIED_COST",
+    "MARGIN_FLOOR"
+  ],
+  "failClosed": {
+    "registryCandidateMissing": true,
+    "unknownOrUnverifiedCost": true,
+    "explicitLanguageUnsupportedOrUnverified": true,
+    "explicitContextRequirementUnknown": true,
+    "explicitRegionRequirementUnverified": true,
+    "entitlementDenied": true,
+    "permissionDenied": true,
+    "providerOpen": true,
+    "providerQuotaExhausted": true,
+    "marginUnknownWhenExplicitlyRequired": true,
+    "marginBelowFloor": true
+  },
+  "health": {
+    "allowed": [
+      "HEALTHY",
+      "DEGRADED"
+    ],
+    "blocked": [
+      "OPEN"
+    ]
+  },
+  "quota": {
+    "allowed": [
+      "UNKNOWN",
+      "AVAILABLE",
+      "LIMITED"
+    ],
+    "blocked": [
+      "EXHAUSTED"
+    ],
+    "note": "UNKNOWN is not exhaustion; Pack024 owns observations and Pack027 may rank LIMITED lower."
+  },
+  "margin": {
+    "defaultMinimumGrossMarginBps": 5000,
+    "liveLegacyCompatibility": "Existing aiRouter callers are already gated upstream by financial/plan logic; until Pack028 supplies a measured router decision receipt, aiRouter bridges omitted quote to the configured minimum. Explicit quotes below the floor are blocked.",
+    "measuredDecisionReceiptOwner": "028"
+  },
+  "authorization": {
+    "liveLegacyCompatibility": "Existing aiRouter entrypoints are already gated upstream. Omitted entitlement/permission flags preserve that contract; an explicit false is fail-closed.",
+    "futureCallers": "Should pass explicit entitlementAllowed and permissionAllowed booleans."
+  },
+  "fallback": {
+    "rule": "The fallback chain is filtered once before any provider attempt; a filtered route cannot re-enter later in the loop.",
+    "unknownCostCannotFallback": true
+  },
+  "ownership": {
+    "ranking": "027",
+    "marginDecisionReceipt": "028",
+    "boundedFallbackBilling": "029"
+  }
+}
