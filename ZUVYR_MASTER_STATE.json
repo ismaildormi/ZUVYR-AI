@@ -390,13 +390,6 @@
                     "red_route_executes":  false,
                     "next_pack":  "029"
                 },
-    "generated_at":  "2026-09-13T15:15:42.5031651+01:00",
-    "pack_id":  "029",
-    "pack_title":  "Fallback + No Double Charge",
-    "status":  "LOCKED_VERIFIED",
-    "next_pack_allowed":  true,
-    "next_external_gate":  null,
-    "next_pack":  "030",
     "pack029":  {
                     "status":  "LOCKED_VERIFIED",
                     "source_commit":  "09e32f9f2d10fc7e0dea5eeab620bbda5e4d6d35",
@@ -407,5 +400,32 @@
                     "provider_attempts_bounded":  true,
                     "first_accepted_success_wins":  true,
                     "next_pack":  "030"
+                },
+    "generated_at":  "2026-09-13T15:28:42.3760711+01:00",
+    "pack_id":  "030",
+    "pack_title":  "Router Checkpoint C",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "031",
+    "pack030":  {
+                    "status":  "LOCKED_VERIFIED",
+                    "source_commit":  "bdff902e9910ba4605c9e94ff1efa8283fa32696",
+                    "receipt_sha256":  "72B47E90B911DEF5799F55AF459365AD5146C1A440A16F96D185D68FC5A02A2A",
+                    "policy_version":  "pack-030.router-checkpoint-c.v1",
+                    "m10_verified":  true,
+                    "live_text_routes":  2,
+                    "live_models":  [
+                                        "openai/gpt-oss-20b",
+                                        "openai/gpt-oss-120b"
+                                    ],
+                    "timeout_simulation":  true,
+                    "rate_limit_simulation":  true,
+                    "provider_down_simulation":  true,
+                    "fallback_first_failure_second_success":  true,
+                    "unknown_cost_blocked":  true,
+                    "no_double_charge":  true,
+                    "provider_router_baseline_locked":  true,
+                    "next_pack":  "031"
                 }
 }
