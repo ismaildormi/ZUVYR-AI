@@ -473,13 +473,6 @@
                     "stable_ref_reuse_without_reupload":  true,
                     "next_pack":  "035"
                 },
-    "generated_at":  "2026-09-13T16:21:56.0893057+01:00",
-    "pack_id":  "035",
-    "pack_title":  "Capability Graph \u0026 Planner",
-    "status":  "LOCKED_VERIFIED",
-    "next_pack_allowed":  true,
-    "next_external_gate":  null,
-    "next_pack":  "036",
     "pack035":  {
                     "status":  "LOCKED_VERIFIED",
                     "source_commit":  "7ad88b3854f02356404bb66a35ccb23f23f56146",
@@ -491,5 +484,24 @@
                     "duplicate_code_media_agents":  false,
                     "execution_enabled":  false,
                     "next_pack":  "036"
+                },
+    "generated_at":  "2026-09-13T16:26:12.8583016+01:00",
+    "pack_id":  "036",
+    "pack_title":  "Quote + Plan Version + Consent",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "037",
+    "pack036":  {
+                    "status":  "LOCKED_VERIFIED",
+                    "source_commit":  "02f31461673edf5bb322a8b6ac5d731bdff2c258",
+                    "receipt_sha256":  "2247F53F3A30CB224E1F9F8CA1692344DBAFB365CB2F2F85DCEBA5A7AB83C4FE",
+                    "contract_version":  "pack-036.plan-quote-consent.v1",
+                    "immutable_plan_version":  true,
+                    "immutable_quote_fingerprint":  true,
+                    "stale_consent_invalidated_on_material_change":  true,
+                    "execution_authorized":  false,
+                    "credit_reservation":  false,
+                    "next_pack":  "037"
                 }
 }
