@@ -1,0 +1,65 @@
+{
+  "version": "pack-020.money-checkpoint-b.v1",
+  "packId": "020",
+  "title": "Money Checkpoint B",
+  "mode": "stripe_test_mode_only",
+  "liveBillingAllowed": false,
+  "externalGate": "M09",
+  "nextPackAfterGate": "021",
+  "operationInvariant": {
+    "estimateRequired": true,
+    "reserveExactlyOnce": true,
+    "executeAfterReservation": true,
+    "actualCostRequired": true,
+    "settleExactlyOnce": true,
+    "refundUnusedReservation": true,
+    "replayMustNotDoubleCharge": true,
+    "failureMustRefundSafely": true
+  },
+  "billingUiParity": {
+    "summaryEndpoint": "/api/zuvyr-usage-summary",
+    "usageLedger": "zuvyr_usage_records",
+    "visibleSurfaces": [
+      "sidebar",
+      "usage_billing"
+    ],
+    "mustAgreeWithPersistedState": true
+  },
+  "stripeSettlementRpcs": [
+    "settle_stripe_checkout_event",
+    "settle_stripe_subscription_lifecycle_event",
+    "settle_stripe_subscription_invoice_event"
+  ],
+  "usageRpcs": [
+    "reserve_zuvyr_usage",
+    "settle_zuvyr_usage",
+    "refund_zuvyr_usage"
+  ],
+  "profitabilityReceipt": {
+    "requiredAtM09": true,
+    "currencyUnit": "micro_usd",
+    "integerOnly": true,
+    "failClosedOnUnknownRevenue": true,
+    "failClosedOnUnknownTechnicalCost": true,
+    "requiredFields": [
+      "operationId",
+      "recognizedRevenueMicrousd",
+      "technicalCostMicrousd",
+      "grossMarginMicrousd",
+      "grossMarginBps",
+      "reservedCredits",
+      "settledCredits",
+      "refundedCredits"
+    ],
+    "targetMargin": "report canonical result; do not invent or silently substitute missing economics"
+  },
+  "m09": {
+    "ownerAccountE2ERequired": true,
+    "testModeFirst": true,
+    "liveMoneyAllowedNow": false,
+    "minimalLiveMoneyCheckOnlyAfterM08LiveAndExplicitApproval": true,
+    "mustVerifyRefundReplay": true,
+    "mustVerifyUiDbParity": true,
+    "mustGenerateProfitabilityReceipt": true
+  }
+}
