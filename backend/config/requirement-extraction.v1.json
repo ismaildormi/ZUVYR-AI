@@ -1,0 +1,78 @@
+{
+  "version": "pack-032.requirement-extraction.v1",
+  "inputContract": "zuvyr.universal-request.v1",
+  "categories": [
+    "hardRequirements",
+    "softPreferences",
+    "unknowns",
+    "outputCriteria",
+    "unclassifiedConstraints"
+  ],
+  "explicitSourcePaths": {
+    "hardRequirements": [
+      "constraints.hard",
+      "constraints.hardRequirements",
+      "constraints.required"
+    ],
+    "softPreferences": [
+      "constraints.soft",
+      "constraints.softPreferences",
+      "constraints.preferences"
+    ],
+    "unknowns": [
+      "constraints.unknowns",
+      "constraints.unresolved",
+      "constraints.unanswered"
+    ],
+    "outputCriteria": [
+      "outputs.criteria",
+      "outputs.acceptanceCriteria",
+      "outputs.required"
+    ]
+  },
+  "structuredFieldRules": {
+    "language.requested": {
+      "category": "hardRequirements",
+      "ignoreValues": [
+        "",
+        "auto",
+        "unknown",
+        "unspecified"
+      ]
+    },
+    "budget.max": {
+      "category": "hardRequirements",
+      "ignoreValues": [
+        null
+      ]
+    },
+    "inputs.aspectRatio": {
+      "category": "outputCriteria",
+      "ignoreValues": [
+        "",
+        null
+      ]
+    },
+    "inputs.duration": {
+      "category": "outputCriteria",
+      "ignoreValues": [
+        "",
+        null
+      ]
+    }
+  },
+  "clarificationThreshold": {
+    "blockingUnknownCount": 1,
+    "unknownCount": 3,
+    "explicitForcePath": "constraints.clarification.required"
+  },
+  "invariants": {
+    "doNotInventRequirements": true,
+    "preserveExplicitValues": true,
+    "preserveSourcePath": true,
+    "unknownConstraintKeysRemainVisible": true,
+    "noModelCall": true,
+    "noDatabaseMutation": true,
+    "noBillingMutation": true
+  }
+}
