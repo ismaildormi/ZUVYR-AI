@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "pack": 9,
-  "mode": "foundation_only",
+  "pack": 43,
+  "mode": "projects_crud",
   "limits": {
     "nameChars": 120,
     "descriptionChars": 2000,
@@ -12,9 +12,35 @@
     "scheduleTitleChars": 120,
     "permissionScopes": 12
   },
-  "itemKinds": ["chat", "file", "image", "video", "audio", "code", "document", "spreadsheet", "presentation", "task"],
-  "creationKinds": ["document", "spreadsheet", "presentation"],
-  "workflowCapabilities": ["chat", "image", "video", "audio", "code", "research", "document", "spreadsheet", "presentation", "export"],
+  "itemKinds": [
+    "chat",
+    "file",
+    "image",
+    "video",
+    "audio",
+    "code",
+    "document",
+    "spreadsheet",
+    "presentation",
+    "task"
+  ],
+  "creationKinds": [
+    "document",
+    "spreadsheet",
+    "presentation"
+  ],
+  "workflowCapabilities": [
+    "chat",
+    "image",
+    "video",
+    "audio",
+    "code",
+    "research",
+    "document",
+    "spreadsheet",
+    "presentation",
+    "export"
+  ],
   "foundations": {
     "library": true,
     "projects": true,
@@ -28,7 +54,7 @@
     "workflows": true
   },
   "execution": {
-    "workspaceWritesEnabled": false,
+    "workspaceWritesEnabled": true,
     "scheduledExecutionEnabled": false,
     "workflowExecutionEnabled": false,
     "pluginInstallEnabled": false,
@@ -52,12 +78,22 @@
   "integrations": {
     "google_drive": {
       "status": "blocked_no_oauth_security_review",
-      "allowedScopes": ["drive.file.read", "drive.file.write", "drive.export"],
+      "allowedScopes": [
+        "drive.file.read",
+        "drive.file.write",
+        "drive.export"
+      ],
       "enabled": false
     },
     "plugins": {
       "status": "blocked_no_marketplace_security_review",
-      "allowedScopes": ["workspace.items.read", "workspace.items.write", "projects.read", "projects.write", "exports.create"],
+      "allowedScopes": [
+        "workspace.items.read",
+        "workspace.items.write",
+        "projects.read",
+        "projects.write",
+        "exports.create"
+      ],
       "enabled": false
     }
   }
