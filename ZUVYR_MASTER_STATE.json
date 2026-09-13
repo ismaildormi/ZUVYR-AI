@@ -401,13 +401,6 @@
                     "first_accepted_success_wins":  true,
                     "next_pack":  "030"
                 },
-    "generated_at":  "2026-09-13T15:28:42.3760711+01:00",
-    "pack_id":  "030",
-    "pack_title":  "Router Checkpoint C",
-    "status":  "LOCKED_VERIFIED",
-    "next_pack_allowed":  true,
-    "next_external_gate":  null,
-    "next_pack":  "031",
     "pack030":  {
                     "status":  "LOCKED_VERIFIED",
                     "source_commit":  "bdff902e9910ba4605c9e94ff1efa8283fa32696",
@@ -427,5 +420,26 @@
                     "no_double_charge":  true,
                     "provider_router_baseline_locked":  true,
                     "next_pack":  "031"
+                },
+    "generated_at":  "2026-09-13T15:36:09.6313493+01:00",
+    "pack_id":  "031",
+    "pack_title":  "Universal Request / Intent Schema",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "032",
+    "pack031":  {
+                    "status":  "LOCKED_VERIFIED",
+                    "source_commit":  "1a180943b13f15a16ddc58deabd3ce551b4babaf",
+                    "receipt_sha256":  "2AE3794D9927D84413FA185B3DE73291A49154B0BE9135A168DC5948F3BD8680",
+                    "schema_version":  "1.0",
+                    "surfaces":  [
+                                     "chat",
+                                     "work",
+                                     "create",
+                                     "code"
+                                 ],
+                    "legacy_backward_compatible":  true,
+                    "next_pack":  "032"
                 }
 }
