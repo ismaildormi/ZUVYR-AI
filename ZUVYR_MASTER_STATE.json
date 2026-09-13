@@ -421,13 +421,6 @@
                     "provider_router_baseline_locked":  true,
                     "next_pack":  "031"
                 },
-    "generated_at":  "2026-09-13T15:36:09.6313493+01:00",
-    "pack_id":  "031",
-    "pack_title":  "Universal Request / Intent Schema",
-    "status":  "LOCKED_VERIFIED",
-    "next_pack_allowed":  true,
-    "next_external_gate":  null,
-    "next_pack":  "032",
     "pack031":  {
                     "status":  "LOCKED_VERIFIED",
                     "source_commit":  "1a180943b13f15a16ddc58deabd3ce551b4babaf",
@@ -441,5 +434,22 @@
                                  ],
                     "legacy_backward_compatible":  true,
                     "next_pack":  "032"
+                },
+    "generated_at":  "2026-09-13T16:07:17.3412250+01:00",
+    "pack_id":  "032",
+    "pack_title":  "Requirement Extraction",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "033",
+    "pack032":  {
+                    "status":  "LOCKED_VERIFIED",
+                    "source_commit":  "ffc0f49db74975020a292eaccc2982872a5dd184",
+                    "receipt_sha256":  "7BFDB9DDCBFAC42D7F05B672CBD3EDF85E474385E9C2E275FF442C880B3FBBF6",
+                    "policy_version":  "pack-032.requirement-extraction.v1",
+                    "representative_benchmarks_passed":  true,
+                    "no_requirement_invention":  true,
+                    "clarification_threshold":  "1 blocking unknown OR 3 explicit unknowns OR explicit force",
+                    "next_pack":  "033"
                 }
 }
