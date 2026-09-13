@@ -1,0 +1,41 @@
+{
+  "version": "pack-042.asset-storage.v1",
+  "bucket": "conversation-files",
+  "bucketPublic": false,
+  "maxFileBytes": 629145600,
+  "uploadUrlTtlSeconds": 600,
+  "downloadUrlTtlSeconds": 300,
+  "canonicalPath": "{ownerId}/objects/{sha256Prefix}/{sha256}",
+  "dedupe": {
+    "scope": "owner",
+    "key": [
+      "owner_id",
+      "sha256",
+      "file_size_bytes",
+      "mime_type"
+    ]
+  },
+  "retentionClasses": [
+    "standard",
+    "temporary",
+    "pinned",
+    "legal_hold"
+  ],
+  "lineageRelations": [
+    "derived_from",
+    "edited_from",
+    "transcoded_from",
+    "extracted_from",
+    "rendered_from",
+    "versioned_from"
+  ],
+  "egress": {
+    "ledger": "zuvyr_asset_egress_events",
+    "pricingState": "unpriced",
+    "chargedCredits": 0,
+    "reason": "Pack042 records bytes durably but does not fabricate unverified egress pricing."
+  },
+  "directAuthenticatedStoragePolicy": false,
+  "serviceRoleSignedUrlsOnly": true,
+  "liveBillingAllowed": false
+}
