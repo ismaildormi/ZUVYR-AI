@@ -485,13 +485,6 @@
                     "execution_enabled":  false,
                     "next_pack":  "036"
                 },
-    "generated_at":  "2026-09-13T16:26:12.8583016+01:00",
-    "pack_id":  "036",
-    "pack_title":  "Quote + Plan Version + Consent",
-    "status":  "LOCKED_VERIFIED",
-    "next_pack_allowed":  true,
-    "next_external_gate":  null,
-    "next_pack":  "037",
     "pack036":  {
                     "status":  "LOCKED_VERIFIED",
                     "source_commit":  "02f31461673edf5bb322a8b6ac5d731bdff2c258",
@@ -503,5 +496,29 @@
                     "execution_authorized":  false,
                     "credit_reservation":  false,
                     "next_pack":  "037"
+                },
+    "generated_at":  "2026-09-13T16:42:02.7468912+01:00",
+    "pack_id":  "037",
+    "pack_title":  "Durable Task Persistence \u0026 Queue Ownership",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "038",
+    "pack037":  {
+                    "status":  "LOCKED_VERIFIED",
+                    "source_commit":  "5ee0338222c76e6239d80bd0b93b727a666b24ab",
+                    "receipt_sha256":  "CAF7D28734304A2157A384055DEA425D68F5CFFA34E678FEA0D08DA639A9863D",
+                    "migration_name":  "pack037_durable_task_kernel",
+                    "migration_version":  "20260913153952",
+                    "migration_sha256":  "A9B5F833890C331AF2A71D42DA15E9110B6BB37F898EB68879E659190C20CE32",
+                    "production_ddl_applied":  true,
+                    "production_schema_verified":  true,
+                    "db_source_of_truth":  true,
+                    "idempotent_task_identity":  true,
+                    "stable_queue_job_identity":  true,
+                    "worker_lease_ownership":  true,
+                    "expired_lease_reclaim":  true,
+                    "checkpoint_resume":  true,
+                    "next_pack":  "038"
                 }
 }
