@@ -338,13 +338,6 @@
                     "external_gate":  null,
                     "next_pack":  "026"
                 },
-    "generated_at":  "2026-09-13T14:56:08.1666171+01:00",
-    "pack_id":  "026",
-    "pack_title":  "Router Hard Filters",
-    "status":  "LOCKED_VERIFIED",
-    "next_pack_allowed":  true,
-    "next_external_gate":  null,
-    "next_pack":  "027",
     "pack026":  {
                     "status":  "LOCKED_VERIFIED",
                     "source_commit":  "b8fd90d10d0b232d6d22111fcd03083cd8226fa3",
@@ -357,5 +350,37 @@
                     "ranking_deferred_to":  "027",
                     "margin_decision_receipt_deferred_to":  "028",
                     "next_pack":  "027"
+                },
+    "generated_at":  "2026-09-13T15:01:51.3845022+01:00",
+    "pack_id":  "027",
+    "pack_title":  "Router Ranking Modes",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "028",
+    "pack027":  {
+                    "status":  "LOCKED_VERIFIED",
+                    "source_commit":  "ed3470d1a782b0073b0fc01eb7e926eee62e6d8b",
+                    "receipt_sha256":  "D2BF2437FDF800A8E882F84AEFA765889C8B9813C257FAF6210EE595CA0B2B82",
+                    "policy_version":  "pack-027.router-ranking.v1",
+                    "modes":  [
+                                  "SMART_BEST_VALUE",
+                                  "ECONOMY",
+                                  "FAST",
+                                  "MAX_QUALITY"
+                              ],
+                    "dimensions":  [
+                                       "quality",
+                                       "reliability",
+                                       "latency",
+                                       "margin",
+                                       "context",
+                                       "language",
+                                       "privacy"
+                                   ],
+                    "eligible_candidate_set_preserved":  true,
+                    "deterministic_fixtures":  true,
+                    "margin_guard_decision_log_deferred_to":  "028",
+                    "next_pack":  "028"
                 }
 }
