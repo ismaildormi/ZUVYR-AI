@@ -435,13 +435,6 @@
                     "legacy_backward_compatible":  true,
                     "next_pack":  "032"
                 },
-    "generated_at":  "2026-09-13T16:07:17.3412250+01:00",
-    "pack_id":  "032",
-    "pack_title":  "Requirement Extraction",
-    "status":  "LOCKED_VERIFIED",
-    "next_pack_allowed":  true,
-    "next_external_gate":  null,
-    "next_pack":  "033",
     "pack032":  {
                     "status":  "LOCKED_VERIFIED",
                     "source_commit":  "ffc0f49db74975020a292eaccc2982872a5dd184",
@@ -451,5 +444,29 @@
                     "no_requirement_invention":  true,
                     "clarification_threshold":  "1 blocking unknown OR 3 explicit unknowns OR explicit force",
                     "next_pack":  "033"
+                },
+    "generated_at":  "2026-09-13T16:11:23.0834735+01:00",
+    "pack_id":  "033",
+    "pack_title":  "Intent Lock",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "034",
+    "pack033":  {
+                    "status":  "LOCKED_VERIFIED",
+                    "source_commit":  "091428fa76ed574105a9c8c30943649c254787b2",
+                    "receipt_sha256":  "19415368A2E21260CD34D7ECA1523C3DE6FFC7689C1C0AE2DF1CF3C51F6BBB1D",
+                    "policy_version":  "pack-033.intent-lock.v1",
+                    "locked_fields":  [
+                                          "goal",
+                                          "hardRequirements",
+                                          "softPreferences",
+                                          "unknowns",
+                                          "outputCriteria",
+                                          "unclassifiedConstraints"
+                                      ],
+                    "no_requirement_invention":  true,
+                    "no_constraint_mutation":  true,
+                    "next_pack":  "034"
                 }
 }
