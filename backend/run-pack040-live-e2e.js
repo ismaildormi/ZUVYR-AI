@@ -29,7 +29,7 @@ function fail(code) {
   throw error;
 }
 
-function pilotUser() {
+function pilotUsers() {
   const users = String(
     process.env.ZUVYR_CHAT_FLOW_PILOT_USERS || ''
   )
@@ -38,7 +38,29 @@ function pilotUser() {
     .filter(value => UUID.test(value));
 
   if (!users.length) fail('PACK040_LIVE_PILOT_USER_MISSING');
-  return users[0];
+  return users;
+}
+
+async function selectTopupPilot(requiredCredits) {
+  const users = pilotUsers();
+
+  const { data, error } = await supabaseAdmin
+    .from('profiles')
+    .select('id,topup_credits_balance')
+    .in('id', users)
+    .order('topup_credits_balance', { ascending: false });
+
+  if (error) fail('PACK040_LIVE_PILOT_LOOKUP_FAILED');
+
+  const selected = (data || []).find(row =>
+    Number(row.topup_credits_balance || 0) >= Number(requiredCredits)
+  );
+
+  if (!selected || !UUID.test(selected.id || '')) {
+    fail('PACK040_LIVE_TOPUP_CAPACITY_UNAVAILABLE');
+  }
+
+  return selected.id;
 }
 
 async function workerOnce() {
@@ -113,7 +135,12 @@ async function main() {
     fail('PACK040_LIVE_E2E_NOT_EXPLICITLY_ENABLED');
   }
 
-  const userId = pilotUser();
+  if (
+    process.env.ZUVYR_PACK040_LIVE_ALLOW_TOPUP !== 'true'
+  ) {
+    fail('PACK040_LIVE_TOPUP_NOT_EXPLICITLY_APPROVED');
+  }
+
   const requestId = crypto.randomUUID();
   const idempotencyKey = `live-${requestId}`;
 
@@ -162,12 +189,16 @@ async function main() {
     fail('PACK040_LIVE_PREVIEW_CAPABILITY_MISMATCH');
   }
 
+  const userId = await selectTopupPilot(
+    Number(preview.estimatedCredits)
+  );
+
   const started = await runtime.start({
     userId,
     request,
     approved: true,
     confirmCreditReservation: true,
-    allowTopup: false,
+    allowTopup: true,
     idempotencyKey,
     enqueueTask: false
   });
@@ -244,7 +275,10 @@ async function main() {
   console.log('DURABLE_EXECUTION=PASS');
   console.log('VERIFY_SETTLE_SAVE=PASS');
   console.log('PROVIDER_OUTPUT_PRINTED=false');
-  console.log('ALLOW_TOPUP=false');
+  console.log('ALLOW_TOPUP=true');
+  console.log('TOPUP_SOURCE=EXISTING_BALANCE_ONLY');
+  console.log('SUBSCRIPTION_MUTATION=false');
+  console.log('STRIPE_LIVE_MUTATION=false');
   console.log('LIVE_BILLING_ALLOWED=false');
 }
 

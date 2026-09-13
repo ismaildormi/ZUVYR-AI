@@ -375,6 +375,25 @@ const fakeQueue = {
     'usageRequestId must be part of the bound Pack040 plan before quote/consent'
   );
 
+  const liveSource = fs.readFileSync(
+    path.join(__dirname, 'run-pack040-live-e2e.js'),
+    'utf8'
+  );
+  assert(
+    liveSource.includes(
+      "process.env.ZUVYR_PACK040_LIVE_ALLOW_TOPUP !== 'true'"
+    ),
+    'Pack040 live top-up proof must require an explicit dedicated approval flag'
+  );
+  assert(
+    liveSource.includes('selectTopupPilot('),
+    'Pack040 live proof must select a configured pilot with enough existing top-up balance'
+  );
+  assert(
+    liveSource.includes('allowTopup: true'),
+    'Pack040 controlled live proof must use the explicitly approved existing top-up path'
+  );
+
   console.log(
     'PASS: canonical Brain preview produces the exact two-capability checkpoint plan'
   );
