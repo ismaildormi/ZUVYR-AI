@@ -1,0 +1,70 @@
+{
+  "version": "pack-024.provider-health-quota-state.v1",
+  "authority": "backend/lib/providerHealthQuotaState.js",
+  "providerRegistryAuthority": "backend/config/provider-registry.v1.json",
+  "adapterContractAuthority": "backend/lib/providerAdapterContract.js",
+  "healthStates": [
+    "HEALTHY",
+    "DEGRADED",
+    "OPEN"
+  ],
+  "quotaStates": [
+    "UNKNOWN",
+    "AVAILABLE",
+    "LIMITED",
+    "EXHAUSTED"
+  ],
+  "defaults": {
+    "failureThreshold": 3,
+    "cooldownMs": 30000,
+    "probeLeaseMs": 15000
+  },
+  "providerQuota": {
+    "separateFromUserQuota": true,
+    "allowedScopes": [
+      "organization",
+      "provider_managed",
+      "local_runtime"
+    ],
+    "forbiddenUserFields": [
+      "userId",
+      "credits",
+      "creditsRemaining",
+      "allowance",
+      "topupBalance",
+      "subscriptionStatus",
+      "plan"
+    ],
+    "unknownPolicy": "record UNKNOWN; Pack026 owns router hard-filter behavior",
+    "exhaustedPolicy": "expose EXHAUSTED; Pack026 owns router hard-filter behavior"
+  },
+  "recoveryProbe": {
+    "billable": false,
+    "creditReservation": false,
+    "usageLedgerMutation": false,
+    "requiresCooldownElapsed": true,
+    "singleLeasePerProvider": true
+  },
+  "timestamps": [
+    "stateSinceMs",
+    "lastSuccessAtMs",
+    "lastFailureAtMs",
+    "openedAtMs",
+    "cooldownUntilMs",
+    "lastProbeAtMs",
+    "quota.observedAtMs",
+    "quota.resetAtMs"
+  ],
+  "compatibility": {
+    "legacyModelCircuit": "backend/lib/modelHealth.js",
+    "legacyRouterBoundary": "backend/aiRouter.js canRoute/reportOutcome",
+    "note": "Pack024 adds provider-level state without deleting the existing model-level circuit. Router hard-filter integration belongs to Pack026."
+  },
+  "ownership": {
+    "finalErrorTaxonomy": "025",
+    "routerHardFilters": "026",
+    "routerRanking": "027",
+    "marginDecisionLog": "028",
+    "fallbackBilling": "029"
+  }
+}
