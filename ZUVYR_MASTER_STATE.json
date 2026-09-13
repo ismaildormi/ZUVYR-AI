@@ -264,13 +264,6 @@
                     "external_gate":  null,
                     "next_pack":  "023"
                 },
-    "generated_at":  "2026-09-13T14:04:08.5939316+01:00",
-    "pack_id":  "023",
-    "pack_title":  "Normalized Provider Adapter Contract",
-    "status":  "LOCKED_VERIFIED",
-    "next_pack_allowed":  true,
-    "next_external_gate":  null,
-    "next_pack":  "024",
     "pack023":  {
                     "status":  "LOCKED_VERIFIED",
                     "source_commit":  "5bcebf408b1dac3c084a70756fc25602030ab5a0",
@@ -294,5 +287,36 @@
                     "provider_health_quota_deferred_to":  "024",
                     "external_gate":  null,
                     "next_pack":  "024"
+                },
+    "generated_at":  "2026-09-13T14:13:09.5000294+01:00",
+    "pack_id":  "024",
+    "pack_title":  "Provider Health \u0026 Quota State",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "025",
+    "pack024":  {
+                    "status":  "LOCKED_VERIFIED",
+                    "source_commit":  "0cf326c1be782ef080405cf1293909612ee7ee53",
+                    "receipt_sha256":  "FFB93D3E57C83A74CBADC4AD9E3F6AD155458830806D744F1DC6732320B76D9A",
+                    "state_version":  "pack-024.provider-health-quota-state.v1",
+                    "health_states":  [
+                                          "HEALTHY",
+                                          "DEGRADED",
+                                          "OPEN"
+                                      ],
+                    "quota_states":  [
+                                         "UNKNOWN",
+                                         "AVAILABLE",
+                                         "LIMITED",
+                                         "EXHAUSTED"
+                                     ],
+                    "recovery_probe_billable":  false,
+                    "provider_quota_separate_from_user_quota":  true,
+                    "legacy_model_circuit_preserved":  true,
+                    "router_hard_filter_integration_deferred_to":  "026",
+                    "final_error_retry_policy_deferred_to":  "025",
+                    "external_gate":  null,
+                    "next_pack":  "025"
                 }
 }
