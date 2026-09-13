@@ -1,0 +1,213 @@
+{
+  "version": "pack-035.capability-graph.v1",
+  "plannerId": "zuvyr.brain.planner.v1",
+  "singleSharedPlanner": true,
+  "intentContract": "pack-033.intent-lock.v1",
+  "contextContract": "pack-034.context-resolver.v1",
+  "capabilities": {
+    "chat.respond": {
+      "domain": "chat",
+      "registryHint": "lib/chatCapabilities.js",
+      "shared": true
+    },
+    "research.run": {
+      "domain": "research",
+      "registryHint": "lib/intelligenceRegistry.js",
+      "shared": true
+    },
+    "image.generate": {
+      "domain": "image",
+      "registryHint": "lib/imageOperationRegistry.js",
+      "shared": true
+    },
+    "video.generate": {
+      "domain": "video",
+      "registryHint": "lib/videoOperationRegistry.js",
+      "shared": true
+    },
+    "audio.generate": {
+      "domain": "audio",
+      "registryHint": "lib/audioOperationRegistry.js",
+      "shared": true
+    },
+    "code.inspect": {
+      "domain": "code",
+      "registryHint": "lib/codeStudioRegistry.js",
+      "shared": true,
+      "canonicalCodeStage": 1
+    },
+    "code.edit": {
+      "domain": "code",
+      "registryHint": "lib/codeStudioRegistry.js",
+      "shared": true,
+      "canonicalCodeStage": 2
+    },
+    "code.validate": {
+      "domain": "code",
+      "registryHint": "lib/codeStudioRegistry.js",
+      "shared": true,
+      "canonicalCodeStage": 3
+    },
+    "code.runtime.start": {
+      "domain": "code_runtime",
+      "registryHint": "lib/codeRuntimePolicy.js",
+      "shared": true,
+      "canonicalCodeStage": 4
+    },
+    "code.runtime.update": {
+      "domain": "code_runtime",
+      "registryHint": "lib/codeRuntimePolicy.js",
+      "shared": true,
+      "canonicalCodeStage": 4
+    },
+    "code.preview.verify": {
+      "domain": "code_preview",
+      "registryHint": "lib/codeStudioRegistry.js",
+      "shared": true,
+      "canonicalCodeStage": 5
+    },
+    "project.collect": {
+      "domain": "project",
+      "registryHint": "lib/finalProductRegistry.js",
+      "shared": true
+    }
+  },
+  "edges": [
+    [
+      "code.inspect",
+      "code.edit"
+    ],
+    [
+      "code.inspect",
+      "research.run"
+    ],
+    [
+      "code.inspect",
+      "image.generate"
+    ],
+    [
+      "code.inspect",
+      "video.generate"
+    ],
+    [
+      "code.inspect",
+      "audio.generate"
+    ],
+    [
+      "research.run",
+      "code.edit"
+    ],
+    [
+      "image.generate",
+      "code.edit"
+    ],
+    [
+      "video.generate",
+      "code.edit"
+    ],
+    [
+      "audio.generate",
+      "code.edit"
+    ],
+    [
+      "code.edit",
+      "code.validate"
+    ],
+    [
+      "code.validate",
+      "code.runtime.start"
+    ],
+    [
+      "code.validate",
+      "code.runtime.update"
+    ],
+    [
+      "code.runtime.start",
+      "code.preview.verify"
+    ],
+    [
+      "code.runtime.update",
+      "code.preview.verify"
+    ],
+    [
+      "chat.respond",
+      "project.collect"
+    ],
+    [
+      "research.run",
+      "project.collect"
+    ],
+    [
+      "image.generate",
+      "project.collect"
+    ],
+    [
+      "video.generate",
+      "project.collect"
+    ],
+    [
+      "audio.generate",
+      "project.collect"
+    ],
+    [
+      "code.preview.verify",
+      "project.collect"
+    ]
+  ],
+  "outputAliases": {
+    "chat": "chat.respond",
+    "research": "research.run",
+    "image": "image.generate",
+    "images": "image.generate",
+    "video": "video.generate",
+    "videos": "video.generate",
+    "audio": "audio.generate",
+    "code": "code",
+    "project": "project.collect"
+  },
+  "code": {
+    "newRuntimePath": [
+      "code.inspect",
+      "code.edit",
+      "code.validate",
+      "code.runtime.start",
+      "code.preview.verify"
+    ],
+    "existingRuntimePath": [
+      "code.inspect",
+      "code.edit",
+      "code.validate",
+      "code.runtime.update",
+      "code.preview.verify"
+    ],
+    "sharedHandoffs": [
+      "research.run",
+      "image.generate",
+      "video.generate",
+      "audio.generate"
+    ],
+    "forbiddenDuplicateAgentPrefixes": [
+      "code.agent.",
+      "code.image_agent",
+      "code.video_agent",
+      "code.audio_agent",
+      "code.research_agent"
+    ]
+  },
+  "plannerRules": {
+    "keywordIntentGuessing": false,
+    "explicitOutputsOnly": true,
+    "surfaceDefaults": {
+      "chat": [
+        "chat.respond"
+      ],
+      "code": [
+        "code"
+      ]
+    },
+    "createAndWorkRequireExplicitOutputWhenNoSurfaceDefault": true,
+    "contextRefsRequireVerifiedContextReceipt": true,
+    "cyclePolicy": "REJECT",
+    "unknownCapabilityPolicy": "REJECT"
+  }
+}
