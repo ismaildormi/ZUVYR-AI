@@ -1,0 +1,275 @@
+{
+  "version": "pack-021.provider-registry.v1",
+  "authority": "backend/config/provider-registry.v1.json",
+  "externalGate": "M10",
+  "launchAuthorizationEnvironment": "ZUVYR_LAUNCH_PROVIDERS",
+  "credentialRule": "Expose credentialPresent boolean only; never credential values.",
+  "costAuthority": "backend/config/cost-registry.v1.json",
+  "healthAdapter": {
+    "module": "backend/lib/providerHealthAdapter.js",
+    "adapterId": "pack021-credential-capability-cost-preflight",
+    "scope": "preflight_only",
+    "note": "Pack024 adds HEALTHY/DEGRADED/OPEN runtime circuit state."
+  },
+  "providers": {
+    "groq": {
+      "credentialEnvironment": [
+        "GROQ_API_KEY"
+      ],
+      "regions": [
+        "provider_managed"
+      ],
+      "quotaType": "organization",
+      "termsLicenseNotes": "M10 must confirm current account/provider terms before launch authorization. Pack021 records no secret or acceptance artifact.",
+      "adapter": "src/modules/ai/providers/groqFree.js",
+      "capabilities": [
+        {
+          "id": "chat",
+          "verification": "verified_repository",
+          "cost": {
+            "mode": "groq_verified_catalog",
+            "authority": "backend/config/cost-registry.v1.json",
+            "evidence": "backend/config/groq-text-pricing.verified.v1.json",
+            "requiredEnvironment": [
+              "ZUVYR_GROQ_FREE_TIER_CONFIRMED"
+            ]
+          }
+        },
+        {
+          "id": "code",
+          "verification": "verified_repository",
+          "cost": {
+            "mode": "groq_verified_catalog",
+            "authority": "backend/config/cost-registry.v1.json",
+            "evidence": "backend/config/groq-text-pricing.verified.v1.json",
+            "requiredEnvironment": [
+              "ZUVYR_GROQ_FREE_TIER_CONFIRMED"
+            ]
+          }
+        }
+      ]
+    },
+    "openrouter": {
+      "credentialEnvironment": [
+        "OPENROUTER_API_KEY"
+      ],
+      "regions": [
+        "provider_managed"
+      ],
+      "quotaType": "provider_managed",
+      "termsLicenseNotes": "M10 must confirm current terms, selected model commercial eligibility and pricing before launch authorization.",
+      "adapter": "src/modules/ai/providers/index.js",
+      "capabilities": [
+        {
+          "id": "chat",
+          "verification": "registered_unverified",
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json"
+          }
+        },
+        {
+          "id": "code",
+          "verification": "registered_unverified",
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json"
+          }
+        },
+        {
+          "id": "multimodal_chat",
+          "verification": "registered_unverified",
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json"
+          }
+        }
+      ]
+    },
+    "anthropic": {
+      "credentialEnvironment": [
+        "ANTHROPIC_API_KEY"
+      ],
+      "regions": [
+        "provider_managed"
+      ],
+      "quotaType": "provider_managed",
+      "termsLicenseNotes": "Direct Anthropic remains blocked until M10 verifies current terms, account authorization and exact cost source.",
+      "adapter": "src/modules/ai/providers/index.js",
+      "capabilities": [
+        {
+          "id": "chat",
+          "verification": "registered_unverified",
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json"
+          }
+        },
+        {
+          "id": "code",
+          "verification": "registered_unverified",
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json"
+          }
+        }
+      ]
+    },
+    "openai": {
+      "credentialEnvironment": [
+        "OPENAI_API_KEY"
+      ],
+      "regions": [
+        "provider_managed"
+      ],
+      "quotaType": "provider_managed",
+      "termsLicenseNotes": "Direct OpenAI remains blocked until M10 verifies current terms, account authorization and exact cost source.",
+      "adapter": "src/modules/ai/providers/index.js",
+      "capabilities": [
+        {
+          "id": "chat",
+          "verification": "registered_unverified",
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json"
+          }
+        },
+        {
+          "id": "code",
+          "verification": "registered_unverified",
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json"
+          }
+        },
+        {
+          "id": "audio",
+          "verification": "registered_unverified",
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json"
+          }
+        }
+      ]
+    },
+    "google": {
+      "credentialEnvironment": [
+        "GOOGLE_API_KEY",
+        "GOOGLE_AI_API_KEY"
+      ],
+      "regions": [
+        "provider_managed"
+      ],
+      "quotaType": "provider_managed",
+      "termsLicenseNotes": "Google/Gemini remains blocked until M10 verifies the selected launch model, terms and cost source.",
+      "adapter": "src/modules/ai/providers/index.js",
+      "capabilities": [
+        {
+          "id": "chat",
+          "verification": "registered_unverified",
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json"
+          }
+        },
+        {
+          "id": "multimodal_chat",
+          "verification": "registered_unverified",
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json"
+          }
+        },
+        {
+          "id": "audio",
+          "verification": "registered_unverified",
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json"
+          }
+        }
+      ]
+    },
+    "local": {
+      "credentialEnvironment": [],
+      "connectionEnvironment": [
+        "LOCAL_MODEL_BASE_URL"
+      ],
+      "regions": [
+        "local_runtime"
+      ],
+      "quotaType": "local_runtime",
+      "termsLicenseNotes": "Local models require model-specific license and compute-cost verification before launch authorization.",
+      "adapter": "src/modules/ai/providers/index.js",
+      "capabilities": [
+        {
+          "id": "chat",
+          "verification": "registered_unverified",
+          "cost": {
+            "mode": "unverified",
+            "authority": "backend/config/cost-registry.v1.json"
+          }
+        }
+      ]
+    },
+    "fal": {
+      "credentialEnvironment": [
+        "FAL_KEY"
+      ],
+      "regions": [
+        "provider_managed"
+      ],
+      "quotaType": "provider_managed",
+      "termsLicenseNotes": "M10 must confirm account funding, selected model commercial eligibility and current terms.",
+      "adapter": "image.providers",
+      "capabilities": [
+        {
+          "id": "image.generate",
+          "verification": "verified_repository",
+          "cost": {
+            "mode": "compat_environment_cost",
+            "authority": "backend/config/cost-registry.v1.json",
+            "requiredEnvironment": [
+              "FAL_IMAGE_COST_USD"
+            ]
+          }
+        }
+      ]
+    },
+    "replicate": {
+      "credentialEnvironment": [
+        "REPLICATE_API_TOKEN"
+      ],
+      "regions": [
+        "provider_managed"
+      ],
+      "quotaType": "provider_managed",
+      "termsLicenseNotes": "M10 must confirm account funding, selected model commercial eligibility and current terms.",
+      "adapter": "image.providers",
+      "capabilities": [
+        {
+          "id": "image.generate",
+          "verification": "verified_repository",
+          "cost": {
+            "mode": "compat_environment_cost",
+            "authority": "backend/config/cost-registry.v1.json",
+            "requiredEnvironment": [
+              "REPLICATE_IMAGE_COST_USD"
+            ]
+          }
+        },
+        {
+          "id": "video.text_to_video",
+          "verification": "verified_repository",
+          "cost": {
+            "mode": "compat_environment_cost",
+            "authority": "backend/config/cost-registry.v1.json",
+            "requiredEnvironment": [
+              "REPLICATE_VIDEO_COST_USD"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
