@@ -1,0 +1,168 @@
+{
+  "version": "pack-027.router-ranking.v1",
+  "authority": "backend/lib/routerRanking.js",
+  "eligibleCandidateAuthority": "backend/lib/routerHardFilters.js",
+  "modelRegistryAuthority": "backend/lib/modelRegistry.js",
+  "providerHealthQuotaAuthority": "backend/lib/providerHealthQuotaState.js",
+  "modes": {
+    "SMART_BEST_VALUE": {
+      "aliases": [
+        "smart",
+        "best_value",
+        "best-value",
+        "best value",
+        "balanced",
+        "auto"
+      ],
+      "weights": {
+        "quality": 24,
+        "reliability": 18,
+        "latency": 15,
+        "margin": 18,
+        "context": 8,
+        "language": 7,
+        "privacy": 10
+      }
+    },
+    "ECONOMY": {
+      "aliases": [
+        "economy",
+        "cheap",
+        "value"
+      ],
+      "weights": {
+        "quality": 8,
+        "reliability": 12,
+        "latency": 8,
+        "margin": 48,
+        "context": 5,
+        "language": 5,
+        "privacy": 14
+      }
+    },
+    "FAST": {
+      "aliases": [
+        "fast",
+        "speed",
+        "low_latency",
+        "low-latency"
+      ],
+      "weights": {
+        "quality": 10,
+        "reliability": 15,
+        "latency": 52,
+        "margin": 8,
+        "context": 5,
+        "language": 5,
+        "privacy": 5
+      }
+    },
+    "MAX_QUALITY": {
+      "aliases": [
+        "max_quality",
+        "max-quality",
+        "max quality",
+        "quality",
+        "best"
+      ],
+      "weights": {
+        "quality": 58,
+        "reliability": 14,
+        "latency": 5,
+        "margin": 5,
+        "context": 8,
+        "language": 5,
+        "privacy": 5
+      }
+    }
+  },
+  "scoreRange": {
+    "min": 0,
+    "max": 100
+  },
+  "neutralScores": {
+    "margin": 50,
+    "privacy": 50,
+    "languageWhenUnspecified": 70,
+    "contextWhenUnknownAndUnrequired": 50
+  },
+  "qualityTierScores": {
+    "frontier": 100,
+    "max": 100,
+    "premium": 95,
+    "excellent": 92,
+    "high": 85,
+    "strong": 82,
+    "balanced": 70,
+    "standard": 60,
+    "medium": 60,
+    "economy": 45,
+    "basic": 35,
+    "low": 30,
+    "unknown": 50
+  },
+  "latencyClassScores": {
+    "instant": 100,
+    "ultra_fast": 100,
+    "ultra-fast": 100,
+    "fast": 90,
+    "low": 90,
+    "balanced": 70,
+    "medium": 65,
+    "normal": 65,
+    "slow": 40,
+    "high": 40,
+    "very_slow": 20,
+    "very-slow": 20,
+    "batch": 10,
+    "unknown": 50
+  },
+  "reliability": {
+    "health": {
+      "HEALTHY": 100,
+      "DEGRADED": 55,
+      "OPEN": 0
+    },
+    "quota": {
+      "AVAILABLE": 100,
+      "UNKNOWN": 75,
+      "LIMITED": 50,
+      "EXHAUSTED": 0
+    },
+    "healthWeight": 70,
+    "quotaWeight": 30
+  },
+  "loadAdjustments": {
+    "normal": {},
+    "elevated": {
+      "latency": 1.2,
+      "reliability": 1.1
+    },
+    "high": {
+      "latency": 1.5,
+      "reliability": 1.2,
+      "margin": 1.15
+    }
+  },
+  "margin": {
+    "minimumGrossMarginBpsDefault": 5000,
+    "scoreAtFloor": 50,
+    "bpsForMaxScoreAboveFloor": 5000,
+    "note": "Pack027 scores a supplied route-specific margin estimate. When no route-specific estimate exists, margin is neutral. Pack028 owns measured green/yellow/red guard and auditable estimate/actual receipts."
+  },
+  "privacy": {
+    "note": "Pack027 accepts verified registry/provider privacyScore or an explicit privacyScoreByRoute override. Missing privacy evidence is neutral, never invented."
+  },
+  "tieBreak": [
+    "higher total score",
+    "higher reliability score",
+    "higher mode-primary dimension",
+    "original eligible order",
+    "lexicographic route key"
+  ],
+  "ownership": {
+    "hardFilters": "026",
+    "marginGuardAndDecisionLog": "028",
+    "fallbackAndNoDoubleCharge": "029"
+  }
+}

@@ -17,6 +17,8 @@ const { estimateCostUsd, costTier } = require('./lib/modelCosts');
 const intelligenceRegistry = require('./lib/intelligenceRegistry');
 /* ZUVYR_PACK026_ROUTER_HARD_FILTERS */
 const { routerHardFilters } = require('./lib/routerHardFilters');
+/* ZUVYR_PACK027_ROUTER_RANKING */
+const { routerRanking } = require('./lib/routerRanking');
 // Providers (anthropic/openrouter/openai/google/groq/local/custom) are no
 // longer called directly from this file â€” see src/modules/ai/providers.
 // This is what makes providers interchangeable: adding one, swapping one,
@@ -177,13 +179,33 @@ async function routeRequest(feature, messages, opts = {}) {
     quotedGrossMarginBps
   });
 
-  const chain = hardFilterResult.routes;
+  const hardFilteredChain = hardFilterResult.routes;
   const hardFilterAttempts = hardFilterResult.filtered.map(item => ({
     model: item.route.model,
     provider: item.route.provider,
     status: 'skipped_hard_filter',
     reasons: item.decision.reasons
   }));
+
+  const rankingResult = routerRanking.rankEligibleRoutes({
+    eligibleRoutes: hardFilteredChain,
+    mode: opts.rankingMode || opts.routerMode || 'smart',
+    capability,
+    inputModality: hasMultimodalInput
+      ? (opts.inputModality || null)
+      : 'text',
+    outputModality: 'text',
+    language: opts.language || null,
+    minimumContextTokens:
+      opts.minimumContextTokens == null ? null : opts.minimumContextTokens,
+    loadLevel,
+    minimumGrossMarginBps,
+    quotedGrossMarginBps,
+    marginBpsByRoute: opts.marginBpsByRoute || null,
+    privacyScoreByRoute: opts.privacyScoreByRoute || null
+  });
+
+  const chain = rankingResult.routes;
   const chainReordered = chain[0]?.model !== originalChain[0]?.model;
 
   const timeoutMs =
@@ -237,6 +259,8 @@ async function routeRequest(feature, messages, opts = {}) {
         provider: route.provider,
         fallback_triggered: isReliabilityFallback,
         chain_reordered: chainReordered,
+        ranking_mode: rankingResult.mode,
+        ranking_changed: rankingResult.rankingChanged,
         load_level: loadLevel,
         usage: result.usage,
         cost_usd:
@@ -276,7 +300,7 @@ async function routeRequest(feature, messages, opts = {}) {
   throw error;
 }
 
-module.exports = { routeRequest, ROUTES, MULTIMODAL_ROUTE, getEffectiveChain };
+module.exports = { routeRequest, ROUTES, MULTIMODAL_ROUTE, getEffectiveChain, rankEligibleRoutes: routerRanking.rankEligibleRoutes };
 
 
 
