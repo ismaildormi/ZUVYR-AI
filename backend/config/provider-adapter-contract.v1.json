@@ -1,0 +1,120 @@
+{
+  "version": "pack-023.provider-adapter-contract.v1",
+  "authority": "backend/lib/providerAdapterContract.js",
+  "compatibilityAuthority": "backend/lib/normalizedProviderAdapters.js",
+  "request": {
+    "required": [
+      "requestId",
+      "capability",
+      "providerId",
+      "input"
+    ],
+    "optional": [
+      "modelId",
+      "options",
+      "signal",
+      "metadata"
+    ],
+    "credentials": "adapter_private_never_normalized_request"
+  },
+  "result": {
+    "status": "ok",
+    "required": [
+      "requestId",
+      "providerId",
+      "capability",
+      "output",
+      "artifacts",
+      "usage",
+      "timing"
+    ],
+    "primaryUrl": "output.primaryUrl",
+    "artifacts": "canonical array of URL/ref artifacts",
+    "usage": "canonical nullable numeric usage fields"
+  },
+  "error": {
+    "shape": "ProviderAdapterError",
+    "taxonomy": "minimal_transport_shape_only_pack025_owns_final_error_taxonomy",
+    "fields": [
+      "code",
+      "providerCode",
+      "statusCode",
+      "retryAfterSeconds",
+      "retryable",
+      "cancelled",
+      "timedOut",
+      "providerId",
+      "capability"
+    ]
+  },
+  "cancel": {
+    "interface": "AbortSignal",
+    "rule": "adapters receive request.signal and must fail closed before execution if already aborted"
+  },
+  "surfaces": [
+    "text",
+    "image",
+    "video",
+    "audio",
+    "research",
+    "3d",
+    "browser",
+    "sandbox"
+  ],
+  "existingBoundaries": [
+    {
+      "id": "text-provider-registry",
+      "surface": "text",
+      "path": "backend/src/modules/ai/providers/index.js",
+      "legacyInterface": "call(provider, model, messages, opts)",
+      "normalizedBridge": "adaptLegacyTextCall"
+    },
+    {
+      "id": "groq-text-provider",
+      "surface": "text",
+      "path": "backend/src/modules/ai/providers/groqFree.js",
+      "legacyInterface": "Groq call with AbortSignal/timeout and provider usage",
+      "normalizedBridge": "adaptLegacyTextCall"
+    },
+    {
+      "id": "image-provider-registry",
+      "surface": "image",
+      "path": "backend/src/modules/ai/providers/imageProviders.js",
+      "legacyInterface": "generate(prompt, opts)",
+      "normalizedBridge": "adaptLegacyImageGenerate"
+    },
+    {
+      "id": "replicate-video-provider",
+      "surface": "video",
+      "path": "backend/lib/videoProvider.js",
+      "legacyInterface": "generateVideo(request, deps)",
+      "normalizedBridge": "adaptLegacyVideoGenerate"
+    },
+    {
+      "id": "audio-contract-boundary",
+      "surface": "audio",
+      "path": "backend/lib/audioRequestContract.js",
+      "artifactPath": "backend/lib/audioArtifactContract.js",
+      "legacyInterface": "request/artifact contract; execution remains separately gated",
+      "normalizedBridge": "adaptLegacyGeneric"
+    },
+    {
+      "id": "research-engine-boundary",
+      "surface": "research",
+      "path": "backend/lib/deepResearchEngine.js",
+      "legacyInterface": "structured research engine output",
+      "normalizedBridge": "adaptLegacyGeneric"
+    }
+  ],
+  "contractReadySurfacesWithoutVerifiedExecutorBoundary": [
+    "3d",
+    "browser",
+    "sandbox"
+  ],
+  "notes": [
+    "Pack023 standardizes transport shapes and compatibility adapters only.",
+    "Pack024 owns health/quota runtime state.",
+    "Pack025 owns final error taxonomy and retry policy.",
+    "Packs026-029 migrate router filtering/ranking/fallback/billing behavior."
+  ]
+}
