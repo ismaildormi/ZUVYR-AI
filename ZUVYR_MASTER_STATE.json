@@ -530,13 +530,6 @@
                     "live_worker_wiring":  false,
                     "next_pack":  "039"
                 },
-    "generated_at":  "2026-09-13T17:02:05.4399919+01:00",
-    "pack_id":  "039",
-    "pack_title":  "Cancel / Compensation / Rollback",
-    "status":  "LOCKED_VERIFIED",
-    "next_pack_allowed":  true,
-    "next_external_gate":  null,
-    "next_pack":  "040",
     "pack039":  {
                     "status":  "LOCKED_VERIFIED",
                     "source_commit":  "40bd13f61b64f9133ce07ee8518cad1c445fed40",
@@ -552,5 +545,37 @@
                     "live_worker_wiring":  false,
                     "live_financial_wiring":  false,
                     "next_pack":  "040"
+                },
+    "generated_at":  "2026-09-13T17:51:12.7676501+01:00",
+    "pack_id":  "040",
+    "pack_title":  "Brain + Kernel Checkpoint D",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "041",
+    "pack040":  {
+                    "status":  "LOCKED_VERIFIED",
+                    "source_commit":  "59e51c2ebc5236671668c362d1c72888d35981a4",
+                    "fix2_commit":  "6f1dfe98e69b7723786d2d050891965a32e6beb6",
+                    "fix3_commit":  "edbc03056e7cade8d66fc6097376f61cc0224479",
+                    "fix4_commit":  "601febf632b9e316e083c1285aaebc7fc09a0630",
+                    "receipt_sha256":  "B60A2680E37F70D2DFDAE1D803703E8F11965EF3D154A859BC3E8AD56604E6AD",
+                    "migration_48_version":  "20260913162342",
+                    "migration_49_version":  "20260913164539",
+                    "live_e2e":  "PASS",
+                    "capabilities":  [
+                                         "chat.respond",
+                                         "project.collect"
+                                     ],
+                    "one_usage_reservation":  "PASS",
+                    "forced_process_restart":  "PASS",
+                    "same_persisted_task":  "PASS",
+                    "durable_execution":  "PASS",
+                    "verify_settle_save":  "PASS",
+                    "reserved_credits":  3,
+                    "actual_credits":  1,
+                    "refunded_credits":  2,
+                    "live_billing_allowed":  false,
+                    "next_pack":  "041"
                 }
 }
