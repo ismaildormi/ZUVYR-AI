@@ -1,0 +1,150 @@
+{
+  "version": "pack-025.provider-error-policy.v1",
+  "authority": "backend/lib/providerErrorPolicy.js",
+  "transportAuthority": "backend/lib/providerAdapterContract.js",
+  "healthQuotaAuthority": "backend/lib/providerHealthQuotaState.js",
+  "categories": [
+    "RATE_LIMIT",
+    "QUOTA",
+    "DOWN",
+    "TIMEOUT",
+    "MODEL_UNAVAILABLE",
+    "AUTH",
+    "INVALID_REQUEST",
+    "CONTENT_RESTRICTION",
+    "INTERNAL"
+  ],
+  "controlFlow": {
+    "CANCELLED": {
+      "providerFailureCategory": false,
+      "retryable": false,
+      "fallbackAllowed": false,
+      "userMessage": "The request was cancelled."
+    }
+  },
+  "policy": {
+    "RATE_LIMIT": {
+      "retryable": true,
+      "maxSameProviderRetries": 1,
+      "baseDelayMs": 1000,
+      "maxDelayMs": 30000,
+      "honorRetryAfter": true,
+      "fallbackAllowed": true,
+      "countAsProviderHealthFailure": false,
+      "quotaImpact": "LIMITED",
+      "userMessage": "The AI service is temporarily rate limited. Please try again shortly."
+    },
+    "QUOTA": {
+      "retryable": false,
+      "maxSameProviderRetries": 0,
+      "baseDelayMs": 0,
+      "maxDelayMs": 0,
+      "honorRetryAfter": false,
+      "fallbackAllowed": true,
+      "countAsProviderHealthFailure": false,
+      "quotaImpact": "EXHAUSTED",
+      "userMessage": "The AI provider has reached its current capacity limit. Please try again later."
+    },
+    "DOWN": {
+      "retryable": true,
+      "maxSameProviderRetries": 1,
+      "baseDelayMs": 500,
+      "maxDelayMs": 5000,
+      "honorRetryAfter": true,
+      "fallbackAllowed": true,
+      "countAsProviderHealthFailure": true,
+      "quotaImpact": "NONE",
+      "userMessage": "The AI service is temporarily unavailable."
+    },
+    "TIMEOUT": {
+      "retryable": true,
+      "maxSameProviderRetries": 1,
+      "baseDelayMs": 250,
+      "maxDelayMs": 3000,
+      "honorRetryAfter": false,
+      "fallbackAllowed": true,
+      "countAsProviderHealthFailure": true,
+      "quotaImpact": "NONE",
+      "userMessage": "The AI service took too long to respond."
+    },
+    "MODEL_UNAVAILABLE": {
+      "retryable": false,
+      "maxSameProviderRetries": 0,
+      "baseDelayMs": 0,
+      "maxDelayMs": 0,
+      "honorRetryAfter": false,
+      "fallbackAllowed": true,
+      "countAsProviderHealthFailure": false,
+      "quotaImpact": "NONE",
+      "userMessage": "The requested AI model is temporarily unavailable."
+    },
+    "AUTH": {
+      "retryable": false,
+      "maxSameProviderRetries": 0,
+      "baseDelayMs": 0,
+      "maxDelayMs": 0,
+      "honorRetryAfter": false,
+      "fallbackAllowed": true,
+      "countAsProviderHealthFailure": false,
+      "quotaImpact": "NONE",
+      "userMessage": "The AI service is temporarily unavailable because a provider connection is not ready."
+    },
+    "INVALID_REQUEST": {
+      "retryable": false,
+      "maxSameProviderRetries": 0,
+      "baseDelayMs": 0,
+      "maxDelayMs": 0,
+      "honorRetryAfter": false,
+      "fallbackAllowed": false,
+      "countAsProviderHealthFailure": false,
+      "quotaImpact": "NONE",
+      "userMessage": "The request could not be processed as sent."
+    },
+    "CONTENT_RESTRICTION": {
+      "retryable": false,
+      "maxSameProviderRetries": 0,
+      "baseDelayMs": 0,
+      "maxDelayMs": 0,
+      "honorRetryAfter": false,
+      "fallbackAllowed": false,
+      "countAsProviderHealthFailure": false,
+      "quotaImpact": "NONE",
+      "userMessage": "The request cannot be completed because of provider content restrictions."
+    },
+    "INTERNAL": {
+      "retryable": true,
+      "maxSameProviderRetries": 1,
+      "baseDelayMs": 500,
+      "maxDelayMs": 5000,
+      "honorRetryAfter": false,
+      "fallbackAllowed": true,
+      "countAsProviderHealthFailure": true,
+      "quotaImpact": "NONE",
+      "userMessage": "The AI service encountered an internal provider error."
+    }
+  },
+  "precedence": [
+    "CANCELLED",
+    "CONTENT_RESTRICTION",
+    "QUOTA",
+    "RATE_LIMIT",
+    "TIMEOUT",
+    "AUTH",
+    "MODEL_UNAVAILABLE",
+    "DOWN",
+    "INVALID_REQUEST",
+    "INTERNAL"
+  ],
+  "routerOwnership": {
+    "hardFilters": "026",
+    "ranking": "027",
+    "decisionLog": "028",
+    "boundedFallbackBilling": "029"
+  },
+  "notes": [
+    "Pack025 defines error classification and bounded policy but does not execute provider retries or fallback itself.",
+    "CONTENT_RESTRICTION and INVALID_REQUEST never fall back to another provider.",
+    "Cancellation is control flow, not one of the nine provider failure categories.",
+    "Provider quota remains separate from user billing/allowance state."
+  ]
+}
