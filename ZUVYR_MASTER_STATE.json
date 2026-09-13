@@ -462,13 +462,6 @@
                     "no_constraint_mutation":  true,
                     "next_pack":  "034"
                 },
-    "generated_at":  "2026-09-13T16:15:54.2139259+01:00",
-    "pack_id":  "034",
-    "pack_title":  "Context Resolver",
-    "status":  "LOCKED_VERIFIED",
-    "next_pack_allowed":  true,
-    "next_external_gate":  null,
-    "next_pack":  "035",
     "pack034":  {
                     "status":  "LOCKED_VERIFIED",
                     "source_commit":  "f8afc4dee5be85ed93de61ea41adb7bb3f8a3c0e",
@@ -479,5 +472,24 @@
                     "max_total_characters":  18000,
                     "stable_ref_reuse_without_reupload":  true,
                     "next_pack":  "035"
+                },
+    "generated_at":  "2026-09-13T16:21:56.0893057+01:00",
+    "pack_id":  "035",
+    "pack_title":  "Capability Graph \u0026 Planner",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "036",
+    "pack035":  {
+                    "status":  "LOCKED_VERIFIED",
+                    "source_commit":  "7ad88b3854f02356404bb66a35ccb23f23f56146",
+                    "receipt_sha256":  "7D12E6FF03E300350CFB6BB26EB034DAE0544C845D2576B288406736BEF1D31A",
+                    "graph_version":  "pack-035.capability-graph.v1",
+                    "planner_id":  "zuvyr.brain.planner.v1",
+                    "single_shared_planner":  true,
+                    "canonical_code_chain":  "code.inspect -\u003e code.edit -\u003e code.validate -\u003e code.runtime.start/update -\u003e code.preview.verify",
+                    "duplicate_code_media_agents":  false,
+                    "execution_enabled":  false,
+                    "next_pack":  "036"
                 }
 }
