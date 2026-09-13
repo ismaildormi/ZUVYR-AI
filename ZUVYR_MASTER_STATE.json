@@ -170,7 +170,6 @@
                     "actions":  "VERIFIED",
                     "production_database_mutation":  false
                 },
-    "pack_title":  "Stripe Canonical Catalog \u0026 Lifecycle",
     "finalized_at":  "2026-09-13T02:37:28.2010211+01:00",
     "pack019":  {
                     "status":  "SOURCE_VERIFIED_AWAITING_M08",
@@ -188,10 +187,6 @@
                     "railway_variable_mutation":  false,
                     "production_database_mutation":  false
                 },
-    "commit":  "f7d525fc2ffce5994d7f808e92f422d08989a8b3",
-    "source_commit":  "f7d525fc2ffce5994d7f808e92f422d08989a8b3",
-    "pack_id":  "019",
-    "status":  "SOURCE_VERIFIED_AWAITING_M08",
     "m08":  {
                 "test_mode_status":  "VERIFIED",
                 "test_mode_receipt_sha256":  "65072F5168089F42A5ABF45DEF974B63FE6C90FF0574059B5096C7A0ADC617A9",
@@ -208,8 +203,26 @@
                 "deferral_revision":  "REV1.2",
                 "deferral_policy":  "TEST_MODE_ALLOWS_PACK020_DEVELOPMENT_LIVE_REMAINS_LAUNCH_GATE"
             },
-    "generated_at":  "2026-09-13T02:57:22.8777962+01:00",
-    "next_pack_allowed":  true,
-    "next_external_gate":  "M08_LIVE_BEFORE_REAL_MONEY_LAUNCH",
-    "next_pack":  "020"
+    "generated_at":  "2026-09-13T13:13:12.5350280+01:00",
+    "commit":  "c60a45ce9349d0b84ea2d7153a3f39a4254bbd3b",
+    "source_commit":  "c60a45ce9349d0b84ea2d7153a3f39a4254bbd3b",
+    "pack_id":  "020",
+    "pack_title":  "Money Checkpoint B",
+    "status":  "SOURCE_VERIFIED_AWAITING_M09",
+    "next_pack_allowed":  false,
+    "next_external_gate":  "M09",
+    "next_pack":  "021",
+    "pack020":  {
+                    "status":  "SOURCE_VERIFIED_AWAITING_M09",
+                    "source_commit":  "c60a45ce9349d0b84ea2d7153a3f39a4254bbd3b",
+                    "receipt_sha256":  "A9F281C4D46D0C8A202765C633C030FF8BBB1AF6FB244661B965CBAF78FBB0CE",
+                    "mode":  "stripe_test_mode_only",
+                    "live_billing_allowed":  false,
+                    "money_flow_contract":  "PASS",
+                    "billing_ui_db_contract":  "PASS",
+                    "profitability_receipt_contract":  "PASS",
+                    "live_verification":  "PASS",
+                    "actual_owner_e2e":  "PENDING_M09",
+                    "external_gate":  "M09"
+                }
 }
