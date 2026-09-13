@@ -546,13 +546,6 @@
                     "live_financial_wiring":  false,
                     "next_pack":  "040"
                 },
-    "generated_at":  "2026-09-13T17:51:12.7676501+01:00",
-    "pack_id":  "040",
-    "pack_title":  "Brain + Kernel Checkpoint D",
-    "status":  "LOCKED_VERIFIED",
-    "next_pack_allowed":  true,
-    "next_external_gate":  null,
-    "next_pack":  "041",
     "pack040":  {
                     "status":  "LOCKED_VERIFIED",
                     "source_commit":  "59e51c2ebc5236671668c362d1c72888d35981a4",
@@ -577,5 +570,27 @@
                     "refunded_credits":  2,
                     "live_billing_allowed":  false,
                     "next_pack":  "041"
+                },
+    "generated_at":  "2026-09-13T18:09:37.3886559+01:00",
+    "pack_id":  "041",
+    "pack_title":  "Universal Content Object",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "042",
+    "pack041":  {
+                    "status":  "LOCKED_VERIFIED",
+                    "source_commit":  "b32f6fdb58cc39c65dc0dab60aeaef0a088c2249",
+                    "receipt_sha256":  "7D7B815CF225B8BF8B3F5619CC1B5AC7C22EBF9B018F659A5C9BD8462E3194B0",
+                    "migration_version":  "20260913170638",
+                    "migration_sha256":  "A87011696400DCF0E79043789C945684F85F7DD218F94A06FCACCA4ED09828EC",
+                    "kinds":  9,
+                    "producer_bindings":  6,
+                    "canonical_content_id":  "PASS",
+                    "transactional_kind_proof":  "PASS",
+                    "persistent_test_data":  false,
+                    "blob_duplication":  false,
+                    "live_billing_allowed":  false,
+                    "next_pack":  "042"
                 }
 }
