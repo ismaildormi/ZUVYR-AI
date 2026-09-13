@@ -254,13 +254,6 @@
                 "credential_values_recorded":  false,
                 "live_billing_allowed":  false
             },
-    "generated_at":  "2026-09-13T13:55:51.5173943+01:00",
-    "pack_id":  "022",
-    "pack_title":  "Model Registry",
-    "status":  "LOCKED_VERIFIED",
-    "next_pack_allowed":  true,
-    "next_external_gate":  null,
-    "next_pack":  "023",
     "pack022":  {
                     "status":  "LOCKED_VERIFIED",
                     "source_commit":  "9b142f47f33e41b2b9c889941ebf5fca689de2ee",
@@ -270,5 +263,36 @@
                     "runtime_execution_migration":  "deferred_to_packs_023_029",
                     "external_gate":  null,
                     "next_pack":  "023"
+                },
+    "generated_at":  "2026-09-13T14:04:08.5939316+01:00",
+    "pack_id":  "023",
+    "pack_title":  "Normalized Provider Adapter Contract",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "024",
+    "pack023":  {
+                    "status":  "LOCKED_VERIFIED",
+                    "source_commit":  "5bcebf408b1dac3c084a70756fc25602030ab5a0",
+                    "receipt_sha256":  "8EF96257A187AEFAA26EF09C7941E623C6A7A61E8FE4D5F5398D1C8ADCC80B0E",
+                    "contract_version":  "pack-023.provider-adapter-contract.v1",
+                    "normalized_surfaces":  [
+                                                "text",
+                                                "image",
+                                                "video",
+                                                "audio",
+                                                "research",
+                                                "3d",
+                                                "browser",
+                                                "sandbox"
+                                            ],
+                    "existing_boundaries_mapped":  true,
+                    "result_urls_artifacts_normalized":  true,
+                    "usage_normalized":  true,
+                    "cancellation_interface":  "AbortSignal",
+                    "final_error_taxonomy_deferred_to":  "025",
+                    "provider_health_quota_deferred_to":  "024",
+                    "external_gate":  null,
+                    "next_pack":  "024"
                 }
 }
