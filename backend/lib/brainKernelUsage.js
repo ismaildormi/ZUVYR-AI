@@ -153,6 +153,7 @@ function createBrainKernelUsage({ client } = {}) {
         CONFIG.usage.refundRpc,
         await client.rpc(CONFIG.usage.refundRpc, {
           p_request_id: requestId,
+          p_actual_provider_cost_microusd: '0',
           p_enforcement_enabled: true
         })
       );

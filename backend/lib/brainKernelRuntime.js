@@ -124,6 +124,8 @@ function createBrainKernelRuntime({
     });
 
     const liveQuote = buildCheckpointDQuotes(plan);
+    const usageRequestId = requestIdFrom(request.requestId);
+
     const taskPlan = Object.freeze({
       ...plan,
       pack040: Object.freeze({
@@ -131,7 +133,8 @@ function createBrainKernelRuntime({
         providerQuotes: liveQuote.providerQuotes,
         modelTool: liveQuote.modelTool,
         pricingVersion: liveQuote.pricingVersion,
-        creditValueMicroUsd: liveQuote.creditValueMicroUsd
+        creditValueMicroUsd: liveQuote.creditValueMicroUsd,
+        usageRequestId
       })
     });
 
@@ -207,7 +210,8 @@ function createBrainKernelRuntime({
         approved: true
       });
 
-      const usageRequestId = requestIdFrom(bundle.request.requestId);
+      const usageRequestId =
+        bundle.plan.pack040.usageRequestId;
 
       const quoteRecord = Object.freeze({
         ...bundle.quote,
@@ -218,13 +222,7 @@ function createBrainKernelRuntime({
         })
       });
 
-      const taskPlan = Object.freeze({
-        ...bundle.plan,
-        pack040: Object.freeze({
-          ...bundle.plan.pack040,
-          usageRequestId
-        })
-      });
+      const taskPlan = bundle.plan;
 
       let reservation = null;
       let task = null;

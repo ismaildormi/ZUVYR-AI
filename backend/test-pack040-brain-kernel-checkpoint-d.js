@@ -213,6 +213,13 @@ const fakeQueue = {
       error.code === 'PACK040_EXPLICIT_APPROVAL_REQUIRED'
   );
 
+  const preview2 = runtime.preview({ request });
+  assert.equal(
+    preview.planVersion,
+    preview2.planVersion,
+    'Pack040 preview plan version must remain deterministic'
+  );
+
   const started = await runtime.start({
     userId:
       '11111111-1111-4111-8111-111111111111',
@@ -347,6 +354,25 @@ const fakeQueue = {
       ),
       'utf8'
     ).includes('zuvyr-durable-tasks')
+  );
+
+  const usageSource = fs.readFileSync(
+    path.join(__dirname, 'lib/brainKernelUsage.js'),
+    'utf8'
+  );
+  assert(
+    usageSource.includes("p_actual_provider_cost_microusd: '0'"),
+    'Pack040 refund must match the live refund_zuvyr_usage RPC signature'
+  );
+
+  const runtimeSource = fs.readFileSync(
+    path.join(__dirname, 'lib/brainKernelRuntime.js'),
+    'utf8'
+  );
+  assert(
+    runtimeSource.includes('usageRequestId\n      })') ||
+      runtimeSource.includes('usageRequestId\r\n      })'),
+    'usageRequestId must be part of the bound Pack040 plan before quote/consent'
   );
 
   console.log(
