@@ -206,3 +206,36 @@ Railway evidence SHA256: $ExpectedEvidenceSha
 - Next pack: 013 — Unified Usage Ledger
 - Finalized: 2026-09-12T08:07:26.3221213+01:00
 <!-- ZUVYR_PACK_012_FINALIZER_END -->
+
+<!-- ZUVYR_PACK_043_FINALIZER_BEGIN -->
+## Pack 043 — Projects CRUD
+- Status: LOCKED_VERIFIED
+- Verified source commit: 5465f1d78ed02fd6467ee5e55a9dce8972e608c3
+- Dependencies: 011 + 041 + 042
+- Production migrations 52–55: APPLIED / VERIFIED
+- Project create/list/get/update: PASS
+- Archive / restore: PASS
+- Fresh-login persistence: PASS
+- Two-account project isolation: PASS
+- Resource owner isolation: PASS
+- Resource links: conversation/content/task/deployment PASS
+- Existing conversation memory link: PASS
+- Canonical content project sync/unlink: PASS
+- Browser direct writes: BLOCKED
+- Backend unlink after Migration 55: PASS
+- Audit trail: PASS
+- Live E2E charged credits: 0
+- Live billing allowed: false
+- Stage5C product data path: PASS
+- Stage5C local cleanup: blocked by least-privilege 42501 on workspace_audit_events
+- Production privilege broadening for test cleanup: NO
+- Controlled Supabase cleanup: PASS
+- Zero persistent test residue: PASS
+- Railway deployment: 1f25c0a1-39e9-4672-bd5d-73830a536ebc / SUCCESS
+- Vercel deployment: dpl_Ekz3bsoNpjapVDFbNqGkonNeVfoL / READY
+- Receipt: zuvyr-pack-evidence/pack-043/receipt.json
+- Receipt SHA256: E6C06A6B2DF32DF34167A17B2BC250711DF18DE67D29A828ECB23217FC46482E
+- Next pack allowed: YES
+- Next pack: 044 — Library
+- Finalized: 2026-09-13T21:01:39.904Z
+<!-- ZUVYR_PACK_043_FINALIZER_END -->

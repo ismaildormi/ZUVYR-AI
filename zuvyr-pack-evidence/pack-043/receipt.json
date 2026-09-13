@@ -1,0 +1,117 @@
+{
+  "schema_version": "1.0",
+  "pack_id": "043",
+  "title": "Projects CRUD",
+  "status": "LOCKED_VERIFIED",
+  "finalized_at": "2026-09-13T21:01:39.904Z",
+  "dependencies": [
+    "011",
+    "041",
+    "042"
+  ],
+  "verified_source_commit": "5465f1d78ed02fd6467ee5e55a9dce8972e608c3",
+  "production": {
+    "supabase_project_ref": "tqoqsgaymygmqrzddvtu",
+    "railway": {
+      "project_id": "ba460cdb-cc55-4203-bdd0-711846b7564c",
+      "environment_id": "5f533b47-378a-4098-baec-a34c4ddfdf01",
+      "service_id": "65161b7e-7b83-4adf-bb57-290df3963de1",
+      "deployment_id": "1f25c0a1-39e9-4672-bd5d-73830a536ebc",
+      "deployment_status": "SUCCESS",
+      "commit": "5465f1d78ed02fd6467ee5e55a9dce8972e608c3"
+    },
+    "vercel": {
+      "project_id": "prj_P6VddfynJKniiK29clC6Epr9byPk",
+      "deployment_id": "dpl_Ekz3bsoNpjapVDFbNqGkonNeVfoL",
+      "deployment_status": "READY",
+      "target": "production",
+      "commit": "5465f1d78ed02fd6467ee5e55a9dce8972e608c3"
+    }
+  },
+  "migrations": [
+    {
+      "path": "backend/52_pack043_projects_crud.sql",
+      "name": "pack043_projects_crud",
+      "version": "20260913194506",
+      "sha256": "DE1CEBCD6DA321A2579122471322FAD9D0A6362826A9AC1BC2D0CF45F8A65EC0",
+      "production_applied": true
+    },
+    {
+      "path": "backend/53_pack043_trigger_function_privilege_hardening.sql",
+      "name": "pack043_trigger_function_privilege_hardening",
+      "version": "20260913194620",
+      "sha256": "A913EA1EAA10547E23A3AF61A38F64ABCA158B29C6C1524EBB6A729DA42D68CA",
+      "production_applied": true
+    },
+    {
+      "path": "backend/54_pack043_rls_performance_hardening.sql",
+      "name": "pack043_rls_performance_hardening",
+      "version": "20260913194640",
+      "sha256": "BE39D6F0B614FACC6367F2BCA90F540FAC25422ED6125044007422EDA1F0D81A",
+      "production_applied": true
+    },
+    {
+      "path": "backend/55_pack043_service_role_unlink_privilege.sql",
+      "name": "pack043_service_role_unlink_privilege",
+      "version": "20260913200657",
+      "sha256": "40F152D62CF9A150F252792F8429190409A3C95F987034B5C1CAFD5EFDF03803",
+      "production_applied": true
+    }
+  ],
+  "source_validation": {
+    "workspace_project_route_unit": "PASS",
+    "unified_conversation_routes_unit": "PASS",
+    "private_attachment_routes_unit": "PASS",
+    "roxip_routes_unit": "PASS",
+    "scoped_commit_push": "PASS"
+  },
+  "live_e2e": {
+    "data_path": "PASS",
+    "project_crud": "PASS",
+    "archive_restore": "PASS",
+    "persistence_fresh_login": "PASS",
+    "two_account_project_isolation": "PASS",
+    "resource_owner_isolation": "PASS",
+    "resource_links": {
+      "conversation": "PASS",
+      "content": "PASS",
+      "task": "PASS",
+      "deployment": "PASS"
+    },
+    "existing_memory_link": "PASS",
+    "canonical_content_project_sync": "PASS",
+    "browser_direct_writes_blocked": "PASS",
+    "unlink_after_migration_55": "PASS",
+    "audit_trail": "PASS",
+    "credit_usage": 0
+  },
+  "cleanup": {
+    "stage5c_runner_cleanup_result": "BLOCKED_BY_LEAST_PRIVILEGE_42501",
+    "stage5c_failure_table": "workspace_audit_events",
+    "product_functionality_affected": false,
+    "privilege_broadening_for_test_cleanup": false,
+    "controlled_production_cleanup": "PASS",
+    "zero_residue_verified": true,
+    "zero_residue_tables": [
+      "auth.users",
+      "profiles",
+      "workspace_projects",
+      "workspace_items",
+      "workspace_audit_events",
+      "zuvyr_content_objects",
+      "zuvyr_task_runs",
+      "code_deploy_requests",
+      "code_projects",
+      "shared_conversations"
+    ],
+    "security_note": "Cleanup used the trusted database control plane instead of broadening protected-table DELETE privileges for test convenience."
+  },
+  "billing": {
+    "live_billing_allowed": false,
+    "charged_credits_in_live_e2e": 0
+  },
+  "result": {
+    "pack043": "LOCKED_VERIFIED",
+    "next_pack": "044"
+  }
+}

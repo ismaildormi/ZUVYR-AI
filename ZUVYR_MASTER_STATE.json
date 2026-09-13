@@ -610,5 +610,39 @@
                     "charged_credits":  0,
                     "live_billing_allowed":  false,
                     "next_pack":  "043"
-                }
+                },
+    "pack043": {
+        "status": "LOCKED_VERIFIED",
+        "source_commit": "5465f1d78ed02fd6467ee5e55a9dce8972e608c3",
+        "receipt_sha256": "E6C06A6B2DF32DF34167A17B2BC250711DF18DE67D29A828ECB23217FC46482E",
+        "dependencies": [
+            "011",
+            "041",
+            "042"
+        ],
+        "projects_crud": "VERIFIED",
+        "owner_isolation": "VERIFIED",
+        "resource_linking": "VERIFIED",
+        "resource_types": [
+            "conversation",
+            "content",
+            "task",
+            "deployment"
+        ],
+        "existing_memory_link": "VERIFIED",
+        "canonical_content_project_sync": "VERIFIED",
+        "browser_direct_writes": "BLOCKED",
+        "audit_trail": "VERIFIED",
+        "zero_residue": "VERIFIED",
+        "production_migrations": [
+            "20260913194506_pack043_projects_crud",
+            "20260913194620_pack043_trigger_function_privilege_hardening",
+            "20260913194640_pack043_rls_performance_hardening",
+            "20260913200657_pack043_service_role_unlink_privilege"
+        ],
+        "charged_credits_live_e2e": 0,
+        "live_billing_allowed": false,
+        "next_pack": "044",
+        "finalized_at": "2026-09-13T21:01:39.904Z"
+    }
 }
