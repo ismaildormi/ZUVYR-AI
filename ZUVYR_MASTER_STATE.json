@@ -232,8 +232,6 @@
                 "provider_calls":  false,
                 "pack020":  "LOCKED_VERIFIED_TEST_MODE"
             },
-    "pack_id":  "021",
-    "pack_title":  "Provider Registry",
     "pack021":  {
                     "source_commit":  "f119ae17370880b82cff7c2a6b4d2ba76910521b",
                     "receipt_sha256":  "B23D17E01CBEB3969D0C89B874E1339CDEA5CD47A8CDAE11906E05F6CB9964CA",
@@ -245,11 +243,6 @@
                     "m10_status":  "VERIFIED",
                     "m10_receipt_sha256":  "3901E1B855EF1C77A2FD7AB96DABC0147DE2DAA6BF986276C6A6A603419AF106"
                 },
-    "generated_at":  "2026-09-13T13:47:08.1405673+01:00",
-    "status":  "LOCKED_VERIFIED",
-    "next_pack_allowed":  true,
-    "next_external_gate":  null,
-    "next_pack":  "022",
     "m10":  {
                 "status":  "VERIFIED",
                 "verified_at":  "2026-09-13T13:47:08.1405673+01:00",
@@ -260,5 +253,22 @@
                 "receipt_sha256":  "3901E1B855EF1C77A2FD7AB96DABC0147DE2DAA6BF986276C6A6A603419AF106",
                 "credential_values_recorded":  false,
                 "live_billing_allowed":  false
-            }
+            },
+    "generated_at":  "2026-09-13T13:55:51.5173943+01:00",
+    "pack_id":  "022",
+    "pack_title":  "Model Registry",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "023",
+    "pack022":  {
+                    "status":  "LOCKED_VERIFIED",
+                    "source_commit":  "9b142f47f33e41b2b9c889941ebf5fca689de2ee",
+                    "receipt_sha256":  "364AD64DEE3C48D108F1FD193A0C169687C923B711125C97146FF49EC477026F",
+                    "registry_version":  "pack-022.model-registry.v1",
+                    "router_candidate_api":  "aiRouter.listRegistryCandidates",
+                    "runtime_execution_migration":  "deferred_to_packs_023_029",
+                    "external_gate":  null,
+                    "next_pack":  "023"
+                }
 }
