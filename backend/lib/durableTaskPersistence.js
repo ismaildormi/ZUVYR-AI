@@ -136,6 +136,45 @@ function createDurableTaskPersistence({ client } = {}) {
       });
     },
 
+    async completeStep({
+      stepId,
+      workerOwner,
+      leaseToken,
+      output
+    } = {}) {
+      if (!Number.isSafeInteger(stepId) || stepId < 1) {
+        throw persistenceError('DURABLE_TASK_STEP_ID_INVALID');
+      }
+
+      return rpc('complete_zuvyr_task_step', {
+        p_step_id: stepId,
+        p_worker_owner: required(workerOwner, 'DURABLE_TASK_WORKER_OWNER_INVALID', 200),
+        p_lease_token: uuid(leaseToken, 'DURABLE_TASK_LEASE_TOKEN_INVALID'),
+        p_output: output == null ? null : output
+      });
+    },
+
+    async failStep({
+      stepId,
+      workerOwner,
+      leaseToken,
+      errorCode,
+      retryable = false
+    } = {}) {
+      if (!Number.isSafeInteger(stepId) || stepId < 1) {
+        throw persistenceError('DURABLE_TASK_STEP_ID_INVALID');
+      }
+
+      return rpc('fail_zuvyr_task_step', {
+        p_step_id: stepId,
+        p_worker_owner: required(workerOwner, 'DURABLE_TASK_WORKER_OWNER_INVALID', 200),
+        p_lease_token: uuid(leaseToken, 'DURABLE_TASK_LEASE_TOKEN_INVALID'),
+        p_error_code: required(errorCode, 'DURABLE_TASK_ERROR_CODE_INVALID', 200),
+        p_retryable: retryable === true
+      });
+    },
+
+
     async checkpoint({
       stepId,
       workerOwner,

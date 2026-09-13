@@ -1,0 +1,45 @@
+{
+  "version": "pack-038.step-executor.v1",
+  "durableContract": "pack-037.durable-task-kernel.v1",
+  "capabilityGraph": "pack-035.capability-graph.v1",
+  "execution": {
+    "defaultTimeoutMs": 90000,
+    "minTimeoutMs": 50,
+    "maxTimeoutMs": 900000,
+    "leaseRenewalMs": 20000,
+    "checkpointBeforeInvoke": true,
+    "checkpointAfterInvoke": true,
+    "completionRequiresCurrentLease": true,
+    "failureRequiresCurrentLease": true
+  },
+  "retry": {
+    "attemptSourceOfTruth": "postgres_step_attempts",
+    "boundedByPersistedMaxAttempts": true,
+    "timeoutRetryableWhenSafe": true,
+    "explicitRetryableErrorsOnly": true,
+    "bullmqTaskAttempts": 1
+  },
+  "sideEffects": {
+    "allowedModes": [
+      "read_only",
+      "idempotent_external"
+    ],
+    "nonIdempotentExternal": "REJECT",
+    "stableIdempotencyKey": "sha256(taskRunId:stepKey)",
+    "sameKeyAcrossRetryAndRestart": true,
+    "uncertainCompletion": "leave_lease_state_for_expiry_reclaim"
+  },
+  "production": {
+    "liveWorkerWiringByThisPack": false,
+    "realCapabilityHandlersByThisPack": false,
+    "pack040OwnsLiveCrossFeatureE2E": true
+  },
+  "invariants": {
+    "noDuplicateExternalSideEffect": true,
+    "noRetryOutsidePersistedAttemptBound": true,
+    "noCompletionFromStaleLease": true,
+    "noFailureFromStaleLease": true,
+    "noBillingMutation": true,
+    "noCreditReservation": true
+  }
+}
