@@ -1,0 +1,54 @@
+{
+  "version": "pack-028.margin-guard-decision-log.v1",
+  "authority": "backend/lib/routerDecisionLog.js",
+  "marginGuard": {
+    "states": [
+      "GREEN",
+      "YELLOW",
+      "RED"
+    ],
+    "minimumGrossMarginBpsDefault": 5000,
+    "GREEN": "quoted gross margin is strictly above the active Pack026 floor",
+    "YELLOW": "quoted gross margin equals the active Pack026 floor",
+    "RED": "quoted gross margin is below the active Pack026 floor or unknown",
+    "redAllowed": false
+  },
+  "decisionReceipt": {
+    "requiredFields": [
+      "decisionId",
+      "requestRef",
+      "timestamp",
+      "provider",
+      "model",
+      "reason",
+      "outcome",
+      "marginState",
+      "quotedGrossMarginBps",
+      "minimumGrossMarginBps",
+      "estimatedCostUsd",
+      "actualCostUsd",
+      "latencyMs",
+      "retries",
+      "rankingMode"
+    ],
+    "estimateBasis": "pre-call input-only estimate from authoritative model cost registry",
+    "actualCostAuthority": "provider usage cost when finite, otherwise authoritative model cost registry applied to actual usage",
+    "privacy": {
+      "rawRequestIdStored": false,
+      "rawUserIdStored": false,
+      "promptStored": false,
+      "messagesStored": false,
+      "safeIdentifier": "sha256-prefix"
+    }
+  },
+  "logging": {
+    "format": "structured_json",
+    "prefix": "[router-decision]",
+    "containsRawPromptsOrUserIds": false
+  },
+  "ownership": {
+    "hardFilters": "026",
+    "ranking": "027",
+    "fallbackAndNoDoubleCharge": "029"
+  }
+}

@@ -19,6 +19,16 @@ const intelligenceRegistry = require('./lib/intelligenceRegistry');
 const { routerHardFilters } = require('./lib/routerHardFilters');
 /* ZUVYR_PACK027_ROUTER_RANKING */
 const { routerRanking } = require('./lib/routerRanking');
+/* ZUVYR_PACK028_MARGIN_GUARD_DECISION_LOG */
+const {
+  createDecisionContext,
+  marginGuard,
+  estimatePreCallCostUsd,
+  actualCostUsd,
+  buildDecisionReceipt,
+  routerDecisionLogger
+} = require('./lib/routerDecisionLog');
+const { normalizeProviderFailure } = require('./lib/providerErrorPolicy');
 // Providers (anthropic/openrouter/openai/google/groq/local/custom) are no
 // longer called directly from this file â€” see src/modules/ai/providers.
 // This is what makes providers interchangeable: adding one, swapping one,
@@ -219,6 +229,11 @@ async function routeRequest(feature, messages, opts = {}) {
               : PRIMARY_TIMEOUT_MS
           );
   const attempts = [...hardFilterAttempts];
+  const decisionContext = createDecisionContext({
+    requestId: opts.requestId || opts.idempotencyKey || null
+  });
+  const decisionLog = [];
+  let providerAttemptCount = 0;
 
   for (let i = 0; i < chain.length; i++) {
     const route = chain[i];
@@ -229,6 +244,44 @@ async function routeRequest(feature, messages, opts = {}) {
       continue;
     }
 
+    const guard = marginGuard({
+      quotedGrossMarginBps,
+      minimumGrossMarginBps
+    });
+    const estimatedCost = estimatePreCallCostUsd({
+      provider: route.provider,
+      model: route.model,
+      messages
+    });
+
+    if (!guard.allowed) {
+      const blockedReceipt = buildDecisionReceipt({
+        context: decisionContext,
+        provider: route.provider,
+        model: route.model,
+        reason: providerAttemptCount === 0 ? 'RANKED_PRIMARY' : 'FALLBACK_AFTER_PREVIOUS_ATTEMPT',
+        outcome: 'BLOCKED_MARGIN_GUARD',
+        guard,
+        estimatedCostUsd: estimatedCost,
+        actualCostUsd: null,
+        latencyMs: 0,
+        retries: providerAttemptCount,
+        rankingMode: rankingResult.mode
+      });
+      routerDecisionLogger.record(blockedReceipt);
+      decisionLog.push(blockedReceipt);
+      attempts.push({
+        model: route.model,
+        provider: route.provider,
+        status: 'skipped_margin_guard',
+        margin_state: guard.state,
+        decision_id: blockedReceipt.decisionId
+      });
+      continue;
+    }
+
+    providerAttemptCount += 1;
+    const routeReason = providerAttemptCount === 1 ? 'RANKED_PRIMARY' : 'FALLBACK_AFTER_PREVIOUS_ATTEMPT';
     const startedAt = Date.now();
     try {
       const maxOutputTokens =
@@ -240,10 +293,37 @@ async function routeRequest(feature, messages, opts = {}) {
         callModel(route, messages, maxOutputTokens),
         timeoutMs
       );
-      attempts.push({ model: route.model, status: 'success' });
+      const latencyMs = Date.now() - startedAt;
+      const actualRouteCost = actualCostUsd({
+        provider: route.provider,
+        model: route.model,
+        usage: result.usage
+      });
+      const successReceipt = buildDecisionReceipt({
+        context: decisionContext,
+        provider: route.provider,
+        model: route.model,
+        reason: routeReason,
+        outcome: 'SUCCESS',
+        guard,
+        estimatedCostUsd: estimatedCost,
+        actualCostUsd: actualRouteCost,
+        latencyMs,
+        retries: providerAttemptCount - 1,
+        rankingMode: rankingResult.mode
+      });
+      routerDecisionLogger.record(successReceipt);
+      decisionLog.push(successReceipt);
+
+      attempts.push({
+        model: route.model,
+        provider: route.provider,
+        status: 'success',
+        decision_id: successReceipt.decisionId
+      });
 
       await reportOutcome(route.model, true);
-      recordModelLatency(route.model, Date.now() - startedAt);
+      recordModelLatency(route.model, latencyMs);
       recordModelOutcome(route.model, 'success');
 
       // A reliability fallback (primary was down/slow) is tracked
@@ -267,10 +347,44 @@ async function routeRequest(feature, messages, opts = {}) {
           Number.isFinite(Number(result.usage?.cost))
             ? Number(result.usage.cost)
             : estimateCostUsd(route.model, result.usage, { provider: route.provider }),
-        attempts
+        attempts,
+        decision_receipt: successReceipt,
+        decision_log: decisionLog
       };
     } catch (err) {
-      attempts.push({ model: route.model, status: 'error', message: err.message });
+      const failureLatencyMs = Date.now() - startedAt;
+      let failureCategory = null;
+      try {
+        failureCategory = normalizeProviderFailure(err, {
+          providerId: route.provider,
+          capability
+        }).category;
+      } catch (_) {}
+
+      const failureReceipt = buildDecisionReceipt({
+        context: decisionContext,
+        provider: route.provider,
+        model: route.model,
+        reason: routeReason,
+        outcome: 'ERROR',
+        guard,
+        estimatedCostUsd: estimatedCost,
+        actualCostUsd: null,
+        latencyMs: failureLatencyMs,
+        retries: providerAttemptCount - 1,
+        rankingMode: rankingResult.mode,
+        errorCategory: failureCategory
+      });
+      routerDecisionLogger.record(failureReceipt);
+      decisionLog.push(failureReceipt);
+
+      attempts.push({
+        model: route.model,
+        provider: route.provider,
+        status: 'error',
+        message: err.message,
+        decision_id: failureReceipt.decisionId
+      });
 
       console.error('[aiRouter] model failed', {
         feature,
@@ -289,7 +403,7 @@ async function routeRequest(feature, messages, opts = {}) {
       });
 
       await reportOutcome(route.model, false);
-      recordModelLatency(route.model, Date.now() - startedAt);
+      recordModelLatency(route.model, failureLatencyMs);
       recordModelOutcome(route.model, 'failure');
       // loop continues to the next model in the chain
     }
@@ -297,6 +411,7 @@ async function routeRequest(feature, messages, opts = {}) {
 
   const error = new Error('all_models_failed');
   error.attempts = attempts;
+  error.decision_log = decisionLog;
   throw error;
 }
 
