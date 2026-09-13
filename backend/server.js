@@ -830,7 +830,7 @@ app.post('/api/chat', requireAuth, rateLimit('chat'), validateChatBody, loadRoxU
       }
     }
 
-    const result = await routeRequest(feature || 'chat', routedMessages, { loadLevel, isPro });
+    const result = await routeRequest(feature || 'chat', routedMessages, { loadLevel, isPro, requestId });
     const responseSources = attachmentSources(attachmentContext.sources);
 
     let settlement = null;
@@ -887,6 +887,7 @@ app.post('/api/chat', requireAuth, rateLimit('chat'), validateChatBody, loadRoxU
       metadata: {
         usage: result.usage,
         attempts: result.attempts,
+        billing_scope: result.billing_scope,
         cost_usd: result.cost_usd,
         margin_usd: margin,
         load_level: loadLevel,

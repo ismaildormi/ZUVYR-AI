@@ -1,0 +1,28 @@
+{
+  "version": "pack-029.fallback-no-double-charge.v1",
+  "authority": "backend/lib/routerBillingAttempt.js",
+  "financialAuthority": {
+    "reserve": "gatekeeper.reserveCredits(requestId)",
+    "settle": "gatekeeper.settleCredits(requestId, finalCredits)",
+    "refund": "gatekeeper.refundCredits(requestId)",
+    "routerMayMutateBilling": false,
+    "idempotencyKey": "logical requestId"
+  },
+  "fallback": {
+    "attemptBudget": "number of Pack026-eligible routes after Pack027 ranking",
+    "sameLogicalBillingIdAcrossAttempts": true,
+    "firstAcceptedSuccessWins": true,
+    "lateCompletionAccepted": false,
+    "terminalAttemptReplayAccepted": false
+  },
+  "privacy": {
+    "rawRequestIdExposedByRouterScope": false,
+    "safeBillingReference": "sha256-prefix"
+  },
+  "ownership": {
+    "hardFilters": "026",
+    "ranking": "027",
+    "marginGuardDecisionLog": "028",
+    "routerCheckpoint": "030"
+  }
+}

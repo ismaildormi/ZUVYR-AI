@@ -29,6 +29,8 @@ const {
   routerDecisionLogger
 } = require('./lib/routerDecisionLog');
 const { normalizeProviderFailure } = require('./lib/providerErrorPolicy');
+/* ZUVYR_PACK029_FALLBACK_NO_DOUBLE_CHARGE */
+const { createFallbackBillingScope } = require('./lib/routerBillingAttempt');
 // Providers (anthropic/openrouter/openai/google/groq/local/custom) are no
 // longer called directly from this file â€” see src/modules/ai/providers.
 // This is what makes providers interchangeable: adding one, swapping one,
@@ -234,6 +236,10 @@ async function routeRequest(feature, messages, opts = {}) {
   });
   const decisionLog = [];
   let providerAttemptCount = 0;
+  const fallbackScope = createFallbackBillingScope({
+    requestId: opts.requestId || null,
+    routes: chain
+  });
 
   for (let i = 0; i < chain.length; i++) {
     const route = chain[i];
@@ -282,6 +288,7 @@ async function routeRequest(feature, messages, opts = {}) {
 
     providerAttemptCount += 1;
     const routeReason = providerAttemptCount === 1 ? 'RANKED_PRIMARY' : 'FALLBACK_AFTER_PREVIOUS_ATTEMPT';
+    const billingAttempt = fallbackScope.beginAttempt(route);
     const startedAt = Date.now();
     try {
       const maxOutputTokens =
@@ -294,6 +301,16 @@ async function routeRequest(feature, messages, opts = {}) {
         timeoutMs
       );
       const latencyMs = Date.now() - startedAt;
+      const logicalSuccess = fallbackScope.completeAttempt(billingAttempt.attemptId, 'SUCCESS');
+      if (!logicalSuccess.accepted) {
+        attempts.push({
+          model: route.model,
+          provider: route.provider,
+          status: 'late_success_ignored',
+          billing_attempt_id: billingAttempt.attemptId
+        });
+        continue;
+      }
       const actualRouteCost = actualCostUsd({
         provider: route.provider,
         model: route.model,
@@ -319,7 +336,8 @@ async function routeRequest(feature, messages, opts = {}) {
         model: route.model,
         provider: route.provider,
         status: 'success',
-        decision_id: successReceipt.decisionId
+        decision_id: successReceipt.decisionId,
+        billing_attempt_id: billingAttempt.attemptId
       });
 
       await reportOutcome(route.model, true);
@@ -349,9 +367,14 @@ async function routeRequest(feature, messages, opts = {}) {
             : estimateCostUsd(route.model, result.usage, { provider: route.provider }),
         attempts,
         decision_receipt: successReceipt,
-        decision_log: decisionLog
+        decision_log: decisionLog,
+        billing_scope: fallbackScope.snapshot()
       };
     } catch (err) {
+      fallbackScope.completeAttempt(
+        billingAttempt.attemptId,
+        err && err.name === 'AbortError' ? 'CANCELLED' : 'ERROR'
+      );
       const failureLatencyMs = Date.now() - startedAt;
       let failureCategory = null;
       try {
@@ -383,7 +406,8 @@ async function routeRequest(feature, messages, opts = {}) {
         provider: route.provider,
         status: 'error',
         message: err.message,
-        decision_id: failureReceipt.decisionId
+        decision_id: failureReceipt.decisionId,
+        billing_attempt_id: billingAttempt.attemptId
       });
 
       console.error('[aiRouter] model failed', {
@@ -412,6 +436,7 @@ async function routeRequest(feature, messages, opts = {}) {
   const error = new Error('all_models_failed');
   error.attempts = attempts;
   error.decision_log = decisionLog;
+  error.billing_scope = fallbackScope.snapshot();
   throw error;
 }
 
