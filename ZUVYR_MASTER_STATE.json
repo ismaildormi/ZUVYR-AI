@@ -220,13 +220,6 @@
                     "m09_receipt_sha256":  "9653A683C556A1F1530F1DDCBBA8AAA72B2CD1AFAE2A98EADA39A622A45F863F",
                     "locked_at":  "2026-09-13T13:33:50.3986819+01:00"
                 },
-    "generated_at":  "2026-09-13T13:33:50.3986819+01:00",
-    "pack_id":  "020",
-    "pack_title":  "Money Checkpoint B",
-    "status":  "LOCKED_VERIFIED_TEST_MODE",
-    "next_pack_allowed":  true,
-    "next_external_gate":  "M08_LIVE_BEFORE_REAL_MONEY_LAUNCH",
-    "next_pack":  "021",
     "m09":  {
                 "status":  "VERIFIED_TEST_MODE",
                 "verified_at":  "2026-09-13T13:33:50.3986819+01:00",
@@ -238,5 +231,21 @@
                 "stripe_mutation":  "TEST_MODE_ONLY",
                 "provider_calls":  false,
                 "pack020":  "LOCKED_VERIFIED_TEST_MODE"
-            }
+            },
+    "generated_at":  "2026-09-13T13:42:54.1736944+01:00",
+    "pack_id":  "021",
+    "pack_title":  "Provider Registry",
+    "status":  "SOURCE_VERIFIED_AWAITING_M10",
+    "next_pack_allowed":  false,
+    "next_external_gate":  "M10",
+    "next_pack":  "022",
+    "pack021":  {
+                    "status":  "SOURCE_VERIFIED_AWAITING_M10",
+                    "source_commit":  "f119ae17370880b82cff7c2a6b4d2ba76910521b",
+                    "receipt_sha256":  "B23D17E01CBEB3969D0C89B874E1339CDEA5CD47A8CDAE11906E05F6CB9964CA",
+                    "registry_version":  "pack-021.provider-registry.v1",
+                    "external_gate":  "M10",
+                    "credential_values_stored":  false,
+                    "next_pack_after_gate":  "022"
+                }
 }
