@@ -1,0 +1,59 @@
+{
+  "version": "pack-034.context-resolver.v1",
+  "inputContract": "zuvyr.universal-request.v1",
+  "supportedTypes": [
+    "conversation",
+    "project",
+    "file",
+    "asset",
+    "memory",
+    "connected_source",
+    "task_output"
+  ],
+  "reference": {
+    "acceptedForms": [
+      {
+        "type": "conversation",
+        "id": "uuid-or-stable-id"
+      },
+      {
+        "ref": "conversation:uuid-or-stable-id"
+      }
+    ],
+    "maxRefs": 24,
+    "duplicatePolicy": "dedupe_by_type_and_id_preserve_first"
+  },
+  "ownership": {
+    "required": true,
+    "rule": "resolved.ownerId must exactly equal resolver ownerId",
+    "missingOwner": "REJECT",
+    "mismatch": "REJECT",
+    "adapterMissing": "REJECT",
+    "notFound": "REJECT"
+  },
+  "budget": {
+    "unit": "characters",
+    "maxTotalCharacters": 18000,
+    "maxItemCharacters": 8000,
+    "allocation": "request_order",
+    "overflow": "truncate_with_receipt",
+    "emptyContent": "allow_metadata_only"
+  },
+  "result": {
+    "includeSourceRef": true,
+    "includeOwnershipVerified": true,
+    "includeOriginalCharacters": true,
+    "includeIncludedCharacters": true,
+    "includeTruncationReceipt": true,
+    "includeRawOwnerId": false
+  },
+  "invariants": {
+    "noCrossOwnerContext": true,
+    "noSilentBudgetOverflow": true,
+    "noContextRefMutation": true,
+    "noAdapterFallbackAcrossTypes": true,
+    "noDatabaseMutation": true,
+    "noBillingMutation": true,
+    "noModelCall": true
+  }
+}
