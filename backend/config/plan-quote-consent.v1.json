@@ -1,0 +1,58 @@
+{
+  "version": "pack-036.plan-quote-consent.v1",
+  "planContract": "pack-035.brain-plan.v1",
+  "binding": {
+    "planVersionAlgorithm": "sha256",
+    "quoteFingerprintAlgorithm": "sha256",
+    "consentBinding": [
+      "planVersion",
+      "quoteFingerprint",
+      "intentFingerprint",
+      "requestId",
+      "surface"
+    ],
+    "materialQuoteFields": [
+      "estimatedCredits",
+      "estimatedCostMicroUsd",
+      "estimatedDurationMs",
+      "riskLevel",
+      "pricingVersion",
+      "pricingSource"
+    ]
+  },
+  "quote": {
+    "requireEveryStepQuoted": true,
+    "requireVerifiedPricing": true,
+    "unknownPrice": "REJECT",
+    "unknownDuration": "REJECT",
+    "unknownRisk": "REJECT",
+    "riskLevels": [
+      "low",
+      "medium",
+      "high",
+      "critical"
+    ],
+    "moneyEncoding": "integer_micro_usd_string",
+    "creditsEncoding": "non_negative_integer_string",
+    "durationEncoding": "non_negative_safe_integer_ms",
+    "aggregateRisk": "maximum_step_risk"
+  },
+  "consent": {
+    "explicitApprovalRequired": true,
+    "stalePlan": "REJECT",
+    "staleQuote": "REJECT",
+    "changedPrice": "REJECT",
+    "changedDuration": "REJECT",
+    "changedRisk": "REJECT",
+    "executionEnabledByThisPack": false
+  },
+  "invariants": {
+    "noInventedPrice": true,
+    "noInventedDuration": true,
+    "noInventedRisk": true,
+    "noCreditReservation": true,
+    "noDatabaseMutation": true,
+    "noBillingMutation": true,
+    "noModelCall": true
+  }
+}
