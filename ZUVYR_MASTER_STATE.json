@@ -351,13 +351,6 @@
                     "margin_decision_receipt_deferred_to":  "028",
                     "next_pack":  "027"
                 },
-    "generated_at":  "2026-09-13T15:01:51.3845022+01:00",
-    "pack_id":  "027",
-    "pack_title":  "Router Ranking Modes",
-    "status":  "LOCKED_VERIFIED",
-    "next_pack_allowed":  true,
-    "next_external_gate":  null,
-    "next_pack":  "028",
     "pack027":  {
                     "status":  "LOCKED_VERIFIED",
                     "source_commit":  "ed3470d1a782b0073b0fc01eb7e926eee62e6d8b",
@@ -382,5 +375,26 @@
                     "deterministic_fixtures":  true,
                     "margin_guard_decision_log_deferred_to":  "028",
                     "next_pack":  "028"
+                },
+    "generated_at":  "2026-09-13T15:10:57.4459312+01:00",
+    "pack_id":  "028",
+    "pack_title":  "Margin Guard \u0026 Decision Log",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "029",
+    "pack028":  {
+                    "status":  "LOCKED_VERIFIED",
+                    "source_commit":  "02e2afb601d665b1f143ab9d4582e5caa8bd906d",
+                    "receipt_sha256":  "FA676CD6E919F4C5B7A5E110617EDA19166BA6863D5A90D6E737AF0A4A721172",
+                    "policy_version":  "pack-028.margin-guard-decision-log.v1",
+                    "margin_states":  [
+                                          "GREEN",
+                                          "YELLOW",
+                                          "RED"
+                                      ],
+                    "privacy_safe_identifiers":  true,
+                    "red_route_executes":  false,
+                    "next_pack":  "029"
                 }
 }
