@@ -29,6 +29,7 @@ const { normalizeVideoRequest } = require('./lib/videoRequestContract');
 const { assertVideoRequestAvailable } = require('./lib/videoOperationRegistry');
 const { buildVideoArtifact } = require('./lib/videoArtifactContract');
 const { connection } = require('./lib/queue');
+const { startBrainKernelWorker } = require('./lib/brainKernelWorker');
 const { supabaseAdmin } = require('./lib/supabaseAdmin');
 const { refundCredits, logCreditEvent, reportRefundFailure } = require('./gatekeeper');
 const { recordRefund } = require('./lib/metrics');
@@ -419,5 +420,19 @@ videoWorker.on('failed', (job, err) => handleJobFailure(job, err, 'video'));
 attachmentWorker.on('failed', (job, err) =>
   handleAttachmentFailure(job, err)
 );
+
+const brainKernelWorker =
+  startBrainKernelWorker({
+    connection,
+    concurrency: 1
+  });
+
+brainKernelWorker.on('failed', (job, error) => {
+  console.error(
+    '[brain-kernel-worker] failed:',
+    job && job.id,
+    error && (error.code || error.message)
+  );
+});
 
 console.log(`ROX AI worker running (concurrency: image=${CONCURRENCY}, video=${Math.max(1, Math.floor(CONCURRENCY / 2))}, attachment=${ATTACHMENT_WORKER_CONCURRENCY})`);

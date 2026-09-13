@@ -1,0 +1,59 @@
+{
+  "version": "pack-040.brain-kernel-checkpoint-d.v1",
+  "requestContract": "zuvyr.universal-request.v1",
+  "plannerContract": "pack-035.brain-plan.v1",
+  "quoteConsentContract": "pack-036.plan-quote-consent.v1",
+  "durableContract": "pack-037.durable-task-kernel.v1",
+  "executorContract": "pack-038.step-executor.v1",
+  "cancelCompensationContract": "pack-039.cancel-compensation.v1",
+  "checkpointCapabilities": [
+    "chat.respond",
+    "project.collect"
+  ],
+  "pipeline": [
+    "brain",
+    "quote",
+    "consent",
+    "reserve",
+    "durable_execution",
+    "verify",
+    "settle",
+    "save"
+  ],
+  "usage": {
+    "ledger": "zuvyr_usage_records",
+    "reserveRpc": "reserve_zuvyr_usage_contract",
+    "settleRpc": "settle_zuvyr_usage",
+    "refundRpc": "refund_zuvyr_usage",
+    "oneReservationPerTask": true,
+    "allowTopupForAutomatedLiveProof": false,
+    "liveBillingAllowed": false
+  },
+  "liveProof": {
+    "provider": "groq",
+    "providerCapability": "chat.respond",
+    "secondCapability": "project.collect",
+    "pilotUserSource": "ZUVYR_CHAT_FLOW_PILOT_USERS",
+    "forcedRestart": "two_distinct_node_processes_same_persisted_task",
+    "providerOutputPrinted": false,
+    "providerRetryInsideHandler": false
+  },
+  "production": {
+    "unifiedApproveRouteEnabled": true,
+    "durableQueueWorkerEnabled": true,
+    "queueName": "zuvyr-durable-tasks",
+    "jobName": "run-durable-task",
+    "unsupportedCheckpointCapabilities": "REJECT",
+    "liveBillingAllowed": false
+  },
+  "invariants": {
+    "oneReservation": true,
+    "sameTaskAcrossRestart": true,
+    "samePlanVersionAcrossRestart": true,
+    "settlementReplaySafe": true,
+    "saveIsDurableTaskFinalResult": true,
+    "noProviderOutputInEvidence": true,
+    "noSecretInEvidence": true,
+    "m08RemainsFalse": true
+  }
+}

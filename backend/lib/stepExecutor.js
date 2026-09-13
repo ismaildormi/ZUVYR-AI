@@ -140,6 +140,35 @@ function createStepExecutor({
         });
       }
 
+      const executionSnapshot =
+        typeof persistence.snapshot === 'function'
+          ? await persistence.snapshot({
+              userId,
+              taskRunId
+            })
+          : null;
+
+      const dependencyOutputs =
+        executionSnapshot &&
+        Array.isArray(executionSnapshot.steps)
+          ? Object.fromEntries(
+              (claim.dependsOn || []).map(stepKey => {
+                const dependency =
+                  executionSnapshot.steps.find(
+                    item =>
+                      (item.step_key || item.stepKey) ===
+                      stepKey
+                  );
+                return [
+                  stepKey,
+                  dependency
+                    ? dependency.output || null
+                    : null
+                ];
+              })
+            )
+          : {};
+
       const descriptor = registry.get(claim.capability);
       const effectiveTimeout = normalizeTimeout(
         timeoutMs == null ? descriptor.timeoutMs : timeoutMs,
@@ -244,6 +273,12 @@ function createStepExecutor({
             priorCheckpoint: claim.checkpoint || {},
             dependencyStepKeys: claim.dependsOn || [],
             input: claim.input || {},
+            taskPlan:
+              executionSnapshot &&
+              executionSnapshot.run
+                ? executionSnapshot.run.plan || null
+                : null,
+            dependencyOutputs,
             idempotencyKey: effectKey
           }
         });

@@ -232,6 +232,90 @@ function createDurableTaskPersistence({ client } = {}) {
     },
 
 
+    async bindCheckpointD({
+      userId,
+      taskRunId,
+      usageRecordId,
+      quote,
+      consent
+    } = {}) {
+      if (
+        !Number.isSafeInteger(usageRecordId) ||
+        usageRecordId < 1
+      ) {
+        throw persistenceError(
+          'DURABLE_TASK_USAGE_RECORD_ID_INVALID'
+        );
+      }
+      if (!quote || typeof quote !== 'object') {
+        throw persistenceError(
+          'DURABLE_TASK_CHECKPOINT_D_QUOTE_INVALID'
+        );
+      }
+      if (!consent || typeof consent !== 'object') {
+        throw persistenceError(
+          'DURABLE_TASK_CHECKPOINT_D_CONSENT_INVALID'
+        );
+      }
+
+      return rpc('bind_zuvyr_task_checkpoint_d', {
+        p_task_run_id: uuid(
+          taskRunId,
+          'DURABLE_TASK_RUN_ID_INVALID'
+        ),
+        p_user_id: uuid(
+          userId,
+          'DURABLE_TASK_USER_ID_INVALID'
+        ),
+        p_usage_record_id: usageRecordId,
+        p_quote: quote,
+        p_consent: consent
+      });
+    },
+
+    async recordCheckpointD({
+      userId,
+      taskRunId,
+      verificationReceipt,
+      settlementReceipt
+    } = {}) {
+      if (
+        !verificationReceipt ||
+        typeof verificationReceipt !== 'object'
+      ) {
+        throw persistenceError(
+          'DURABLE_TASK_CHECKPOINT_D_VERIFICATION_INVALID'
+        );
+      }
+      if (
+        !settlementReceipt ||
+        typeof settlementReceipt !== 'object'
+      ) {
+        throw persistenceError(
+          'DURABLE_TASK_CHECKPOINT_D_SETTLEMENT_INVALID'
+        );
+      }
+
+      return rpc(
+        'record_zuvyr_task_checkpoint_d_receipts',
+        {
+          p_task_run_id: uuid(
+            taskRunId,
+            'DURABLE_TASK_RUN_ID_INVALID'
+          ),
+          p_user_id: uuid(
+            userId,
+            'DURABLE_TASK_USER_ID_INVALID'
+          ),
+          p_verification_receipt:
+            verificationReceipt,
+          p_settlement_receipt:
+            settlementReceipt
+        }
+      );
+    },
+
+
     async checkpoint({
       stepId,
       workerOwner,
