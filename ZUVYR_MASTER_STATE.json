@@ -445,13 +445,6 @@
                     "clarification_threshold":  "1 blocking unknown OR 3 explicit unknowns OR explicit force",
                     "next_pack":  "033"
                 },
-    "generated_at":  "2026-09-13T16:11:23.0834735+01:00",
-    "pack_id":  "033",
-    "pack_title":  "Intent Lock",
-    "status":  "LOCKED_VERIFIED",
-    "next_pack_allowed":  true,
-    "next_external_gate":  null,
-    "next_pack":  "034",
     "pack033":  {
                     "status":  "LOCKED_VERIFIED",
                     "source_commit":  "091428fa76ed574105a9c8c30943649c254787b2",
@@ -468,5 +461,23 @@
                     "no_requirement_invention":  true,
                     "no_constraint_mutation":  true,
                     "next_pack":  "034"
+                },
+    "generated_at":  "2026-09-13T16:15:54.2139259+01:00",
+    "pack_id":  "034",
+    "pack_title":  "Context Resolver",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "035",
+    "pack034":  {
+                    "status":  "LOCKED_VERIFIED",
+                    "source_commit":  "f8afc4dee5be85ed93de61ea41adb7bb3f8a3c0e",
+                    "receipt_sha256":  "5BFE1ECA080C7941C3CA1CF338CC587A5A9D48A47EEA0408424870F1A6A3F9A5",
+                    "policy_version":  "pack-034.context-resolver.v1",
+                    "ownership_required":  true,
+                    "max_context_refs":  24,
+                    "max_total_characters":  18000,
+                    "stable_ref_reuse_without_reupload":  true,
+                    "next_pack":  "035"
                 }
 }
