@@ -288,13 +288,6 @@
                     "external_gate":  null,
                     "next_pack":  "024"
                 },
-    "generated_at":  "2026-09-13T14:13:09.5000294+01:00",
-    "pack_id":  "024",
-    "pack_title":  "Provider Health \u0026 Quota State",
-    "status":  "LOCKED_VERIFIED",
-    "next_pack_allowed":  true,
-    "next_external_gate":  null,
-    "next_pack":  "025",
     "pack024":  {
                     "status":  "LOCKED_VERIFIED",
                     "source_commit":  "0cf326c1be782ef080405cf1293909612ee7ee53",
@@ -318,5 +311,38 @@
                     "final_error_retry_policy_deferred_to":  "025",
                     "external_gate":  null,
                     "next_pack":  "025"
+                },
+    "generated_at":  "2026-09-13T14:21:23.6988576+01:00",
+    "pack_id":  "025",
+    "pack_title":  "Error Taxonomy \u0026 Retry Policy",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "026",
+    "pack025":  {
+                    "status":  "LOCKED_VERIFIED",
+                    "source_commit":  "546483b0a4df2a38f93eeb8f6b9c634b25be3f09",
+                    "receipt_sha256":  "192EDAD18D127BD85EE6CEEF381DA42FB5A00A32E916C4C263AA00C8095B4641",
+                    "policy_version":  "pack-025.provider-error-policy.v1",
+                    "categories":  [
+                                       "RATE_LIMIT",
+                                       "QUOTA",
+                                       "DOWN",
+                                       "TIMEOUT",
+                                       "MODEL_UNAVAILABLE",
+                                       "AUTH",
+                                       "INVALID_REQUEST",
+                                       "CONTENT_RESTRICTION",
+                                       "INTERNAL"
+                                   ],
+                    "max_same_provider_retries":  1,
+                    "max_retry_delay_ms":  30000,
+                    "cancellation_is_control_flow":  true,
+                    "user_messages_canonical":  true,
+                    "invalid_request_fallback":  false,
+                    "content_restriction_fallback":  false,
+                    "live_router_retry_execution_deferred_to":  "026-029",
+                    "external_gate":  null,
+                    "next_pack":  "026"
                 }
 }
