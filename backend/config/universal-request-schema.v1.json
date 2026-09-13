@@ -1,0 +1,94 @@
+{
+  "$id": "zuvyr.universal-request.v1",
+  "version": "1.0",
+  "surfaces": [
+    "chat",
+    "work",
+    "create",
+    "code"
+  ],
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "surface",
+    "goal",
+    "inputs",
+    "constraints",
+    "outputs",
+    "contextRefs",
+    "language",
+    "risk",
+    "budget",
+    "clientState"
+  ],
+  "fields": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "surface": {
+      "type": "string",
+      "enum": [
+        "chat",
+        "work",
+        "create",
+        "code"
+      ]
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "inputs": {
+      "type": "object"
+    },
+    "constraints": {
+      "type": "object"
+    },
+    "outputs": {
+      "type": "object"
+    },
+    "contextRefs": {
+      "type": "array",
+      "maxItems": 100
+    },
+    "language": {
+      "type": "object"
+    },
+    "risk": {
+      "type": "object"
+    },
+    "budget": {
+      "type": "object"
+    },
+    "clientState": {
+      "type": "object"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "normalization": {
+    "unknownFields": "preserve_only_inside_metadata_extra",
+    "defaultsMustNotInventUserRequirements": true,
+    "emptyOptionalContainers": "allowed",
+    "legacyPayloads": "adapted_without_behavior_change",
+    "requestId": "caller value when present; otherwise generated once at normalization boundary"
+  },
+  "surfaceMappings": {
+    "chat": "legacy /api/chat with feature=chat",
+    "code": "legacy /api/chat with feature=code",
+    "create": "legacy image/video generation payloads",
+    "work": "canonical envelope supported by shared normalizer; execution integration arrives in later Brain/Kernel packs"
+  },
+  "privacy": {
+    "rawUserContentLoggingAdded": false,
+    "secretsAllowed": false
+  }
+}

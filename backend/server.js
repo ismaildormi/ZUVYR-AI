@@ -31,6 +31,8 @@ const { requireAuth } = require('./lib/auth');
 const { rateLimit } = require('./lib/rateLimit');
 const { ipRateLimit, ipBlockGuard } = require('./lib/ipGuard');
 const { validateChatBody, validatePromptBody, validateImageBody, validateVideoBody } = require('./lib/inputValidation');
+/* ZUVYR_PACK031_UNIVERSAL_REQUEST */
+const { normalizeSurfaceRequest } = require('./lib/universalRequest');
 const { loadRoxUserMiddleware, gatekeeperMiddleware, reserveCredits, refundCredits, settleCredits, logCreditEvent, reportRefundFailure } = require('./gatekeeper');
 const { routeRequest } = require('./aiRouter');
 const { imageQueue, videoQueue, defaultJobOptions, connection: queueConnection } = require('./lib/queue');
@@ -537,6 +539,11 @@ app.post('/api/chat', requireAuth, rateLimit('chat'), validateChatBody, loadRoxU
     attachmentIds = [],
     chatMode = 'standard'
   } = req.body; // feature: 'chat' | 'code'
+    req.universalRequest = normalizeSurfaceRequest({
+      surface: feature === 'code' ? 'code' : 'chat',
+      body: req.body,
+      requestId: req.body && (req.body.requestId || req.body.request_id) || null
+    });
   const userId = req.userId;
   const requestId = crypto.randomUUID();
   const memoryRequestKey = turnId || requestId;
@@ -1537,11 +1544,23 @@ app.post('/api/chat-feedback', requireAuth, async (req, res) => {
 });
 // ROX CHAT FEEDBACK API END
 app.post('/api/generate-image', requireAuth, rateLimit('image'), validateImageBody, gatekeeperMiddleware, requireProSubscription('image'), (req, res) =>
+  (req.universalRequest = normalizeSurfaceRequest({
+    surface: 'create',
+    body: req.body,
+    requestId: req.body && (req.body.requestId || req.body.request_id) || null
+  }),
   handleGenerationRequest(req, res, { feature: 'image', queue: imageQueue })
+  )
 );
 
 app.post('/api/generate-video', requireAuth, rateLimit('video'), validateVideoBody, gatekeeperMiddleware, requireProSubscription('video'), (req, res) =>
+  (req.universalRequest = normalizeSurfaceRequest({
+    surface: 'create',
+    body: req.body,
+    requestId: req.body && (req.body.requestId || req.body.request_id) || null
+  }),
   handleGenerationRequest(req, res, { feature: 'video', queue: videoQueue })
+  )
 );
 
 // Frontend polls this (or subscribes to the same row via Supabase Realtime)
