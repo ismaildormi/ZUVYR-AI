@@ -1,0 +1,37 @@
+{
+  "version": "pack-039.cancel-compensation.v1",
+  "durableContract": "pack-037.durable-task-kernel.v1",
+  "executorContract": "pack-038.step-executor.v1",
+  "cancellation": {
+    "pollMs": 250,
+    "activeProviderAbort": true,
+    "lateResult": "IGNORE",
+    "terminalState": "cancelled",
+    "leaseGuardedFinalization": true,
+    "requestReplay": "IDEMPOTENT"
+  },
+  "compensation": {
+    "receiptPersistence": true,
+    "receiptReplay": "RETURN_EXISTING",
+    "conflictingReceipt": "REJECT",
+    "undoOrder": "reverse_succeeded_step_sequence",
+    "checkpointPassedToCompensator": true,
+    "stableUndoKey": "sha256(taskRunId:stepKey:undo)",
+    "stableFinancialKey": "sha256(taskRunId:cancellation-financial)",
+    "financialAmounts": "adapter_verified_only",
+    "missingFinancialAdapter": "RECORD_NOT_WIRED"
+  },
+  "production": {
+    "liveWorkerWiringByThisPack": false,
+    "liveFinancialWiringByThisPack": false,
+    "pack040OwnsLiveCrossFeatureE2E": true
+  },
+  "invariants": {
+    "lateCompletionCannotResurrectCancelledTask": true,
+    "noDuplicateCompensationReceipt": true,
+    "noDuplicateFinancialSettlement": true,
+    "noInventedFinancialAmount": true,
+    "noCreditReservationByPack039": true,
+    "noLiveBillingEnable": true
+  }
+}

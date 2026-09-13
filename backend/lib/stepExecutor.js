@@ -93,7 +93,8 @@ function createStepExecutor({
   persistence,
   registry,
   leaseRenewalMs = CONFIG.execution.leaseRenewalMs,
-  defaultTimeoutMs = CONFIG.execution.defaultTimeoutMs
+  defaultTimeoutMs = CONFIG.execution.defaultTimeoutMs,
+  cancelPollMs = 250
 } = {}) {
   if (
     !persistence ||
@@ -112,6 +113,10 @@ function createStepExecutor({
 
   if (!Number.isSafeInteger(leaseRenewalMs) || leaseRenewalMs < 5) {
     throw executorError('STEP_EXECUTOR_LEASE_RENEWAL_INVALID');
+  }
+
+  if (!Number.isSafeInteger(cancelPollMs) || cancelPollMs < 5) {
+    throw executorError('STEP_EXECUTOR_CANCEL_POLL_INVALID');
   }
 
   return Object.freeze({
@@ -157,6 +162,26 @@ function createStepExecutor({
       let heartbeatStopped = false;
       let heartbeatError = null;
       let activeController = null;
+      let cancellationRequested = false;
+      let cancellationReason = null;
+      let cancellationPollError = null;
+
+      const cancellationEnabled =
+        typeof persistence.cancelState === 'function' &&
+        typeof persistence.finalizeCancellation === 'function';
+
+      async function pollCancellation() {
+        if (!cancellationEnabled || cancellationRequested) return;
+        const state = await persistence.cancelState({
+          userId,
+          taskRunId
+        });
+        if (state && state.cancelRequested === true) {
+          cancellationRequested = true;
+          cancellationReason = state.reason || 'user_requested';
+          if (activeController) activeController.abort();
+        }
+      }
 
       const heartbeat = setInterval(() => {
         if (heartbeatStopped || heartbeatError) return;
@@ -174,6 +199,30 @@ function createStepExecutor({
 
       if (typeof heartbeat.unref === 'function') heartbeat.unref();
 
+      const cancellationTimer = cancellationEnabled
+        ? setInterval(() => {
+            if (cancellationRequested || cancellationPollError) return;
+            Promise.resolve(pollCancellation()).catch(error => {
+              cancellationPollError = error;
+              if (activeController) activeController.abort();
+            });
+          }, cancelPollMs)
+        : null;
+
+      if (cancellationTimer && typeof cancellationTimer.unref === 'function') {
+        cancellationTimer.unref();
+      }
+
+      if (cancellationEnabled) {
+        await pollCancellation();
+      }
+
+      function stopTimers() {
+        heartbeatStopped = true;
+        clearInterval(heartbeat);
+        if (cancellationTimer) clearInterval(cancellationTimer);
+      }
+
       let output;
       try {
         output = await invokeWithTimeout({
@@ -181,6 +230,7 @@ function createStepExecutor({
           timeoutMs: effectiveTimeout,
           onController(controller) {
             activeController = controller;
+            if (cancellationRequested) controller.abort();
           },
           context: {
             taskRunId,
@@ -202,11 +252,43 @@ function createStepExecutor({
           throw executorError('STEP_EXECUTOR_LEASE_RENEWAL_FAILED');
         }
       } catch (error) {
-        heartbeatStopped = true;
-        clearInterval(heartbeat);
+        stopTimers();
+
+        if (cancellationPollError) {
+          throw cancellationPollError;
+        }
 
         if (heartbeatError) {
           throw heartbeatError;
+        }
+
+        if (cancellationRequested && cancellationEnabled) {
+          const cancelled = await persistence.finalizeCancellation({
+            stepId: claim.stepId,
+            workerOwner,
+            leaseToken: claim.leaseToken,
+            receipt: {
+              version: 'pack-039.cancel-receipt.v1',
+              phase: 'active_provider_abort',
+              reason: cancellationReason || 'user_requested',
+              effectKey,
+              capability: claim.capability,
+              attempt: claim.attempt,
+              lateResultIgnored: false
+            }
+          });
+
+          return Object.freeze({
+            claimed: true,
+            taskRunId,
+            stepId: claim.stepId,
+            stepKey: claim.stepKey,
+            capability: claim.capability,
+            state: cancelled.state || 'cancelled',
+            cancelled: true,
+            lateResultIgnored: false,
+            effectKey
+          });
         }
 
         const retryable = safeToRetry(descriptor, error);
@@ -232,8 +314,44 @@ function createStepExecutor({
         });
       }
 
-      heartbeatStopped = true;
-      clearInterval(heartbeat);
+      stopTimers();
+
+      if (cancellationEnabled) {
+        await pollCancellation();
+
+        if (cancellationPollError) {
+          throw cancellationPollError;
+        }
+
+        if (cancellationRequested) {
+          const cancelled = await persistence.finalizeCancellation({
+            stepId: claim.stepId,
+            workerOwner,
+            leaseToken: claim.leaseToken,
+            receipt: {
+              version: 'pack-039.cancel-receipt.v1',
+              phase: 'late_result_ignored',
+              reason: cancellationReason || 'user_requested',
+              effectKey,
+              capability: claim.capability,
+              attempt: claim.attempt,
+              lateResultIgnored: true
+            }
+          });
+
+          return Object.freeze({
+            claimed: true,
+            taskRunId,
+            stepId: claim.stepId,
+            stepKey: claim.stepKey,
+            capability: claim.capability,
+            state: cancelled.state || 'cancelled',
+            cancelled: true,
+            lateResultIgnored: true,
+            effectKey
+          });
+        }
+      }
 
       await persistence.checkpoint({
         stepId: claim.stepId,

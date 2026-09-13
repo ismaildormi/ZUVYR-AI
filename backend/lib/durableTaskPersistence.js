@@ -175,6 +175,63 @@ function createDurableTaskPersistence({ client } = {}) {
     },
 
 
+    async requestCancel({
+      userId,
+      taskRunId,
+      reason = 'user_requested'
+    } = {}) {
+      return rpc('request_cancel_zuvyr_task', {
+        p_task_run_id: uuid(taskRunId, 'DURABLE_TASK_RUN_ID_INVALID'),
+        p_user_id: uuid(userId, 'DURABLE_TASK_USER_ID_INVALID'),
+        p_reason: required(reason, 'DURABLE_TASK_CANCEL_REASON_INVALID', 500)
+      });
+    },
+
+    async cancelState({ userId, taskRunId } = {}) {
+      return rpc('get_zuvyr_task_cancel_state', {
+        p_task_run_id: uuid(taskRunId, 'DURABLE_TASK_RUN_ID_INVALID'),
+        p_user_id: uuid(userId, 'DURABLE_TASK_USER_ID_INVALID')
+      });
+    },
+
+    async finalizeCancellation({
+      stepId,
+      workerOwner,
+      leaseToken,
+      receipt
+    } = {}) {
+      if (!Number.isSafeInteger(stepId) || stepId < 1) {
+        throw persistenceError('DURABLE_TASK_STEP_ID_INVALID');
+      }
+      if (!receipt || typeof receipt !== 'object' || Array.isArray(receipt)) {
+        throw persistenceError('DURABLE_TASK_CANCELLATION_RECEIPT_INVALID');
+      }
+
+      return rpc('cancel_zuvyr_task_step', {
+        p_step_id: stepId,
+        p_worker_owner: required(workerOwner, 'DURABLE_TASK_WORKER_OWNER_INVALID', 200),
+        p_lease_token: uuid(leaseToken, 'DURABLE_TASK_LEASE_TOKEN_INVALID'),
+        p_receipt: receipt
+      });
+    },
+
+    async recordCompensation({
+      userId,
+      taskRunId,
+      receipt
+    } = {}) {
+      if (!receipt || typeof receipt !== 'object' || Array.isArray(receipt)) {
+        throw persistenceError('DURABLE_TASK_COMPENSATION_RECEIPT_INVALID');
+      }
+
+      return rpc('record_zuvyr_task_compensation', {
+        p_task_run_id: uuid(taskRunId, 'DURABLE_TASK_RUN_ID_INVALID'),
+        p_user_id: uuid(userId, 'DURABLE_TASK_USER_ID_INVALID'),
+        p_receipt: receipt
+      });
+    },
+
+
     async checkpoint({
       stepId,
       workerOwner,
