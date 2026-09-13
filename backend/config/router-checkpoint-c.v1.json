@@ -1,0 +1,47 @@
+{
+  "version": "pack-030.router-checkpoint-c.v1",
+  "authority": "backend/lib/routerCheckpointC.js",
+  "liveProof": {
+    "environment": "Railway production environment via `railway run`",
+    "provider": "groq",
+    "routes": [
+      {
+        "provider": "groq",
+        "model": "openai/gpt-oss-20b",
+        "capability": "chat"
+      },
+      {
+        "provider": "groq",
+        "model": "openai/gpt-oss-120b",
+        "capability": "chat"
+      }
+    ],
+    "prompt": "Reply with only ZUVYR-CHECKPOINT-C-OK.",
+    "maxCompletionTokens": 256,
+    "expectedLiveCalls": 2,
+    "printsModelContent": false,
+    "billingMutation": false,
+    "databaseMutation": false,
+    "providerAccountMutation": false,
+    "diagnosis": "Groq GPT-OSS models consumed the previous 32-token cap in reasoning and returned finish_reason=length with empty content. 256 tokens was verified read-only against both launch models: finish_reason=stop and non-empty content."
+  },
+  "simulationProofs": {
+    "timeout": "Pack025 error-policy regression + Checkpoint C fallback harness",
+    "rateLimit": "Pack025 error-policy regression + Checkpoint C fallback harness",
+    "providerDown": "Pack024 health/cooldown regression",
+    "unknownCostBlocked": "Pack026 hard-filter regression",
+    "fallback": "Checkpoint C forced-first-failure/second-success harness",
+    "noDoubleCharge": "Pack029 logical billing-scope regression + Pack012/Pack020 financial invariants"
+  },
+  "baselineLock": {
+    "packs": "021-029",
+    "hashes": "provider/model registries + adapter/error/health/router policies and implementations",
+    "nextPack": "031"
+  },
+  "safety": {
+    "realMoney": false,
+    "liveBillingAllowed": false,
+    "secretValuesRecorded": false,
+    "livePromptContainsUserData": false
+  }
+}
