@@ -232,20 +232,33 @@
                 "provider_calls":  false,
                 "pack020":  "LOCKED_VERIFIED_TEST_MODE"
             },
-    "generated_at":  "2026-09-13T13:42:54.1736944+01:00",
     "pack_id":  "021",
     "pack_title":  "Provider Registry",
-    "status":  "SOURCE_VERIFIED_AWAITING_M10",
-    "next_pack_allowed":  false,
-    "next_external_gate":  "M10",
-    "next_pack":  "022",
     "pack021":  {
-                    "status":  "SOURCE_VERIFIED_AWAITING_M10",
                     "source_commit":  "f119ae17370880b82cff7c2a6b4d2ba76910521b",
                     "receipt_sha256":  "B23D17E01CBEB3969D0C89B874E1339CDEA5CD47A8CDAE11906E05F6CB9964CA",
                     "registry_version":  "pack-021.provider-registry.v1",
                     "external_gate":  "M10",
                     "credential_values_stored":  false,
-                    "next_pack_after_gate":  "022"
-                }
+                    "next_pack_after_gate":  "022",
+                    "status":  "LOCKED_VERIFIED",
+                    "m10_status":  "VERIFIED",
+                    "m10_receipt_sha256":  "3901E1B855EF1C77A2FD7AB96DABC0147DE2DAA6BF986276C6A6A603419AF106"
+                },
+    "generated_at":  "2026-09-13T13:47:08.1405673+01:00",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "022",
+    "m10":  {
+                "status":  "VERIFIED",
+                "verified_at":  "2026-09-13T13:47:08.1405673+01:00",
+                "authorized_launch_providers":  [
+                                                    "groq",
+                                                    "replicate"
+                                                ],
+                "receipt_sha256":  "3901E1B855EF1C77A2FD7AB96DABC0147DE2DAA6BF986276C6A6A603419AF106",
+                "credential_values_recorded":  false,
+                "live_billing_allowed":  false
+            }
 }
