@@ -232,3 +232,7 @@ async function routeRequest(feature, messages, opts = {}) {
 module.exports = { routeRequest, ROUTES, MULTIMODAL_ROUTE, getEffectiveChain };
 
 
+
+/* ZUVYR_PACK022_MODEL_REGISTRY_CANDIDATES */
+const { listRouterCandidates: listRegistryCandidates } = require('./lib/modelRegistry');
+module.exports.listRegistryCandidates = listRegistryCandidates;

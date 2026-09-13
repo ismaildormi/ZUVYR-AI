@@ -1,0 +1,310 @@
+{
+  "version": "pack-022.model-registry.v1",
+  "authority": "backend/config/model-registry.v1.json",
+  "providerAuthority": "backend/config/provider-registry.v1.json",
+  "costAuthority": "backend/config/cost-registry.v1.json",
+  "candidateDiscoveryAuthority": "backend/lib/modelRegistry.js",
+  "policy": {
+    "unknownCommercialEligibility": "blocked",
+    "unknownPrice": "blocked",
+    "deprecated": "blocked",
+    "disabledProvider": "blocked",
+    "unknownContextForPositiveMinimum": "blocked",
+    "unknownLanguageForExplicitLanguage": "blocked",
+    "legacyFeatureRouteLists": "compatibility_only_until_packs_026_029",
+    "note": "Pack022 makes candidate discovery registry-driven without changing existing execution/fallback semantics. Later router packs consume these candidates for filtering/ranking/fallback."
+  },
+  "models": [
+    {
+      "id": "groq:openai/gpt-oss-20b",
+      "providerId": "groq",
+      "modelId": "openai/gpt-oss-20b",
+      "kind": "model",
+      "capabilities": [
+        "chat",
+        "code"
+      ],
+      "modalities": {
+        "input": [
+          "text"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "unverified"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "unverified",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "M10 provider authorization + repository Groq model foundation"
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "resolver": "backend/lib/groqTextPricing.js",
+        "providerModel": "openai/gpt-oss-20b",
+        "verification": "provider_capability_verified"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "groq:openai/gpt-oss-120b",
+      "providerId": "groq",
+      "modelId": "openai/gpt-oss-120b",
+      "kind": "model",
+      "capabilities": [
+        "chat",
+        "code"
+      ],
+      "modalities": {
+        "input": [
+          "text"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "unverified"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "unverified",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "M10 provider authorization + repository Groq model foundation"
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "resolver": "backend/lib/groqTextPricing.js",
+        "providerModel": "openai/gpt-oss-120b",
+        "verification": "provider_capability_verified"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "openrouter:nemotron-free",
+      "providerId": "openrouter",
+      "modelId": "nvidia/nemotron-3-super-120b-a12b:free",
+      "kind": "model",
+      "capabilities": [
+        "chat",
+        "code"
+      ],
+      "modalities": {
+        "input": [
+          "text"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "unverified"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "unverified",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "unverified",
+        "evidence": null
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "verification": "unverified"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "openrouter:free",
+      "providerId": "openrouter",
+      "modelId": "openrouter/free",
+      "kind": "model",
+      "capabilities": [
+        "chat",
+        "code"
+      ],
+      "modalities": {
+        "input": [
+          "text"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "unverified"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "unverified",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "unverified",
+        "evidence": null
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "verification": "unverified"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "openrouter:gemini-multimodal",
+      "providerId": "openrouter",
+      "modelId": "google/gemini-2.5-flash",
+      "kind": "model",
+      "capabilities": [
+        "multimodal_chat"
+      ],
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "audio",
+          "video",
+          "file"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "unverified"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "unverified",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "unverified",
+        "evidence": null
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "verification": "unverified"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "replicate:image.generate:runtime",
+      "providerId": "replicate",
+      "modelId": null,
+      "modelIdEnvironment": "REPLICATE_IMAGE_MODEL",
+      "kind": "tool",
+      "capabilities": [
+        "image.generate"
+      ],
+      "modalities": {
+        "input": [
+          "text",
+          "image"
+        ],
+        "output": [
+          "image"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "unverified",
+        "evidence": "Exact runtime model/license remains model-specific."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "environment": "REPLICATE_IMAGE_COST_USD",
+        "verification": "conditional_operator_configured"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "replicate:video.text_to_video:runtime",
+      "providerId": "replicate",
+      "modelId": null,
+      "modelIdEnvironment": "REPLICATE_VIDEO_MODEL",
+      "kind": "tool",
+      "capabilities": [
+        "video.text_to_video"
+      ],
+      "modalities": {
+        "input": [
+          "text",
+          "image"
+        ],
+        "output": [
+          "video"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "unverified",
+        "evidence": "Exact runtime model/license remains model-specific."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "environment": "REPLICATE_VIDEO_COST_USD",
+        "verification": "conditional_operator_configured"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    }
+  ]
+}
