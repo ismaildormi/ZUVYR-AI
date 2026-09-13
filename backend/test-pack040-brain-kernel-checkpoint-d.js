@@ -394,6 +394,40 @@ const fakeQueue = {
     'Pack040 controlled live proof must use the explicitly approved existing top-up path'
   );
 
+  const reconcileSql = fs.readFileSync(
+    path.join(__dirname, '49_pack040_usage_binding_reconciliation.sql'),
+    'utf8'
+  );
+  for (const sqlMarker of [
+    'add column if not exists usage_record_id bigint',
+    'foreign key (usage_record_id)',
+    'references public.zuvyr_usage_records(id)',
+    'zuvyr_task_runs_usage_record_unique',
+    'pack040_usage_already_bound',
+    'bind_zuvyr_task_checkpoint_d'
+  ]) {
+    assert(
+      reconcileSql.includes(sqlMarker),
+      `missing Pack040 FIX4 usage binding marker: ${sqlMarker}`
+    );
+  }
+
+  const cleanupSource = fs.readFileSync(
+    path.join(__dirname, 'run-pack040-cleanup-failed-proof.js'),
+    'utf8'
+  );
+  assert(
+    cleanupSource.includes(
+      "process.env.ZUVYR_PACK040_CLEANUP_FAILED_PROOF !== 'true'"
+    )
+  );
+  assert(
+    cleanupSource.includes("p_actual_provider_cost_microusd: '0'")
+  );
+  assert(
+    cleanupSource.includes("task.state !== 'pending'")
+  );
+
   console.log(
     'PASS: canonical Brain preview produces the exact two-capability checkpoint plan'
   );
