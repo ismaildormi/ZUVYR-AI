@@ -1,0 +1,62 @@
+{
+  "version": "pack-037.durable-task-kernel.v1",
+  "planContract": "pack-035.brain-plan.v1",
+  "consentContract": "pack-036.plan-quote-consent.v1",
+  "queue": {
+    "name": "zuvyr-durable-tasks",
+    "jobName": "run-durable-task",
+    "jobIdPrefix": "zuvyr-task-",
+    "attempts": 1,
+    "removeOnComplete": 500,
+    "removeOnFail": 1000,
+    "persistenceSourceOfTruth": "postgres"
+  },
+  "task": {
+    "states": [
+      "pending",
+      "running",
+      "succeeded",
+      "failed",
+      "cancelled"
+    ],
+    "idempotencyScope": [
+      "user_id",
+      "idempotency_key"
+    ],
+    "maxIdempotencyCharacters": 128,
+    "intentMaxCharacters": 4000
+  },
+  "step": {
+    "states": [
+      "pending",
+      "running",
+      "succeeded",
+      "failed",
+      "cancelled"
+    ],
+    "defaultMaxAttempts": 3,
+    "leaseSeconds": 60,
+    "maxLeaseSeconds": 300,
+    "heartbeatSeconds": 20,
+    "checkpointType": "json_object",
+    "reclaimExpiredRunningStep": true,
+    "dependencyRule": "all_depends_on_step_keys_must_be_succeeded"
+  },
+  "ownership": {
+    "queueJobBoundToTaskRun": true,
+    "workerLeaseBoundToStep": true,
+    "leaseToken": "uuid",
+    "staleWorkerCheckpoint": "REJECT",
+    "crossOwnerTaskRead": "REJECT"
+  },
+  "invariants": {
+    "dbIsTaskSourceOfTruth": true,
+    "queuePayloadContainsIdentityOnly": true,
+    "sameIdempotencyKeySameTask": true,
+    "sameIdempotencyKeyDifferentPlan": "REJECT",
+    "restartReusesPersistedTask": true,
+    "noProviderCall": true,
+    "noBillingMutation": true,
+    "noCreditReservation": true
+  }
+}
