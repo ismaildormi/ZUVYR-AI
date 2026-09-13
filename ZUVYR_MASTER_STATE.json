@@ -514,13 +514,6 @@
                     "checkpoint_resume":  true,
                     "next_pack":  "038"
                 },
-    "generated_at":  "2026-09-13T16:51:30.7116838+01:00",
-    "pack_id":  "038",
-    "pack_title":  "Step Executor / Retry / Timeout / Resume",
-    "status":  "LOCKED_VERIFIED",
-    "next_pack_allowed":  true,
-    "next_external_gate":  null,
-    "next_pack":  "039",
     "pack038":  {
                     "status":  "LOCKED_VERIFIED",
                     "source_commit":  "1fa490512caed1ad15399a3e910cd18f63a40fb6",
@@ -536,5 +529,28 @@
                     "crash_restart_no_duplicate_side_effect":  "PASS",
                     "live_worker_wiring":  false,
                     "next_pack":  "039"
+                },
+    "generated_at":  "2026-09-13T17:02:05.4399919+01:00",
+    "pack_id":  "039",
+    "pack_title":  "Cancel / Compensation / Rollback",
+    "status":  "LOCKED_VERIFIED",
+    "next_pack_allowed":  true,
+    "next_external_gate":  null,
+    "next_pack":  "040",
+    "pack039":  {
+                    "status":  "LOCKED_VERIFIED",
+                    "source_commit":  "40bd13f61b64f9133ce07ee8518cad1c445fed40",
+                    "receipt_sha256":  "630B08DB7FED114986E6FA587BB0A889BBFF57D3FD196CA8201EC4701DEF65F7",
+                    "migration_name":  "pack039_cancel_compensation",
+                    "migration_version":  "20260913155945",
+                    "migration_sha256":  "50548402BDFA5AD78444349181684BEF85D9BF25FA49375348F4AD66BDAB2F22",
+                    "active_provider_cancel":  "PASS",
+                    "late_result_rejected":  "PASS",
+                    "compensation_replay_safe":  "PASS",
+                    "no_duplicate_financial_settlement":  "PASS",
+                    "checkpoint_restore":  "PASS",
+                    "live_worker_wiring":  false,
+                    "live_financial_wiring":  false,
+                    "next_pack":  "040"
                 }
 }
