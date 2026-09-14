@@ -20,6 +20,7 @@ const {
   RESOURCE_TYPES,
   getDefaultWorkspaceProjectStore
 } = require('./workspaceProjectRepository');
+const { getDefaultWorkspaceLibraryStore } = require('./workspaceLibraryRepository');
 
 function validation(res, error) {
   return res.status(400).json({
@@ -91,6 +92,7 @@ function projectFailure(res, error) {
   });
 }
 
+function libraryFailure(res,error){const c=error?.code||'workspace_library_operation_failed';if(['workspace_library_item_not_found','workspace_library_asset_not_found'].includes(c))return res.status(404).json({status:'error',code:c,message:'Library item was not found.'});if(['workspace_library_filter_invalid','workspace_library_destination_invalid'].includes(c))return res.status(400).json({status:'error',code:c,message:'Library request is invalid.'});if(['workspace_library_legal_hold','workspace_library_item_deleted','workspace_library_destination_unsupported'].includes(c))return res.status(409).json({status:'error',code:c,message:'Library action is unavailable.'});console.error('[workspace/library] operation failed:',c);return res.status(500).json({status:'error',code:'workspace_library_operation_failed',message:'Library operation failed.'})}
 function assertProjectWriteEnabled() {
   assertWorkspaceExecutionAvailable('workspace_write');
 }
@@ -156,6 +158,7 @@ function createWorkspaceRouter(options = {}) {
   const router = express.Router();
   const projectStore =
     options.projectStore || getDefaultWorkspaceProjectStore();
+  const libraryStore = options.libraryStore || getDefaultWorkspaceLibraryStore();
 
   router.get(
     '/capabilities',
@@ -178,6 +181,13 @@ function createWorkspaceRouter(options = {}) {
   });
 
   // Kept for compatibility and preflight validation. Real persistence is
+  router.get('/library/items',async(req,res)=>{try{return res.json({status:'success',persisted:true,...await libraryStore.listItems({ownerId:req.userId,filters:req.query||{}})})}catch(e){return libraryFailure(res,e)}});
+  router.get('/library/items/:contentId',async(req,res)=>{try{return res.json({status:'success',persisted:true,item:await libraryStore.getItem({ownerId:req.userId,contentId:uuid(req.params.contentId,'invalid_workspace_library_content_id')})})}catch(e){if(e?.code?.startsWith('invalid_'))return validation(res,e);return libraryFailure(res,e)}});
+  router.post('/library/items/:contentId/download',async(req,res)=>{try{return res.json({status:'success',download:await libraryStore.createDownload({ownerId:req.userId,contentId:uuid(req.params.contentId,'invalid_workspace_library_content_id'),assetId:req.body?.assetId?uuid(req.body.assetId,'invalid_workspace_library_asset_id'):null})})}catch(e){if(e?.code?.startsWith('invalid_'))return validation(res,e);return libraryFailure(res,e)}});
+  router.delete('/library/items/:contentId',async(req,res)=>{try{assertProjectWriteEnabled();return res.json({status:'success',persisted:true,item:await libraryStore.softDelete({ownerId:req.userId,contentId:uuid(req.params.contentId,'invalid_workspace_library_content_id')})})}catch(e){if(e?.code?.startsWith('invalid_'))return validation(res,e);if(e?.code==='workspace_executor_unavailable')return executorUnavailable(res,'workspace_write');return libraryFailure(res,e)}});
+  router.post('/library/items/:contentId/restore',async(req,res)=>{try{assertProjectWriteEnabled();return res.json({status:'success',persisted:true,item:await libraryStore.restore({ownerId:req.userId,contentId:uuid(req.params.contentId,'invalid_workspace_library_content_id')})})}catch(e){if(e?.code?.startsWith('invalid_'))return validation(res,e);if(e?.code==='workspace_executor_unavailable')return executorUnavailable(res,'workspace_write');return libraryFailure(res,e)}});
+  router.post('/library/items/:contentId/send-to',async(req,res)=>{try{return res.json({status:'success',handoff:await libraryStore.createSendTo({ownerId:req.userId,contentId:uuid(req.params.contentId,'invalid_workspace_library_content_id'),destination:req.body?.destination})})}catch(e){if(e?.code?.startsWith('invalid_'))return validation(res,e);return libraryFailure(res,e)}});
+
   // provided by the CRUD routes below.
   router.post('/projects/validate', (req, res) => {
     try {

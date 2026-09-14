@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "pack": 43,
-  "mode": "projects_crud",
+  "pack": 44,
+  "mode": "library",
   "limits": {
     "nameChars": 120,
     "descriptionChars": 2000,
