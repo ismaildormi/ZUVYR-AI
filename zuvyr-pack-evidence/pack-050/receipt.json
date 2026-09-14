@@ -1,0 +1,69 @@
+{
+  "pack_id": "050",
+  "title": "Unified UX Shell / Work / Settings",
+  "status": "LOCKED_VERIFIED",
+  "source_commit": "2c17ec51b371010550800024f3da18ffec69f206",
+  "database_migration": "NOT_REQUIRED",
+  "capabilities": {
+    "unified_shell": true,
+    "desktop_mobile_navigation": true,
+    "native_screen_delegation": true,
+    "work_surface": true,
+    "settings_control_center": true,
+    "projects_library_creations_research_code_history_links": true,
+    "account_usage_permissions_memory_analytics_links": true,
+    "pack049_actions_visible": true,
+    "keyboard_focus_aria": true,
+    "rtl_ltr": true,
+    "responsive": true,
+    "reduced_motion": true,
+    "duplicate_backend_systems": false,
+    "provider_calls_on_shell_boot": 0,
+    "billing_mutations_on_shell_boot": 0
+  },
+  "tests": {
+    "pack050": "PASS",
+    "native_navigation": "PASS",
+    "usage_ux": "PASS",
+    "dependency_regressions_043_049": "PASS"
+  },
+  "live_verification": {
+    "railway": {
+      "deployment_id": "033834ff-f8c7-46a1-8459-691ebaa0857c",
+      "snapshot_id": "455385f7-3173-48fa-afc2-06abe0048a1e",
+      "status": "SUCCESS",
+      "source_commit": "2c17ec51b371010550800024f3da18ffec69f206",
+      "source_identity_method": "clean temporary clone detached at exact source commit before CLI upload",
+      "healthcheck": "/readyz",
+      "healthcheck_status": "PASS",
+      "runtime": "rox-ai-backend@0.64.0 / node server.js / port 8080"
+    },
+    "vercel": {
+      "deployment_id": "dpl_4EQVHETxL7r1dhP4tY2Zjk9L8yNc",
+      "status": "READY",
+      "target": "production",
+      "source_commit": "2c17ec51b371010550800024f3da18ffec69f206",
+      "alias": "rox-ai-sepia.vercel.app",
+      "pack050_asset_http_status": 200,
+      "pack050_asset": "/zuvyr-unified-ux-v1.js?v=1"
+    }
+  },
+  "verification": {
+    "architecture": "PASS",
+    "ux": "PASS",
+    "accessibility": "PASS",
+    "security": "PASS",
+    "reliability": "PASS",
+    "performance": "PASS",
+    "cost": "PASS",
+    "integrations": "PASS",
+    "billable_provider_calls": 0,
+    "live_billing_allowed": false
+  },
+  "finalizer": {
+    "commit": "PENDING_RUNNER_OUTPUT",
+    "final_deploy_verification_required": true
+  },
+  "next_pack": "051 - Chat Core Normalization",
+  "finalized_at": "2026-09-14T22:35:02.169Z"
+}

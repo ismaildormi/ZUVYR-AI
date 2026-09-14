@@ -3,7 +3,7 @@
   "source_fix": "005-FIX6",
   "selected_strategy": "railway_internal_route",
   "previous_pack": {
-    "pack_id": "048",
+    "pack_id": "049",
     "status": "LOCKED_VERIFIED"
   },
   "tests": {
@@ -170,7 +170,7 @@
     "actions": "VERIFIED",
     "production_database_mutation": false
   },
-  "finalized_at": "2026-09-14T21:48:35.198Z",
+  "finalized_at": "2026-09-14T22:35:02.169Z",
   "pack019": {
     "status": "SOURCE_VERIFIED_AWAITING_M08",
     "source_commit": "f7d525fc2ffce5994d7f808e92f422d08989a8b3",
@@ -204,7 +204,7 @@
     "deferral_policy": "TEST_MODE_ALLOWS_PACK020_DEVELOPMENT_LIVE_REMAINS_LAUNCH_GATE"
   },
   "commit": "29e719a23fc52f11911c84ea10f2493acb91a619",
-  "source_commit": "90685afbf03db215c846a8b5c69a43158e8af48b",
+  "source_commit": "2c17ec51b371010550800024f3da18ffec69f206",
   "pack020": {
     "source_commit": "c60a45ce9349d0b84ea2d7153a3f39a4254bbd3b",
     "receipt_sha256": "A9F281C4D46D0C8A202765C633C030FF8BBB1AF6FB244661B965CBAF78FBB0CE",
@@ -587,12 +587,12 @@
     "next_pack": "042"
   },
   "generated_at": "2026-09-14T16:21:33.815Z",
-  "pack_id": "049",
+  "pack_id": "050",
   "pack_title": "Knowledge / Context Graph",
   "status": "LOCKED_VERIFIED",
   "next_pack_allowed": true,
   "next_external_gate": null,
-  "next_pack": "050 - Unified UX Shell / Work / Settings",
+  "next_pack": "051 - Chat Core Normalization",
   "pack042": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "258ce1f4df2e3a4630cfc87069668f073c0dee79",
@@ -803,5 +803,31 @@
     "receipt_sha256": "21506384B4B320C5191D7827966E30B00ADA65FB00668445A4F8623D695F173B",
     "next_pack": "050",
     "finalized_at": "2026-09-14T21:48:35.198Z"
+  },
+  "pack050": {
+    "status": "LOCKED_VERIFIED",
+    "title": "Unified UX Shell / Work / Settings",
+    "source_commit": "2c17ec51b371010550800024f3da18ffec69f206",
+    "database_migration": "NOT_REQUIRED",
+    "unified_shell_verified": true,
+    "desktop_mobile_navigation_verified": true,
+    "native_screen_delegation_verified": true,
+    "work_surface_verified": true,
+    "settings_control_center_verified": true,
+    "pack049_actions_surface_verified": true,
+    "accessibility_verified": true,
+    "rtl_ltr_verified": true,
+    "responsive_verified": true,
+    "native_navigation_regression": "PASS",
+    "dependency_regressions_043_049": "PASS",
+    "railway_source_deploy_verified": true,
+    "vercel_source_deploy_verified": true,
+    "provider_calls_on_shell_boot": 0,
+    "billing_mutations_on_shell_boot": 0,
+    "billable_provider_calls": 0,
+    "live_billing_allowed": false,
+    "receipt_sha256": "8F141DE2858C133DF6FD0ABABDA2834B8B4D0FBF8A382D260DA2FCB52217EBE3",
+    "next_pack": "051",
+    "finalized_at": "2026-09-14T22:35:02.169Z"
   }
 }
