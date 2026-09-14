@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "defaultLocale": "en",
+  "supportedLocales": [
+    "ary-MA",
+    "ar",
+    "fr",
+    "en",
+    "es"
+  ],
+  "routingLanguageMap": {
+    "ary-MA": "ar",
+    "ary": "ar",
+    "ar": "ar",
+    "fr": "fr",
+    "en": "en",
+    "es": "es"
+  },
+  "rtlScripts": [
+    "Arab",
+    "Hebr"
+  ],
+  "ocr": {
+    "default": "eng+ara+fra",
+    "byLanguage": {
+      "ar": "ara",
+      "ary": "ara",
+      "fr": "fra",
+      "en": "eng",
+      "es": "spa"
+    }
+  },
+  "mixedLanguage": {
+    "minimumSecondaryScore": 2,
+    "minimumScriptShare": 0.15
+  },
+  "responsePolicy": {
+    "explicitPreferenceWins": true,
+    "autoPreservesLatestUserLanguage": true,
+    "autoPreservesDarija": true,
+    "mixedAutoPreservesCodeSwitching": true
+  },
+  "billing": {
+    "liveBillingAllowed": false
+  }
+}

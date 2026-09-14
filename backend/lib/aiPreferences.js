@@ -1,5 +1,7 @@
 'use strict';
 
+const { normalizeLanguageContext, buildLanguageContextPrompt } = require('./languageEngine');
+
 const ALLOWED_LANGUAGES = ['auto', 'ar', 'fr', 'en', 'es'];
 const ALLOWED_LENGTHS = ['concise', 'balanced', 'detailed'];
 const ALLOWED_TONES = ['natural', 'professional', 'creative'];
@@ -24,6 +26,7 @@ function normalizeAiPreferences(value = {}) {
     tone: ALLOWED_TONES.includes(source.tone)
       ? source.tone
       : 'natural',
+    languageContext: normalizeLanguageContext(source.languageContext)
   };
 }
 
@@ -47,6 +50,10 @@ function buildTextPreferencePrompt(aiPreferences = {}) {
       'Answer entirely in clear natural Spanish regardless of the language used by the user.',
   };
 
+  const languageContextInstruction = buildLanguageContextPrompt(
+    preferences.languageContext,
+    preferences.language
+  );
   const lengthInstructions = {
     concise:
       'Keep normal answers concise, focused, and usually under 80 words. Provide complete code when code is requested.',
@@ -71,6 +78,7 @@ function buildTextPreferencePrompt(aiPreferences = {}) {
 
   return [
     languageInstructions[preferences.language],
+    languageContextInstruction,
     lengthInstructions[preferences.length],
     toneInstructions[preferences.tone],
     'These selected preferences override automatic language detection.',

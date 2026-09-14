@@ -41,6 +41,7 @@ const {
   buildTextPreferencePrompt,
   buildGenerationPrompt,
 } = require('./lib/aiPreferences');
+const { createLanguageContextMiddleware } = require('./lib/languageMiddleware');
 const { supabaseAdmin } = require('./lib/supabaseAdmin');
 const { register, setQueueDepth, recordCost, recordMargin, recordLoadLevel } = require('./lib/metrics');
 const { createHeaderSecretGuard } = require('./lib/operatorAuth');
@@ -248,6 +249,7 @@ app.use(ipRateLimit());
 // rejected by Express itself before it reaches any handler, on top of
 // the field-level checks in lib/inputValidation.js.
 app.use(express.json({ limit: '2mb' }));
+app.use(createLanguageContextMiddleware());
 // --- API versioning ---------------------------------------------------
 // New/future-feature endpoints are written directly under /api/v1 (see
 // src/api/v1/futureRoutes.js) ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â checked FIRST so they never fall into
@@ -845,7 +847,12 @@ app.post('/api/chat', requireAuth, rateLimit('chat'), validateChatBody, loadRoxU
       }
     }
 
-    const result = await routeRequest(feature || 'chat', routedMessages, { loadLevel, isPro, requestId });
+    const result = await routeRequest(feature || 'chat', routedMessages, {
+      loadLevel,
+      isPro,
+      requestId,
+      language: req.zuvyrLanguageContext?.routingLanguage || null
+    });
     const responseSources = attachmentSources(attachmentContext.sources);
 
     let settlement = null;
