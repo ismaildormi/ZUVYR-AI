@@ -64,6 +64,7 @@ const {
 const {
   createCodeStudioRouter
 } = require('./lib/codeStudioRoutes');
+const { createPermissionCenterRouter } = require('./lib/permissionCenterRoutes');
 const {
   createAudioStudioRouter
 } = require('./lib/audioStudioRoutes');
@@ -287,6 +288,13 @@ app.use(
   rateLimit('chat'),
   createCodeStudioRouter({ creditApi: { reserveCredits, settleCredits, refundCredits } })
 );
+app.use(
+  '/api/permissions',
+  requireAuth,
+  rateLimit('chat'),
+  createPermissionCenterRouter({ db: supabaseAdmin })
+);
+
 app.use(
   '/api/audio-studio',
   requireAuth,
