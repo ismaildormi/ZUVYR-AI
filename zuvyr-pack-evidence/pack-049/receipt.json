@@ -1,0 +1,90 @@
+{
+  "pack_id": "049",
+  "title": "Universal Actions / Send-To / Undo",
+  "status": "LOCKED_VERIFIED",
+  "source_commit": "90685afbf03db215c846a8b5c69a43158e8af48b",
+  "migration": {
+    "number": 63,
+    "name": "pack049_universal_actions_send_to_undo",
+    "status": "APPLIED_VERIFIED",
+    "production_tables": [
+      "zuvyr_universal_actions",
+      "zuvyr_code_asset_bindings"
+    ],
+    "production_rpcs": [
+      "create_zuvyr_universal_action",
+      "execute_zuvyr_code_asset_handoff",
+      "restore_zuvyr_content_version_action",
+      "undo_zuvyr_universal_action"
+    ],
+    "authenticated_rpc_execute": 0,
+    "authenticated_table_mutation_privileges": 0,
+    "service_role_rpc_execute": 4
+  },
+  "capabilities": {
+    "context_actions": [
+      "ask",
+      "edit",
+      "verify",
+      "translate",
+      "search",
+      "save"
+    ],
+    "persistent_send_to": true,
+    "canonical_ids_preserved": true,
+    "provenance_preserved": true,
+    "image_to_video_contract": true,
+    "research_to_doc_contract": true,
+    "asset_to_code": true,
+    "affected_file_ids": true,
+    "code_project_versioning": true,
+    "safe_undo": true,
+    "changed_file_protection": true,
+    "version_compare": true,
+    "version_restore": true,
+    "permission_scoped_code_write": true,
+    "no_media_research_duplication": true
+  },
+  "tests": {
+    "pack049": "PASS",
+    "dependency_regressions_041_048": "PASS",
+    "pack044_legacy_assertions": "EVOLUTION_SAFE",
+    "pack045_legacy_assertions": "EVOLUTION_SAFE"
+  },
+  "source_deployment": {
+    "railway": {
+      "deployment_id": "56d281aa-6d0b-4315-8c9a-65f961c57ccf",
+      "snapshot_id": "104016b9-7e1a-402f-82f7-8f9f5e096aa7",
+      "status": "SUCCESS",
+      "source_commit": "90685afbf03db215c846a8b5c69a43158e8af48b",
+      "source_identity_method": "clean temporary clone detached at exact source commit before CLI upload",
+      "healthcheck": "/readyz",
+      "healthcheck_status": "PASS",
+      "runtime": "rox-ai-backend@0.64.0 / node server.js / port 8080"
+    },
+    "vercel": {
+      "deployment_id": "dpl_HEqsWAV7TGS8a66Jg5VLwj6Xbyy5",
+      "status": "READY",
+      "target": "production",
+      "source_commit": "90685afbf03db215c846a8b5c69a43158e8af48b",
+      "alias": "rox-ai-sepia.vercel.app"
+    }
+  },
+  "verification": {
+    "billable_provider_calls": 0,
+    "live_billing_allowed": false,
+    "architecture": "PASS",
+    "ux_contracts": "PASS",
+    "security": "PASS",
+    "reliability": "PASS",
+    "performance": "PASS",
+    "cost": "PASS",
+    "integrations": "PASS"
+  },
+  "finalizer": {
+    "commit": "PENDING_RUNNER_OUTPUT",
+    "final_deploy_verification_required": true
+  },
+  "next_pack": "050 - Unified UX Shell / Work / Settings",
+  "finalized_at": "2026-09-14T21:48:35.198Z"
+}
