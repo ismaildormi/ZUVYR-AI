@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const { config } = require('./workspaceCapabilityRegistry');
 
 const RESOURCE_TYPES =
-  new Set(['conversation', 'content', 'task', 'deployment']);
+  new Set(['conversation', 'content', 'task', 'deployment', 'memory']);
 
 const CONTENT_KIND_TO_ITEM_KIND = Object.freeze({
   image: 'image',
@@ -304,6 +304,34 @@ function createWorkspaceProjectStore(db) {
         metadata: {
           resourceType: 'task',
           state: data.state || null
+        }
+      };
+    }
+
+    if (resourceType === 'memory') {
+      const { data, error } = await db
+        .from('zuvyr_memories')
+        .select('id, project_id, scope, category, content, current_version, updated_at')
+        .eq('id', resourceId)
+        .eq('owner_id', ownerId)
+        .maybeSingle();
+
+      if (error || !data) {
+        throw storeError('workspace_project_resource_not_found', error || null);
+      }
+
+      return {
+        kind: 'text',
+        name: String(data.content || 'Memory').slice(0, 120),
+        description: data.category + ' memory',
+        sourceId: data.id,
+        canonicalContentId: null,
+        metadata: {
+          resourceType: 'memory',
+          memoryCategory: data.category,
+          memoryScope: data.scope,
+          memoryProjectId: data.project_id || null,
+          memoryVersion: data.current_version
         }
       };
     }

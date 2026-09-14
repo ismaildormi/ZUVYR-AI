@@ -5,6 +5,9 @@ const {
   publicInventory,
   assertWorkspaceExecutionAvailable
 } = require('./workspaceCapabilityRegistry');
+const {
+  getDefaultWorkspaceMemoryStore
+} = require('./workspaceMemoryRepository');
 const { normalizeWorkspaceItem } = require('./workspaceItemContract');
 const { normalizeWorkspaceProject } = require('./workspaceProjectContract');
 const { normalizeCreation } = require('./workspaceCreationContract');
@@ -159,6 +162,8 @@ function createWorkspaceRouter(options = {}) {
   const projectStore =
     options.projectStore || getDefaultWorkspaceProjectStore();
   const libraryStore = options.libraryStore || getDefaultWorkspaceLibraryStore();
+  const memoryStore =
+    options.memoryStore || getDefaultWorkspaceMemoryStore();
 
   router.get(
     '/capabilities',
@@ -167,6 +172,60 @@ function createWorkspaceRouter(options = {}) {
       ...publicInventory()
     })
   );
+  function memoryFailure(res, error) {
+    const code = error?.code || 'workspace_memory_operation_failed';
+    if (code === 'workspace_memory_not_found') return res.status(404).json({status:'error',code,message:'Memory was not found.'});
+    if (code === 'workspace_memory_undo_unavailable' || code === 'workspace_memory_scope_invalid') return res.status(409).json({status:'error',code,message:'Memory action is not available.'});
+    if (code.includes('invalid') || code.endsWith('_empty')) return res.status(400).json({status:'error',code,message:'Memory request is invalid.'});
+    console.error('[workspace/memory] operation failed:', code);
+    return res.status(500).json({status:'error',code:'workspace_memory_operation_failed',message:'Memory operation could not be completed.'});
+  }
+
+  router.get('/memory/preferences', async (req,res) => {
+    try { return res.json({status:'success',preferences:await memoryStore.getPreferences(req.userId)}); }
+    catch(error){ return memoryFailure(res,error); }
+  });
+
+  router.patch('/memory/preferences', async (req,res) => {
+    try { const preferences=await memoryStore.updatePreferences(req.userId,req.body||{}); return res.json({status:'success',preferences,memory_updated:true}); }
+    catch(error){ return memoryFailure(res,error); }
+  });
+
+  router.get('/memory/items', async (req,res) => {
+    try { return res.json({status:'success',...(await memoryStore.listItems(req.userId,req.query||{}))}); }
+    catch(error){ return memoryFailure(res,error); }
+  });
+
+  router.post('/memory/items', async (req,res) => {
+    try { const item=await memoryStore.createItem(req.userId,req.body||{}); return res.status(201).json({status:'success',item,memory_updated:true}); }
+    catch(error){ return memoryFailure(res,error); }
+  });
+
+  router.get('/memory/items/:memoryId', async (req,res) => {
+    try { const item=await memoryStore.getItem(req.userId,uuid(req.params.memoryId,'invalid_workspace_memory_id')); return res.json({status:'success',item}); }
+    catch(error){ if(error?.code?.startsWith('invalid_'))return validation(res,error); return memoryFailure(res,error); }
+  });
+
+  router.patch('/memory/items/:memoryId', async (req,res) => {
+    try { const item=await memoryStore.updateItem(req.userId,uuid(req.params.memoryId,'invalid_workspace_memory_id'),req.body||{}); return res.json({status:'success',item,memory_updated:true}); }
+    catch(error){ if(error?.code?.startsWith('invalid_'))return validation(res,error); return memoryFailure(res,error); }
+  });
+
+  router.post('/memory/items/:memoryId/undo', async (req,res) => {
+    try { const item=await memoryStore.undoItem(req.userId,uuid(req.params.memoryId,'invalid_workspace_memory_id')); return res.json({status:'success',item,memory_updated:true}); }
+    catch(error){ if(error?.code?.startsWith('invalid_'))return validation(res,error); return memoryFailure(res,error); }
+  });
+
+  router.delete('/memory/items/:memoryId', async (req,res) => {
+    try { const result=await memoryStore.forgetItem(req.userId,uuid(req.params.memoryId,'invalid_workspace_memory_id')); return res.json({status:'success',result,memory_updated:true}); }
+    catch(error){ if(error?.code?.startsWith('invalid_'))return validation(res,error); return memoryFailure(res,error); }
+  });
+
+  router.get('/memory/context', async (req,res) => {
+    try { const result=await memoryStore.retrieveContext(req.userId,req.query||{}); return res.json({status:'success',...result}); }
+    catch(error){ return memoryFailure(res,error); }
+  });
+
 
   router.post('/library/items/validate', (req, res) => {
     try {

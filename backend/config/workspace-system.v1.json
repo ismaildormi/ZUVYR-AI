@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "pack": 44,
-  "mode": "library",
+  "pack": 45,
+  "mode": "memory",
   "limits": {
     "nameChars": 120,
     "descriptionChars": 2000,
@@ -51,7 +51,8 @@
     "scheduledTasks": true,
     "plugins": true,
     "googleDrive": true,
-    "workflows": true
+    "workflows": true,
+    "memory": true
   },
   "execution": {
     "workspaceWritesEnabled": true,
