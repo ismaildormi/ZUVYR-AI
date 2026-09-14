@@ -12,7 +12,7 @@
     ['usage','◫','Usage & Billing','ready'],['analytics','⌁','Analytics','validate'],['settings','⚙','Settings','ready']
   ];
   var copy = {
-    dashboard:['Connected workspace','Turn one goal into a coordinated workflow across ZUVYR.'],
+    dashboard:['Work','Continue projects, assets, research, code and history from one coordinated workspace.'],
     images:['Images','Generate, edit, upscale and organize visual assets after a verified provider is connected.'],
     video:['Video','Plan text-to-video, image-to-video, editing, subtitles and export in one job surface.'],
     code:['Code Studio','Build multi-file projects and request approved image or video assets when the experience needs them.'],
@@ -60,15 +60,15 @@
       voice:[['Transcribe','Speech to text with minute tracking'],['Speak','Text to speech and voice selection'],['Voice chat','Transcript, waveform and STOP']],
       music:[['Music','Prompt, duration and variants'],['Audio tools','Cleanup, remix and stems'],['Audio to video','Scenes, subtitles and export']],
       research:[['Web Search','Live sources and citations'],['Deep Research','Multi-round plan and verification'],['Shopping','Products, prices and specs']],
-      library:[['All assets','Search, filters and folders'],['Uploads','Documents, images and media'],['Handoffs','Send approved assets to projects']],
-      projects:[['Project context','Chat, files, media and code'],['Task handoffs','Ordered cross-feature outputs'],['History','Decisions, versions and results']],
-      documents:[['Editor','Write, edit and comment'],['Sources','Citations and linked files'],['Delivery','Review and export']],
+      library:[['All assets','Search, filters and folders'],['Universal actions','Ask, Edit, Verify, Translate, Search and Save'],['Handoffs & versions','Send-To, compare, restore and Undo']],
+  projects:[['Work context','Projects, linked content and task context'],['Cross-surface handoffs','Library, Research, Code and media references'],['History & versions','Decisions, affected files and reversible results']],
+  documents:[['Editor','Write, edit and comment'],['Sources','Citations and linked files'],['Delivery','Review and export']],
       spreadsheets:[['Data','Tables, imports and cleanup'],['Analysis','Formulas and validation'],['Charts','Visual summaries and export']],
       presentations:[['Outline','Narrative and slide structure'],['Design','Templates, media and layouts'],['Export','Review and delivery']],
       scheduled:[['Schedule','Once or recurring'],['History','Runs and notifications'],['Controls','Pause and delete']],
       plugins:[['Discover','Search the marketplace'],['Permissions','Inspect requested access'],['Connections','Connect or disconnect']],
       analytics:[['Usage','7 and 30 day views'],['Cost','Provider and feature cost'],['Margin','Revenue, profit and risk reserve']],
-      settings:[['Account','Profile, language and appearance'],['Privacy','Memory and data controls'],['Billing','Plan, payment and invoices']]
+      settings:[['Account & preferences','Profile, language and appearance'],['Plans, credits & usage','Allowance, top-up credits and billing visibility'],['Privacy & permissions','Permission Center, Memory and data controls']]
     };
     return '<div class="zs-tool-grid">'+(maps[id] || []).map(function (t) { return '<article class="zs-tool"><div class="zs-tool-top"><span class="zs-tool-icon">✦</span><span class="zs-tool-state">'+(sections.find(function(s){return s[0]===id;})[3] === 'ready' ? 'foundation' : 'connect')+'</span></div><h3>'+t[0]+'</h3><p>'+t[1]+'</p></article>'; }).join('')+'</div>';
   }

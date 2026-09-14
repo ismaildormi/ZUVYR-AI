@@ -131,6 +131,9 @@ for (const device of ['mobile', 'desktop']) {
   const features = ['images','videos','code','roxip','chat'].map(id => d.getElementById('feature-' + id));
   const idsBefore = d.querySelectorAll('[id]').map(el => el.id);
   assert(home && chat && payment);
+  if (f.context.window && typeof f.context.window.addEventListener !== 'function') {
+    f.context.window.addEventListener = () => {};
+  }
   vm.runInNewContext(source, f.context, { timeout: 5000 });
   const native = d.getElementById('screen-zuvyr-tools');
   assert(native); assert.equal(native.parentElement, home.parentElement);
@@ -181,6 +184,9 @@ for (const device of ['mobile', 'desktop']) {
   assert.equal(native.dir, 'ltr');
   assert.equal(native.querySelector('[data-zs-close]').textContent, 'Retour');
   const count = d.querySelectorAll('[data-zuvyr-section]').length;
+  if (f.context.window && typeof f.context.window.addEventListener !== 'function') {
+    f.context.window.addEventListener = () => {};
+  }
   vm.runInNewContext(source, f.context, { timeout: 5000 });
   assert.equal(d.querySelectorAll('[data-zuvyr-section]').length, count, 'Duplicate initialization');
   assert.equal(f.network(), 0);
