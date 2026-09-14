@@ -1,0 +1,74 @@
+{
+  "pack_id": "048",
+  "title": "Language Engine",
+  "status": "LOCKED_VERIFIED",
+  "source_commit": "7008247bf8208ac07d73723fe325162a4fc804d2",
+  "database": {
+    "migration_required": false,
+    "status": "NOT_REQUIRED"
+  },
+  "capabilities": {
+    "unicode_normalization": true,
+    "arabic_detection": true,
+    "moroccan_darija_detection": true,
+    "french_detection": true,
+    "english_detection": true,
+    "mixed_language_detection": true,
+    "arabizi_transliteration": true,
+    "response_language_preference_preserved": true,
+    "rtl_ltr_negotiation": true,
+    "utf8_filenames_and_code_comments_preserved": true,
+    "ai_router_existing_language_support_reused_unchanged": true
+  },
+  "verification": {
+    "syntax_recovery": "PASS",
+    "source": "PASS",
+    "tests": "PASS",
+    "semantic_regression": "PASS",
+    "server_exact_route_language_wiring": "PASS",
+    "frontend_runtime_asset_live": "PASS",
+    "production_root_loads_language_engine": "PASS",
+    "billable_provider_calls": 0
+  },
+  "source_deployment": {
+    "railway": {
+      "deployment_id": "babdf2f6-bc9a-44b7-aa45-537c26368cd6",
+      "snapshot_id": "946dccbb-043d-4309-b68c-7d94a7285ffc8",
+      "status": "SUCCESS",
+      "source_commit": "7008247bf8208ac07d73723fe325162a4fc804d2",
+      "source_identity_method": "clean temporary clone detached at exact source commit before CLI upload",
+      "healthcheck": "/readyz",
+      "healthcheck_status": "PASS",
+      "runtime_start": "rox-ai-backend@0.64.0 / node server.js / listening on 0.0.0.0:8080"
+    },
+    "vercel": {
+      "deployment_id": "dpl_4CQjVaijHTuuqaMa9B1QVVQEGP5q",
+      "status": "READY",
+      "target": "production",
+      "source_commit": "7008247bf8208ac07d73723fe325162a4fc804d2",
+      "alias": "rox-ai-sepia.vercel.app",
+      "language_asset": "/zuvyr-language-engine-v1.js",
+      "asset_http_status": 200,
+      "root_http_status": 200,
+      "root_references_language_asset": true
+    }
+  },
+  "live_e2e": {
+    "strategy": "source-equivalent semantic regressions plus exact production deployment identity; no paid AI-provider call",
+    "backend_runtime_healthy": true,
+    "frontend_language_runtime_loaded": true,
+    "mixed_language_semantics_verified": true,
+    "billing_impact": "NONE"
+  },
+  "billing": {
+    "billable_provider_calls": 0,
+    "LIVE_BILLING_ALLOWED": false
+  },
+  "finalizer": {
+    "commit": "PENDING_RUNNER_OUTPUT",
+    "railway_exact_finalizer_upload_requested_by_runner": true,
+    "final_deploy_verification_required": true
+  },
+  "next_pack": "049 - Universal Actions / Send-To / Undo",
+  "finalized_at": "2026-09-14T21:17:51.296Z"
+}
