@@ -8,6 +8,9 @@ const {
 const {
   getDefaultWorkspaceMemoryStore
 } = require('./workspaceMemoryRepository');
+const {
+  getDefaultWorkspaceContextGraphStore
+} = require('./workspaceContextGraphRepository');
 const { normalizeWorkspaceItem } = require('./workspaceItemContract');
 const { normalizeWorkspaceProject } = require('./workspaceProjectContract');
 const { normalizeCreation } = require('./workspaceCreationContract');
@@ -164,6 +167,8 @@ function createWorkspaceRouter(options = {}) {
   const libraryStore = options.libraryStore || getDefaultWorkspaceLibraryStore();
   const memoryStore =
     options.memoryStore || getDefaultWorkspaceMemoryStore();
+  const contextGraphStore =
+    options.contextGraphStore || getDefaultWorkspaceContextGraphStore();
 
   router.get(
     '/capabilities',
@@ -225,6 +230,28 @@ function createWorkspaceRouter(options = {}) {
     try { const result=await memoryStore.retrieveContext(req.userId,req.query||{}); return res.json({status:'success',...result}); }
     catch(error){ return memoryFailure(res,error); }
   });
+  function contextGraphFailure(res,error) {
+    const code=error?.code||'workspace_context_graph_operation_failed';
+    if(code.includes('input_invalid')) return res.status(400).json({status:'error',code,message:'Context graph request is invalid.'});
+    console.error('[workspace/context-graph] operation failed:',code);
+    return res.status(500).json({status:'error',code:'workspace_context_graph_operation_failed',message:'Context graph operation could not be completed.'});
+  }
+
+  router.get('/context-graph/query', async (req,res) => {
+    try { return res.json({status:'success',graph:await contextGraphStore.query(req.userId,req.query||{})}); }
+    catch(error){ return contextGraphFailure(res,error); }
+  });
+
+  router.get('/context-graph/brain', async (req,res) => {
+    try { return res.json({status:'success',context:await contextGraphStore.getBrainContext(req.userId,req.query||{})}); }
+    catch(error){ return contextGraphFailure(res,error); }
+  });
+
+  router.get('/context-graph/manager', async (req,res) => {
+    try { return res.json({status:'success',context:await contextGraphStore.getManagerContext(req.userId,req.query||{})}); }
+    catch(error){ return contextGraphFailure(res,error); }
+  });
+
 
 
   router.post('/library/items/validate', (req, res) => {

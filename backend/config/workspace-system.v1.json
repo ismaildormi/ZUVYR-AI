@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "pack": 45,
-  "mode": "memory",
+  "pack": 46,
+  "mode": "context_graph",
   "limits": {
     "nameChars": 120,
     "descriptionChars": 2000,
@@ -52,7 +52,8 @@
     "plugins": true,
     "googleDrive": true,
     "workflows": true,
-    "memory": true
+    "memory": true,
+    "contextGraph": true
   },
   "execution": {
     "workspaceWritesEnabled": true,
