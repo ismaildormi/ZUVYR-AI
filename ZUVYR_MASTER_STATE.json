@@ -644,5 +644,33 @@
         "live_billing_allowed": false,
         "next_pack": "044",
         "finalized_at": "2026-09-13T21:01:39.904Z"
+    },
+    "pack044": {
+        "status": "LOCKED_VERIFIED",
+        "source_commit": "fb2794a0581618b6cf4e0e1e0fea2437eb398245",
+        "receipt_sha256": "A7C0147EF4AB35A9CC97B9850A308AB3224A8961F6EAA7896A75AA3FDBAC68A7",
+        "dependencies": [
+            "041",
+            "042",
+            "043"
+        ],
+        "global_library": "VERIFIED",
+        "search_filters": [
+            "type",
+            "project",
+            "date",
+            "model",
+            "source"
+        ],
+        "download": "VERIFIED",
+        "delete_restore": "VERIFIED",
+        "send_to": "VERIFIED",
+        "canonical_reuse_without_reupload": "VERIFIED",
+        "owner_isolation": "VERIFIED",
+        "zero_residue": "VERIFIED",
+        "charged_credits_live_e2e": 0,
+        "live_billing_allowed": false,
+        "next_pack": "045",
+        "finalized_at": "2026-09-14T01:52:39.218Z"
     }
 }

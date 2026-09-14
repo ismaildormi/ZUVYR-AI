@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0",
+  "pack_id": "044",
+  "title": "Global Library",
+  "status": "LOCKED_VERIFIED",
+  "finalized_at": "2026-09-14T01:52:39.218Z",
+  "dependencies": [
+    "041",
+    "042",
+    "043"
+  ],
+  "source_commit": "fb2794a0581618b6cf4e0e1e0fea2437eb398245",
+  "migration": {
+    "version": "20260914010922",
+    "name": "pack044_library",
+    "applied_verified": true
+  },
+  "deployments": {
+    "railway": {
+      "deployment_id": "b207b0ef-3078-48e2-ab11-5563442e93af",
+      "commit": "fb2794a0581618b6cf4e0e1e0fea2437eb398245",
+      "status": "SUCCESS"
+    },
+    "vercel": {
+      "deployment_id": "dpl_6967y8nLRdg9hLVEQgWobEuCuoP3",
+      "commit": "fb2794a0581618b6cf4e0e1e0fea2437eb398245",
+      "status": "READY"
+    }
+  },
+  "live_e2e": {
+    "unauth_rejected": true,
+    "search_type_date_model_source": true,
+    "project_filter_db_rollback_control_plane": true,
+    "item_detail_versions_assets": true,
+    "owner_isolation_search": true,
+    "owner_isolation_detail": true,
+    "browser_direct_write_blocked": true,
+    "send_to_no_reupload": true,
+    "signed_download": true,
+    "signed_download_fetch_200": true,
+    "soft_delete": true,
+    "deleted_filter": true,
+    "restore": true,
+    "egress_zero_charge": true,
+    "cleanup_zero_residue": true
+  },
+  "billing": {
+    "live_billing_allowed": false,
+    "charged_credits": 0
+  },
+  "result": {
+    "pack044": "LOCKED_VERIFIED",
+    "next_pack": "045"
+  }
+}
