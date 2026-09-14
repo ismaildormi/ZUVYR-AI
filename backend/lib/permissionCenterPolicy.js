@@ -44,7 +44,7 @@ const ACTIONS = Object.freeze({
     consequenceId: 'permission.preview.view.v1',
     consequence: 'Allow this Code Studio session to view the live preview for this owned project.',
     maxGrantSeconds: 14400,
-    modes: Object.freeze(['allow_once', 'session', 'scoped']),
+    modes: Object.freeze(['allow_once', 'session']),
     scopes: Object.freeze(['project_session']),
     namespaces: Object.freeze(['code_project'])
   }),
@@ -108,7 +108,7 @@ function normalizeAction(value) {
 
 function normalizeHost(value) {
   const host = text(value, 'invalid_permission_network_host', 253).toLowerCase().replace(/\.$/, '');
-  if (host === '*' || !HOST_RE.test(host)) throw permissionError('invalid_permission_network_host');
+  if (host === '*' || !host.includes('.') || !HOST_RE.test(host)) throw permissionError('invalid_permission_network_host');
   if (
     host === 'localhost' ||
     host === '0.0.0.0' ||
@@ -157,6 +157,12 @@ function normalizePermissionRequest(value, { ownerId, now = Date.now() } = {}) {
   if (!definition.modes.includes(grantMode)) throw permissionError('permission_mode_action_mismatch');
   if (!definition.scopes.includes(scopeType)) throw permissionError('permission_scope_action_mismatch');
   if (!definition.namespaces.includes(resourceNamespace)) throw permissionError('permission_resource_action_mismatch');
+  if ((grantMode === 'allow_once' || grantMode === 'session') && scopeType !== 'project_session') {
+    throw permissionError('permission_mode_scope_mismatch');
+  }
+  if (grantMode === 'scoped' && scopeType !== 'project') {
+    throw permissionError('permission_mode_scope_mismatch');
+  }
   if (!UUID_RE.test(resourceId)) throw permissionError('invalid_permission_resource_id');
   if (scopeType === 'project_session' && !sessionId) throw permissionError('permission_session_required');
   if (scopeType === 'project' && sessionId) throw permissionError('permission_session_not_allowed');

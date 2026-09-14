@@ -1,6 +1,7 @@
 'use strict';
 
 const { getDefaultPermissionCenterStore } = require('./permissionCenterRepository');
+const { normalizeHost } = require('./permissionCenterPolicy');
 
 function guardError(code) {
   const error = new Error(code);
@@ -39,6 +40,9 @@ async function consumeCodePermission({
     sessionId: required(sessionId, 'permission_session_required'),
     requestId: required(requestId, 'permission_request_id_required')
   });
+  if (result?.replayed === true) {
+    throw guardError('permission_request_replayed');
+  }
   if (!result || result.allowed !== true) {
     throw guardError(result?.error || 'permission_required');
   }
@@ -58,7 +62,15 @@ async function guardPreviewBeforeExecution(input) {
 }
 
 async function guardNetworkEgressBeforeExecution(input) {
-  return consumeCodePermission({ ...input, action: 'network.egress' });
+  const targetHost = normalizeHost(input.targetHost);
+  const result = await consumeCodePermission({ ...input, action: 'network.egress' });
+  const allowedHosts = Array.isArray(result?.constraints?.allowedHosts)
+    ? result.constraints.allowedHosts.map(normalizeHost)
+    : [];
+  if (!allowedHosts.includes(targetHost)) {
+    throw guardError('permission_network_host_not_granted');
+  }
+  return Object.freeze({ ...result, targetHost });
 }
 
 module.exports = {
