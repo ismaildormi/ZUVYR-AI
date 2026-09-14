@@ -316,3 +316,21 @@ Railway evidence SHA256: $ExpectedEvidenceSha
 - Next pack: 047 — Permission Center
 - Finalized: 2026-09-14T16:21:33.815Z
 <!-- ZUVYR_PACK_046_FINALIZER_END -->
+
+<!-- ZUVYR_PACK_047_FINALIZER_BEGIN -->
+## PACK047 — Permission Center — LOCKED_VERIFIED
+
+- Source commit: `9baf52ba7ab336d02e3867761717b37ba02eb956`
+- Initial source commit: `6e7d20f2e70af5fe4078c947232096acc20e2c06`
+- Migration 61: `20260914170420_pack047_permission_center` — APPLIED_VERIFIED
+- Migration 62: `20260914195606_pack047_permission_replay_scope_hardening` — APPLIED_VERIFIED
+- Railway source deployment: `158fcc57-5304-4224-9538-4fbfbcc852ac` — SUCCESS — `/readyz` PASS
+- Vercel source deployment: `dpl_9MdRvAqvveLhLyoyYwQ1jfJowDnt` — READY production
+- Live E2E: owner/session/project scope, allow-once, replay denial, revoke, expiry, network isolation — PASS
+- Rollback residue: `0`
+- Charged credits: `0`
+- PACK047-specific unindexed FK findings: `0`
+- Receipt SHA256: `1FC061767AE53DF19034590F45A7AE1A8EB5D929D288CF264E41209406AE98DA`
+- `LIVE_BILLING_ALLOWED=false`
+- Next: `PACK048 — Language Engine` after finalizer deployment verification.
+<!-- ZUVYR_PACK_047_FINALIZER_END -->

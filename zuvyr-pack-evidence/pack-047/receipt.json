@@ -1,0 +1,108 @@
+{
+  "pack_id": "047",
+  "title": "Permission Center",
+  "status": "LOCKED_VERIFIED",
+  "source_chain": {
+    "initial_source_commit": "6e7d20f2e70af5fe4078c947232096acc20e2c06",
+    "hardening_commit": "9baf52ba7ab336d02e3867761717b37ba02eb956",
+    "latest_verified_source_commit": "9baf52ba7ab336d02e3867761717b37ba02eb956"
+  },
+  "migrations": [
+    {
+      "version": "20260914170420",
+      "name": "pack047_permission_center",
+      "status": "APPLIED_VERIFIED"
+    },
+    {
+      "version": "20260914195606",
+      "name": "pack047_permission_replay_scope_hardening",
+      "status": "APPLIED_VERIFIED"
+    }
+  ],
+  "capabilities": {
+    "default_decision": "deny",
+    "wildcard_grants": false,
+    "action_classes": [
+      "project.read",
+      "project.write",
+      "dependency.install",
+      "runtime.execute",
+      "preview.view",
+      "preview.open",
+      "network.egress",
+      "deploy.execute"
+    ],
+    "grant_modes": [
+      "allow_once",
+      "session",
+      "scoped"
+    ],
+    "owner_resource_binding": true,
+    "project_scope_binding": true,
+    "session_scope_binding": true,
+    "explicit_consequence_confirmation": true,
+    "expiry": true,
+    "revoke": true,
+    "audit": true,
+    "atomic_consumption": true,
+    "replay_denied": true,
+    "private_network_hosts_denied": true,
+    "deploy_allow_once_only": true
+  },
+  "live_e2e": {
+    "grant_create_ok": true,
+    "first_use_allowed": true,
+    "replay_denied": true,
+    "allow_once_second_request_denied": true,
+    "cross_owner_grant_denied": true,
+    "cross_owner_consume_denied": true,
+    "wrong_session_denied": true,
+    "session_project_scope_mismatch_denied": true,
+    "preview_scoped_denied": true,
+    "revoked_denied": true,
+    "expired_denied": true,
+    "revoke_ok": true,
+    "audit_positive": true,
+    "private_network_host_denied": true,
+    "valid_network_host_grant": true,
+    "rollback_zero_residue": true,
+    "billing_charged_credits": 0
+  },
+  "security": {
+    "rls_enabled_on_permission_tables": true,
+    "authenticated_table_mutation_privileges": 0,
+    "authenticated_permission_rpc_execute_privileges": 0,
+    "service_role_only_mutation_and_rpc": true,
+    "permission_tables_intentionally_have_no_authenticated_rls_policy": true,
+    "secrets_exposed": false
+  },
+  "performance": {
+    "pack047_unindexed_foreign_key_findings": 0,
+    "unrelated_global_advisor_findings_remain": true
+  },
+  "deployment": {
+    "railway": {
+      "deployment_id": "158fcc57-5304-4224-9538-4fbfbcc852ac",
+      "status": "SUCCESS",
+      "commit": "9baf52ba7ab336d02e3867761717b37ba02eb956",
+      "healthcheck": "/readyz",
+      "healthcheck_status": "PASS"
+    },
+    "vercel": {
+      "deployment_id": "dpl_9MdRvAqvveLhLyoyYwQ1jfJowDnt",
+      "status": "READY",
+      "target": "production",
+      "commit": "9baf52ba7ab336d02e3867761717b37ba02eb956"
+    }
+  },
+  "billing": {
+    "charged_credits_live_e2e": 0,
+    "LIVE_BILLING_ALLOWED": false
+  },
+  "finalizer": {
+    "commit": "PENDING_RUNNER_OUTPUT",
+    "final_deploy_verification_required": true
+  },
+  "next_pack": "048 - Language Engine",
+  "finalized_at": "2026-09-14T20:39:54.143Z"
+}
