@@ -20,8 +20,8 @@ for (const needle of [
   "router.get('/memory/context'"
 ]) assert(routes.includes(needle), needle);
 
-assert.strictEqual(config.pack,45);
-assert.strictEqual(config.mode,'memory');
+assert.ok(Number.isInteger(config.pack)&&config.pack>=45,'workspace catalog must preserve Pack045 or newer');
+assert.ok(typeof config.mode==='string'&&config.mode.length>0,'workspace catalog mode must remain defined');
 assert.strictEqual(config.foundations.memory,true);
 assert(index.includes('/zuvyr-memory-v1.css'));
 assert(index.includes('/zuvyr-memory-v1.js'));

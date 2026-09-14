@@ -27,6 +27,7 @@ const {
   getDefaultWorkspaceProjectStore
 } = require('./workspaceProjectRepository');
 const { getDefaultWorkspaceLibraryStore } = require('./workspaceLibraryRepository');
+const { getDefaultUniversalActionsStore } = require('./universalActionsRepository');
 
 function validation(res, error) {
   return res.status(400).json({
@@ -165,6 +166,7 @@ function createWorkspaceRouter(options = {}) {
   const projectStore =
     options.projectStore || getDefaultWorkspaceProjectStore();
   const libraryStore = options.libraryStore || getDefaultWorkspaceLibraryStore();
+  const universalActionsStore = options.universalActionsStore || getDefaultUniversalActionsStore({ libraryStore });
   const memoryStore =
     options.memoryStore || getDefaultWorkspaceMemoryStore();
   const contextGraphStore =
@@ -272,7 +274,73 @@ function createWorkspaceRouter(options = {}) {
   router.post('/library/items/:contentId/download',async(req,res)=>{try{return res.json({status:'success',download:await libraryStore.createDownload({ownerId:req.userId,contentId:uuid(req.params.contentId,'invalid_workspace_library_content_id'),assetId:req.body?.assetId?uuid(req.body.assetId,'invalid_workspace_library_asset_id'):null})})}catch(e){if(e?.code?.startsWith('invalid_'))return validation(res,e);return libraryFailure(res,e)}});
   router.delete('/library/items/:contentId',async(req,res)=>{try{assertProjectWriteEnabled();return res.json({status:'success',persisted:true,item:await libraryStore.softDelete({ownerId:req.userId,contentId:uuid(req.params.contentId,'invalid_workspace_library_content_id')})})}catch(e){if(e?.code?.startsWith('invalid_'))return validation(res,e);if(e?.code==='workspace_executor_unavailable')return executorUnavailable(res,'workspace_write');return libraryFailure(res,e)}});
   router.post('/library/items/:contentId/restore',async(req,res)=>{try{assertProjectWriteEnabled();return res.json({status:'success',persisted:true,item:await libraryStore.restore({ownerId:req.userId,contentId:uuid(req.params.contentId,'invalid_workspace_library_content_id')})})}catch(e){if(e?.code?.startsWith('invalid_'))return validation(res,e);if(e?.code==='workspace_executor_unavailable')return executorUnavailable(res,'workspace_write');return libraryFailure(res,e)}});
-  router.post('/library/items/:contentId/send-to',async(req,res)=>{try{return res.json({status:'success',handoff:await libraryStore.createSendTo({ownerId:req.userId,contentId:uuid(req.params.contentId,'invalid_workspace_library_content_id'),destination:req.body?.destination})})}catch(e){if(e?.code?.startsWith('invalid_'))return validation(res,e);return libraryFailure(res,e)}});
+  function universalActionFailure(res,e){
+    const code=e?.code||'workspace_universal_action_failed';
+    if(code==='workspace_universal_action_not_found'||code.includes('source_content_not_found')||code.includes('source_version_not_found')) return res.status(404).json({status:'error',code,message:'Action source was not found.'});
+    if(code==='workspace_universal_permission_required') return res.status(403).json({status:'error',code,message:'A current scoped project permission is required.'});
+    if(code.includes('already_current')||code.includes('path_conflict')||code.includes('reference_changed')||code.includes('not_undoable')) return res.status(409).json({status:'error',code,message:'Action conflicts with the current resource state.'});
+    if(code.includes('invalid')||code.includes('mismatch')||code.includes('missing')) return res.status(400).json({status:'error',code,message:'Universal action request is invalid.'});
+    console.error('[workspace/universal-actions] operation failed:',code);
+    return res.status(500).json({status:'error',code:'workspace_universal_action_failed',message:'Universal action could not be completed.'});
+  }
+  router.post('/library/items/:contentId/send-to',async(req,res)=>{
+    try{
+      const handoff=await universalActionsStore.sendTo({
+        ownerId:req.userId,
+        contentId:uuid(req.params.contentId,'invalid_workspace_library_content_id'),
+        destination:req.body?.destination,
+        codeProjectId:req.body?.codeProjectId?uuid(req.body.codeProjectId,'invalid_code_project_id'):null,
+        path:req.body?.path||null,
+        sessionId:req.body?.sessionId||null,
+        requestId:req.body?.requestId||null,
+        metadata:req.body?.metadata||{}
+      });
+      return res.json({status:'success',handoff});
+    }catch(e){if(e?.code?.startsWith('invalid_'))return validation(res,e);return universalActionFailure(res,e)}
+  });
+  router.post('/library/items/:contentId/actions',async(req,res)=>{
+    try{
+      const action=await universalActionsStore.createContextAction({
+        ownerId:req.userId,contentId:uuid(req.params.contentId,'invalid_workspace_library_content_id'),
+        action:req.body?.action,requestId:req.body?.requestId||null,metadata:req.body?.metadata||{}
+      });
+      return res.status(201).json({status:'success',action});
+    }catch(e){if(e?.code?.startsWith('invalid_'))return validation(res,e);return universalActionFailure(res,e)}
+  });
+  router.get('/library/items/:contentId/versions/compare',async(req,res)=>{
+    try{
+      const comparison=await universalActionsStore.compareVersions({
+        ownerId:req.userId,contentId:uuid(req.params.contentId,'invalid_workspace_library_content_id'),
+        fromVersionId:uuid(req.query.fromVersionId,'invalid_workspace_content_version_id'),
+        toVersionId:uuid(req.query.toVersionId,'invalid_workspace_content_version_id')
+      });
+      return res.json({status:'success',comparison});
+    }catch(e){if(e?.code?.startsWith('invalid_'))return validation(res,e);return universalActionFailure(res,e)}
+  });
+  router.post('/library/items/:contentId/versions/:versionId/restore',async(req,res)=>{
+    try{
+      assertProjectWriteEnabled();
+      const action=await universalActionsStore.restoreVersion({
+        ownerId:req.userId,contentId:uuid(req.params.contentId,'invalid_workspace_library_content_id'),
+        versionId:uuid(req.params.versionId,'invalid_workspace_content_version_id'),
+        requestId:req.body?.requestId||null,metadata:req.body?.metadata||{}
+      });
+      return res.json({status:'success',action});
+    }catch(e){if(e?.code==='workspace_executor_unavailable')return executorUnavailable(res,'workspace_write');if(e?.code?.startsWith('invalid_'))return validation(res,e);return universalActionFailure(res,e)}
+  });
+  router.get('/actions/:actionId',async(req,res)=>{
+    try{return res.json({status:'success',action:await universalActionsStore.getAction({ownerId:req.userId,actionId:uuid(req.params.actionId,'invalid_universal_action_id')})})}
+    catch(e){if(e?.code?.startsWith('invalid_'))return validation(res,e);return universalActionFailure(res,e)}
+  });
+  router.post('/actions/:actionId/undo',async(req,res)=>{
+    try{
+      const action=await universalActionsStore.undoAction({
+        ownerId:req.userId,actionId:uuid(req.params.actionId,'invalid_universal_action_id'),
+        sessionId:req.body?.sessionId||null,requestId:req.body?.requestId||null
+      });
+      return res.json({status:'success',action});
+    }catch(e){if(e?.code?.startsWith('invalid_'))return validation(res,e);return universalActionFailure(res,e)}
+  });
 
   // provided by the CRUD routes below.
   router.post('/projects/validate', (req, res) => {
