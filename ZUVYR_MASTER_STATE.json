@@ -672,5 +672,43 @@
         "live_billing_allowed": false,
         "next_pack": "045",
         "finalized_at": "2026-09-14T01:52:39.218Z"
+    },
+    "pack045": {
+        "status": "LOCKED_VERIFIED",
+        "source_commit": "80461f39669a0d8972d84b27d828dacaa2e83506",
+        "receipt_sha256": "63E3BE69543C527553565D93E2A621E281729BD072D9BCA7B5CB718EF7D2CB3D",
+        "dependencies": [
+            "041",
+            "042",
+            "043",
+            "044"
+        ],
+        "memory_scopes": [
+            "account",
+            "project"
+        ],
+        "memory_categories": [
+            "preference",
+            "profile",
+            "goal",
+            "decision",
+            "constraint",
+            "fact",
+            "relationship",
+            "workflow",
+            "project_context"
+        ],
+        "retrieval": "VERIFIED",
+        "edit_versioning": "VERIFIED",
+        "undo": "VERIFIED",
+        "hard_forget": "VERIFIED",
+        "project_linking": "VERIFIED",
+        "owner_isolation": "VERIFIED",
+        "memory_training_permissions_independent": true,
+        "rollback_e2e_zero_residue": true,
+        "charged_credits_live_e2e": 0,
+        "live_billing_allowed": false,
+        "next_pack": "046",
+        "finalized_at": "2026-09-14T04:44:28.435Z"
     }
 }

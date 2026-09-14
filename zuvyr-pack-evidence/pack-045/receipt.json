@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0",
+  "pack_id": "045",
+  "title": "Memory / Personal Intelligence",
+  "status": "LOCKED_VERIFIED",
+  "finalized_at": "2026-09-14T04:44:28.435Z",
+  "dependencies": [
+    "041",
+    "042",
+    "043",
+    "044"
+  ],
+  "source_commit": "80461f39669a0d8972d84b27d828dacaa2e83506",
+  "migration": {
+    "version": "20260914021136",
+    "name": "pack045_memory_personal_intelligence",
+    "applied_verified": true
+  },
+  "deployments": {
+    "railway": {
+      "deployment_id": "275897c1-82d1-45f4-afdc-4d7002a7021f",
+      "status": "SUCCESS",
+      "healthcheck": "/readyz",
+      "note": "Production CLI deployment completed successfully from the working tree immediately after source commit."
+    },
+    "vercel": {
+      "deployment_id": "dpl_6nUR1QJ9dmqyyc6ujmcjuS2yLUhg",
+      "status": "READY",
+      "source_commit": "80461f39669a0d8972d84b27d828dacaa2e83506",
+      "target": "production"
+    }
+  },
+  "live_verification": {
+    "retrieval_disabled_blocks": true,
+    "account_scope_retrieval": true,
+    "project_scope_plus_account_retrieval": true,
+    "update_versioned": true,
+    "undo_restores_previous": true,
+    "owner_search_isolation": true,
+    "hard_forget_removes_content_and_versions": true,
+    "forget_audit_without_content": true,
+    "memory_training_permissions_independent": true,
+    "service_role_only_memory_rpcs": true,
+    "authenticated_memory_tables_select_only": true,
+    "rollback_e2e_zero_residue": true,
+    "frontend_memory_asset_200": true
+  },
+  "billing": {
+    "live_billing_allowed": false,
+    "charged_credits": 0
+  },
+  "result": {
+    "pack045": "LOCKED_VERIFIED",
+    "next_pack": "046"
+  }
+}
