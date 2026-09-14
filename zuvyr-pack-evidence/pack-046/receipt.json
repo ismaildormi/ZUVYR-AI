@@ -1,0 +1,104 @@
+{
+  "pack_id": "046",
+  "pack_title": "Knowledge / Context Graph",
+  "status": "LOCKED_VERIFIED",
+  "finalized_at": "2026-09-14T16:21:33.815Z",
+  "pre_finalizer_commit": "29e719a23fc52f11911c84ea10f2493acb91a619",
+  "source_chain": {
+    "initial_source_commit": "06733bc4d909401650eed26187b1186779b1449d",
+    "suite_loader_fix_commit": "786d34a8311ed068c8e6fcd2ca2a7521fd1abb3a",
+    "deployment_scope_fix_commit": "29e719a23fc52f11911c84ea10f2493acb91a619",
+    "latest_verified_source_commit": "29e719a23fc52f11911c84ea10f2493acb91a619"
+  },
+  "migrations": [
+    {
+      "name": "pack046_knowledge_context_graph",
+      "version": "20260914050013",
+      "production": "APPLIED_VERIFIED"
+    },
+    {
+      "name": "pack046_context_graph_deployment_scope_fix",
+      "version": "20260914155744",
+      "production": "APPLIED_VERIFIED"
+    },
+    {
+      "name": "pack046_context_graph_fk_indexes",
+      "version": "20260914161108",
+      "production": "APPLIED_VERIFIED",
+      "source_path": "backend/60_pack046_context_graph_fk_indexes.sql",
+      "source_sha256": "82A113C640CBEF573D28D61E47F14269480474AC546880D43698AC6FD09DEBB7"
+    }
+  ],
+  "regression": {
+    "pack046_unit": "PASS",
+    "pack046_wiring": "PASS",
+    "deployment_scope_fix": "PASS"
+  },
+  "production_deploy_before_finalizer": {
+    "railway": {
+      "deployment_id": "c7d31dd0-6760-4e83-8611-08a0c1a1e663",
+      "status": "SUCCESS",
+      "commit": "29e719a23fc52f11911c84ea10f2493acb91a619",
+      "healthcheck_path": "/readyz"
+    },
+    "vercel": {
+      "deployment_id": "dpl_5yCJ3gGWhNaytpAEjiKVXW1YCU9v",
+      "status": "READY",
+      "commit": "29e719a23fc52f11911c84ea10f2493acb91a619",
+      "target": "production"
+    }
+  },
+  "live_e2e": {
+    "status": "PASS",
+    "scan_scope_ok": true,
+    "owner_b_isolated": true,
+    "owner_scoped_flag": true,
+    "query_marker_found": true,
+    "project_filter_found": true,
+    "fixture_node_coverage": true,
+    "project_decision_edge": true,
+    "rollback_zero_residue": true,
+    "deployment_scope_fixed": true,
+    "refresh_edges_positive": true,
+    "refresh_nodes_positive": true,
+    "asset_represents_content": true,
+    "decision_type_depth0_only": true
+  },
+  "security_verification": {
+    "context_edges_rls": true,
+    "context_nodes_rls": true,
+    "service_refresh_execute": true,
+    "service_retrieve_execute": true,
+    "authenticated_edges_insert": false,
+    "authenticated_nodes_delete": false,
+    "authenticated_nodes_insert": false,
+    "authenticated_nodes_update": false,
+    "authenticated_refresh_execute": false,
+    "authenticated_retrieve_execute": false,
+    "residue_memory": 0,
+    "residue_content": 0,
+    "pack046_specific_security_advisor_blockers": 0
+  },
+  "performance_verification": {
+    "pre_hardening_unindexed_fk_findings": 3,
+    "post_hardening_unindexed_fk_findings": 0,
+    "post_hardening_total_project_unindexed_fk_findings": 62,
+    "fixed_indexes": [
+      "zuvyr_context_edges_from_node_idx",
+      "zuvyr_context_edges_to_node_idx",
+      "zuvyr_context_nodes_project_idx"
+    ],
+    "unrelated_global_advisor_findings_deferred": true
+  },
+  "billing": {
+    "charged_credits": 0,
+    "LIVE_BILLING_ALLOWED": false
+  },
+  "backup": {
+    "master_state_sha256": "2A040A495F8F3D98B9E62244C4C21C7B29ADAD892FB850CF0C85C4811977FB1E",
+    "master_matrix_sha256": "19621133B96E96F6D79A3C2FDF1A94238B4E76FF2C57ED4F4592E02C65F613BB",
+    "location": "local_temp_not_staged"
+  },
+  "finalizer_commit_identity": "The exact commit containing this receipt is emitted after git commit/push and must be deployment-verified before Pack047 starts.",
+  "next_pack": "047 - Permission Center"
+}
