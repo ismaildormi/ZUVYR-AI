@@ -5,6 +5,7 @@ const { createReplicateImageAdapter, REPLICATE_IMAGE_MODEL } = require('../../..
 const DEFAULT_IMAGE_PROVIDER = 'replicate';
 const DEFAULT_IMAGE_MODEL = REPLICATE_IMAGE_MODEL;
 const DEFAULT_FAL_IMAGE_MODEL = 'fal-ai/flux/schnell';
+const HF_FAL_ROUTER_BASE = 'https://router.huggingface.co/fal-ai';
 const providers = new Map();
 
 function registerImageProvider(key, adapter) {
@@ -60,6 +61,7 @@ function sanitizeProviderMessage(value) {
   return text
     .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, 'Bearer [REDACTED]')
     .replace(/\br8_[A-Za-z0-9_-]+\b/g, 'r8_[REDACTED]')
+    .replace(/\bhf_[A-Za-z0-9_-]+\b/g, 'hf_[REDACTED]')
     .replace(/([?&](?:token|key|api_key|access_token)=)[^&\s]+/gi, '$1[REDACTED]')
     .slice(0, 600);
 }
@@ -101,6 +103,155 @@ function providerAttemptRetryable(attempt) {
   if ([400, 401, 402, 403, 404, 409, 422].includes(status)) return false;
   if (status === 408 || status === 429 || status >= 500) return true;
   return true;
+}
+
+function huggingFaceProviderError(message, response, body = '') {
+  const error = new Error(message);
+  error.statusCode = Number(response && response.status) || null;
+  error.providerCode = 'HuggingFaceInferenceProviderError';
+  error.retryable =
+    error.statusCode === 408 ||
+    error.statusCode === 429 ||
+    Number(error.statusCode) >= 500;
+  error.cause = new Error(
+    `${message}: ${error.statusCode || 'unknown'} ${sanitizeProviderMessage(body || response?.statusText || '')}`
+  );
+  return error;
+}
+
+async function fetchJson(url, options = {}, fetchImpl = globalThis.fetch) {
+  if (typeof fetchImpl !== 'function') {
+    const error = new Error('provider_fetch_unavailable');
+    error.retryable = false;
+    throw error;
+  }
+
+  const response = await fetchImpl(url, options);
+  const body = await response.text();
+  if (!response.ok) {
+    throw huggingFaceProviderError('huggingface_provider_request_failed', response, body);
+  }
+
+  try {
+    return JSON.parse(body);
+  } catch (cause) {
+    const error = new Error('huggingface_provider_invalid_json');
+    error.providerCode = 'HuggingFaceInferenceProviderOutputError';
+    error.statusCode = Number(response.status) || null;
+    error.retryable = false;
+    error.cause = cause;
+    throw error;
+  }
+}
+
+function validateFalProviderModel(model) {
+  const value = String(model || '').trim();
+  if (!/^fal-ai\/[A-Za-z0-9._/-]+$/.test(value) || value.includes('..')) {
+    const error = new Error('invalid_fal_provider_model');
+    error.statusCode = 400;
+    error.retryable = false;
+    throw error;
+  }
+  return value;
+}
+
+async function generateViaHuggingFaceFal(prompt, opts = {}) {
+  const token = String(opts.apiKey || process.env.HF_TOKEN || '').trim();
+  if (!token) {
+    const error = new Error('missing_huggingface_token');
+    error.statusCode = 401;
+    error.retryable = false;
+    throw error;
+  }
+
+  const model = validateFalProviderModel(
+    opts.model || process.env.FAL_IMAGE_MODEL || DEFAULT_FAL_IMAGE_MODEL
+  );
+  const fetchImpl = opts.fetchImpl || globalThis.fetch;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  };
+  const query = '?_subdomain=queue';
+  const submitUrl = `${HF_FAL_ROUTER_BASE}/${model}${query}`;
+  const submitted = await fetchJson(
+    submitUrl,
+    {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        prompt: String(prompt || ''),
+        image_size: 'landscape_4_3',
+        num_images: 1,
+        enable_safety_checker: true,
+        output_format: 'jpeg',
+        ...(opts.input || {})
+      })
+    },
+    fetchImpl
+  );
+
+  if (!submitted || typeof submitted.response_url !== 'string') {
+    const error = new Error('huggingface_fal_missing_response_url');
+    error.providerCode = 'HuggingFaceInferenceProviderOutputError';
+    error.retryable = false;
+    throw error;
+  }
+
+  let routedPath;
+  try {
+    routedPath = new URL(submitted.response_url).pathname;
+  } catch (_) {
+    const error = new Error('huggingface_fal_invalid_response_url');
+    error.providerCode = 'HuggingFaceInferenceProviderOutputError';
+    error.retryable = false;
+    throw error;
+  }
+
+  if (
+    !/^\/fal-ai\/[A-Za-z0-9._/-]+\/requests\/[A-Za-z0-9._-]+$/.test(routedPath) ||
+    routedPath.includes('..')
+  ) {
+    const error = new Error('huggingface_fal_unsafe_response_path');
+    error.providerCode = 'HuggingFaceInferenceProviderOutputError';
+    error.retryable = false;
+    throw error;
+  }
+
+  const statusUrl = `${HF_FAL_ROUTER_BASE}${routedPath}/status${query}`;
+  const resultUrl = `${HF_FAL_ROUTER_BASE}${routedPath}${query}`;
+  let status = String(submitted.status || '').toUpperCase();
+  const deadline = Date.now() + Number(opts.pollTimeoutMs || 90_000);
+
+  while (status !== 'COMPLETED') {
+    if (['FAILED', 'CANCELLED', 'ERROR'].includes(status)) {
+      const error = new Error(`huggingface_fal_${status.toLowerCase()}`);
+      error.providerCode = 'HuggingFaceInferenceProviderJobError';
+      error.retryable = false;
+      throw error;
+    }
+    if (Date.now() >= deadline) {
+      const error = new Error('huggingface_fal_poll_timeout');
+      error.providerCode = 'HuggingFaceInferenceProviderTimeout';
+      error.statusCode = 408;
+      error.retryable = true;
+      throw error;
+    }
+    await new Promise(resolve => setTimeout(resolve, Number(opts.pollIntervalMs || 500)));
+    const polled = await fetchJson(statusUrl, { method: 'GET', headers }, fetchImpl);
+    status = String(polled && polled.status || '').toUpperCase();
+  }
+
+  const result = await fetchJson(resultUrl, { method: 'GET', headers }, fetchImpl);
+  const url = result?.images?.[0]?.url;
+  if (typeof url !== 'string' || !/^https:\/\//i.test(url)) {
+    const error = new Error('huggingface_fal_returned_no_image_url');
+    error.providerCode = 'HuggingFaceInferenceProviderOutputError';
+    error.retryable = false;
+    throw error;
+  }
+
+  return url;
 }
 
 async function generateImage(prompt, opts = {}) {
@@ -153,11 +304,23 @@ async function generateImage(prompt, opts = {}) {
 
 registerImageProvider('fal', {
   label: 'Fal AI',
-  isConfigured: () => Boolean(process.env.FAL_KEY),
+  isConfigured: () => Boolean(process.env.HF_TOKEN || process.env.FAL_KEY),
   async generate(prompt, opts = {}) {
+    const model = opts.model || process.env.FAL_IMAGE_MODEL || DEFAULT_FAL_IMAGE_MODEL;
+
+    // Prefer Hugging Face Inference Providers routing when an HF token exists.
+    // This keeps the same Fal model/cost semantics but uses the user's Hugging Face
+    // Inference Providers credits instead of a separate direct Fal account balance.
+    if (process.env.HF_TOKEN) {
+      return generateViaHuggingFaceFal(prompt, {
+        ...opts,
+        model,
+        apiKey: process.env.HF_TOKEN
+      });
+    }
+
     const { fal } = await import('@fal-ai/client');
     fal.config({ credentials: opts.apiKey || process.env.FAL_KEY });
-    const model = opts.model || process.env.FAL_IMAGE_MODEL || DEFAULT_FAL_IMAGE_MODEL;
     const result = await fal.subscribe(model, {
       input: {
         prompt,
@@ -198,6 +361,7 @@ module.exports = {
   DEFAULT_IMAGE_PROVIDER,
   DEFAULT_IMAGE_MODEL,
   DEFAULT_FAL_IMAGE_MODEL,
+  HF_FAL_ROUTER_BASE,
   registerImageProvider,
   getImageProvider,
   listImageProviders,
@@ -205,5 +369,6 @@ module.exports = {
   sanitizeProviderMessage,
   providerFailureEvidence,
   providerAttemptRetryable,
+  generateViaHuggingFaceFal,
   generateImage,
 };

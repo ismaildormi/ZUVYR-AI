@@ -101,7 +101,7 @@
   "launchProvider": {
     "provider": "fal",
     "model": "fal-ai/flux/schnell",
-    "credentialEnvironment": "FAL_KEY",
+    "credentialEnvironment": "HF_TOKEN",
     "pricing": {
       "unitType": "megapixels",
       "fixedEffectiveCostMicroUsd": "3000",
@@ -122,6 +122,15 @@
       }
     ],
     "externalGate": "M12",
-    "liveE2ERequiredBeforePackDone": true
+    "liveE2ERequiredBeforePackDone": true,
+    "routing": {
+      "gateway": "huggingface_inference_providers",
+      "credentialEnvironment": "HF_TOKEN",
+      "upstreamProvider": "fal-ai",
+      "route": "https://router.huggingface.co/fal-ai",
+      "fallbackCredentialEnvironment": "FAL_KEY",
+      "verifiedAt": "2026-09-15T00:00:00Z",
+      "fallbackSemantics": "Direct Fal is used only when HF_TOKEN is not configured; it is not a same-request fallback."
+    }
   }
 }

@@ -15,6 +15,9 @@ async function run() {
   assert.equal(imageSystem.launchProvider.model, 'fal-ai/flux/schnell');
   assert.equal(imageSystem.launchProvider.pricing.fixedEffectiveCostMicroUsd, '3000');
   assert.equal(imageSystem.launchProvider.pricing.commercialUseVerified, true);
+  assert.equal(imageSystem.launchProvider.credentialEnvironment, 'HF_TOKEN');
+  assert.equal(imageSystem.launchProvider.routing.gateway, 'huggingface_inference_providers');
+  assert.equal(imageSystem.launchProvider.routing.upstreamProvider, 'fal-ai');
   assert.equal(imageSystem.launchProvider.externalGate, 'M12');
   assert.equal(imageSystem.operations.generate.status, 'implemented_m12_live_e2e_pending');
   assert.equal(imageSystem.providers.replicate.status, 'verified_launch_provider');
@@ -51,7 +54,9 @@ async function run() {
   const {
     providerFailureEvidence,
     providerAttemptRetryable,
-    sanitizeProviderMessage
+    sanitizeProviderMessage,
+    generateViaHuggingFaceFal,
+    HF_FAL_ROUTER_BASE
   } = require('./src/modules/ai/providers/imageProviders');
 
   const providerEvidence = providerFailureEvidence({
@@ -72,6 +77,45 @@ async function run() {
   assert.equal(providerAttemptRetryable({ status: 'error', statusCode: 402 }), false);
   assert.equal(providerAttemptRetryable({ status: 'error', statusCode: 429 }), true);
   assert.equal(providerAttemptRetryable({ status: 'error', statusCode: 503 }), true);
+
+  assert.match(sanitizeProviderMessage('hf_SUPERSECRET'), /hf_\[REDACTED\]/);
+  const hfCalls = [];
+  const hfFetch = async (url, options = {}) => {
+    hfCalls.push({ url: String(url), options });
+    const payload = hfCalls.length === 1
+      ? {
+          request_id: 'test123',
+          status: 'COMPLETED',
+          response_url: 'https://queue.fal.run/fal-ai/flux/schnell/requests/test123'
+        }
+      : {
+          images: [{ url: 'https://v3.fal.media/files/example.jpeg' }]
+        };
+    return {
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      async text() { return JSON.stringify(payload); }
+    };
+  };
+  const hfUrl = await generateViaHuggingFaceFal('test prompt', {
+    apiKey: 'hf_test_token',
+    model: 'fal-ai/flux/schnell',
+    fetchImpl: hfFetch,
+    pollIntervalMs: 1,
+    pollTimeoutMs: 1000
+  });
+  assert.equal(hfUrl, 'https://v3.fal.media/files/example.jpeg');
+  assert.equal(hfCalls.length, 2);
+  assert.equal(
+    hfCalls[0].url,
+    `${HF_FAL_ROUTER_BASE}/fal-ai/flux/schnell?_subdomain=queue`
+  );
+  assert.equal(
+    hfCalls[1].url,
+    `${HF_FAL_ROUTER_BASE}/fal-ai/flux/schnell/requests/test123?_subdomain=queue`
+  );
+  assert.equal(hfCalls[0].options.headers.Authorization, 'Bearer hf_test_token');
 
   const basic = normalizeImageRequest({ imageOperation: 'generate' });
   assert.equal(assertImageRequestAvailable(basic).operation, 'generate');
@@ -120,6 +164,10 @@ async function run() {
   assert.match(providers, /providerMessage/);
   assert.match(providers, /DEFAULT_FAL_IMAGE_MODEL/);
   assert.match(providers, /image_size: 'landscape_4_3'/);
+  assert.match(providers, /HF_FAL_ROUTER_BASE/);
+  assert.match(providers, /generateViaHuggingFaceFal/);
+  assert.match(providers, /process\.env\.HF_TOKEN/);
+  assert.match(providers, /huggingface\.co\/fal-ai/);
   assert.match(worker, /chain: \['fal', 'replicate'\]/);
   assert.match(worker, /DEFAULT_FAL_IMAGE_MODEL/);
   assert.match(worker, /UnrecoverableError/);
@@ -148,7 +196,7 @@ async function run() {
   const product = require('./config/unified-product.v1.json');
   assert.equal(product.sections.find(item => item.id === 'images').status, 'implemented_m12_live_e2e_pending');
 
-  console.log('PASS: Pack061 FIX2 verifies fal FLUX Schnell launch pricing/model, keeps Replicate fallback diagnostics, stores owned canonical images, settles exact reserved credits, exposes durable history/download identity, and blocks Pack062 options');
+  console.log('PASS: Pack061 FIX4 routes fal FLUX Schnell through Hugging Face Inference Providers when HF_TOKEN exists, preserves direct Fal/Replicate fallbacks, canonical image persistence, exact credits and Pack062 guards');
   console.log('PROVIDER / NETWORK CALLS: NONE (unit/static verification only; M12 live E2E remains external gate)');
 }
 
