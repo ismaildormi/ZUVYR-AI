@@ -1,0 +1,78 @@
+{
+  "pack_id": "052",
+  "title": "Attachments + Recent/Project/Library Picker",
+  "status": "LOCKED_VERIFIED",
+  "parent_pack_finalizer_commit": "a72801f3440434f4f5881542e9616d3a7ad6c052",
+  "source_commit": "1caa3ea0248271ec2b166d45464b796fe88b156b",
+  "cumulative_source_zip": "ZUVYR_PACK052_FIX2_CUMULATIVE_PREPARED.zip",
+  "cumulative_source_zip_sha256": "079309BF911746D36DB94A03CD6ADF675D3E180BE73473843E936E6135D20189",
+  "fix_iterations": [
+    {
+      "id": "PACK052-FIX1",
+      "reason": "unit-test harness constructed an unused Supabase client without local test env",
+      "resolution": "test-only placeholders; no database/network call added"
+    },
+    {
+      "id": "PACK052-FIX2",
+      "reason": "stale Pack043 projects_crud expectation after Pack046 context_graph became canonical",
+      "resolution": "test expectation aligned to context_graph while asserting projects and contextGraph foundations remain enabled"
+    }
+  ],
+  "database": {
+    "migration": "64_pack052_attachment_identity.sql",
+    "production_migration_name": "pack052_attachment_identity",
+    "production_migration_version": "20260915154631",
+    "status": "APPLIED_VERIFIED",
+    "canonical_asset_id": true,
+    "identity_function": true,
+    "identity_trigger": true,
+    "identity_index": true,
+    "execute_privileges": {
+      "anon": false,
+      "authenticated": false,
+      "service_role": true
+    }
+  },
+  "verified_capabilities": {
+    "canonical_attachment_identity": true,
+    "historic_id_bridge": true,
+    "chat_code_attachment_reuse": true,
+    "recent_project_library_picker_wiring": true,
+    "upload_progress_remove_retry": true,
+    "reload_persistence": true,
+    "owner_scoped_resolution": true,
+    "billing_guards": true
+  },
+  "tests": {
+    "pack052_identity": "PASS",
+    "pack052_resolution": "PASS",
+    "attachment_context": "PASS",
+    "private_attachment_routes": "PASS",
+    "attachment_completion_security_credit": "PASS",
+    "frontend_multi_attachment_sources": "PASS",
+    "multimodal_chat_wiring": "PASS",
+    "chat_code_memory": "PASS",
+    "workspace_library": "PASS",
+    "workspace_project_routes": "PASS",
+    "pack051_regression": "PASS",
+    "native_navigation_dom_simulation": "PASS"
+  },
+  "source_deployments": {
+    "vercel": {
+      "deployment_id": "dpl_5nV3i71VaT2d4EdWvwySQD4eSrFm",
+      "status": "READY",
+      "target": "production",
+      "commit": "1caa3ea0248271ec2b166d45464b796fe88b156b"
+    },
+    "railway_clean_clone_upload": {
+      "deployment_id": "edc30cf8-6384-4e3a-af77-85d69bb97519",
+      "connector_state_at_finalizer_preparation": "INITIALIZING",
+      "counted_as_final_verification": false,
+      "note": "Finalizer performs a fresh clean-clone upload; connector cross-check after the finalizer is the authoritative production gate."
+    }
+  },
+  "live_billing_allowed": false,
+  "next_pack": "053 - Multimodal & Document Understanding",
+  "finalizer_live_cross_check_required": true,
+  "prepared_at": "2026-09-15"
+}

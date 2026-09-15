@@ -411,3 +411,24 @@ Railway evidence SHA256: $ExpectedEvidenceSha
 - `LIVE_BILLING_ALLOWED=false`
 - Next: `PACK052 — Attachments + Recent/Project/Library Picker` after exact finalizer deployment verification.
 <!-- ZUVYR_PACK_051_FINALIZER_END -->
+
+<!-- ZUVYR_PACK_052_FINALIZER_BEGIN -->
+## PACK052 — Attachments + Recent/Project/Library Picker — LOCKED_VERIFIED
+
+- Parent finalizer: `a72801f3440434f4f5881542e9616d3a7ad6c052`
+- Source commit: `1caa3ea0248271ec2b166d45464b796fe88b156b`
+- Cumulative source ZIP SHA256: `079309BF911746D36DB94A03CD6ADF675D3E180BE73473843E936E6135D20189`
+- Migration 64 / `pack052_attachment_identity` / `20260915154631`: APPLIED_VERIFIED
+- Canonical attachment identity + historic ID bridge: PASS
+- Chat/Code attachment reuse + Recent/Project/Library picker wiring: PASS
+- Progress/remove/retry + reload persistence + ownership guards: PASS
+- Billing guards and no duplicate attachment charge regression: PASS
+- FIX1 test-only Supabase construction dependency: RESOLVED
+- FIX2 stale `projects_crud` expectation after Pack046 `context_graph`: RESOLVED
+- Full local regression set: PASS
+- Vercel source deployment `dpl_5nV3i71VaT2d4EdWvwySQD4eSrFm`: READY production
+- Railway source upload `edc30cf8-6384-4e3a-af77-85d69bb97519`: not counted until finalizer cross-check; finalizer performs fresh clean-clone upload
+- Receipt SHA256: `BEC40C789BA030BACBDBB794E9B29DA3592D6AAF805BA8D02C3ECAE0375ADE5D`
+- `LIVE_BILLING_ALLOWED=false`
+- Next: `PACK053 — Multimodal & Document Understanding` after finalizer production cross-check.
+<!-- ZUVYR_PACK_052_FINALIZER_END -->
