@@ -1,0 +1,77 @@
+{
+  "pack_id": "058",
+  "title": "Documents + Templates DOCX/PDF/TXT/MD",
+  "status": "FINALIZER_PREPARED",
+  "parent_pack": 57,
+  "parent_pack_finalizer_commit": "ea10852b0fdddb585ddac883bedde7d884be79a9",
+  "parent_cumulative_zip_sha256": "0BE92F4170A9AB946CE64F8A9E6F76C976FF364DA36872571CC0BC2047B9A849",
+  "source_commit": "370ecb605a3bef1916d487743fd79d8895593c6b",
+  "source_fix_iteration": 2,
+  "cumulative_source_zip": "ZUVYR_PACK058_FIX2_CUMULATIVE_PREPARED.zip",
+  "cumulative_source_zip_sha256": "3F20B19FD7D038C2557C887C3B1C138722909E6B8AEAF1FBF113FC01F805AD60",
+  "package_lock_sha256": "6C8304EC091C24763FD5E6D9FE50BF653694EC98F14AA8ABEC16FEAC6B63E267",
+  "database_migration": "NOT_REQUIRED",
+  "fix_history": [
+    {
+      "id": "PACK058-FIX1",
+      "result": "FAILED_BEFORE_COMMIT",
+      "reason": "first Arabic font package exposed a webfont path that fontkit could not embed reliably"
+    },
+    {
+      "id": "PACK058-FIX2",
+      "result": "PASS",
+      "reason": "resolved a real TTF through the package public entry and verified multilingual PDF generation"
+    }
+  ],
+  "verified_capabilities": {
+    "docx_generation": true,
+    "pdf_generation": true,
+    "txt_generation": true,
+    "markdown_generation": true,
+    "arabic_french_english_pdf": true,
+    "templates_builtin_and_private": true,
+    "owner_scoped_document_routes": true,
+    "canonical_asset_persistence": true,
+    "project_linking": true,
+    "signed_library_downloads": true,
+    "zero_model_provider_calls": true,
+    "zero_generation_credits": true
+  },
+  "tests": {
+    "pack058_documents_templates": "PASS",
+    "pack058_document_routes": "PASS",
+    "pack057_specialized_research": "PASS",
+    "pack056_deep_research": "PASS",
+    "pack055_web_search": "PASS",
+    "pack054_sources_citations": "PASS",
+    "pack053_multimodal": "PASS",
+    "pack052_attachment_identity_resolution": "PASS",
+    "pack051_chat_core": "PASS",
+    "chat_code_durable_memory": "PASS",
+    "pack014_cost_registry": "PASS",
+    "pack016_entitlements": "PASS",
+    "workspace_context_graph": "PASS",
+    "workspace_project_routes": "PASS",
+    "workspace_library": "PASS",
+    "native_navigation_dom": "PASS"
+  },
+  "source_deployments": {
+    "vercel": {
+      "deployment_id": "dpl_EPxC3zoPmRfopChX7HZafxmqA261",
+      "status": "READY",
+      "target": "production",
+      "commit": "370ecb605a3bef1916d487743fd79d8895593c6b"
+    },
+    "railway_clean_clone_upload": {
+      "deployment_id": "b652f28a-a566-4a78-b138-8b13fd74fb7e",
+      "status_at_finalizer_preparation": "DEPLOYING",
+      "counted_as_final_verification": false,
+      "note": "Finalizer performs a fresh clean-clone upload. Post-finalizer connector cross-check is authoritative."
+    }
+  },
+  "live_billing_allowed": false,
+  "finalizer_cross_check_required": true,
+  "published_visual_checks": "OUTSTANDING_GENERAL_V1_GATE",
+  "next_pack": "059 - Spreadsheets + Presentations",
+  "prepared_at": "2026-09-15"
+}
