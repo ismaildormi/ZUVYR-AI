@@ -1,0 +1,64 @@
+{
+  "pack_id": "054",
+  "title": "Sources/Citations normalized, persistent and verifiable",
+  "status": "FINALIZER_PREPARED",
+  "parent_pack_finalizer_commit": "673a3ad475adbdaa6c24c05270653f89d4f2cd18",
+  "source_commit": "27f141a9a0151e2f2813e1be0e401174cfe821ef",
+  "cumulative_source_zip": "ZUVYR_PACK054_CUMULATIVE_PREPARED.zip",
+  "cumulative_source_zip_sha256": "F7F788F3303D881D2A9254474AF0631C82EC48DC68EE8129CC3D78D67CE98FC0",
+  "database": {
+    "migration": "65_pack054_sources_citations.sql",
+    "production_migration_name": "pack054_sources_citations",
+    "production_migration_version": "20260915170308",
+    "status": "APPLIED_VERIFIED",
+    "canonical_asset_id_exists": true,
+    "canonical_content_id_exists": true,
+    "project_id_exists": true,
+    "capture_function_exists": true,
+    "capture_trigger_exists": true,
+    "execute_privileges": {
+      "anon": false,
+      "authenticated": false,
+      "service_role": true
+    }
+  },
+  "verified_capabilities": {
+    "durable_normalized_citations": true,
+    "owner_scoped_source_records": true,
+    "project_association": true,
+    "file_source_verification": true,
+    "signed_file_reopen": true,
+    "web_product_memory_source_types": true,
+    "chat_source_reopen_api_and_ui": true,
+    "legacy_source_backfill_path": true,
+    "pack053_regression_preserved": true
+  },
+  "tests": {
+    "pack054_sources_citations": "PASS",
+    "pack03_source_contract": "PASS",
+    "pack053_multimodal_document": "PASS",
+    "attachment_complete_security_credit": "PASS",
+    "attachment_context": "PASS",
+    "pack052_identity": "PASS",
+    "pack051_chat_core": "PASS",
+    "native_navigation_dom": "PASS"
+  },
+  "source_deployments": {
+    "vercel": {
+      "deployment_id": "dpl_5C6GnLvL6KnTXV47RvqB1w721QWy",
+      "status": "READY",
+      "target": "production",
+      "commit": "27f141a9a0151e2f2813e1be0e401174cfe821ef"
+    },
+    "railway_clean_clone_upload": {
+      "deployment_id": "45ba631b-f2be-4041-b6e7-e186057e84f2",
+      "status_at_finalizer_preparation": "INITIALIZING",
+      "counted_as_final_verification": false,
+      "note": "Finalizer starts a fresh clean-clone upload; connector cross-check after finalizer is authoritative."
+    }
+  },
+  "live_billing_allowed": false,
+  "finalizer_cross_check_required": true,
+  "next_pack": "055 - Web Search + Direct URL Reader",
+  "prepared_at": "2026-09-15"
+}
