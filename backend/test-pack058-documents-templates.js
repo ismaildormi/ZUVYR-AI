@@ -198,7 +198,7 @@ async function run() {
   assert.equal(packageJson.dependencies['@openfonts/noto-sans-arabic_all'], undefined);
 
   const workspace = require('./config/workspace-system.v1.json');
-  assert.equal(workspace.pack, 58);
+  assert.ok(Number(workspace.pack) >= 58, `Pack058 document contract must survive later packs; got pack ${workspace.pack}`);
   assert.equal(workspace.mode, 'context_graph');
   assert.deepEqual(workspace.documentFormats, ['docx', 'pdf', 'txt', 'md']);
   assert.equal(workspace.documentTemplates.scriptsAllowed, false);
@@ -227,7 +227,7 @@ async function run() {
     'data-zs-document-template',
     'data-zs-document-download',
     "'/api/workspace/documents/render'",
-    "view.dataset.zsView==='documents'",
+    "['documents','spreadsheets','presentations'].indexOf(view.dataset.zsView)>-1",
     'Local rendering · provider calls 0 · generation credits 0'
   ]) assert(frontend.includes(marker), `Missing Pack058 frontend marker: ${marker}`);
 

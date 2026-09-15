@@ -372,12 +372,36 @@
         '<div class="zs-card half"><h2>Templates</h2><p>Built-in and private saved templates are script-free. Placeholders use <code>{{variable}}</code>.</p><div class="zs-document-template-list" data-zs-document-template-list></div></div>'+
       '</div>';
   }
+
+  var officeState={spreadsheets:[],presentations:[],loading:{spreadsheets:false,presentations:false}};
+  function spreadsheetsView(){
+    return heading('spreadsheets')+
+      '<div class="zs-banner"><span>▥</span><div><b>Spreadsheet Studio is live.</b> Build local XLSX/CSV files from bounded tables, persist them canonically, attach verified sources, and keep formulas/macros disabled.</div></div>'+
+      '<div class="zs-grid"><div class="zs-card wide"><h2>Create spreadsheet</h2><form data-zs-spreadsheet-form>'+
+        '<div class="zs-document-row"><div class="zs-field"><label>Title</label><input name="title" maxlength="120" required placeholder="Budget model"></div><div class="zs-field"><label>Sheet name</label><input name="sheetName" maxlength="31" value="Sheet 1"></div></div>'+
+        '<div class="zs-field"><label>Columns <span class="zs-hint">comma separated · max 100</span></label><input name="columns" placeholder="Item, Quantity, Cost"></div>'+
+        '<div class="zs-field"><label>Rows <span class="zs-hint">one CSV-like row per line · no formulas</span></label><textarea name="rows" placeholder="Hosting,1,20&#10;Storage,2,8"></textarea></div>'+
+        '<div class="zs-document-row"><div class="zs-field"><label>Project ID <span class="zs-hint">optional</span></label><input name="projectId" placeholder="UUID"></div><div class="zs-field"><label>Verified source record IDs <span class="zs-hint">optional</span></label><input name="sourceRecordIds" placeholder="UUIDs separated by commas"></div></div>'+
+        '<div class="zs-field"><label>Formats</label><div class="zs-checks"><label class="zs-check"><input type="checkbox" name="spreadsheetFormats" value="xlsx" checked> XLSX</label><label class="zs-check"><input type="checkbox" name="spreadsheetFormats" value="csv" checked> CSV</label></div></div>'+
+        '<div class="zs-actions"><button class="zs-primary" type="submit" data-zs-spreadsheet-generate>Generate spreadsheet</button><span class="zs-hint">Local rendering · formulas/macros off · provider calls 0</span></div>'+
+      '</form><div class="zs-result" data-zs-spreadsheet-result></div></div><div class="zs-card wide"><h2>Recent spreadsheets</h2><div class="zs-document-list" data-zs-spreadsheet-list></div></div></div>';
+  }
+  function presentationsView(){
+    return heading('presentations')+
+      '<div class="zs-banner"><span>▧</span><div><b>Presentation Studio is live.</b> Turn an approved outline into a local 16:9 PPTX, keep it in Library, link it to a Project, and append verified sources without a model call.</div></div>'+
+      '<div class="zs-grid"><div class="zs-card wide"><h2>Create presentation</h2><form data-zs-presentation-form>'+
+        '<div class="zs-field"><label>Title</label><input name="title" maxlength="120" required placeholder="Launch strategy"></div>'+
+        '<div class="zs-field"><label>Slides <span class="zs-hint">separate slides with ---; first line is the slide title</span></label><textarea name="slides" placeholder="Problem&#10;Current workflow is fragmented&#10;Research is disconnected&#10;---&#10;Solution&#10;One ZUVYR workspace&#10;Canonical artifacts and handoffs"></textarea></div>'+
+        '<div class="zs-document-row"><div class="zs-field"><label>Project ID <span class="zs-hint">optional</span></label><input name="projectId" placeholder="UUID"></div><div class="zs-field"><label>Verified source record IDs <span class="zs-hint">optional</span></label><input name="sourceRecordIds" placeholder="UUIDs separated by commas"></div></div>'+
+        '<div class="zs-actions"><button class="zs-primary" type="submit" data-zs-presentation-generate>Generate PPTX</button><span class="zs-hint">Local rendering · 16:9 · provider calls 0</span></div>'+
+      '</form><div class="zs-result" data-zs-presentation-result></div></div><div class="zs-card wide"><h2>Recent presentations</h2><div class="zs-document-list" data-zs-presentation-list></div></div></div>';
+  }
   function genericView(id) {
     var state=sections.find(function(s){return s[0]===id;})[3];
     var extra=id==='code'?orchestrator('code'):toolCards(id);
     return heading(id)+'<div class="zs-banner"><span>◎</span><div><b>'+(state==='ready'?'Interface foundation is ready.':'Ready to connect safely.')+'</b> '+(state==='ready'?'Use the existing backend foundation and connect verified data next.':'Provider execution stays off until pricing, limits and settlement pass verification.')+'</div></div>'+extra;
   }
-  function viewHtml(id) { if(id==='dashboard')return dashboard(); if(id==='ip')return ipView(); if(id==='usage')return usageView(); if(id==='documents')return documentsView(); return genericView(id); }
+  function viewHtml(id) { if(id==='dashboard')return dashboard(); if(id==='ip')return ipView(); if(id==='usage')return usageView(); if(id==='documents')return documentsView(); if(id==='spreadsheets')return spreadsheetsView(); if(id==='presentations')return presentationsView(); return genericView(id); }
 
   // Native navigation integration 01. Existing Chat, Images, Video, Code,
   // IP, Projects, History, Settings and payment handlers retain ownership.
@@ -440,8 +464,8 @@
     document.querySelectorAll('[data-zuvyr-section-label]').forEach(function(el){el.textContent=sectionLabel(el.dataset.zuvyrSectionLabel);});
     suite.querySelectorAll('[data-zs-view]').forEach(function(view){
       var title=view.querySelector('h1');if(title)title.textContent=sectionLabel(view.dataset.zsView);
-      if(view.dataset.zsView==='documents'){
-        var documentStatus=view.querySelector('.zs-status');if(documentStatus){documentStatus.textContent=language()==='ar'?'مفعّل':language()==='fr'?'Actif':'Live';documentStatus.classList.add('ready');}
+      if(['documents','spreadsheets','presentations'].indexOf(view.dataset.zsView)>-1){
+        var liveStatus=view.querySelector('.zs-status');if(liveStatus){liveStatus.textContent=language()==='ar'?'مفعّل':language()==='fr'?'Actif':'Live';liveStatus.classList.add('ready');}
         return;
       }
       var status=view.querySelector('.zs-status');if(status){status.textContent=words.unavailable;status.classList.remove('ready');}
@@ -483,6 +507,7 @@
   function show(id){
     if(id==='usage')loadUsage();else clearUsage();
     if(id==='documents')loadDocuments();
+    if(id==='spreadsheets'||id==='presentations')loadOfficeItems(id);
     suite.querySelectorAll('[data-zs-view]').forEach(function(v){v.dataset.active=String(v.dataset.zsView===id);});
     document.querySelectorAll('[data-zuvyr-section]').forEach(function(el){var active=el.dataset.zuvyrSection===id;el.classList.toggle('active',active);if(active)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});
   }
@@ -535,18 +560,33 @@
     button.disabled=true;
     try{var response=await request('/api/workspace/library/items/'+encodeURIComponent(button.dataset.contentId)+'/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({assetId:button.dataset.assetId})}),data=await response.json();if(!response.ok)throw new Error(data.code||'document_download_failed');var url=data.download&&data.download.signed_url;if(!url)throw new Error('document_download_url_missing');window.open(url,'_blank','noopener,noreferrer');}catch(error){toast('Download: '+error.message);}finally{button.disabled=false;}
   }
+
+  function officeView(id){return suite.querySelector('[data-zs-view="'+id+'"]');}
+  function parseCsvLine(line){var out=[],cur='',quoted=false;for(var i=0;i<line.length;i++){var ch=line[i];if(ch==='"'){if(quoted&&line[i+1]==='"'){cur+='"';i++;}else quoted=!quoted;}else if(ch===','&&!quoted){out.push(cur.trim());cur='';}else cur+=ch;}out.push(cur.trim());return out;}
+  function spreadsheetValue(value){var v=String(value==null?'':value).trim();if(/^-?(?:\d+|\d*\.\d+)$/.test(v)&&v!=='')return Number(v);if(v.toLowerCase()==='true')return true;if(v.toLowerCase()==='false')return false;return v;}
+  function spreadsheetRows(value){return String(value||'').split(/\r?\n/).map(function(line){return line.trim();}).filter(Boolean).map(function(line){return parseCsvLine(line).map(spreadsheetValue);});}
+  function presentationSlides(value){return String(value||'').split(/\n\s*---\s*\n/).map(function(block){var lines=block.split(/\r?\n/).map(function(v){return v.trim();}).filter(Boolean);return lines.length?{title:lines[0],lines:lines.slice(1)}:null;}).filter(Boolean);}
+  function officeAssetButtons(item){var assets=(item.assets||[]).filter(function(a){return a.status==='active';});return assets.map(function(a){var mime=a.mime_type||'';var label=mime.indexOf('spreadsheetml')>-1?'XLSX':mime.indexOf('presentationml')>-1?'PPTX':mime.indexOf('csv')>-1?'CSV':'FILE';return '<button type="button" class="zs-secondary" data-zs-office-download data-content-id="'+esc(item.id||item.contentId)+'" data-asset-id="'+esc(a.id||a.assetId)+'">'+label+'</button>';}).join('');}
+  function renderOfficeList(id){var view=officeView(id),list=view&&view.querySelector(id==='spreadsheets'?'[data-zs-spreadsheet-list]':'[data-zs-presentation-list]');if(!list)return;var items=officeState[id]||[];if(!items.length){list.innerHTML='<div class="zs-empty"><div><strong>No '+esc(id)+' yet</strong><span>Generated artifacts will appear here.</span></div></div>';return;}list.innerHTML=items.slice(0,16).map(function(item){return '<article class="zs-document-item"><div><strong>'+esc(item.title||'Artifact')+'</strong><small>'+esc(item.updated_at||item.created_at||'')+'</small></div><div class="zs-document-assets">'+officeAssetButtons(item)+'</div></article>';}).join('');}
+  async function loadOfficeItems(id){if(officeState.loading[id])return;officeState.loading[id]=true;try{var response=await request('/api/workspace/'+id+'?limit=30'),data=await response.json();if(!response.ok)throw new Error(data.code||id+'_load_failed');officeState[id]=data.items||[];renderOfficeList(id);}catch(error){toast(sectionLabel(id)+': '+error.message);}finally{officeState.loading[id]=false;}}
+  async function officeDownload(button){button.disabled=true;try{var response=await request('/api/workspace/library/items/'+encodeURIComponent(button.dataset.contentId)+'/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({assetId:button.dataset.assetId})}),data=await response.json();if(!response.ok)throw new Error(data.code||'office_download_failed');var url=data.download&&data.download.signed_url;if(!url)throw new Error('office_download_url_missing');window.open(url,'_blank','noopener,noreferrer');}catch(error){toast('Download: '+error.message);}finally{button.disabled=false;}}
+  async function spreadsheetSubmit(form){var result=officeView('spreadsheets').querySelector('[data-zs-spreadsheet-result]'),button=form.querySelector('[data-zs-spreadsheet-generate]');var columns=parseCsvLine(form.columns.value||'').filter(Boolean),rows=spreadsheetRows(form.rows.value);var body={title:form.title.value,sheetName:form.sheetName.value||'Sheet 1',columns:columns,rows:rows,formats:checked(form,'spreadsheetFormats'),projectId:form.projectId.value||null,sourceRecordIds:documentIds(form.sourceRecordIds.value)};if(!body.formats.length){toast('Choose XLSX and/or CSV.');return;}button.disabled=true;result.dataset.visible='true';result.innerHTML='<div class="zs-result-title">Generating locally…</div><p>Formula execution and provider calls are disabled.</p>';try{var response=await request('/api/workspace/spreadsheets/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),data=await response.json();if(!response.ok)throw new Error(data.code||'spreadsheet_generation_failed');var item=data.spreadsheet||{};result.innerHTML='<div class="zs-result-title">Spreadsheet ready</div><p>'+esc(item.title||body.title)+'</p><div class="zs-document-assets">'+(item.assets||[]).map(function(a){return '<button type="button" class="zs-secondary" data-zs-office-download data-content-id="'+esc(item.contentId)+'" data-asset-id="'+esc(a.assetId)+'">Download '+esc(String(a.format||'file').toUpperCase())+'</button>';}).join('')+'</div><p class="zs-note">Canonical Library artifact · provider calls '+Number(item.providerCalls||0)+' · generation credits '+Number(item.billedCredits||0)+'</p>';await loadOfficeItems('spreadsheets');}catch(error){result.innerHTML='<div class="zs-result-title">Spreadsheet needs attention</div><p>'+esc(error.message)+'</p>';}finally{button.disabled=false;}}
+  async function presentationSubmit(form){var result=officeView('presentations').querySelector('[data-zs-presentation-result]'),button=form.querySelector('[data-zs-presentation-generate]');var body={title:form.title.value,slides:presentationSlides(form.slides.value),projectId:form.projectId.value||null,sourceRecordIds:documentIds(form.sourceRecordIds.value)};if(!body.slides.length){toast('Add at least one slide.');return;}button.disabled=true;result.dataset.visible='true';result.innerHTML='<div class="zs-result-title">Generating locally…</div><p>Building a 16:9 PPTX without a provider call.</p>';try{var response=await request('/api/workspace/presentations/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),data=await response.json();if(!response.ok)throw new Error(data.code||'presentation_generation_failed');var item=data.presentation||{};result.innerHTML='<div class="zs-result-title">Presentation ready</div><p>'+esc(item.title||body.title)+' · '+Number((body.slides||[]).length)+' slides</p><div class="zs-document-assets">'+(item.assets||[]).map(function(a){return '<button type="button" class="zs-secondary" data-zs-office-download data-content-id="'+esc(item.contentId)+'" data-asset-id="'+esc(a.assetId)+'">Download PPTX</button>';}).join('')+'</div><p class="zs-note">Canonical Library artifact · provider calls '+Number(item.providerCalls||0)+' · generation credits '+Number(item.billedCredits||0)+'</p>';await loadOfficeItems('presentations');}catch(error){result.innerHTML='<div class="zs-result-title">Presentation needs attention</div><p>'+esc(error.message)+'</p>';}finally{button.disabled=false;}}
   function renderPlan(el,plan){el.dataset.visible='true';el.innerHTML='<div class="zs-result-title">✦ Safe proposal ready</div><p>No provider call or credit charge was made.</p><div class="zs-step-list">'+plan.steps.map(function(s,i){return '<div class="zs-step"><span class="zs-step-num">'+(i+1)+'</span><div><strong>'+esc(s.title)+'</strong><small>'+esc(s.capability)+' · proposed · execution off</small></div></div>';}).join('')+'</div>';}
   async function planSubmit(form){var result=form.parentNode.querySelector('[data-zs-plan-result]');var body={goal:form.goal.value,requestedOutputs:checked(form,'outputs'),additionalCreationConsent:form.consent.checked};try{var res=await request('/api/unified-product/orchestration/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});var data=await res.json();if(!res.ok)throw new Error(data.code||'plan_failed');renderPlan(result,data.plan);}catch(error){result.dataset.visible='true';result.innerHTML='<div class="zs-result-title">Planning needs attention</div><p>'+esc(error.message==='additional_creation_consent_required'?'Approve selected media creation to include it in the plan.':error.message)+'</p>';}}
   async function ipSubmit(form){var result=form.parentNode.querySelector('[data-zs-ip-result]');var body={goal:form.goal.value,scopes:checked(form,'scopes'),explicitConsent:form.consent.checked};try{var res=await request('/api/unified-product/ip/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});var data=await res.json();if(!res.ok)throw new Error(data.code||'ip_plan_failed');result.dataset.visible='true';result.innerHTML='<div class="zs-result-title">✦ IP tool plan ready</div><p>'+data.plan.scopes.map(esc).join(' · ')+'</p><div class="zs-chip-row"><span class="zs-chip">Execution off</span><span class="zs-chip">Device control off</span><span class="zs-chip">Audit required</span><span class="zs-chip">STOP available</span></div>';}catch(error){result.dataset.visible='true';result.innerHTML='<div class="zs-result-title">Permission check</div><p>'+esc(error.message)+'</p>';}}
   document.addEventListener('submit',function(e){
     var form=e.target;
     if(form&&form.matches&&form.matches('[data-zs-document-form]')){e.preventDefault();documentSubmit(form);return;}
+    if(form&&form.matches&&form.matches('[data-zs-spreadsheet-form]')){e.preventDefault();spreadsheetSubmit(form);return;}
+    if(form&&form.matches&&form.matches('[data-zs-presentation-form]')){e.preventDefault();presentationSubmit(form);return;}
     if(form&&form.matches&&form.matches('[data-zs-plan-form]')){e.preventDefault();planSubmit(form);return;}
     if(form&&form.matches&&form.matches('[data-zs-ip-form]')){e.preventDefault();ipSubmit(form);return;}
   });
   document.addEventListener('click',function(e){
     if(!e.target.closest)return;
     var docDownload=e.target.closest('[data-zs-document-download]');if(docDownload&&suite.contains(docDownload)){downloadDocument(docDownload);return;}
+    var officeDownloadButton=e.target.closest('[data-zs-office-download]');if(officeDownloadButton&&suite.contains(officeDownloadButton)){officeDownload(officeDownloadButton);return;}
     var docSave=e.target.closest('[data-zs-document-save-template]');if(docSave&&suite.contains(docSave)){var docForm=docSave.closest('[data-zs-document-form]');if(docForm)saveDocumentTemplate(docForm);return;}
     if(e.target.closest('[data-zs-usage-refresh]')&&suite.contains(e.target)){loadUsage();return;}
     var entryButton=e.target.closest('[data-zuvyr-section]');

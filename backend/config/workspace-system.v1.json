@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pack": 58,
+  "pack": 59,
   "mode": "context_graph",
   "limits": {
     "nameChars": 120,
@@ -12,7 +12,13 @@
     "scheduleTitleChars": 120,
     "permissionScopes": 12,
     "documentFormats": 4,
-    "documentSourceRecords": 30
+    "documentSourceRecords": 30,
+    "spreadsheetSheets": 20,
+    "spreadsheetRowsPerSheet": 5000,
+    "spreadsheetColumns": 100,
+    "spreadsheetTotalCells": 100000,
+    "presentationSlides": 60,
+    "presentationLinesPerSlide": 24
   },
   "itemKinds": [
     "chat",
@@ -112,5 +118,18 @@
     "saved": true,
     "scriptsAllowed": false,
     "communityPublishingEnabled": false
+  },
+  "spreadsheetFormats": [
+    "xlsx",
+    "csv"
+  ],
+  "presentationFormats": [
+    "pptx"
+  ],
+  "officeArtifactStorage": {
+    "canonicalKind": "document",
+    "metadataDiscriminator": "officeArtifactKind",
+    "providerCalls": 0,
+    "generationCredits": 0
   }
 }

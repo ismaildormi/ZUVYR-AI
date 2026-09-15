@@ -29,6 +29,7 @@ const {
 const { getDefaultWorkspaceLibraryStore } = require('./workspaceLibraryRepository');
 const { getDefaultUniversalActionsStore } = require('./universalActionsRepository');
 const { getDefaultDocumentStudioRepository } = require('./documentStudioRepository');
+const { getDefaultOfficeArtifactRepository } = require('./officeArtifactRepository');
 
 function validation(res, error) {
   return res.status(400).json({
@@ -169,6 +170,7 @@ function createWorkspaceRouter(options = {}) {
   const libraryStore = options.libraryStore || getDefaultWorkspaceLibraryStore();
   const universalActionsStore = options.universalActionsStore || getDefaultUniversalActionsStore({ libraryStore });
   const documentStudio = options.documentStudio || getDefaultDocumentStudioRepository({ projectStore });
+  const officeStudio = options.officeStudio || getDefaultOfficeArtifactRepository({ projectStore });
   const memoryStore =
     options.memoryStore || getDefaultWorkspaceMemoryStore();
   const contextGraphStore =
@@ -592,6 +594,56 @@ function createWorkspaceRouter(options = {}) {
     } catch (error) {
       if (error?.code === 'workspace_workspace_write_disabled') return disabled(res, 'workspace_write');
       return documentFailure(res, error);
+    }
+  });
+
+  function officeFailure(res, error) {
+    const code = String(error && (error.code || error.message) || 'office_artifact_operation_failed');
+    const status = Number(error && error.status);
+    if (Number.isInteger(status) && status >= 400 && status < 600) {
+      return res.status(status).json({ status: 'error', code, message: 'Office artifact operation could not be completed.' });
+    }
+    if (code === 'workspace_project_not_found' || code === 'workspace_project_resource_not_found') {
+      return res.status(404).json({ status: 'error', code, message: 'Artifact project was not found.' });
+    }
+    if (code.includes('invalid_') || code.includes('_disabled') || code.includes('_missing') || code.includes('_requires_')) {
+      return res.status(400).json({ status: 'error', code, message: 'Office artifact request is invalid.' });
+    }
+    console.error('[workspace/office-artifacts] operation failed:', code);
+    return res.status(500).json({ status: 'error', code: 'office_artifact_operation_failed', message: 'Office artifact operation could not be completed.' });
+  }
+
+  async function officeList(req, res, artifactKind) {
+    try {
+      const result = await libraryStore.listItems({ ownerId: req.userId, filters: { ...(req.query || {}), kind: 'document' } });
+      const items = (result.items || []).filter(item => item?.metadata?.officeArtifactKind === artifactKind);
+      return res.json({ status: 'success', persisted: true, ...result, items });
+    } catch (error) {
+      return libraryFailure(res, error);
+    }
+  }
+
+  router.get('/spreadsheets', async (req, res) => officeList(req, res, 'spreadsheet'));
+  router.post('/spreadsheets/render', async (req, res) => {
+    try {
+      assertProjectWriteEnabled();
+      const spreadsheet = await officeStudio.renderSpreadsheet({ ownerId: req.userId, input: req.body || {} });
+      return res.status(201).json({ status: 'success', persisted: true, spreadsheet });
+    } catch (error) {
+      if (error?.code === 'workspace_workspace_write_disabled') return disabled(res, 'workspace_write');
+      return officeFailure(res, error);
+    }
+  });
+
+  router.get('/presentations', async (req, res) => officeList(req, res, 'presentation'));
+  router.post('/presentations/render', async (req, res) => {
+    try {
+      assertProjectWriteEnabled();
+      const presentation = await officeStudio.renderPresentation({ ownerId: req.userId, input: req.body || {} });
+      return res.status(201).json({ status: 'success', persisted: true, presentation });
+    } catch (error) {
+      if (error?.code === 'workspace_workspace_write_disabled') return disabled(res, 'workspace_write');
+      return officeFailure(res, error);
     }
   });
 
