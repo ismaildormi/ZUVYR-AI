@@ -13,12 +13,15 @@ function mountZuvyrChatFlow(app, {requireAuth, rateLimit, db, memory, preference
     try { await fn(req,res,next); }
     catch(e) { res.status(e.status||503).json({code:e.code||'chat_temporarily_unavailable',message:e.status?e.message:'Chat is temporarily unavailable. Retry the same operation.'}); }
   };
-  // Mounted before legacy /api/chat. Eligibility never depends on browser data.
-  app.post('/api/chat',requireAuth,(req,res,next)=>enabledFor(req.userId,env)&&(!req.body.feature||req.body.feature==='chat')?Promise.resolve(limit(req,res,next)).catch(next):next(),wrap(async(req,res,next)=>{
-    if (!enabledFor(req.userId,env) || (req.body.feature && req.body.feature!=='chat')) return next();
-    const run = await service.quote(req.userId,req.body);
-    res.status(428).json({code:'zuvyr_chat_consent_required',run});
-  }));
+  // Pack051: standard /api/chat is no longer selected by a pilot-user list.
+  // Keep the old consent flow only as an explicit recovery/compatibility path.
+  if (env.ZUVYR_CHAT_FLOW_LEGACY_PILOT_ENABLED === 'true') {
+    app.post('/api/chat',requireAuth,(req,res,next)=>enabledFor(req.userId,env)&&(!req.body.feature||req.body.feature==='chat')?Promise.resolve(limit(req,res,next)).catch(next):next(),wrap(async(req,res,next)=>{
+      if (!enabledFor(req.userId,env) || (req.body.feature && req.body.feature!=='chat')) return next();
+      const run = await service.quote(req.userId,req.body);
+      res.status(428).json({code:'zuvyr_chat_consent_required',run});
+    }));
+  }
   app.post('/api/zuvyr-chat/:id/execute',requireAuth,rateLimit('chat'),wrap(async(req,res)=>{
     const run=await service.execute(req.userId,req.params.id,req.body);
     res.json(run);

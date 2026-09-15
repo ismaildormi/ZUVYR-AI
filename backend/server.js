@@ -102,6 +102,7 @@ const {
   applyAttachmentParts
 } = require('./lib/conversationAttachmentContext');
 const { assertChatModeAvailable } = require('./lib/chatCapabilities');
+const { normalizeChatCoreRequest, chatCoreEvidence } = require('./lib/chatCoreNormalization');
 const { attachmentSources } = require('./lib/sourceContract');
 const { normalizeImageRequest } = require('./lib/imageRequestContract');
 const { assertImageRequestAvailable } = require('./lib/imageOperationRegistry');
@@ -557,6 +558,21 @@ app.post('/api/chat', requireAuth, rateLimit('chat'), validateChatBody, loadRoxU
   const userId = req.userId;
   const requestId = crypto.randomUUID();
   const memoryRequestKey = turnId || requestId;
+  let chatCoreBinding = null;
+
+  if (feature !== 'code') {
+    try {
+      chatCoreBinding = normalizeChatCoreRequest({ body: req.body, requestId });
+      req.universalRequest = chatCoreBinding.request;
+    } catch (error) {
+      console.error('[pack051-chat-core] normalization failed:', error.code || error.message);
+      return res.status(400).json({
+        status: 'error',
+        code: error.code || 'chat_core_normalization_failed',
+        message: 'Chat request could not be normalized.'
+      });
+    }
+  }
   const subscriptionPlan =
     normalizePlanId(req.roxUser?.subscription_status);
   const isPro = isPaidPlan(subscriptionPlan);
@@ -914,6 +930,7 @@ app.post('/api/chat', requireAuth, rateLimit('chat'), validateChatBody, loadRoxU
         margin_usd: margin,
         load_level: loadLevel,
         chain_reordered: result.chain_reordered,
+        chat_core: chatCoreBinding ? chatCoreEvidence(chatCoreBinding, result) : null,
         attachment_ids:
           attachmentContext.attachmentIds,
         attachment_sources:
@@ -1159,6 +1176,21 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
   // and its refund (if any) are always the same id to look up.
   const requestId = crypto.randomUUID();
   const memoryRequestKey = turnId || requestId;
+  let chatCoreBinding = null;
+
+  if (feature !== 'code') {
+    try {
+      chatCoreBinding = normalizeChatCoreRequest({ body: req.body, requestId });
+      req.universalRequest = chatCoreBinding.request;
+    } catch (error) {
+      console.error('[pack051-chat-core] normalization failed:', error.code || error.message);
+      return res.status(400).json({
+        status: 'error',
+        code: error.code || 'chat_core_normalization_failed',
+        message: 'Chat request could not be normalized.'
+      });
+    }
+  }
   let memoryConversation = null;
 
   if (conversationId) {
