@@ -28,6 +28,7 @@ const {
 } = require('./workspaceProjectRepository');
 const { getDefaultWorkspaceLibraryStore } = require('./workspaceLibraryRepository');
 const { getDefaultUniversalActionsStore } = require('./universalActionsRepository');
+const { getDefaultDocumentStudioRepository } = require('./documentStudioRepository');
 
 function validation(res, error) {
   return res.status(400).json({
@@ -167,6 +168,7 @@ function createWorkspaceRouter(options = {}) {
     options.projectStore || getDefaultWorkspaceProjectStore();
   const libraryStore = options.libraryStore || getDefaultWorkspaceLibraryStore();
   const universalActionsStore = options.universalActionsStore || getDefaultUniversalActionsStore({ libraryStore });
+  const documentStudio = options.documentStudio || getDefaultDocumentStudioRepository({ projectStore });
   const memoryStore =
     options.memoryStore || getDefaultWorkspaceMemoryStore();
   const contextGraphStore =
@@ -533,6 +535,65 @@ function createWorkspaceRouter(options = {}) {
       }
     }
   );
+
+  function documentFailure(res, error) {
+    const code = String(error && (error.code || error.message) || 'document_operation_failed');
+    const status = Number(error && error.status);
+    if (Number.isInteger(status) && status >= 400 && status < 600) {
+      return res.status(status).json({ status: 'error', code, message: 'Document operation could not be completed.' });
+    }
+    if (code === 'workspace_project_not_found' || code === 'workspace_project_resource_not_found') {
+      return res.status(404).json({ status: 'error', code, message: 'Document project was not found.' });
+    }
+    if (code === 'workspace_project_item_limit' || code === 'workspace_project_archived') {
+      return res.status(409).json({ status: 'error', code, message: 'Document project cannot accept this item.' });
+    }
+    if (code.includes('invalid_') || code.includes('_blocked') || code.includes('_missing')) {
+      return res.status(400).json({ status: 'error', code, message: 'Document request is invalid.' });
+    }
+    console.error('[workspace/documents] operation failed:', code);
+    return res.status(500).json({ status: 'error', code: 'document_operation_failed', message: 'Document operation could not be completed.' });
+  }
+
+  router.get('/documents', async (req, res) => {
+    try {
+      const result = await libraryStore.listItems({ ownerId: req.userId, filters: { ...(req.query || {}), kind: 'document' } });
+      const items = (result.items || []).filter(item => item?.metadata?.documentTemplate !== true);
+      return res.json({ status: 'success', persisted: true, ...result, items });
+    } catch (error) {
+      return libraryFailure(res, error);
+    }
+  });
+
+  router.get('/documents/templates', async (req, res) => {
+    try {
+      return res.json({ status: 'success', persisted: true, templates: await documentStudio.listTemplates(req.userId) });
+    } catch (error) {
+      return documentFailure(res, error);
+    }
+  });
+
+  router.post('/documents/templates', async (req, res) => {
+    try {
+      assertProjectWriteEnabled();
+      const template = await documentStudio.saveTemplate({ ownerId: req.userId, input: req.body || {} });
+      return res.status(201).json({ status: 'success', persisted: true, template, providerCalls: 0, billedCredits: 0, liveBillingAllowed: false });
+    } catch (error) {
+      if (error?.code === 'workspace_workspace_write_disabled') return disabled(res, 'workspace_write');
+      return documentFailure(res, error);
+    }
+  });
+
+  router.post('/documents/render', async (req, res) => {
+    try {
+      assertProjectWriteEnabled();
+      const document = await documentStudio.renderDocument({ ownerId: req.userId, input: req.body || {} });
+      return res.status(201).json({ status: 'success', persisted: true, document });
+    } catch (error) {
+      if (error?.code === 'workspace_workspace_write_disabled') return disabled(res, 'workspace_write');
+      return documentFailure(res, error);
+    }
+  });
 
   router.post('/creations/validate', (req, res) => {
     try {

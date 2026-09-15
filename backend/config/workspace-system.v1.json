@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pack": 46,
+  "pack": 58,
   "mode": "context_graph",
   "limits": {
     "nameChars": 120,
@@ -10,7 +10,9 @@
     "workflowSteps": 20,
     "templateVariables": 50,
     "scheduleTitleChars": 120,
-    "permissionScopes": 12
+    "permissionScopes": 12,
+    "documentFormats": 4,
+    "documentSourceRecords": 30
   },
   "itemKinds": [
     "chat",
@@ -98,5 +100,17 @@
       ],
       "enabled": false
     }
+  },
+  "documentFormats": [
+    "docx",
+    "pdf",
+    "txt",
+    "md"
+  ],
+  "documentTemplates": {
+    "builtin": true,
+    "saved": true,
+    "scriptsAllowed": false,
+    "communityPublishingEnabled": false
   }
 }

@@ -198,7 +198,12 @@
   "documents": {
     "enabled": true,
     "tier": "free",
-    "status": "foundation"
+    "status": "live_verified"
+  },
+  "document_templates": {
+    "enabled": true,
+    "tier": "free",
+    "status": "live_verified"
   },
   "spreadsheets": {
     "enabled": true,

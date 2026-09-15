@@ -6,10 +6,9 @@
 # added) so they never end up in the final image, then the `runtime`
 # stage copies just node_modules + app source on top of a fresh, slim
 # base â€” smaller image, smaller attack surface, no build toolchain left
-# behind. Uses `npm install` rather than `npm ci`: this repo has no
-# package-lock.json yet (see Phase 1's security-review notes), and
-# `npm ci` requires one â€” switch to `npm ci` once a lockfile is
-# committed, for fully reproducible installs.
+# behind. Production installs use the committed package-lock.json with
+# `npm ci`, so dependency resolution is reproducible and fails closed if
+# package.json and the lockfile ever drift.
 #
 # This image runs `node server.js` directly â€” NOT through pm2
 # (ecosystem.config.js / `./cli/rox.js start` is the bare-metal path;
@@ -37,7 +36,7 @@ WORKDIR /app
 # dependencies actually change, not on every source edit.
 COPY package.json ./
 COPY package-lock.json* ./
-RUN npm install --omit=dev --no-audit --no-fund
+RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 
 # ---- runtime stage ------------------------------------------------------
 FROM node:22-alpine AS runtime

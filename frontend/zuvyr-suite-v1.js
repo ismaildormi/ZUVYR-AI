@@ -350,12 +350,34 @@
     usageState = 'idle';
   }
 
+  var documentState={templates:[],documents:[],loading:false};
+  function documentsView(){
+    return heading('documents')+
+      '<div class="zs-banner" data-zs-document-banner><span>▤</span><div><b>Document Studio is live.</b> Generate local DOCX, PDF, Markdown and text files, keep canonical versions in Library, and link them to Projects without a model call.</div></div>'+
+      '<div class="zs-grid">'+
+        '<div class="zs-card wide zs-document-editor"><h2>Create document</h2><form data-zs-document-form>'+
+          '<div class="zs-document-row"><div class="zs-field"><label>Title</label><input name="title" maxlength="120" required placeholder="Quarterly research brief"></div><div class="zs-field"><label>Template</label><select name="templateId" data-zs-document-template><option value="builtin:blank">Blank document</option></select></div></div>'+
+          '<div class="zs-field"><label>Content</label><textarea name="content" maxlength="200000" placeholder="Write or paste the document body here"></textarea></div>'+
+          '<div data-zs-document-variables></div>'+
+          '<div class="zs-document-row"><div class="zs-field"><label>Project ID <span class="zs-hint">optional</span></label><input name="projectId" placeholder="UUID"></div><div class="zs-field"><label>Verified source record IDs <span class="zs-hint">optional · max 30</span></label><input name="sourceRecordIds" placeholder="UUIDs separated by commas"></div></div>'+
+          '<div class="zs-field"><label>Formats</label><div class="zs-checks zs-document-formats">'+
+            '<label class="zs-check"><input type="checkbox" name="documentFormats" value="docx" checked> DOCX</label>'+
+            '<label class="zs-check"><input type="checkbox" name="documentFormats" value="pdf" checked> PDF</label>'+
+            '<label class="zs-check"><input type="checkbox" name="documentFormats" value="md"> Markdown</label>'+
+            '<label class="zs-check"><input type="checkbox" name="documentFormats" value="txt"> TXT</label>'+
+          '</div></div>'+
+          '<div class="zs-actions"><button class="zs-primary" type="submit" data-zs-document-generate>Generate document</button><button class="zs-secondary" type="button" data-zs-document-save-template>Save content as template</button><span class="zs-hint">Local rendering · provider calls 0 · generation credits 0</span></div>'+
+        '</form><div class="zs-result" data-zs-document-result></div></div>'+
+        '<div class="zs-card half"><h2>Recent documents</h2><div class="zs-document-list" data-zs-document-list><div class="zs-empty"><div><strong>No documents loaded</strong><span>Open Documents to refresh your Library.</span></div></div></div></div>'+
+        '<div class="zs-card half"><h2>Templates</h2><p>Built-in and private saved templates are script-free. Placeholders use <code>{{variable}}</code>.</p><div class="zs-document-template-list" data-zs-document-template-list></div></div>'+
+      '</div>';
+  }
   function genericView(id) {
     var state=sections.find(function(s){return s[0]===id;})[3];
     var extra=id==='code'?orchestrator('code'):toolCards(id);
     return heading(id)+'<div class="zs-banner"><span>◎</span><div><b>'+(state==='ready'?'Interface foundation is ready.':'Ready to connect safely.')+'</b> '+(state==='ready'?'Use the existing backend foundation and connect verified data next.':'Provider execution stays off until pricing, limits and settlement pass verification.')+'</div></div>'+extra;
   }
-  function viewHtml(id) { if(id==='dashboard')return dashboard(); if(id==='ip')return ipView(); if(id==='usage')return usageView(); return genericView(id); }
+  function viewHtml(id) { if(id==='dashboard')return dashboard(); if(id==='ip')return ipView(); if(id==='usage')return usageView(); if(id==='documents')return documentsView(); return genericView(id); }
 
   // Native navigation integration 01. Existing Chat, Images, Video, Code,
   // IP, Projects, History, Settings and payment handlers retain ownership.
@@ -418,6 +440,10 @@
     document.querySelectorAll('[data-zuvyr-section-label]').forEach(function(el){el.textContent=sectionLabel(el.dataset.zuvyrSectionLabel);});
     suite.querySelectorAll('[data-zs-view]').forEach(function(view){
       var title=view.querySelector('h1');if(title)title.textContent=sectionLabel(view.dataset.zsView);
+      if(view.dataset.zsView==='documents'){
+        var documentStatus=view.querySelector('.zs-status');if(documentStatus){documentStatus.textContent=language()==='ar'?'مفعّل':language()==='fr'?'Actif':'Live';documentStatus.classList.add('ready');}
+        return;
+      }
       var status=view.querySelector('.zs-status');if(status){status.textContent=words.unavailable;status.classList.remove('ready');}
       view.querySelectorAll('.zs-tool-state').forEach(function(el){el.textContent=words.unavailable;});
       var banner=view.querySelector('.zs-banner');if(banner)banner.textContent=words.notice;
@@ -456,16 +482,72 @@
   }
   function show(id){
     if(id==='usage')loadUsage();else clearUsage();
+    if(id==='documents')loadDocuments();
     suite.querySelectorAll('[data-zs-view]').forEach(function(v){v.dataset.active=String(v.dataset.zsView===id);});
     document.querySelectorAll('[data-zuvyr-section]').forEach(function(el){var active=el.dataset.zuvyrSection===id;el.classList.toggle('active',active);if(active)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});
   }
   function request(path, options){if(typeof window.authFetch==='function')return window.authFetch(path,options);return fetch(path,options);}
   function checked(form,name){return Array.prototype.slice.call(form.querySelectorAll('input[name="'+name+'"]:checked')).map(function(i){return i.value;});}
+  function documentView(){return suite.querySelector('[data-zs-view="documents"]');}
+  function documentIds(value){return String(value||'').split(/[\s,]+/).map(function(v){return v.trim();}).filter(Boolean);}
+  function documentTemplateById(id){return documentState.templates.find(function(item){return item.id===id;})||null;}
+  function renderDocumentVariableFields(){
+    var view=documentView(),form=view&&view.querySelector('[data-zs-document-form]'),host=view&&view.querySelector('[data-zs-document-variables]');
+    if(!form||!host)return;
+    var template=documentTemplateById(form.templateId.value),vars=template&&Array.isArray(template.variables)?template.variables.filter(function(name){return name!=='body';}):[];
+    host.innerHTML=vars.length?'<div class="zs-field"><label>Template fields</label><div class="zs-document-variable-grid">'+vars.map(function(name){return '<label><span>'+esc(name.replace(/_/g,' '))+'</span><textarea data-zs-document-variable="'+esc(name)+'" maxlength="200000"></textarea></label>';}).join('')+'</div></div>':'';
+  }
+  function renderDocumentTemplates(){
+    var view=documentView();if(!view)return;
+    var select=view.querySelector('[data-zs-document-template]'),list=view.querySelector('[data-zs-document-template-list]');
+    if(select){var current=select.value;select.innerHTML=documentState.templates.map(function(t){return '<option value="'+esc(t.id)+'">'+esc(t.name)+(t.builtin?' · built-in':' · saved')+'</option>';}).join('');if(documentState.templates.some(function(t){return t.id===current;}))select.value=current;}
+    if(list)list.innerHTML=documentState.templates.length?documentState.templates.slice(0,8).map(function(t){return '<div class="zs-document-mini"><strong>'+esc(t.name)+'</strong><small>'+esc(t.category||'general')+' · '+(t.builtin?'built-in':'private saved')+'</small></div>';}).join(''):'<p class="zs-note">No templates available.</p>';
+    renderDocumentVariableFields();
+  }
+  function renderDocumentList(){
+    var view=documentView(),list=view&&view.querySelector('[data-zs-document-list]');if(!list)return;
+    if(!documentState.documents.length){list.innerHTML='<div class="zs-empty"><div><strong>No generated documents yet</strong><span>Your canonical documents will appear here.</span></div></div>';return;}
+    list.innerHTML=documentState.documents.slice(0,12).map(function(item){var assets=(item.assets||[]).filter(function(a){return a.status==='active';});return '<article class="zs-document-item"><div><strong>'+esc(item.title||'Document')+'</strong><small>'+assets.length+' file'+(assets.length===1?'':'s')+' · '+esc(item.updated_at||item.created_at||'')+'</small></div><div class="zs-document-assets">'+assets.map(function(a){return '<button type="button" class="zs-secondary" data-zs-document-download data-content-id="'+esc(item.id)+'" data-asset-id="'+esc(a.id)+'">'+esc((a.mime_type||'file').split('/').pop().replace('vnd.openxmlformats-officedocument.wordprocessingml.document','DOCX').replace('pdf','PDF').replace('markdown;charset=utf-8','MD').replace('plain;charset=utf-8','TXT'))+'</button>';}).join('')+'</div></article>';}).join('');
+  }
+  async function loadDocuments(){
+    if(documentState.loading)return;documentState.loading=true;
+    try{
+      var responses=await Promise.all([request('/api/workspace/documents/templates'),request('/api/workspace/documents?limit=25')]);
+      var templateData=await responses[0].json(),documentData=await responses[1].json();
+      if(!responses[0].ok)throw new Error(templateData.code||'document_templates_failed');
+      if(!responses[1].ok)throw new Error(documentData.code||'documents_failed');
+      documentState.templates=templateData.templates||[];documentState.documents=documentData.items||[];renderDocumentTemplates();renderDocumentList();
+    }catch(error){toast('Documents: '+error.message);}finally{documentState.loading=false;}
+  }
+  function documentVariables(form){var out={};form.querySelectorAll('[data-zs-document-variable]').forEach(function(el){out[el.dataset.zsDocumentVariable]=el.value;});return out;}
+  async function documentSubmit(form){
+    var result=documentView().querySelector('[data-zs-document-result]'),button=form.querySelector('[data-zs-document-generate]');
+    var body={title:form.title.value,content:form.content.value,templateId:form.templateId.value||null,variables:documentVariables(form),formats:checked(form,'documentFormats'),projectId:form.projectId.value||null,sourceRecordIds:documentIds(form.sourceRecordIds.value)};
+    if(!body.formats.length){toast('Choose at least one document format.');return;}
+    button.disabled=true;result.dataset.visible='true';result.innerHTML='<div class="zs-result-title">Generating locally…</div><p>No model/provider call is required.</p>';
+    try{var response=await request('/api/workspace/documents/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),data=await response.json();if(!response.ok)throw new Error(data.code||'document_generation_failed');var doc=data.document||{};result.innerHTML='<div class="zs-result-title">Document ready</div><p>'+esc(doc.title||body.title)+' · '+esc((doc.formats||[]).join(', ').toUpperCase())+'</p><div class="zs-document-assets">'+(doc.assets||[]).map(function(a){return '<button type="button" class="zs-secondary" data-zs-document-download data-content-id="'+esc(doc.contentId)+'" data-asset-id="'+esc(a.assetId)+'">Download '+esc(String(a.format||'file').toUpperCase())+'</button>';}).join('')+'</div><p class="zs-note">Canonical content/version saved · provider calls '+Number(doc.providerCalls||0)+' · generation credits '+Number(doc.billedCredits||0)+'</p>';await loadDocuments();}catch(error){result.innerHTML='<div class="zs-result-title">Document needs attention</div><p>'+esc(error.message)+'</p>';}finally{button.disabled=false;}
+  }
+  async function saveDocumentTemplate(form){
+    var name=(form.title.value||'Saved template').trim(),body=form.content.value||'{{body}}';
+    try{var response=await request('/api/workspace/documents/templates',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template:{name:name,category:'custom',body:body}})}),data=await response.json();if(!response.ok)throw new Error(data.code||'document_template_save_failed');toast('Template saved privately.');await loadDocuments();}catch(error){toast('Template: '+error.message);}
+  }
+  async function downloadDocument(button){
+    button.disabled=true;
+    try{var response=await request('/api/workspace/library/items/'+encodeURIComponent(button.dataset.contentId)+'/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({assetId:button.dataset.assetId})}),data=await response.json();if(!response.ok)throw new Error(data.code||'document_download_failed');var url=data.download&&data.download.signed_url;if(!url)throw new Error('document_download_url_missing');window.open(url,'_blank','noopener,noreferrer');}catch(error){toast('Download: '+error.message);}finally{button.disabled=false;}
+  }
   function renderPlan(el,plan){el.dataset.visible='true';el.innerHTML='<div class="zs-result-title">✦ Safe proposal ready</div><p>No provider call or credit charge was made.</p><div class="zs-step-list">'+plan.steps.map(function(s,i){return '<div class="zs-step"><span class="zs-step-num">'+(i+1)+'</span><div><strong>'+esc(s.title)+'</strong><small>'+esc(s.capability)+' · proposed · execution off</small></div></div>';}).join('')+'</div>';}
   async function planSubmit(form){var result=form.parentNode.querySelector('[data-zs-plan-result]');var body={goal:form.goal.value,requestedOutputs:checked(form,'outputs'),additionalCreationConsent:form.consent.checked};try{var res=await request('/api/unified-product/orchestration/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});var data=await res.json();if(!res.ok)throw new Error(data.code||'plan_failed');renderPlan(result,data.plan);}catch(error){result.dataset.visible='true';result.innerHTML='<div class="zs-result-title">Planning needs attention</div><p>'+esc(error.message==='additional_creation_consent_required'?'Approve selected media creation to include it in the plan.':error.message)+'</p>';}}
   async function ipSubmit(form){var result=form.parentNode.querySelector('[data-zs-ip-result]');var body={goal:form.goal.value,scopes:checked(form,'scopes'),explicitConsent:form.consent.checked};try{var res=await request('/api/unified-product/ip/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});var data=await res.json();if(!res.ok)throw new Error(data.code||'ip_plan_failed');result.dataset.visible='true';result.innerHTML='<div class="zs-result-title">✦ IP tool plan ready</div><p>'+data.plan.scopes.map(esc).join(' · ')+'</p><div class="zs-chip-row"><span class="zs-chip">Execution off</span><span class="zs-chip">Device control off</span><span class="zs-chip">Audit required</span><span class="zs-chip">STOP available</span></div>';}catch(error){result.dataset.visible='true';result.innerHTML='<div class="zs-result-title">Permission check</div><p>'+esc(error.message)+'</p>';}}
+  document.addEventListener('submit',function(e){
+    var form=e.target;
+    if(form&&form.matches&&form.matches('[data-zs-document-form]')){e.preventDefault();documentSubmit(form);return;}
+    if(form&&form.matches&&form.matches('[data-zs-plan-form]')){e.preventDefault();planSubmit(form);return;}
+    if(form&&form.matches&&form.matches('[data-zs-ip-form]')){e.preventDefault();ipSubmit(form);return;}
+  });
   document.addEventListener('click',function(e){
     if(!e.target.closest)return;
+    var docDownload=e.target.closest('[data-zs-document-download]');if(docDownload&&suite.contains(docDownload)){downloadDocument(docDownload);return;}
+    var docSave=e.target.closest('[data-zs-document-save-template]');if(docSave&&suite.contains(docSave)){var docForm=docSave.closest('[data-zs-document-form]');if(docForm)saveDocumentTemplate(docForm);return;}
     if(e.target.closest('[data-zs-usage-refresh]')&&suite.contains(e.target)){loadUsage();return;}
     var entryButton=e.target.closest('[data-zuvyr-section]');
     if(entryButton){e.preventDefault();open(entryButton.dataset.zuvyrSection,entryButton);return;}
@@ -475,6 +557,7 @@
     if(suite.dataset.open==='true'&&!suite.contains(e.target)&&e.target.closest('[data-tab], [data-open]'))close(true,false);
   },true);
   function refreshVisibleUsage(){if(suite.dataset.open==='true'&&suite.querySelector('[data-zs-view="usage"]').dataset.active==='true'&&!document.hidden)loadUsage();}
+  suite.addEventListener('change',function(e){if(e.target&&e.target.matches('[data-zs-document-template]'))renderDocumentVariableFields();});
   window.addEventListener('focus',refreshVisibleUsage);
   document.addEventListener('visibilitychange',function(){if(document.hidden)clearUsage();else refreshVisibleUsage();});
   if(typeof supa!=='undefined'&&supa.auth&&supa.auth.onAuthStateChange)supa.auth.onAuthStateChange(function(event){clearUsage();if(event!=='SIGNED_OUT')setTimeout(refreshVisibleUsage,0);});
