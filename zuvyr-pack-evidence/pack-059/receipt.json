@@ -1,0 +1,64 @@
+{
+  "pack_id": "059",
+  "title": "Spreadsheets + Presentations XLSX/CSV/PPTX",
+  "status": "FINALIZER_PREPARED",
+  "parent_pack": 58,
+  "parent_pack_finalizer_commit": "cd9a5efc6c151d963b7e8dba3312921fc21aa37f",
+  "parent_cumulative_zip_sha256": "32AFEB84DBDCACF09916DA5D0966A3AEA484FDFC8A0C1AD3AAEDF9C716D309BE",
+  "source_commit": "998a804f2c6eac13ce4871b9cb289986aa033d21",
+  "source_fix_iteration": 3,
+  "source_cumulative_zip_sha256": "29913C0A1991FBC60FBD0936421515DA50F7950C6E0BB400D5D2BE6B0B6407CC",
+  "database_migration": "NOT_REQUIRED",
+  "verified_capabilities": {
+    "xlsx_generation": true,
+    "csv_generation": true,
+    "pptx_generation": true,
+    "formula_execution_disabled": true,
+    "macro_execution_disabled": true,
+    "verified_sources_appendix": true,
+    "owner_scoped_routes": true,
+    "canonical_library_persistence": true,
+    "project_linking": true,
+    "signed_library_downloads": true,
+    "provider_model_calls": 0,
+    "generation_credits": 0
+  },
+  "test_evidence": {
+    "pack059_office_artifacts": "PASS",
+    "pack059_office_routes": "PASS",
+    "pack058_documents_templates": "PASS",
+    "pack058_document_routes": "PASS",
+    "pack057_specialized_research": "PASS",
+    "pack056_deep_research": "PASS",
+    "pack055_web_search": "PASS",
+    "pack054_sources_citations": "PASS",
+    "pack053_multimodal": "PASS",
+    "pack052_attachments": "PASS",
+    "pack051_chat_core": "PASS",
+    "pack014_cost_registry": "PASS",
+    "pack016_entitlements": "PASS",
+    "pack09_contracts_registry": "PASS",
+    "pack11_registry_no_activation": "PASS",
+    "workspace_project_routes": "PASS",
+    "workspace_library": "PASS",
+    "native_navigation_dom": "PASS",
+    "published_visual_checks": "OUTSTANDING_GENERAL_V1_GATE"
+  },
+  "source_deployments": {
+    "vercel": {
+      "deployment_id": "dpl_2drA4HtEUaLLPtDVrWeGpqKz2M8g",
+      "status": "READY",
+      "target": "production",
+      "commit": "998a804f2c6eac13ce4871b9cb289986aa033d21"
+    },
+    "railway_clean_clone_upload": {
+      "deployment_id": "ff2e0525-a4db-4677-a172-27c4d142891a",
+      "snapshot_id": "28957c82-4a9f-4579-94c0-d2c52b5d2394",
+      "status": "SUCCESS"
+    }
+  },
+  "live_billing_allowed": false,
+  "finalizer_cross_check_required": true,
+  "next_pack": "060 - Research-to-artifact checkpoint",
+  "prepared_at": "2026-09-15"
+}
