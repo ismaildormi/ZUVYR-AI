@@ -1,0 +1,56 @@
+{
+  "pack_id": "057",
+  "title": "Shopping / Local / Connected Research",
+  "status": "FINALIZER_PREPARED",
+  "parent_pack_finalizer_commit": "0740345dda5e5fca9258c136b9f5d405b2a1e6a3",
+  "source_commit": "972e17e4c3f33d2491a120646ea14037cb8df927",
+  "cumulative_source_zip": "ZUVYR_PACK057_CUMULATIVE_PREPARED.zip",
+  "cumulative_source_zip_sha256": "4F34FAF933A268019B59478C19C4F563E9AD5D827C910D18E8021FF931D345E6",
+  "database_migration": "NOT_REQUIRED",
+  "verified_capabilities": {
+    "shopping_research": true,
+    "local_research_without_private_location_inference": true,
+    "connected_research_owner_scoped_context_graph": true,
+    "pro_legend_max_entitlements": true,
+    "pack055_web_pricing_reuse": true,
+    "pack054_durable_citations_reuse": true,
+    "pack056_deep_research_preserved": true,
+    "standard_chat_preserved": true,
+    "no_fake_oauth_or_plugin_execution": true
+  },
+  "tests": {
+    "pack057_specialized_research": "PASS",
+    "pack03_capability_guard": "PASS",
+    "pack03_wiring": "PASS",
+    "pack03_external_engines": "PASS",
+    "pack056_deep_research": "PASS",
+    "pack055_web_search": "PASS",
+    "pack054_sources_citations": "PASS",
+    "pack053_multimodal_document": "PASS",
+    "pack052_attachment_identity_resolution": "PASS",
+    "pack051_chat_core": "PASS",
+    "chat_code_durable_memory": "PASS",
+    "pack014_cost_registry": "PASS",
+    "pack016_plan_entitlements": "PASS",
+    "workspace_context_graph": "PASS",
+    "native_navigation_dom": "PASS"
+  },
+  "source_deployments": {
+    "vercel": {
+      "deployment_id": "dpl_Gigbij3bD3sK71Kt1rffd63gi4Y9",
+      "status": "READY",
+      "target": "production",
+      "commit": "972e17e4c3f33d2491a120646ea14037cb8df927"
+    },
+    "railway_clean_clone_upload": {
+      "deployment_id": "9ce18184-5996-4094-b5ce-e2dbc69e9ff8",
+      "status_at_finalizer_preparation": "BUILDING",
+      "counted_as_final_verification": false,
+      "note": "Finalizer performs a fresh clean-clone upload; post-finalizer connector cross-check is authoritative."
+    }
+  },
+  "live_billing_allowed": false,
+  "finalizer_cross_check_required": true,
+  "next_pack": "058 - Documents + Templates",
+  "prepared_at": "2026-09-15"
+}
