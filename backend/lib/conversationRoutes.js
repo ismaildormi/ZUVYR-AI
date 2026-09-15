@@ -103,7 +103,8 @@ function createConversationRouter({
   storage = null,
   creditManager = null,
   attachmentQueue = null,
-  attachmentJobOptions = null
+  attachmentJobOptions = null,
+  sourceStore = null
 } = {}) {
   const router = express.Router();
 
@@ -117,6 +118,11 @@ function createConversationRouter({
   function getCreditManager() {
     if (creditManager) return creditManager;
     return require('../gatekeeper');
+  }
+
+  function getSourceStore() {
+    if (sourceStore) return sourceStore;
+    return require('./sourceRecordRepository');
   }
 
   function getAttachmentQueue() {
@@ -1127,6 +1133,102 @@ function createConversationRouter({
       );
     }
   });
+
+  router.get(
+    '/:conversationId/messages/:messageId/sources',
+    async (req, res) => {
+      if (!isConversationId(req.params.conversationId)) {
+        return res.status(400).json({
+          status: 'error',
+          code: 'invalid_conversation_id',
+          message: 'Invalid conversation id.'
+        });
+      }
+
+      try {
+        const sources = await getSourceStore().listMessageSources({
+          conversationId: req.params.conversationId,
+          ownerId: req.userId,
+          messageId: req.params.messageId
+        });
+
+        return res.json({
+          status: 'success',
+          sources
+        });
+      } catch (error) {
+        const code = String(error && (error.code || error.message) || '');
+        if (
+          code === 'invalid_source_message_id'
+        ) {
+          return res.status(400).json({
+            status: 'error',
+            code,
+            message: 'Invalid source message id.'
+          });
+        }
+        if (code === 'conversation_not_found') {
+          return res.status(404).json({
+            status: 'error',
+            code,
+            message: 'Conversation not found.'
+          });
+        }
+        return sendConversationError(res, error, 'sources-list');
+      }
+    }
+  );
+
+  router.get(
+    '/:conversationId/messages/:messageId/sources/:citationKey',
+    async (req, res) => {
+      if (!isConversationId(req.params.conversationId)) {
+        return res.status(400).json({
+          status: 'error',
+          code: 'invalid_conversation_id',
+          message: 'Invalid conversation id.'
+        });
+      }
+
+      try {
+        const source = await getSourceStore().getSourceRecord({
+          conversationId: req.params.conversationId,
+          ownerId: req.userId,
+          messageId: req.params.messageId,
+          citationKey: req.params.citationKey
+        });
+
+        return res.json({
+          status: 'success',
+          source
+        });
+      } catch (error) {
+        const code = String(error && (error.code || error.message) || '');
+        if (
+          code === 'invalid_source_message_id' ||
+          code === 'invalid_source_citation_key'
+        ) {
+          return res.status(400).json({
+            status: 'error',
+            code,
+            message: 'Invalid source request.'
+          });
+        }
+        if (
+          code === 'conversation_not_found' ||
+          code === 'conversation_source_not_found' ||
+          code === 'source_file_not_available'
+        ) {
+          return res.status(404).json({
+            status: 'error',
+            code,
+            message: 'Source not found.'
+          });
+        }
+        return sendConversationError(res, error, 'source-open');
+      }
+    }
+  );
 
   router.get('/:conversationId/messages', async (req, res) => {
     if (!isConversationId(req.params.conversationId)) {

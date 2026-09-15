@@ -10603,6 +10603,7 @@ async function openRoxHistoryItem(item, row=null){
         false,
         {
           responseId:content.responseId||null,
+          messageId:message.id||null,
           model:message.model||null,
           feature,
           conversationId:item.id,
@@ -12405,6 +12406,7 @@ async function sendChat(feature, text, msgBox, userMessage) {
   } else {
     appendMsg(msgBox, 'bot', data.text, false, {
       responseId: data.responseId,
+      messageId: data.conversationMessageId || null,
       model: data.model,
       feature,
       conversationId: data.conversationId || conversationId,
@@ -12416,6 +12418,7 @@ async function sendChat(feature, text, msgBox, userMessage) {
 } else {
   appendMsg(msgBox, 'bot', data.text, false, {
       responseId: data.responseId,
+      messageId: data.conversationMessageId || null,
       model: data.model,
       feature,
       conversationId: data.conversationId || conversationId,
@@ -30648,6 +30651,7 @@ async function openRoxHistoryItem(item, row=null){
         false,
         {
           responseId:content.responseId||null,
+          messageId:message.id||null,
           model:message.model||null,
           feature,
           conversationId:item.id,
@@ -32450,6 +32454,7 @@ async function sendChat(feature, text, msgBox, userMessage) {
   } else {
     appendMsg(msgBox, 'bot', data.text, false, {
       responseId: data.responseId,
+      messageId: data.conversationMessageId || null,
       model: data.model,
       feature,
       conversationId: data.conversationId || conversationId,
@@ -32461,6 +32466,7 @@ async function sendChat(feature, text, msgBox, userMessage) {
 } else {
   appendMsg(msgBox, 'bot', data.text, false, {
       responseId: data.responseId,
+      messageId: data.conversationMessageId || null,
       model: data.model,
       feature,
       conversationId: data.conversationId || conversationId,

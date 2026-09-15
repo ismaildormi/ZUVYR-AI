@@ -1715,8 +1715,11 @@
         output.push({
           key,
           id,
+          citationId:String(source.citationId||source.citation_id||'').trim(),
+          type:String(source.type||source.source_type||'').toLowerCase(),
           url,
           title:String(source.title||source.name||title||'Attachment'),
+          snippet:String(source.snippet||''),
           mimeType:String(source.mimeType||source.mime_type||''),
           assetType:String(source.assetType||source.asset_type||''),
           extractionStatus:String(source.extractionStatus||source.extraction_status||'')
@@ -1732,8 +1735,11 @@
         output.push({
           key:parsed.href,
           id:'',
+          citationId:'',
+          type:'web',
           url:parsed.href,
           title:String(title||parsed.hostname||parsed.href),
+          snippet:'',
           mimeType:'',assetType:'',extractionStatus:''
         });
       }catch(_){}
@@ -1870,7 +1876,7 @@
     document.querySelector('.zuvyr-sources-panel')?.remove();
   };
 
-  const openSources=sources=>{
+  const openSources=(sources,context={})=>{
     closeSources();
     const backdrop=document.createElement('div');
     backdrop.className='zuvyr-sources-backdrop';
@@ -1889,13 +1895,23 @@
     panel.appendChild(header);
 
     sources.forEach(source=>{
-      const card=document.createElement(source.url?'a':'div');
+      const canReopen=Boolean(
+        context.conversationId&&
+        context.messageId&&
+        source.citationId
+      );
+      const card=document.createElement(
+        source.url&&!canReopen?'a':'button'
+      );
       card.className='zuvyr-source-card';
-      if(source.url){
+      if(card.tagName==='BUTTON'){
+        card.type='button';
+      }
+      if(source.url&&!canReopen){
         card.href=source.url;
         card.target='_blank';
         card.rel='noopener noreferrer';
-      }else{
+      }else if(!source.url){
         card.classList.add('zuvyr-source-file');
       }
       const cardTitle=document.createElement('span');
@@ -1903,11 +1919,48 @@
       cardTitle.textContent=source.title;
       const detail=document.createElement('span');
       detail.className='zuvyr-source-url';
-      detail.textContent=source.url||[
-        source.mimeType||source.assetType||'File',
+      detail.textContent=source.url||source.snippet||[
+        source.mimeType||source.assetType||source.type||'Source',
         source.extractionStatus||''
-      ].filter(Boolean).join(' Â· ');
+      ].filter(Boolean).join(' · ');
       card.append(cardTitle,detail);
+
+      if(canReopen){
+        card.addEventListener('click',async()=>{
+          card.disabled=true;
+          try{
+            const response=await authFetch(
+              '/api/conversations/'+
+              encodeURIComponent(context.conversationId)+
+              '/messages/'+
+              encodeURIComponent(context.messageId)+
+              '/sources/'+
+              encodeURIComponent(source.citationId)
+            );
+            const data=await response.json().catch(()=>({}));
+            if(!response.ok||!data.source){
+              throw new Error(data.message||'Source could not be reopened.');
+            }
+            const durable=data.source;
+            const openUrl=String(durable.openUrl||durable.url||'').trim();
+            if(openUrl){
+              window.open(openUrl,'_blank','noopener,noreferrer');
+              return;
+            }
+            detail.textContent=String(
+              durable.snippet||
+              durable.title||
+              source.snippet||
+              'Source record verified.'
+            );
+          }catch(error){
+            toast(error?.message||'Source could not be reopened.');
+          }finally{
+            card.disabled=false;
+          }
+        });
+      }
+
       panel.appendChild(card);
     });
 
@@ -1995,6 +2048,16 @@
     const branchButton=menuItems[1];
     const message=messageFor(actions);
     const sources=collectSources(message);
+    const sourceContext={
+      conversationId:
+        message?._zuvyrMeta?.conversationId||
+        message?.dataset?.zuvyrConversationId||
+        null,
+      messageId:
+        message?._zuvyrMeta?.messageId||
+        message?.dataset?.zuvyrMessageId||
+        null
+    };
     const outputs=collectOutputs(message);
     const outputsButton=document.createElement('button');
     outputsButton.type='button';
@@ -2024,7 +2087,7 @@
           moreWrap.querySelector('.rox-gpt-more-menu').hidden=true;
           moreWrap.querySelector('.rox-gpt-more-button')
             ?.setAttribute('aria-expanded','false');
-          openSources(sources);
+          openSources(sources,sourceContext);
         },true);
       }
     }

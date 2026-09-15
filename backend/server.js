@@ -942,10 +942,11 @@ app.post('/api/chat', requireAuth, rateLimit('chat'), validateChatBody, loadRoxU
 
     let memorySaved;
     let conversationMessageCount;
+    let assistantMessage = null;
 
     if (memoryConversation) {
       try {
-        const assistantMessage = await completeConversationTurn({
+        assistantMessage = await completeConversationTurn({
           conversationId,
           ownerId: userId,
           feature: feature || 'chat',
@@ -1011,6 +1012,10 @@ app.post('/api/chat', requireAuth, rateLimit('chat'), validateChatBody, loadRoxU
       conversationMessageCount:
         conversationId && Number.isFinite(conversationMessageCount)
           ? conversationMessageCount
+          : undefined,
+      conversationMessageId:
+        conversationId && assistantMessage && assistantMessage.id
+          ? assistantMessage.id
           : undefined,
       dailyChatUsed: dailyStatus ? dailyStatus.current : undefined,
       dailyChatLimit: dailyStatus ? dailyStatus.limit : undefined,
