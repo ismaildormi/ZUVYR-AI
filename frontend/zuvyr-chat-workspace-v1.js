@@ -3,6 +3,10 @@
 
   const ICON = './zuvyr-app-icon-20260827.png?v=1';
 
+  if (!['standard','web_search'].includes(window.__zuvyrChatMode)) {
+    window.__zuvyrChatMode = 'standard';
+  }
+
   function getZuvyrAccountName() {
     try {
       if (typeof getRoxAccountDisplayName === 'function') {
@@ -1582,6 +1586,31 @@
       trigger.title = 'Attach';
       trigger.innerHTML = plusIcon;
 
+      let webToggle = null;
+      if (row.closest('#feature-chat')) {
+        webToggle = document.createElement('button');
+        webToggle.type = 'button';
+        webToggle.className = 'zuvyr-web-search-toggle';
+        webToggle.setAttribute('aria-label','Web Search');
+        webToggle.title = 'Web Search';
+        const renderWebMode = () => {
+          const active = window.__zuvyrChatMode === 'web_search';
+          webToggle.setAttribute('aria-pressed', active ? 'true' : 'false');
+          webToggle.dataset.active = active ? '1' : '0';
+          webToggle.innerHTML = `<span aria-hidden="true">⌕</span><span class="zuvyr-web-search-label">Web</span>`;
+        };
+        webToggle.addEventListener('click', event => {
+          event.preventDefault();
+          window.__zuvyrChatMode =
+            window.__zuvyrChatMode === 'web_search'
+              ? 'standard'
+              : 'web_search';
+          renderWebMode();
+          input.focus();
+        });
+        renderWebMode();
+      }
+
       const picker = document.createElement('input');
       picker.type = 'file';
       picker.hidden = true;
@@ -1596,6 +1625,7 @@
       list.className = 'zuvyr-attachment-list';
       list.hidden = true;
       row.insertBefore(trigger,input);
+      if (webToggle) row.insertBefore(webToggle,input);
       row.append(picker,menu,list);
 
       const setOpen = open => {

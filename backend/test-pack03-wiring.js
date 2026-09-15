@@ -9,13 +9,14 @@ const validation = fs.readFileSync(path.join(__dirname, 'lib/inputValidation.js'
 const turn = fs.readFileSync(path.join(__dirname, 'lib/conversationTurn.js'), 'utf8');
 const flags = JSON.parse(fs.readFileSync(path.join(__dirname, 'config/feature-flags.json'), 'utf8'));
 
-for (const marker of ["require('./lib/chatCapabilities')", "require('./lib/sourceContract')", "chatMode = 'standard'", 'assertChatModeAvailable(chatMode)', 'const responseSources = attachmentSources', 'sources: responseSources']) assert(server.includes(marker), `Missing server marker: ${marker}`);
+for (const marker of ["require('./lib/chatCapabilities')", "require('./lib/sourceContract')", "chatMode = 'standard'", 'assertChatModeAvailable(chatMode)', 'const responseSources = normalizeSources', 'sources: responseSources']) assert(server.includes(marker), `Missing server marker: ${marker}`);
 assert(server.indexOf('assertChatModeAvailable(chatMode)') < server.indexOf('reservation = await reserveCredits'));
 assert(validation.includes('ALLOWED_CHAT_MODES'));
 assert(validation.includes("'standard', 'web_search', 'deep_research', 'shopping'"));
 assert(turn.includes('sources: Array.isArray(sources) ? sources : []'));
 assert(turn.includes('source_count: Array.isArray(sources) ? sources.length : 0'));
 assert.equal(flags.chat_sources.enabled, true);
-for (const key of ['file_analysis', 'web_search', 'deep_research', 'shopping']) assert.equal(flags[key].enabled, false);
+assert.equal(flags.web_search.enabled, true);
+for (const key of ['file_analysis', 'deep_research', 'shopping']) assert.equal(flags[key].enabled, false);
 
-console.log('PASS: Pack 03 Chat-mode validation, pre-charge guard, source response and memory wiring');
+console.log('PASS: Pack 03 foundations preserved while Pack055 activates Web Search through the same source/memory contract');

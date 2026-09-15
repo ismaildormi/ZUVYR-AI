@@ -171,8 +171,8 @@
       "note": "Placeholder rate; tune before enabling."
     },
     "web_search": {
-      "credits": 1,
-      "note": "Placeholder rate; tune before enabling."
+      "credits": null,
+      "note": "Dynamic exact technical cost from cost-registry.v1.json; fixed placeholder is non-authoritative."
     }
   },
   "rateLimitsPerMinute": {

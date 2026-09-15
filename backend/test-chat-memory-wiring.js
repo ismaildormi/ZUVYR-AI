@@ -67,12 +67,15 @@ function run() {
   );
 
   const completePosition = server.indexOf(
-    'const assistantMessage = await completeConversationTurn'
+    'assistantMessage = await completeConversationTurn'
   );
 
   assert(preparePosition >= 0);
   assert(routePosition >= 0);
   assert(completePosition >= 0);
+  assert(
+    server.includes('let assistantMessage = null;')
+  );
   assert(preparePosition < routePosition);
   assert(routePosition < completePosition);
 

@@ -12332,6 +12332,10 @@ async function sendChat(feature, text, msgBox, userMessage) {
         feature,
         conversationId,
         turnId,
+        chatMode:
+          feature === 'chat'
+            ? (window.__zuvyrChatMode || 'standard')
+            : 'standard',
         ...((feature === 'chat' || feature === 'code')
           ? {
               attachmentIds:
@@ -32380,6 +32384,10 @@ async function sendChat(feature, text, msgBox, userMessage) {
         feature,
         conversationId,
         turnId,
+        chatMode:
+          feature === 'chat'
+            ? (window.__zuvyrChatMode || 'standard')
+            : 'standard',
         ...((feature === 'chat' || feature === 'code')
           ? {
               attachmentIds:

@@ -5,10 +5,11 @@ const { normalizeChatMode, isModeEnabled, assertChatModeAvailable } = require('.
 
 assert.equal(normalizeChatMode(), 'standard');
 assert.equal(assertChatModeAvailable('standard', { env: {} }).capability, 'chat');
-assert.equal(isModeEnabled('web_search', {}), false);
-assert.throws(() => assertChatModeAvailable('web_search', { env: { ZUVYR_WEB_SEARCH_ENABLED: 'true' } }), error => error.code === 'chat_mode_unpriced');
+assert.equal(isModeEnabled('web_search', {}), true);
+assert.equal(assertChatModeAvailable('web_search', { env: {} }).capability, 'web_search');
+assert.equal(isModeEnabled('web_search', { ZUVYR_WEB_SEARCH_ENABLED: 'false' }), false);
 assert.throws(() => assertChatModeAvailable('deep_research'), error => error.code === 'chat_mode_unpriced');
 assert.throws(() => assertChatModeAvailable('shopping'), error => error.code === 'chat_mode_unpriced');
 assert.throws(() => normalizeChatMode('unknown'), error => error.code === 'unknown_chat_mode');
 
-console.log('PASS: Pack 03 standard Chat remains available and unpriced external modes fail closed');
+console.log('PASS: Pack 03 capability guard preserves standard Chat, Pack055 Web Search is live, and later external modes still fail closed');
