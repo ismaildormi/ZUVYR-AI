@@ -1,0 +1,55 @@
+{
+  "pack_id": "056",
+  "title": "Crawl + Deep Research",
+  "status": "FINALIZER_PREPARED",
+  "parent_pack_finalizer_commit": "8feb41ca720d934af007d9fc1805245d9b69c6aa",
+  "source_commit": "54d28c54bf692d2c9e22c9b55ed36b44dc99d901",
+  "cumulative_source_zip": "ZUVYR_PACK056_CUMULATIVE_PREPARED.zip",
+  "cumulative_source_zip_sha256": "DD6FAA934F9D46B026BF7817E3DD72817A5C9678481861ED5D2975D0F263B636",
+  "database_migration": "NOT_REQUIRED",
+  "verified_capabilities": {
+    "bounded_deep_research": true,
+    "checkpointed_search_to_crawl": true,
+    "resume_without_repeating_completed_operations": true,
+    "per_operation_idempotent_billing": true,
+    "pro_entitlement_gate": true,
+    "pack055_web_search_preserved": true,
+    "pack054_durable_citations_preserved": true,
+    "standard_chat_preserved": true,
+    "later_external_modes_fail_closed": true,
+    "native_navigation_regression_preserved": true
+  },
+  "tests": {
+    "pack056_deep_research": "PASS",
+    "pack03_capability_guard": "PASS",
+    "pack03_wiring": "PASS",
+    "pack03_external_engines": "PASS",
+    "pack055_web_search": "PASS",
+    "pack054_sources_citations": "PASS",
+    "pack053_multimodal_document": "PASS",
+    "pack052_attachment_identity_resolution": "PASS",
+    "pack051_chat_core": "PASS",
+    "chat_code_durable_memory": "PASS",
+    "pack014_cost_registry": "PASS",
+    "pack016_plan_entitlements": "PASS",
+    "native_navigation_dom": "PASS"
+  },
+  "source_deployments": {
+    "vercel": {
+      "deployment_id": "dpl_977qwfkX28EpLHZtkZ9QcPR68yq8",
+      "status": "READY",
+      "target": "production",
+      "commit": "54d28c54bf692d2c9e22c9b55ed36b44dc99d901"
+    },
+    "railway_clean_clone_upload": {
+      "deployment_id": "912876d6-31eb-48fd-9a09-6ba2df37f974",
+      "status_at_finalizer_preparation": "INITIALIZING",
+      "counted_as_final_verification": false,
+      "note": "Finalizer performs a fresh clean-clone upload; post-finalizer connector cross-check is authoritative."
+    }
+  },
+  "live_billing_allowed": false,
+  "finalizer_cross_check_required": true,
+  "next_pack": "057 - Shopping / Local / Connected Research",
+  "prepared_at": "2026-09-15"
+}
