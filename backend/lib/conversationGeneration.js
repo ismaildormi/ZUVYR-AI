@@ -103,6 +103,8 @@ async function completeGenerationConversation({
   startFrameAssetId = null,
   endFrameAssetId = null,
   videoOptions = {},
+  canonicalContentId = null,
+  canonicalAssetId = null,
   logger = console
 }) {
   if (!conversationId) return null;
@@ -137,7 +139,9 @@ async function completeGenerationConversation({
           endFrameAssetId
         },
         imageOptions,
-        videoOptions
+        videoOptions,
+        canonicalContentId,
+        canonicalAssetId
       },
       metadata: {
         turn_role: 'assistant',
@@ -166,7 +170,9 @@ async function completeGenerationConversation({
       source_video_asset_id: sourceVideoAssetId,
       start_frame_asset_id: startFrameAssetId,
       end_frame_asset_id: endFrameAssetId,
-      video_options: videoOptions
+      video_options: videoOptions,
+      canonical_content_id: canonicalContentId,
+      canonical_asset_id: canonicalAssetId
     }
   });
 

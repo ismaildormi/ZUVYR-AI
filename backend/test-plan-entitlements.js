@@ -43,6 +43,7 @@ assert.strictEqual(planHasFeature('legend', 'ip'), true);
 assert.strictEqual(planHasFeature('max', 'ip'), true);
 
 assert.strictEqual(minimumPlanForFeature('code'), 'plus');
+assert.strictEqual(minimumPlanForFeature('image'), 'plus');
 assert.strictEqual(minimumPlanForFeature('video'), 'pro');
 assert.strictEqual(minimumPlanForFeature('ip'), 'legend');
 

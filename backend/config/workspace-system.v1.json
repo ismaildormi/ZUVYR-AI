@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pack": 60,
+  "pack": 61,
   "mode": "context_graph",
   "limits": {
     "nameChars": 120,
@@ -64,7 +64,8 @@
     "workflows": true,
     "memory": true,
     "contextGraph": true,
-    "researchArtifactCheckpoint": true
+    "researchArtifactCheckpoint": true,
+    "imageGenerate": true
   },
   "execution": {
     "workspaceWritesEnabled": true,

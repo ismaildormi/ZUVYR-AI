@@ -68,12 +68,12 @@
   "image_generation": {
     "enabled": true,
     "tier": "pro",
-    "status": "live"
+    "status": "implemented_m12_live_e2e_pending"
   },
   "image_history": {
     "enabled": true,
     "tier": "pro",
-    "status": "foundation"
+    "status": "implemented_m12_live_e2e_pending"
   },
   "image_reference": {
     "enabled": false,

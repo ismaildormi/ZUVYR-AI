@@ -244,19 +244,18 @@
         "provider_managed"
       ],
       "quotaType": "provider_managed",
-      "termsLicenseNotes": "M10 must confirm account funding, selected model commercial eligibility and current terms.",
+      "termsLicenseNotes": "Pack061 revalidated the official Replicate FLUX Schnell model page on 2026-09-15: commercial use permitted; production account/token/billing live E2E remains M12.",
       "adapter": "image.providers",
       "capabilities": [
         {
           "id": "image.generate",
-          "verification": "verified_repository",
+          "verification": "verified_current",
           "cost": {
-            "mode": "compat_environment_cost",
+            "mode": "registry_verified_entry",
             "authority": "backend/config/cost-registry.v1.json",
-            "requiredEnvironment": [
-              "REPLICATE_IMAGE_COST_USD"
-            ]
-          }
+            "entryId": "replicate-image-generation"
+          },
+          "model": "black-forest-labs/flux-schnell"
         },
         {
           "id": "video.text_to_video",

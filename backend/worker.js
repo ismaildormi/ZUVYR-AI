@@ -22,8 +22,11 @@ reportEnvironmentValidation(
   { component: 'worker' }
 );
 const { Worker, UnrecoverableError } = require('bullmq');
-const { generateImage } = require('./src/modules/ai/providers/imageProviders');
+const { generateImage, DEFAULT_IMAGE_MODEL } = require('./src/modules/ai/providers/imageProviders');
 const { buildImageArtifact } = require('./lib/imageArtifactContract');
+const { normalizeImageRequest } = require('./lib/imageRequestContract');
+const { assertImageRequestAvailable } = require('./lib/imageOperationRegistry');
+const { getDefaultImageGenerationRepository } = require('./lib/imageGenerationRepository');
 const { generateVideo, DEFAULT_VIDEO_MODEL } = require('./lib/videoProvider');
 const { normalizeVideoRequest } = require('./lib/videoRequestContract');
 const { assertVideoRequestAvailable } = require('./lib/videoOperationRegistry');
@@ -181,7 +184,7 @@ async function processAttachmentJob(job) {
 // version, which is what replicate.run()/the JS client recommends for
 // anything long-running. If you need a pinned version for reproducible
 // output, verify the exact hash on the model's Replicate page first.
-const IMAGE_MODEL = 'black-forest-labs/flux-schnell';
+const IMAGE_MODEL = DEFAULT_IMAGE_MODEL;
 const VIDEO_MODEL = process.env.REPLICATE_VIDEO_MODEL || DEFAULT_VIDEO_MODEL;
 
 async function processImageJob(job) {
@@ -190,6 +193,7 @@ async function processImageJob(job) {
     requestId,
     userId,
     prompt,
+    creditsConsumed,
     conversationId = null,
     memoryRequestKey = null,
     imageOperation = 'generate',
@@ -199,24 +203,70 @@ async function processImageJob(job) {
     imageOptions = {}
   } = job.data;
 
+  const imageRequest = normalizeImageRequest({
+    imageOperation,
+    referenceAssetIds,
+    sourceAssetId,
+    maskAssetId,
+    imageOptions
+  });
+  // Defence in depth: even a manually injected queue job cannot reach a paid
+  // image provider while the requested operation/options are unavailable.
+  assertImageRequestAvailable(imageRequest);
+
+  const imageRepository = getDefaultImageGenerationRepository();
+
   await markJob(jobRowId, {
     status: 'processing',
     started_at: new Date().toISOString()
   });
 
-  const result = await generateImage(prompt);
-  const artifact = buildImageArtifact({
-    url: result.url,
-    operation: imageOperation,
-    provider: result.provider || null,
-    model: result.model || null,
-    referenceAssetIds,
-    sourceAssetId,
-    maskAssetId,
-    options: imageOptions
-  });
-  let memoryResult = null;
+  // A settlement/database retry must not invoke the paid provider twice after
+  // the canonical image already exists. Reuse the persisted job artifact.
+  let persisted = await imageRepository.getExisting({ ownerId: userId, jobId: jobRowId });
+  let providerResult = null;
 
+  if (!persisted) {
+    providerResult = await generateImage(prompt, {
+      chain: ['replicate'],
+      model: IMAGE_MODEL,
+      requestId: requestId || jobRowId
+    });
+
+    persisted = await imageRepository.persistGenerated({
+      ownerId: userId,
+      jobId: jobRowId,
+      prompt,
+      providerUrl: providerResult.url,
+      provider: providerResult.provider,
+      model: providerResult.model,
+      operation: imageRequest.operation,
+      options: imageRequest.options
+    });
+  }
+
+  const provider = providerResult?.provider || 'replicate';
+  const model = providerResult?.model || IMAGE_MODEL;
+  const artifact = buildImageArtifact({
+    url: persisted.providerUrl,
+    operation: imageRequest.operation,
+    provider,
+    model,
+    referenceAssetIds: imageRequest.referenceAssetIds,
+    sourceAssetId: imageRequest.sourceAssetId,
+    maskAssetId: imageRequest.maskAssetId,
+    options: imageRequest.options
+  });
+
+  const finalCredits = Number(creditsConsumed);
+  if (!Number.isSafeInteger(finalCredits) || finalCredits < 1) {
+    const error = new Error('image_credit_settlement_invalid');
+    error.code = 'image_credit_settlement_invalid';
+    throw error;
+  }
+  await settleCredits(requestId, finalCredits);
+
+  let memoryResult = null;
   if (conversationId) {
     try {
       memoryResult = await completeGenerationConversation({
@@ -225,31 +275,28 @@ async function processImageJob(job) {
         feature: 'image',
         resultUrl: artifact.url,
         requestKey: memoryRequestKey || requestId || jobRowId,
-        provider: result.provider || null,
-        model: result.model || null,
+        provider,
+        model,
         operation: artifact.operation,
         referenceAssetIds: artifact.lineage.referenceAssetIds,
         sourceAssetId: artifact.lineage.sourceAssetId,
         maskAssetId: artifact.lineage.maskAssetId,
-        imageOptions: artifact.options
+        imageOptions: artifact.options,
+        canonicalContentId: persisted.contentId,
+        canonicalAssetId: persisted.assetId
       });
     } catch (memoryError) {
-      console.error(
-        '[worker-memory] image completion save failed:',
-        memoryError.message
-      );
+      console.error('[worker-memory] image completion save failed:', memoryError.message);
     }
   }
 
   await markJob(jobRowId, {
     status: 'done',
     result_url: artifact.url,
-    response_message_id:
-      memoryResult?.assistantMessage?.id || null,
+    canonical_content_id: persisted.contentId,
+    response_message_id: memoryResult?.assistantMessage?.id || null,
     completed_at: new Date().toISOString()
   });
-
-  // Credits were already reserved before enqueue.
 }
 
 async function processVideoJob(job) {

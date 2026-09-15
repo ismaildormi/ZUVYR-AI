@@ -144,7 +144,7 @@ async function run() {
   const fs = require('node:fs');
   const path = require('node:path');
   const workspace = require('./config/workspace-system.v1.json');
-  assert.equal(workspace.pack, 60);
+  assert.ok(Number(workspace.pack) >= 60);
   assert.equal(workspace.foundations.researchArtifactCheckpoint, true);
   assert.equal(workspace.researchArtifactCheckpoint.requiresVerifiedSourceRecords, true);
   assert.equal(workspace.researchArtifactCheckpoint.conversionProviderCalls, 0);

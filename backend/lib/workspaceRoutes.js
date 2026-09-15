@@ -31,6 +31,7 @@ const { getDefaultUniversalActionsStore } = require('./universalActionsRepositor
 const { getDefaultDocumentStudioRepository } = require('./documentStudioRepository');
 const { getDefaultOfficeArtifactRepository } = require('./officeArtifactRepository');
 const { getDefaultResearchArtifactCheckpointRepository } = require('./researchArtifactCheckpointRepository');
+const { getDefaultImageGenerationRepository } = require('./imageGenerationRepository');
 
 function validation(res, error) {
   return res.status(400).json({
@@ -173,6 +174,7 @@ function createWorkspaceRouter(options = {}) {
   const documentStudio = options.documentStudio || getDefaultDocumentStudioRepository({ projectStore });
   const officeStudio = options.officeStudio || getDefaultOfficeArtifactRepository({ projectStore });
   const researchCheckpoint = options.researchCheckpoint || getDefaultResearchArtifactCheckpointRepository({ documentStudio, officeStudio, libraryStore, projectStore });
+  const imageGenerationStore = options.imageGenerationStore || getDefaultImageGenerationRepository();
   const memoryStore =
     options.memoryStore || getDefaultWorkspaceMemoryStore();
   const contextGraphStore =
@@ -185,6 +187,16 @@ function createWorkspaceRouter(options = {}) {
       ...publicInventory()
     })
   );
+
+  router.get('/images/history', async (req,res) => {
+    try {
+      const history = await imageGenerationStore.listHistory({ ownerId:req.userId, limit:req.query?.limit });
+      return res.json({status:'success',history,pack:61,providerCalls:0});
+    } catch(error) {
+      console.error('[workspace/images] history failed:', error?.code || error?.message || 'unknown');
+      return res.status(500).json({status:'error',code:'image_history_operation_failed',message:'Image history could not be loaded.'});
+    }
+  });
   function memoryFailure(res, error) {
     const code = error?.code || 'workspace_memory_operation_failed';
     if (code === 'workspace_memory_not_found') return res.status(404).json({status:'error',code,message:'Memory was not found.'});

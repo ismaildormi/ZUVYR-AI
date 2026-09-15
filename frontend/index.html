@@ -12465,6 +12465,31 @@ const GEN_ROUTES = { images: '/api/generate-image', videos: '/api/generate-video
 const GEN_POLL_MS = 2500;
 const GEN_TIMEOUT_MS = 120000;
 
+async function downloadCanonicalGeneration(contentId, assetId, button) {
+  if (!contentId || !assetId) return;
+  if (button) button.disabled = true;
+  try {
+    const res = await authFetch('/api/workspace/library/items/' + encodeURIComponent(contentId) + '/download', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assetId })
+    });
+    const data = await res.json();
+    if (!res.ok || !data?.download?.signed_url) throw new Error(data?.code || 'generation_download_failed');
+    const link = document.createElement('a');
+    link.href = data.download.signed_url;
+    link.rel = 'noopener';
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (error) {
+    console.error('[image-download] failed:', error);
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
 async function sendGeneration(feature, text, msgBox) {
   const typing = appendTyping(msgBox);
   try {
@@ -12551,6 +12576,18 @@ async function pollJob(jobId, feature, msgBox, typing) {
         img.src = data.result_url;
         img.alt = roxT('result.generatedAlt');
         wrap.appendChild(img);
+        if (data.canonical_content_id && data.canonical_asset_id) {
+          const downloadButton = document.createElement('button');
+          downloadButton.type = 'button';
+          downloadButton.className = 'artifact-action-btn';
+          downloadButton.textContent = roxT('artifact.download');
+          downloadButton.addEventListener('click', () => downloadCanonicalGeneration(
+            data.canonical_content_id,
+            data.canonical_asset_id,
+            downloadButton
+          ));
+          wrap.appendChild(downloadButton);
+        }
       } else {
         const vid = document.createElement('video');
         vid.src = data.result_url;

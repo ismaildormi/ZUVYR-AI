@@ -74,8 +74,10 @@ assert.deepStrictEqual(
   'The Nemotron free route must not be costed with the expensive default rate.'
 );
 assert(
-  server.includes("requireProSubscription('image')") &&
-    server.includes("requireProSubscription('video')") &&
+  server.includes("requirePlanFeature('image')") &&
+    server.includes("requirePlanFeature('video')") &&
+    server.includes('canonicalPlanIdFromProfile(req.roxUser)') &&
+    server.includes('planHasFeature(planId, normalizedFeature)') &&
     server.includes("planHasFeature(subscriptionPlan, 'code')") &&
     server.includes("code: 'code_requires_plan'"),
   'Plan-gated services must be enforced server-side.'

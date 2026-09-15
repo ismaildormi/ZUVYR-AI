@@ -16,7 +16,7 @@
       "id": "images",
       "label": "Images",
       "icon": "image",
-      "status": "provider_connection_required"
+      "status": "implemented_m12_live_e2e_pending"
     },
     {
       "id": "video",

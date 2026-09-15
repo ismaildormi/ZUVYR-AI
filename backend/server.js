@@ -90,8 +90,10 @@ const {
 const { featureCost } = require('./src/core/config');
 const {
   normalizePlanId,
+  canonicalPlanIdFromProfile,
   isPaidPlan,
   planHasFeature,
+  minimumPlanForFeature,
   publicPlanCatalog
 } = require('./lib/planEntitlements');
 const { publicCapacityContract } = require('./lib/capacityProtection');
@@ -1918,31 +1920,27 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
   });
 }
 
-// Video generation is real-cost-heavy (far more than its 5-credit charge
-// reflects) and, per launch-cost analysis, free-tier users mostly never
-// convert to paid ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â so free video access is a direct, uncapped cost leak.
-// This gate is separate from gatekeeperMiddleware (credit balance) and
-// blocks unconditionally unless subscription_status === 'pro', regardless
-// of how many credits the free user has left.
-// Video AND image generation are pro-only: video is real-cost-heavy far
-// beyond its 5-credit charge, and per launch-cost analysis, free-tier
-// users mostly never convert to paid ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â so any free generation access is
-// a direct, uncapped cost leak. This gate is separate from
-// gatekeeperMiddleware (credit balance) and blocks unconditionally
-// unless subscription_status === 'pro', regardless of remaining credits.
-function requireProSubscription(feature) {
+// Generation access is controlled by the canonical Pack016 plan catalog.
+// Credit balance and plan entitlement are separate checks: a top-up does not
+// unlock subscription-only features. Image starts at Plus; video starts at Pro.
+function requirePlanFeature(feature) {
   return function (req, res, next) {
-    if (!req.roxUser || req.roxUser.subscription_status !== 'pro') {
-      const normalizedFeature =
-        feature === 'video' ? 'video' : 'image';
+    const normalizedFeature =
+      feature === 'video' ? 'video' : 'image';
+    const planId = canonicalPlanIdFromProfile(req.roxUser);
+
+    if (!planHasFeature(planId, normalizedFeature)) {
+      const minimumPlan = minimumPlanForFeature(normalizedFeature);
 
       return res.status(403).json({
         status: 'error',
         message:
-          normalizedFeature === 'video'
-            ? 'La gÃ©nÃ©ration vidÃ©o nÃ©cessite un abonnement Pro.'
-            : 'La gÃ©nÃ©ration dâ€™images nÃ©cessite un abonnement Pro.',
-        code: `${normalizedFeature}_requires_pro`,
+          minimumPlan
+            ? `${normalizedFeature} generation requires the ${minimumPlan} plan or higher.`
+            : `${normalizedFeature} generation is not enabled for this plan.`,
+        code: `${normalizedFeature}_requires_plan`,
+        plan: planId,
+        minimumPlan,
       });
     }
 
@@ -2073,7 +2071,7 @@ app.post('/api/chat-feedback', requireAuth, async (req, res) => {
   });
 });
 // ROX CHAT FEEDBACK API END
-app.post('/api/generate-image', requireAuth, rateLimit('image'), validateImageBody, gatekeeperMiddleware, requireProSubscription('image'), (req, res) =>
+app.post('/api/generate-image', requireAuth, rateLimit('image'), validateImageBody, gatekeeperMiddleware, requirePlanFeature('image'), (req, res) =>
   (req.universalRequest = normalizeSurfaceRequest({
     surface: 'create',
     body: req.body,
@@ -2083,7 +2081,7 @@ app.post('/api/generate-image', requireAuth, rateLimit('image'), validateImageBo
   )
 );
 
-app.post('/api/generate-video', requireAuth, rateLimit('video'), validateVideoBody, gatekeeperMiddleware, requireProSubscription('video'), (req, res) =>
+app.post('/api/generate-video', requireAuth, rateLimit('video'), validateVideoBody, gatekeeperMiddleware, requirePlanFeature('video'), (req, res) =>
   (req.universalRequest = normalizeSurfaceRequest({
     surface: 'create',
     body: req.body,
@@ -2097,7 +2095,7 @@ app.post('/api/generate-video', requireAuth, rateLimit('video'), validateVideoBo
 app.get('/api/job-status/:jobId', requireAuth, async (req, res) => {
   const { data, error } = await supabaseAdmin
     .from('generation_jobs')
-    .select('status, result_url, preview_url, export_url, error_message, feature, video_operation, progress_percent, job_stage, estimated_seconds, cancel_requested, created_at, completed_at, response_message_id, user_id')
+    .select('status, result_url, preview_url, export_url, error_message, feature, video_operation, progress_percent, job_stage, estimated_seconds, cancel_requested, created_at, completed_at, response_message_id, user_id, canonical_content_id')
     .eq('id', req.params.jobId)
     .single();
 
@@ -2105,12 +2103,32 @@ app.get('/api/job-status/:jobId', requireAuth, async (req, res) => {
   if (data.user_id !== req.userId) return res.status(403).json({ status: 'error', message: 'Access denied.' });
 
   try {
-    res.json(data.feature === 'video' ? buildVideoJobSnapshot(data) : data);
+    if (data.feature === 'video') return res.json(buildVideoJobSnapshot(data));
+
+    if (data.feature === 'image' && data.canonical_content_id) {
+      const assetResult = await supabaseAdmin
+        .from('zuvyr_assets')
+        .select('id,mime_type,file_size_bytes,status')
+        .eq('owner_id', req.userId)
+        .eq('canonical_content_id', data.canonical_content_id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!assetResult.error && assetResult.data) {
+        data.canonical_asset_id = assetResult.data.id;
+        data.canonical_mime_type = assetResult.data.mime_type;
+        data.canonical_file_size_bytes = Number(assetResult.data.file_size_bytes || 0);
+        data.downloadable = true;
+      }
+    }
+
+    return res.json(data);
   } catch (snapshotError) {
     res.status(500).json({
       status: 'error',
-      code: snapshotError.code || 'invalid_video_job_snapshot',
-      message: 'Video job status is temporarily unavailable.'
+      code: snapshotError.code || 'invalid_generation_job_snapshot',
+      message: 'Generation job status is temporarily unavailable.'
     });
   }
 });

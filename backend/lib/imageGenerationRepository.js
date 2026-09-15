@@ -1,0 +1,258 @@
+'use strict';
+
+const crypto = require('node:crypto');
+const { CONFIG: ASSET_CONFIG, buildCanonicalObjectPath } = require('./assetStorageContract');
+const { createAssetStorageKernel } = require('./assetStorageKernel');
+const { createContentRepository } = require('./contentRepository');
+
+const IMAGE_SOURCE_SYSTEM = 'generation_job';
+const MAX_CANONICAL_IMAGE_BYTES = 25 * 1024 * 1024;
+const ALLOWED_IMAGE_MIME = new Set(['image/webp', 'image/png', 'image/jpeg']);
+
+function imageRepositoryError(code, status = 500, cause = null) {
+  const error = new Error(code);
+  error.code = code;
+  error.status = status;
+  error.cause = cause;
+  return error;
+}
+
+function isDuplicateStorageError(error) {
+  const status = Number(error && (error.statusCode || error.status || error.code));
+  const message = String(error && error.message || '').toLowerCase();
+  return status === 409 || message.includes('already exists') || message.includes('duplicate');
+}
+
+function normalizeMime(value) {
+  return String(value || '').split(';', 1)[0].trim().toLowerCase();
+}
+
+function titleFromPrompt(prompt) {
+  const text = String(prompt || '').replace(/\s+/g, ' ').trim();
+  if (!text) return 'Generated image';
+  return text.length <= 120 ? text : text.slice(0, 117) + '…';
+}
+
+async function fetchImageBytes(url, { fetchImpl = globalThis.fetch, maxBytes = MAX_CANONICAL_IMAGE_BYTES } = {}) {
+  if (typeof fetchImpl !== 'function') throw imageRepositoryError('image_fetch_unavailable', 500);
+
+  let parsed;
+  try { parsed = new URL(String(url || '')); } catch (_) { throw imageRepositoryError('invalid_image_result_url', 502); }
+  if (parsed.protocol !== 'https:') throw imageRepositoryError('invalid_image_result_protocol', 502);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20_000);
+  let response;
+  try {
+    response = await fetchImpl(parsed.toString(), {
+      method: 'GET',
+      redirect: 'follow',
+      signal: controller.signal,
+      headers: { accept: 'image/webp,image/png,image/jpeg' }
+    });
+  } catch (error) {
+    throw imageRepositoryError('image_result_download_failed', 502, error);
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  if (!response || !response.ok) throw imageRepositoryError('image_result_download_failed', 502);
+  const mimeType = normalizeMime(response.headers && response.headers.get ? response.headers.get('content-type') : '');
+  if (!ALLOWED_IMAGE_MIME.has(mimeType)) throw imageRepositoryError('image_result_mime_unsupported', 502);
+
+  const declared = Number(response.headers && response.headers.get ? response.headers.get('content-length') : 0);
+  if (Number.isFinite(declared) && declared > maxBytes) throw imageRepositoryError('image_result_too_large', 502);
+
+  const bytes = Buffer.from(await response.arrayBuffer());
+  if (!bytes.length || bytes.length > maxBytes) throw imageRepositoryError('image_result_size_invalid', 502);
+  return Object.freeze({ buffer: bytes, mimeType });
+}
+
+function createImageGenerationRepository({ db, storage, contentRepository = null, assetKernel = null, fetchImpl = globalThis.fetch } = {}) {
+  if (!db || typeof db.from !== 'function' || typeof db.rpc !== 'function') throw new TypeError('Image Generation repository requires a Supabase-compatible database client.');
+  if (!storage || typeof storage.from !== 'function') throw new TypeError('Image Generation repository requires a Supabase-compatible storage client.');
+
+  const contentRepo = contentRepository || createContentRepository({ client: db });
+  const assets = assetKernel || createAssetStorageKernel({ client: db, storage });
+
+  async function ownedJob(ownerId, jobId) {
+    const result = await db.from('generation_jobs')
+      .select('id,user_id,feature,status,prompt,result_url,canonical_content_id,image_operation,image_options,created_at,completed_at,error_message')
+      .eq('id', jobId)
+      .eq('user_id', ownerId)
+      .eq('feature', 'image')
+      .maybeSingle();
+    if (result.error) throw imageRepositoryError('image_job_lookup_failed', 500, result.error);
+    return result.data || null;
+  }
+
+  async function newestAsset(ownerId, contentId) {
+    if (!contentId) return null;
+    const result = await db.from('zuvyr_assets')
+      .select('id,canonical_content_id,mime_type,file_size_bytes,sha256,status,created_at')
+      .eq('owner_id', ownerId)
+      .eq('canonical_content_id', contentId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (result.error) throw imageRepositoryError('image_asset_lookup_failed', 500, result.error);
+    return result.data || null;
+  }
+
+  async function getExisting({ ownerId, jobId }) {
+    const job = await ownedJob(ownerId, jobId);
+    if (!job || !job.canonical_content_id) return null;
+    const asset = await newestAsset(ownerId, job.canonical_content_id);
+    if (!asset) return null;
+    return Object.freeze({
+      jobId: job.id,
+      providerUrl: job.result_url || null,
+      contentId: job.canonical_content_id,
+      assetId: asset.id,
+      mimeType: asset.mime_type,
+      fileSizeBytes: Number(asset.file_size_bytes || 0),
+      sha256: asset.sha256 || null,
+      replayed: true
+    });
+  }
+
+  async function persistGenerated({ ownerId, jobId, prompt, providerUrl, provider, model, operation = 'generate', options = {} }) {
+    const existing = await getExisting({ ownerId, jobId });
+    if (existing) return existing;
+
+    const downloaded = await fetchImageBytes(providerUrl, { fetchImpl });
+    const sha256 = crypto.createHash('sha256').update(downloaded.buffer).digest('hex');
+    const promptHash = crypto.createHash('sha256').update(String(prompt || '')).digest('hex');
+    const title = titleFromPrompt(prompt);
+
+    const record = await contentRepo.ensure({
+      ownerId,
+      projectId: null,
+      kind: 'image',
+      title,
+      sourceKind: 'image_generation',
+      sourceSystem: IMAGE_SOURCE_SYSTEM,
+      sourceId: `image-job:${jobId}`,
+      sourceVersionKey: sha256,
+      metadata: {
+        imageGeneration: true,
+        pack: 61,
+        jobId,
+        provider,
+        model,
+        operation,
+        promptHash,
+        options
+      },
+      version: {
+        mimeType: downloaded.mimeType,
+        uri: providerUrl,
+        text: null,
+        sha256,
+        payload: { prompt: String(prompt || ''), provider, model, operation, options },
+        provenance: { source: 'pack061_image_generate', jobId, provider, model }
+      }
+    });
+
+    const storagePath = buildCanonicalObjectPath({ ownerId, sha256 });
+    const upload = await storage.from(ASSET_CONFIG.bucket).upload(storagePath, downloaded.buffer, {
+      contentType: downloaded.mimeType,
+      cacheControl: '3600',
+      upsert: false
+    });
+    if (upload.error && !isDuplicateStorageError(upload.error)) throw imageRepositoryError('image_asset_upload_failed', 500, upload.error);
+
+    const registered = await assets.register({
+      ownerId,
+      canonicalContentId: record.contentId,
+      canonicalVersionId: record.versionId,
+      storagePath,
+      mimeType: downloaded.mimeType,
+      fileSizeBytes: downloaded.buffer.length,
+      sha256,
+      retentionClass: 'standard',
+      metadata: { imageGeneration: true, pack: 61, jobId, provider, model, operation, promptHash }
+    });
+
+    const update = await db.from('generation_jobs')
+      .update({ canonical_content_id: record.contentId, result_url: String(providerUrl) })
+      .eq('id', jobId)
+      .eq('user_id', ownerId)
+      .eq('feature', 'image');
+    if (update.error) throw imageRepositoryError('image_job_canonical_link_failed', 500, update.error);
+
+    return Object.freeze({
+      jobId,
+      providerUrl: String(providerUrl),
+      contentId: record.contentId,
+      versionId: record.versionId,
+      assetId: registered.assetId,
+      mimeType: downloaded.mimeType,
+      fileSizeBytes: downloaded.buffer.length,
+      sha256,
+      replayed: record.replayed === true || registered.replayed === true
+    });
+  }
+
+  async function listHistory({ ownerId, limit = 24 } = {}) {
+    const bounded = Math.max(1, Math.min(50, Number(limit) || 24));
+    const result = await db.from('generation_jobs')
+      .select('id,status,prompt,result_url,canonical_content_id,image_operation,image_options,created_at,completed_at,error_message')
+      .eq('user_id', ownerId)
+      .eq('feature', 'image')
+      .order('created_at', { ascending: false })
+      .limit(bounded);
+    if (result.error) throw imageRepositoryError('image_history_lookup_failed', 500, result.error);
+
+    const jobs = result.data || [];
+    const contentIds = [...new Set(jobs.map(row => row.canonical_content_id).filter(Boolean))];
+    const assetByContent = new Map();
+    if (contentIds.length) {
+      const assetResult = await db.from('zuvyr_assets')
+        .select('id,canonical_content_id,mime_type,file_size_bytes,status,created_at')
+        .eq('owner_id', ownerId)
+        .in('canonical_content_id', contentIds)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+      if (assetResult.error) throw imageRepositoryError('image_history_asset_lookup_failed', 500, assetResult.error);
+      for (const asset of assetResult.data || []) if (!assetByContent.has(asset.canonical_content_id)) assetByContent.set(asset.canonical_content_id, asset);
+    }
+
+    return jobs.map(row => {
+      const asset = row.canonical_content_id ? assetByContent.get(row.canonical_content_id) : null;
+      return Object.freeze({
+        jobId: row.id,
+        status: row.status,
+        prompt: row.prompt,
+        previewUrl: row.result_url || null,
+        contentId: row.canonical_content_id || null,
+        assetId: asset?.id || null,
+        mimeType: asset?.mime_type || null,
+        fileSizeBytes: Number(asset?.file_size_bytes || 0),
+        operation: row.image_operation || 'generate',
+        options: row.image_options || {},
+        createdAt: row.created_at,
+        completedAt: row.completed_at || null,
+        error: row.error_message || null,
+        downloadable: Boolean(row.canonical_content_id && asset?.id)
+      });
+    });
+  }
+
+  return Object.freeze({ persistGenerated, getExisting, listHistory });
+}
+
+function getDefaultImageGenerationRepository() {
+  const { supabaseAdmin } = require('./supabaseAdmin');
+  return createImageGenerationRepository({ db: supabaseAdmin, storage: supabaseAdmin.storage });
+}
+
+module.exports = {
+  IMAGE_SOURCE_SYSTEM,
+  MAX_CANONICAL_IMAGE_BYTES,
+  ALLOWED_IMAGE_MIME,
+  fetchImageBytes,
+  createImageGenerationRepository,
+  getDefaultImageGenerationRepository
+};
