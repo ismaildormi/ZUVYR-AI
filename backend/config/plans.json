@@ -27,7 +27,10 @@
         "audio": false,
         "code": false,
         "ip": false,
-        "deep_research": false
+        "deep_research": false,
+        "shopping": false,
+        "local_research": false,
+        "connected_research": false
       },
       "billing": {
         "subscriptionEligible": false,
@@ -47,7 +50,10 @@
         "audio": false,
         "code": false,
         "ip": false,
-        "deep_research": false
+        "deep_research": false,
+        "shopping": false,
+        "local_research": false,
+        "connected_research": false
       },
       "billing": {
         "subscriptionEligible": false,
@@ -66,7 +72,10 @@
         "audio": true,
         "code": true,
         "ip": false,
-        "deep_research": false
+        "deep_research": false,
+        "shopping": false,
+        "local_research": false,
+        "connected_research": false
       },
       "billing": {
         "subscriptionEligible": true,
@@ -84,7 +93,10 @@
         "audio": true,
         "code": true,
         "ip": false,
-        "deep_research": true
+        "deep_research": true,
+        "shopping": true,
+        "local_research": true,
+        "connected_research": true
       },
       "billing": {
         "subscriptionEligible": true,
@@ -102,7 +114,10 @@
         "audio": true,
         "code": true,
         "ip": true,
-        "deep_research": true
+        "deep_research": true,
+        "shopping": true,
+        "local_research": true,
+        "connected_research": true
       },
       "billing": {
         "subscriptionEligible": true,
@@ -120,7 +135,10 @@
         "audio": true,
         "code": true,
         "ip": true,
-        "deep_research": true
+        "deep_research": true,
+        "shopping": true,
+        "local_research": true,
+        "connected_research": true
       },
       "billing": {
         "subscriptionEligible": true,
@@ -184,6 +202,21 @@
       "credits": null,
       "pricingMode": "dynamic_exact_per_operation",
       "note": "Each bounded research search/fetch operation reuses Pack055 verified OpenRouter web/model pricing with idempotent reserve/settle/refund."
+    },
+    "shopping": {
+      "credits": null,
+      "pricingMode": "dynamic_exact_web_grounding",
+      "note": "Reuses Pack055 verified OpenRouter web/model pricing."
+    },
+    "local_research": {
+      "credits": null,
+      "pricingMode": "dynamic_exact_web_grounding",
+      "note": "Reuses Pack055 verified OpenRouter web/model pricing; location is user-supplied only."
+    },
+    "connected_research": {
+      "credits": 0,
+      "pricingMode": "internal_context_only",
+      "note": "Owner-scoped ZUVYR context graph only; no external OAuth/plugin call."
     }
   },
   "rateLimitsPerMinute": {

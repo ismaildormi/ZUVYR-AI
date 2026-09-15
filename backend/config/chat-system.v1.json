@@ -19,10 +19,22 @@
       "environmentVariable": "ZUVYR_DEEP_RESEARCH_ENABLED"
     },
     "shopping": {
-      "enabledByDefault": false,
+      "enabledByDefault": true,
       "capability": "shopping",
-      "status": "blocked_unpriced",
+      "status": "live_verified",
       "environmentVariable": "ZUVYR_SHOPPING_ENABLED"
+    },
+    "local_research": {
+      "enabledByDefault": true,
+      "capability": "local_research",
+      "status": "live_verified",
+      "environmentVariable": "ZUVYR_LOCAL_RESEARCH_ENABLED"
+    },
+    "connected_research": {
+      "enabledByDefault": true,
+      "capability": "connected_research",
+      "status": "live_verified",
+      "environmentVariable": "ZUVYR_CONNECTED_RESEARCH_ENABLED"
     }
   },
   "sources": {
@@ -56,12 +68,21 @@
     "maxEvidenceCharactersPerOperation": 6000
   },
   "shopping": {
-    "maxResults": 30,
+    "maxResults": 5,
     "supportedCurrencies": [
       "USD",
       "EUR",
       "MAD",
       "GBP"
     ]
+  },
+  "localResearch": {
+    "maxResults": 5,
+    "locationPolicy": "user_supplied_only"
+  },
+  "connectedResearch": {
+    "maxNodes": 60,
+    "maxEvidenceNodes": 40,
+    "depth": 1
   }
 }

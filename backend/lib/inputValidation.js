@@ -17,7 +17,7 @@ const MAX_TOTAL_CHARS = Number(process.env.MAX_TOTAL_CHARS_PER_CHAT || 24000);
 const MAX_PROMPT_CHARS = Number(process.env.MAX_PROMPT_CHARS || 2000);
 
 const ALLOWED_FEATURES = new Set(['chat', 'code']);
-const ALLOWED_CHAT_MODES = new Set(['standard', 'web_search', 'deep_research', 'shopping']);
+const ALLOWED_CHAT_MODES = new Set(['standard', 'web_search', 'deep_research', 'shopping', 'local_research', 'connected_research']);
 const ALLOWED_ROLES = new Set(['user', 'assistant', 'system']);
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

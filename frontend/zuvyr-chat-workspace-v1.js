@@ -3,7 +3,7 @@
 
   const ICON = './zuvyr-app-icon-20260827.png?v=1';
 
-  if (!['standard','web_search','deep_research'].includes(window.__zuvyrChatMode)) {
+  if (!['standard','web_search','deep_research','shopping','local_research','connected_research'].includes(window.__zuvyrChatMode)) {
     window.__zuvyrChatMode = 'standard';
   }
 
@@ -1588,6 +1588,7 @@
 
       let webToggle = null;
       let researchToggle = null;
+      let specializedToggles = [];
       if (row.closest('#feature-chat')) {
         webToggle = document.createElement('button');
         webToggle.type = 'button';
@@ -1639,6 +1640,39 @@
         });
         webToggle.addEventListener('click', renderResearchMode);
         renderResearchMode();
+
+        const specializedModes = [
+          ['shopping','◈','Shop'],
+          ['local_research','⌖','Local'],
+          ['connected_research','⛓','Connected']
+        ];
+        const renderSpecializedModes = () => {
+          specializedToggles.forEach(({button,mode}) => {
+            const active = window.__zuvyrChatMode === mode;
+            button.setAttribute('aria-pressed', active ? 'true' : 'false');
+            button.dataset.active = active ? '1' : '0';
+          });
+        };
+        specializedToggles = specializedModes.map(([mode,icon,label]) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'zuvyr-specialized-research-toggle';
+          button.setAttribute('aria-label', label);
+          button.title = label;
+          button.innerHTML = `<span aria-hidden="true">${icon}</span><span class="zuvyr-specialized-research-label">${label}</span>`;
+          button.addEventListener('click', event => {
+            event.preventDefault();
+            window.__zuvyrChatMode = window.__zuvyrChatMode === mode ? 'standard' : mode;
+            renderWebMode();
+            renderResearchMode();
+            renderSpecializedModes();
+            input.focus();
+          });
+          return {button,mode};
+        });
+        webToggle.addEventListener('click', renderSpecializedModes);
+        researchToggle.addEventListener('click', renderSpecializedModes);
+        renderSpecializedModes();
       }
 
       const picker = document.createElement('input');
@@ -1657,6 +1691,7 @@
       row.insertBefore(trigger,input);
       if (webToggle) row.insertBefore(webToggle,input);
       if (researchToggle) row.insertBefore(researchToggle,input);
+      specializedToggles.forEach(({button}) => row.insertBefore(button,input));
       row.append(picker,menu,list);
 
       const setOpen = open => {

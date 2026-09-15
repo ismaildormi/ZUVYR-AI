@@ -121,6 +121,9 @@ assert.equal(minimumPlanForFeature('code'), 'plus');
 assert.equal(minimumPlanForFeature('video'), 'pro');
 assert.equal(minimumPlanForFeature('ip'), 'legend');
 assert.equal(minimumPlanForFeature('deep_research'), 'pro');
+assert.equal(minimumPlanForFeature('shopping'), 'pro');
+assert.equal(minimumPlanForFeature('local_research'), 'pro');
+assert.equal(minimumPlanForFeature('connected_research'), 'pro');
 
 assert.deepEqual(
   getPlanEntitlements('plus'),
@@ -134,7 +137,10 @@ assert.deepEqual(
       audio: true,
       code: true,
       ip: false,
-      deep_research: false
+      deep_research: false,
+      shopping: false,
+      local_research: false,
+      connected_research: false
     }
   }
 );
