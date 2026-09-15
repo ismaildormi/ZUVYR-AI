@@ -393,3 +393,21 @@ Railway evidence SHA256: $ExpectedEvidenceSha
 - `LIVE_BILLING_ALLOWED=false`
 - Next: `PACK051 — Chat Core Normalization` after exact finalizer deployment verification.
 <!-- ZUVYR_PACK_050_FINALIZER_END -->
+
+<!-- ZUVYR_PACK_051_FINALIZER_BEGIN -->
+## PACK051 — Chat Core Normalization — LOCKED_VERIFIED
+
+- Source commit: `466dfbe64cc7fafba705006e746759277d79ea39`
+- Database migration: `NOT_REQUIRED`
+- Standard Chat → shared Brain plan/kernel contract: PASS
+- Router billing evidence preserved: PASS
+- Pilot-user eligibility removed from standard Chat: PASS
+- Conversation history + attachment path preserved: PASS
+- Bounded fallback + unknown-cost fail-closed regressions: PASS
+- Pack051 / Router Checkpoint C / Chat Memory / legacy Chat Flow tests: PASS
+- Railway source deployment: `4f862ef3-2d3b-4677-8ac4-42820ff66fee` — SUCCESS — `/readyz` PASS
+- Vercel source deployment: `dpl_TKijzFeSXsTUnrN3VaYGP3JU3CBr` — READY production — source `466dfbe64cc7fafba705006e746759277d79ea39`
+- Receipt SHA256: `6FFCA34AC2EF6F5D695320B4382219DD11446258BFFDBD12D6F3359921A2522A`
+- `LIVE_BILLING_ALLOWED=false`
+- Next: `PACK052 — Attachments + Recent/Project/Library Picker` after exact finalizer deployment verification.
+<!-- ZUVYR_PACK_051_FINALIZER_END -->

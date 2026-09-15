@@ -1,0 +1,55 @@
+{
+  "pack_id": "051",
+  "title": "Chat Core Normalization",
+  "status": "LOCKED_VERIFIED",
+  "source_commit": "466dfbe64cc7fafba705006e746759277d79ea39",
+  "database_migration": "NOT_REQUIRED",
+  "capabilities": {
+    "standard_chat_shared_brain_plan_kernel_contract": true,
+    "router_billing_evidence_preserved": true,
+    "pilot_user_dependency_removed_for_standard_chat": true,
+    "conversation_history_preserved": true,
+    "attachment_path_preserved": true,
+    "bounded_fallback_preserved": true,
+    "unknown_cost_blocked_before_provider_invocation": true
+  },
+  "tests": {
+    "pack051": "PASS",
+    "router_checkpoint_c": "PASS",
+    "chat_memory_wiring": "PASS",
+    "legacy_chat_flow": "PASS",
+    "syntax_and_diff_check": "PASS"
+  },
+  "live_verification": {
+    "railway": {
+      "source_upload_deployment_id": "4f862ef3-2d3b-4677-8ac4-42820ff66fee",
+      "snapshot_id": "e243d5a6-f8f1-4195-8c06-6b9795cb765b",
+      "status": "SUCCESS",
+      "healthcheck": "/readyz",
+      "healthcheck_status": "PASS",
+      "runtime": "rox-ai-backend@0.64.0 / node server.js / port 8080",
+      "note": "Finalizer is redeployed from a clean temporary clone by the finalizer runner for exact source identity."
+    },
+    "vercel": {
+      "deployment_id": "dpl_TKijzFeSXsTUnrN3VaYGP3JU3CBr",
+      "status": "READY",
+      "target": "production",
+      "source_commit": "466dfbe64cc7fafba705006e746759277d79ea39"
+    }
+  },
+  "verification": {
+    "architecture": "PASS",
+    "security": "PASS",
+    "reliability": "PASS",
+    "cost": "PASS",
+    "integrations": "PASS",
+    "live_billing_allowed": false
+  },
+  "finalizer": {
+    "commit": "PENDING_RUNNER_OUTPUT",
+    "clean_clone_railway_deploy_required": true,
+    "vercel_finalizer_verification_required": true
+  },
+  "next_pack": "052 - Attachments + Recent/Project/Library Picker",
+  "finalized_at": "2026-09-15"
+}
