@@ -52,7 +52,7 @@
       "id": "research",
       "label": "Research",
       "icon": "search",
-      "status": "provider_connection_required"
+      "status": "implemented_pending_visual_e2e"
     },
     {
       "id": "library",
@@ -165,6 +165,21 @@
       "from": "spreadsheets",
       "to": "analytics",
       "handoff": "validated_dataset"
+    },
+    {
+      "from": "research",
+      "to": "documents",
+      "handoff": "verified_sources_and_result"
+    },
+    {
+      "from": "research",
+      "to": "spreadsheets",
+      "handoff": "verified_sources_and_result"
+    },
+    {
+      "from": "research",
+      "to": "presentations",
+      "handoff": "verified_sources_and_result"
     }
   ],
   "orchestration": {

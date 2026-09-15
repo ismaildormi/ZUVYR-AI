@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pack": 59,
+  "pack": 60,
   "mode": "context_graph",
   "limits": {
     "nameChars": 120,
@@ -18,7 +18,9 @@
     "spreadsheetColumns": 100,
     "spreadsheetTotalCells": 100000,
     "presentationSlides": 60,
-    "presentationLinesPerSlide": 24
+    "presentationLinesPerSlide": 24,
+    "researchCheckpointSourceRecords": 30,
+    "researchCheckpointTextChars": 120000
   },
   "itemKinds": [
     "chat",
@@ -61,7 +63,8 @@
     "googleDrive": true,
     "workflows": true,
     "memory": true,
-    "contextGraph": true
+    "contextGraph": true,
+    "researchArtifactCheckpoint": true
   },
   "execution": {
     "workspaceWritesEnabled": true,
@@ -131,5 +134,19 @@
     "metadataDiscriminator": "officeArtifactKind",
     "providerCalls": 0,
     "generationCredits": 0
+  },
+  "researchArtifactCheckpoint": {
+    "enabled": true,
+    "outputs": [
+      "document",
+      "spreadsheet",
+      "presentation"
+    ],
+    "requiresVerifiedSourceRecords": true,
+    "conversionProviderCalls": 0,
+    "conversionCredits": 0,
+    "upstreamResearchBillingUnaffected": true,
+    "downloadUsesLibrarySignedUrl": true,
+    "cancellation": "pre_persist_only"
   }
 }

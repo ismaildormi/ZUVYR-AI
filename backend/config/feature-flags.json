@@ -1,5 +1,5 @@
 {
-  "_comment": "Single source of truth for every feature the platform has or will have. `enabled: false` = built (or stubbed) but switched off, not 'doesn't exist'. Never delete a key when a feature ships \u2014 flip it to true. src/core/featureFlags.js reads this file, then layers env-var overrides, then DB overrides (table feature_flags) on top, in that order.",
+  "_comment": "Single source of truth for every feature the platform has or will have. `enabled: false` = built (or stubbed) but switched off, not 'doesn't exist'. Never delete a key when a feature ships — flip it to true. src/core/featureFlags.js reads this file, then layers env-var overrides, then DB overrides (table feature_flags) on top, in that order.",
   "chat": {
     "enabled": true,
     "tier": "free",
@@ -455,7 +455,7 @@
     "enabled": true,
     "tier": "internal",
     "status": "live",
-    "note": "flag only gates API/route access; auto-fix MODE is a separate, admin-controlled setting in disk_monitor_settings, defaulting to off \u2014 see ARCHITECTURE.md \u00a714"
+    "note": "flag only gates API/route access; auto-fix MODE is a separate, admin-controlled setting in disk_monitor_settings, defaulting to off — see ARCHITECTURE.md §14"
   },
   "mobile_app": {
     "enabled": false,
@@ -657,5 +657,11 @@
     "tier": "pro",
     "status": "live_verified",
     "note": "Owner-scoped ZUVYR context only; OAuth/plugin connection setup remains gated for later packs."
+  },
+  "research_artifact_checkpoint": {
+    "enabled": true,
+    "tier": "free",
+    "status": "implemented_pending_visual_e2e",
+    "note": "Converts an already-cited research result into canonical Document/XLSX/CSV/PPTX artifacts without a second provider/model charge."
   }
 }

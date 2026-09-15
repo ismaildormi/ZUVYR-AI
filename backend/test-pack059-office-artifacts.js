@@ -71,7 +71,7 @@ async function run() {
   assert.doesNotMatch(repositorySource, /openrouter|anthropic|groq|stripe/i);
 
   const config = require('./config/workspace-system.v1.json');
-  assert.equal(config.pack, 59);
+  assert.ok(Number(config.pack) >= 59, `Pack059 office contract must survive later packs; got pack ${config.pack}`);
   assert.deepEqual(config.spreadsheetFormats, ['xlsx','csv']);
   assert.deepEqual(config.presentationFormats, ['pptx']);
   assert.equal(config.security.spreadsheetFormulaExecutionAllowed, false);

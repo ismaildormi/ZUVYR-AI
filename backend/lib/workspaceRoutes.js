@@ -30,6 +30,7 @@ const { getDefaultWorkspaceLibraryStore } = require('./workspaceLibraryRepositor
 const { getDefaultUniversalActionsStore } = require('./universalActionsRepository');
 const { getDefaultDocumentStudioRepository } = require('./documentStudioRepository');
 const { getDefaultOfficeArtifactRepository } = require('./officeArtifactRepository');
+const { getDefaultResearchArtifactCheckpointRepository } = require('./researchArtifactCheckpointRepository');
 
 function validation(res, error) {
   return res.status(400).json({
@@ -171,6 +172,7 @@ function createWorkspaceRouter(options = {}) {
   const universalActionsStore = options.universalActionsStore || getDefaultUniversalActionsStore({ libraryStore });
   const documentStudio = options.documentStudio || getDefaultDocumentStudioRepository({ projectStore });
   const officeStudio = options.officeStudio || getDefaultOfficeArtifactRepository({ projectStore });
+  const researchCheckpoint = options.researchCheckpoint || getDefaultResearchArtifactCheckpointRepository({ documentStudio, officeStudio, libraryStore, projectStore });
   const memoryStore =
     options.memoryStore || getDefaultWorkspaceMemoryStore();
   const contextGraphStore =
@@ -644,6 +646,39 @@ function createWorkspaceRouter(options = {}) {
     } catch (error) {
       if (error?.code === 'workspace_workspace_write_disabled') return disabled(res, 'workspace_write');
       return officeFailure(res, error);
+    }
+  });
+
+  function researchCheckpointFailure(res, error) {
+    const code = String(error && (error.code || error.message) || 'research_checkpoint_failed');
+    const status = Number(error && error.status);
+    if (Number.isInteger(status) && status >= 400 && status < 600) {
+      return res.status(status).json({ status: 'error', code, message: 'Research artifact handoff could not be completed.' });
+    }
+    if (code.includes('source_record_not_found') || code.includes('sources_lookup_failed')) {
+      return res.status(404).json({ status: 'error', code, message: 'A verified research source was not found.' });
+    }
+    if (code.includes('invalid_') || code.includes('_required') || code.includes('_too_large')) {
+      return res.status(400).json({ status: 'error', code, message: 'Research artifact handoff request is invalid.' });
+    }
+    console.error('[workspace/research-artifacts] operation failed:', code);
+    return res.status(500).json({ status: 'error', code: 'research_checkpoint_failed', message: 'Research artifact handoff could not be completed.' });
+  }
+
+  router.post('/research/artifacts', async (req, res) => {
+    try {
+      assertProjectWriteEnabled();
+      const controller = new AbortController();
+      req.once('aborted', () => controller.abort());
+      const checkpoint = await researchCheckpoint.create({
+        ownerId: req.userId,
+        input: req.body || {},
+        signal: controller.signal
+      });
+      return res.status(201).json({ status: 'success', persisted: true, checkpoint });
+    } catch (error) {
+      if (error?.code === 'workspace_workspace_write_disabled') return disabled(res, 'workspace_write');
+      return researchCheckpointFailure(res, error);
     }
   });
 
