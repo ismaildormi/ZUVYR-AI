@@ -1,0 +1,67 @@
+{
+  "pack_id": "060",
+  "title": "Research-to-Artifact Checkpoint",
+  "status": "FINALIZER_PREPARED",
+  "parent_pack": 59,
+  "parent_pack_finalizer_commit": "84cfe821a3cd19ade390f46c78aade2dc1de4bfd",
+  "parent_cumulative_zip_sha256": "23DB08C10B2AD79A136189282B9FFE7E005C7DAF88609199A3D310D0917A54E0",
+  "source_commit": "9626f2c3c3223956a1f00aee4f69c56ffdf20576",
+  "source_cumulative_zip_sha256": "F0997A45EF303ED0D233C75572741BAE07C8A2A7AC9917F0BEA78F70A93E3EAE",
+  "database_migration": "NOT_REQUIRED",
+  "verified_checkpoint": {
+    "research_to_cited_result": true,
+    "document_generation": true,
+    "xlsx_generation": true,
+    "csv_generation": true,
+    "pptx_generation": true,
+    "canonical_library_reload": true,
+    "signed_download_route": true,
+    "verified_source_ids_preserved": true,
+    "project_linking": true,
+    "pre_persist_cancellation": true,
+    "failure_replay_contract": true,
+    "conversion_provider_calls": 0,
+    "conversion_credits": 0,
+    "duplicate_conversion_charge": false
+  },
+  "test_evidence": {
+    "pack060_checkpoint_contract": "PASS",
+    "pack060_checkpoint_routes": "PASS",
+    "pack059_office_artifacts": "PASS",
+    "pack059_office_routes": "PASS",
+    "pack058_documents_templates": "PASS",
+    "pack058_document_routes": "PASS",
+    "pack057_specialized_research": "PASS",
+    "pack056_deep_research": "PASS",
+    "pack055_web_search": "PASS",
+    "pack054_sources_citations": "PASS",
+    "pack053_multimodal": "PASS",
+    "pack052_attachments": "PASS",
+    "pack051_chat_core": "PASS",
+    "pack014_cost_registry": "PASS",
+    "pack016_entitlements": "PASS",
+    "pack09_contracts_registry": "PASS",
+    "pack11_registry_no_activation": "PASS",
+    "workspace_project_routes": "PASS",
+    "workspace_library": "PASS",
+    "native_navigation_dom": "PASS",
+    "published_visual_checks": "OUTSTANDING_GENERAL_V1_GATE"
+  },
+  "source_deployments": {
+    "vercel": {
+      "deployment_id": "dpl_AzLsD7RJjPLXVgTfLTthg8LCz9ry",
+      "status": "READY",
+      "target": "production",
+      "commit": "9626f2c3c3223956a1f00aee4f69c56ffdf20576"
+    },
+    "railway_clean_clone_upload": {
+      "deployment_id": "73b994bd-e38f-48ad-83fe-19af2620c035",
+      "snapshot_id": "6096cc73-6cd0-4028-a670-7c783125d6de",
+      "status": "SUCCESS"
+    }
+  },
+  "live_billing_allowed": false,
+  "finalizer_cross_check_required": true,
+  "next_pack": "061 - Images",
+  "prepared_at": "2026-09-15"
+}
