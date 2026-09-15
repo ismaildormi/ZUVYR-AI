@@ -53,6 +53,45 @@ function modelFor(providerKey, opts = {}) {
   return null;
 }
 
+function sanitizeProviderMessage(value) {
+  const text = value == null ? '' : String(value);
+  return text
+    .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, 'Bearer [REDACTED]')
+    .replace(/\br8_[A-Za-z0-9_-]+\b/g, 'r8_[REDACTED]')
+    .replace(/([?&](?:token|key|api_key|access_token)=)[^&\s]+/gi, '$1[REDACTED]')
+    .slice(0, 600);
+}
+
+function providerFailureEvidence(error) {
+  const cause = error && error.cause ? error.cause : null;
+  const statusCode =
+    error?.statusCode ??
+    cause?.statusCode ??
+    cause?.status ??
+    cause?.response?.status ??
+    null;
+  const providerCode =
+    error?.providerCode ??
+    cause?.code ??
+    cause?.name ??
+    null;
+  const providerMessage = sanitizeProviderMessage(
+    cause?.message || error?.message || ''
+  );
+
+  return {
+    error: error?.message || 'provider_request_failed',
+    code: error?.code || null,
+    providerCode: providerCode ? String(providerCode) : null,
+    statusCode: Number.isFinite(Number(statusCode)) ? Number(statusCode) : null,
+    retryable:
+      typeof error?.retryable === 'boolean'
+        ? error.retryable
+        : null,
+    providerMessage
+  };
+}
+
 async function generateImage(prompt, opts = {}) {
   const chain = opts.chain || [DEFAULT_IMAGE_PROVIDER];
   const attempts = [];
@@ -82,7 +121,12 @@ async function generateImage(prompt, opts = {}) {
       attempts.push({ provider: providerKey, model, status: 'success', latencyMs: Date.now() - startedAt });
       return { url, provider: providerKey, model, attempts };
     } catch (error) {
-      attempts.push({ provider: providerKey, model, status: 'error', error: error.message });
+      attempts.push({
+        provider: providerKey,
+        model,
+        status: 'error',
+        ...providerFailureEvidence(error)
+      });
     }
   }
 
@@ -135,5 +179,7 @@ module.exports = {
   getImageProvider,
   listImageProviders,
   normalizeOutput,
+  sanitizeProviderMessage,
+  providerFailureEvidence,
   generateImage,
 };

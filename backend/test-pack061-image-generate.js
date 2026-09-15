@@ -33,6 +33,27 @@ async function run() {
   assert.equal(cost.unitType, 'images');
   assert.match(String(cost.source), /replicate\.com\/black-forest-labs\/flux-schnell/);
 
+  const {
+    providerFailureEvidence,
+    sanitizeProviderMessage
+  } = require('./src/modules/ai/providers/imageProviders');
+
+  const providerEvidence = providerFailureEvidence({
+    message: 'Provider request failed.',
+    code: 'provider_adapter_error',
+    providerCode: 'ApiError',
+    statusCode: 402,
+    retryable: false,
+    cause: new Error('Request failed 402 Payment Required for token r8_SUPERSECRET')
+  });
+  assert.equal(providerEvidence.code, 'provider_adapter_error');
+  assert.equal(providerEvidence.providerCode, 'ApiError');
+  assert.equal(providerEvidence.statusCode, 402);
+  assert.equal(providerEvidence.retryable, false);
+  assert.match(providerEvidence.providerMessage, /402 Payment Required/);
+  assert.doesNotMatch(providerEvidence.providerMessage, /r8_SUPERSECRET/);
+  assert.match(sanitizeProviderMessage('Bearer abc.def.ghi'), /Bearer \[REDACTED\]/);
+
   const basic = normalizeImageRequest({ imageOperation: 'generate' });
   assert.equal(assertImageRequestAvailable(basic).operation, 'generate');
   assert.throws(
@@ -75,6 +96,9 @@ async function run() {
   assert.match(adapter, /black-forest-labs\/flux-schnell/);
   assert.match(providers, /chain \|\| \[DEFAULT_IMAGE_PROVIDER\]/);
   assert.match(providers, /return normalizeOutput\(output\[0\]/);
+  assert.match(providers, /providerFailureEvidence\(error\)/);
+  assert.match(providers, /statusCode/);
+  assert.match(providers, /providerMessage/);
   assert.match(worker, /getExisting\(\{ ownerId: userId, jobId: jobRowId \}\)/);
   assert.match(worker, /persistGenerated\(/);
   assert.match(worker, /await settleCredits\(requestId, finalCredits\)/);
