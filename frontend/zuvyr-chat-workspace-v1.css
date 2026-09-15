@@ -1395,3 +1395,10 @@ body.zuvyr-ui #feature-chat .zuvyr-web-search-toggle[aria-pressed="true"]{color:
 body.zuvyr-ui #feature-chat .zuvyr-web-search-toggle>span:first-child{font-size:17px;line-height:1}
 body.zuvyr-ui #feature-chat .chat-input-row.zuvyr-voice-listening .zuvyr-web-search-toggle{display:none!important}
 @media(max-width:760px){body.zuvyr-ui #feature-chat .zuvyr-web-search-toggle{width:38px;padding:0;justify-content:center}body.zuvyr-ui #feature-chat .zuvyr-web-search-label{display:none}}
+
+/* PACK056 Deep Research mode */
+body.zuvyr-ui #feature-chat .zuvyr-deep-research-toggle{display:flex;align-items:center;gap:5px;flex:0 0 auto;height:38px;padding:0 10px;color:#b8b8bd;border:1px solid rgba(255,255,255,.10);border-radius:19px;background:transparent;cursor:pointer;font:600 12px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body.zuvyr-ui #feature-chat .zuvyr-deep-research-toggle:hover{color:#fff;background:rgba(255,255,255,.07)}
+body.zuvyr-ui #feature-chat .zuvyr-deep-research-toggle[aria-pressed="true"]{color:#fff;border-color:rgba(255,113,56,.52);background:rgba(255,113,56,.14);box-shadow:inset 0 0 0 1px rgba(255,113,56,.08)}
+body.zuvyr-ui #feature-chat .chat-input-row.zuvyr-voice-listening .zuvyr-deep-research-toggle{display:none!important}
+@media(max-width:760px){body.zuvyr-ui #feature-chat .zuvyr-deep-research-toggle{width:38px;padding:0;justify-content:center}body.zuvyr-ui #feature-chat .zuvyr-deep-research-label{display:none}}

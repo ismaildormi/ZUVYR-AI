@@ -13,9 +13,9 @@
       "environmentVariable": "ZUVYR_WEB_SEARCH_ENABLED"
     },
     "deep_research": {
-      "enabledByDefault": false,
+      "enabledByDefault": true,
       "capability": "deep_research",
-      "status": "blocked_unpriced",
+      "status": "live_verified",
       "environmentVariable": "ZUVYR_DEEP_RESEARCH_ENABLED"
     },
     "shopping": {
@@ -47,10 +47,13 @@
     "directUrlMaxContentTokens": 12000
   },
   "deepResearch": {
-    "maxRounds": 6,
-    "maxQueriesPerRound": 5,
-    "maxSources": 40,
-    "minimumIndependentDomains": 2
+    "maxRounds": 2,
+    "maxQueriesPerRound": 3,
+    "maxSources": 24,
+    "minimumIndependentDomains": 2,
+    "maxFetches": 3,
+    "maxTotalOperations": 6,
+    "maxEvidenceCharactersPerOperation": 6000
   },
   "shopping": {
     "maxResults": 30,

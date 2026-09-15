@@ -17,6 +17,8 @@ assert(turn.includes('sources: Array.isArray(sources) ? sources : []'));
 assert(turn.includes('source_count: Array.isArray(sources) ? sources.length : 0'));
 assert.equal(flags.chat_sources.enabled, true);
 assert.equal(flags.web_search.enabled, true);
-for (const key of ['file_analysis', 'deep_research', 'shopping']) assert.equal(flags[key].enabled, false);
+for (const key of ['file_analysis', 'shopping']) assert.equal(flags[key].enabled, false);
+assert.equal(flags.deep_research.enabled, true);
+assert.equal(flags.deep_research.status, 'live_verified');
 
-console.log('PASS: Pack 03 foundations preserved while Pack055 activates Web Search through the same source/memory contract');
+console.log('PASS: Pack 03 foundations preserved while Pack056 preserves Web Search and activates Deep Research through the same source/memory contract');

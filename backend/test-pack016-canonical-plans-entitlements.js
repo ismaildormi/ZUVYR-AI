@@ -120,6 +120,7 @@ assert.equal(planHasFeature('max', 'ip'), true);
 assert.equal(minimumPlanForFeature('code'), 'plus');
 assert.equal(minimumPlanForFeature('video'), 'pro');
 assert.equal(minimumPlanForFeature('ip'), 'legend');
+assert.equal(minimumPlanForFeature('deep_research'), 'pro');
 
 assert.deepEqual(
   getPlanEntitlements('plus'),
@@ -132,7 +133,8 @@ assert.deepEqual(
       video: false,
       audio: true,
       code: true,
-      ip: false
+      ip: false,
+      deep_research: false
     }
   }
 );

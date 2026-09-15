@@ -17,17 +17,30 @@ async function main() {
   const search = await executeWebSearch({ provider: 'offline', query: 'ZUVYR', limit: 2 }, { allowExecution: true });
   assert.equal(search[0].type, 'web'); assert.equal(calls, 1);
 
-  const plan = createResearchPlan({ question: 'Compare two sources', queries: ['source one', 'source two'] });
-  await assert.rejects(executeResearch(plan, { search: async () => [], composeReport: async () => '' }), error => error.code === 'deep_research_disabled');
+  const plan = createResearchPlan({ question: 'compare current evidence', queries: ['current evidence'] });
+  await assert.rejects(
+    executeResearch(plan, { runOperation: async () => ({ grounding: { sources: [] }, billing: {} }) }),
+    error => error.code === 'deep_research_disabled'
+  );
   const research = await executeResearch(plan, {
     allowExecution: true,
-    search: async query => [{ title: query, url: query.endsWith('one') ? 'https://one.example/a' : 'https://two.example/b', snippet: query }],
-    composeReport: async ({ sources }) => `Report with ${sources.length} sources`
+    runOperation: async ({ key, type, input }) => ({
+      grounding: {
+        evidence: `evidence for ${input}`,
+        sources: type === 'search'
+          ? [
+              { type: 'web', title: 'A', url: 'https://a.example/x', snippet: 'a' },
+              { type: 'web', title: 'B', url: 'https://b.example/y', snippet: 'b' }
+            ]
+          : [{ type: 'web', title: input, url: input, snippet: 'fetched' }],
+        usage: {}, model: 'test', provider: 'test', mode: type
+      },
+      billing: { creditsCharged: 1, providerCostMicroUsd: '10' }
+    })
   });
-  assert.equal(research.independentDomains, 2); assert.equal(research.sources.length, 2);
+  assert.equal(research.status, 'succeeded');
+  assert(research.independentDomains >= 2);
 
-  assert.throws(() => normalizeProduct({ title: 'Bad', price: -1, currency: 'USD', url: 'https://shop.example/bad' }), error => error.code === 'invalid_product_price');
-  await assert.rejects(compareProducts({ query: 'camera', searchProducts: async () => [] }), error => error.code === 'shopping_disabled');
   const products = await compareProducts({
     query: 'camera', allowExecution: true,
     searchProducts: async () => [

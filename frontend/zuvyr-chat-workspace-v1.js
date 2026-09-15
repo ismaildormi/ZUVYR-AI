@@ -3,7 +3,7 @@
 
   const ICON = './zuvyr-app-icon-20260827.png?v=1';
 
-  if (!['standard','web_search'].includes(window.__zuvyrChatMode)) {
+  if (!['standard','web_search','deep_research'].includes(window.__zuvyrChatMode)) {
     window.__zuvyrChatMode = 'standard';
   }
 
@@ -1587,6 +1587,7 @@
       trigger.innerHTML = plusIcon;
 
       let webToggle = null;
+      let researchToggle = null;
       if (row.closest('#feature-chat')) {
         webToggle = document.createElement('button');
         webToggle.type = 'button';
@@ -1609,6 +1610,35 @@
           input.focus();
         });
         renderWebMode();
+
+        researchToggle = document.createElement('button');
+        researchToggle.type = 'button';
+        researchToggle.className = 'zuvyr-deep-research-toggle';
+        researchToggle.setAttribute('aria-label','Deep Research');
+        researchToggle.title = 'Deep Research';
+        const renderResearchMode = () => {
+          const active = window.__zuvyrChatMode === 'deep_research';
+          researchToggle.setAttribute('aria-pressed', active ? 'true' : 'false');
+          researchToggle.dataset.active = active ? '1' : '0';
+          researchToggle.innerHTML = `<span aria-hidden="true">◎</span><span class="zuvyr-deep-research-label">Research</span>`;
+          if (webToggle) {
+            const webActive = window.__zuvyrChatMode === 'web_search';
+            webToggle.setAttribute('aria-pressed', webActive ? 'true' : 'false');
+            webToggle.dataset.active = webActive ? '1' : '0';
+          }
+        };
+        researchToggle.addEventListener('click', event => {
+          event.preventDefault();
+          window.__zuvyrChatMode =
+            window.__zuvyrChatMode === 'deep_research'
+              ? 'standard'
+              : 'deep_research';
+          renderResearchMode();
+          renderWebMode();
+          input.focus();
+        });
+        webToggle.addEventListener('click', renderResearchMode);
+        renderResearchMode();
       }
 
       const picker = document.createElement('input');
@@ -1626,6 +1656,7 @@
       list.hidden = true;
       row.insertBefore(trigger,input);
       if (webToggle) row.insertBefore(webToggle,input);
+      if (researchToggle) row.insertBefore(researchToggle,input);
       row.append(picker,menu,list);
 
       const setOpen = open => {

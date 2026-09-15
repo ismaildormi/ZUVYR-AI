@@ -26,7 +26,8 @@
         "video": false,
         "audio": false,
         "code": false,
-        "ip": false
+        "ip": false,
+        "deep_research": false
       },
       "billing": {
         "subscriptionEligible": false,
@@ -45,7 +46,8 @@
         "video": false,
         "audio": false,
         "code": false,
-        "ip": false
+        "ip": false,
+        "deep_research": false
       },
       "billing": {
         "subscriptionEligible": false,
@@ -63,7 +65,8 @@
         "video": false,
         "audio": true,
         "code": true,
-        "ip": false
+        "ip": false,
+        "deep_research": false
       },
       "billing": {
         "subscriptionEligible": true,
@@ -80,7 +83,8 @@
         "video": true,
         "audio": true,
         "code": true,
-        "ip": false
+        "ip": false,
+        "deep_research": true
       },
       "billing": {
         "subscriptionEligible": true,
@@ -97,7 +101,8 @@
         "video": true,
         "audio": true,
         "code": true,
-        "ip": true
+        "ip": true,
+        "deep_research": true
       },
       "billing": {
         "subscriptionEligible": true,
@@ -114,7 +119,8 @@
         "video": true,
         "audio": true,
         "code": true,
-        "ip": true
+        "ip": true,
+        "deep_research": true
       },
       "billing": {
         "subscriptionEligible": true,
@@ -173,6 +179,11 @@
     "web_search": {
       "credits": null,
       "note": "Dynamic exact technical cost from cost-registry.v1.json; fixed placeholder is non-authoritative."
+    },
+    "deep_research": {
+      "credits": null,
+      "pricingMode": "dynamic_exact_per_operation",
+      "note": "Each bounded research search/fetch operation reuses Pack055 verified OpenRouter web/model pricing with idempotent reserve/settle/refund."
     }
   },
   "rateLimitsPerMinute": {
