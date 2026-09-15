@@ -709,6 +709,7 @@
     if (code.includes('blocked') || code.includes('dangerous')) return 'This file type is blocked for security.';
     if (code.includes('insufficient')) return 'There are not enough credits to process these files.';
     if (code.includes('timeout')) return 'File processing took too long. You can try again.';
+    if (code.includes('not_found')) return 'The selected file is no longer available.';
     return error?.message && !code.includes('_')
       ? error.message
       : 'ZUVYR could not process the selected files.';
@@ -754,11 +755,38 @@
     };
   };
 
+  const entryForCanonicalAsset = (item,asset) => ({
+    localId: localId(),
+    file: null,
+    name: String(item?.title || item?.kind || 'Library item').slice(-180),
+    size: Number(asset?.file_size_bytes) || 0,
+    mimeType: String(asset?.mime_type || 'application/octet-stream').toLowerCase(),
+    previewUrl: '',
+    status: 'ready',
+    statusText: 'Ready · Library',
+    assetId: String(asset?.id || ''),
+    path: null,
+    source: {
+      id: String(asset?.id || ''),
+      attachment_id: String(asset?.id || ''),
+      canonical_asset_id: String(asset?.id || ''),
+      canonical_content_id: String(item?.id || asset?.canonical_content_id || ''),
+      original_name: String(item?.title || 'Library item'),
+      mime_type: String(asset?.mime_type || 'application/octet-stream'),
+      file_size_bytes: Number(asset?.file_size_bytes) || 0,
+      scan_status: 'clean',
+      extraction_status: 'not_required'
+    },
+    origin: 'workspace'
+  });
+
   const entriesFor = row => (
     Array.isArray(row?._zuvyrAttachments)
       ? row._zuvyrAttachments
       : []
   );
+
+  const composerFor = row => row?.querySelector('[data-feature="chat"], [data-feature="code"]') || null;
 
   const syncCompatibility = row => {
     const entries = entriesFor(row);
@@ -824,10 +852,30 @@
           .filter(candidate => candidate.localId !== entry.localId);
         syncCompatibility(row);
         renderSelection(row);
-        row.querySelector('[data-feature="chat"]')?.focus();
+        composerFor(row)?.focus();
       });
 
-      item.append(visual,copy,remove);
+      if (entry.status === 'failed' && entry.origin !== 'workspace') {
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.className = 'zuvyr-attachment-retry';
+        retry.setAttribute('aria-label',`Retry ${entry.name}`);
+        retry.title = 'Retry upload';
+        retry.textContent = '↻';
+        retry.addEventListener('click',() => {
+          if (window.__zuvyrAttachmentUploadActive) return;
+          entry.assetId = null;
+          entry.path = null;
+          entry.uploadToken = null;
+          entry.bucket = null;
+          entry.source = null;
+          setEntryStatus(entry,'ready','Ready to retry');
+          renderSelection(row);
+        });
+        item.append(visual,copy,retry,remove);
+      } else {
+        item.append(visual,copy,remove);
+      }
       list.appendChild(item);
     });
 
@@ -960,6 +1008,249 @@
     return data;
   };
 
+  const activeAssetFor = item => (
+    Array.isArray(item?.assets)
+      ? item.assets.find(asset => asset?.status === 'active') || null
+      : null
+  );
+
+  const addCanonicalEntry = (row,item,asset) => {
+    const assetId = String(asset?.id || '').trim();
+    if (!assetId) throw new Error('workspace_asset_not_found');
+    const entries = entriesFor(row);
+    if (entries.some(entry => String(entry.assetId || '') === assetId)) return false;
+    if (entries.length >= MAX_ATTACHMENTS_PER_TURN) throw new Error('too_many_attachments');
+    entries.push(entryForCanonicalAsset(item,asset));
+    row._zuvyrAttachments = entries;
+    renderSelection(row);
+    return true;
+  };
+
+  const pickerDate = value => {
+    const date = new Date(value || 0);
+    return Number.isFinite(date.getTime())
+      ? date.toLocaleDateString(undefined,{month:'short',day:'numeric'})
+      : '';
+  };
+
+  const openWorkspacePicker = async (row,mode) => {
+    if (!row || !['recent','project','library'].includes(mode)) {
+      throw new Error('workspace_picker_invalid');
+    }
+
+    document.querySelector('.zuvyr-workspace-picker-backdrop')?.remove();
+    const backdrop = document.createElement('div');
+    backdrop.className = 'zuvyr-workspace-picker-backdrop';
+    const dialog = document.createElement('section');
+    dialog.className = 'zuvyr-workspace-picker';
+    dialog.setAttribute('role','dialog');
+    dialog.setAttribute('aria-modal','true');
+    dialog.setAttribute('aria-label',mode === 'project' ? 'Choose from a project' : mode === 'recent' ? 'Recent files' : 'Library');
+
+    const header = document.createElement('div');
+    header.className = 'zuvyr-workspace-picker-header';
+    const heading = document.createElement('strong');
+    heading.textContent = mode === 'project' ? 'Project files' : mode === 'recent' ? 'Recent files' : 'Library';
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'zuvyr-workspace-picker-close';
+    close.setAttribute('aria-label','Close');
+    close.textContent = '×';
+    header.append(heading,close);
+
+    const tools = document.createElement('div');
+    tools.className = 'zuvyr-workspace-picker-tools';
+    const body = document.createElement('div');
+    body.className = 'zuvyr-workspace-picker-body';
+    const status = document.createElement('div');
+    status.className = 'zuvyr-workspace-picker-status';
+    status.textContent = 'Loading…';
+    body.appendChild(status);
+    dialog.append(header,tools,body);
+    backdrop.appendChild(dialog);
+    document.body.appendChild(backdrop);
+
+    const closePicker = () => {
+      document.removeEventListener('keydown',onKey);
+      backdrop.remove();
+      composerFor(row)?.focus();
+    };
+    const onKey = event => {
+      if (event.key === 'Escape') closePicker();
+    };
+    document.addEventListener('keydown',onKey);
+    close.addEventListener('click',closePicker);
+    backdrop.addEventListener('pointerdown',event => {
+      if (event.target === backdrop) closePicker();
+    });
+
+    const showEmpty = text => {
+      body.replaceChildren();
+      const empty = document.createElement('div');
+      empty.className = 'zuvyr-workspace-picker-empty';
+      empty.textContent = text;
+      body.appendChild(empty);
+    };
+
+    const markSelected = (button,assetId) => {
+      if (entriesFor(row).some(entry => String(entry.assetId || '') === String(assetId || ''))) {
+        button.disabled = true;
+        button.textContent = 'Added';
+      }
+    };
+
+    const renderLibraryItems = items => {
+      body.replaceChildren();
+      const usable = (items || []).filter(item => activeAssetFor(item));
+      if (!usable.length) {
+        showEmpty(mode === 'recent' ? 'No recent reusable files.' : 'No reusable Library files.');
+        return;
+      }
+      usable.forEach(item => {
+        const asset = activeAssetFor(item);
+        const card = document.createElement('article');
+        card.className = 'zuvyr-workspace-picker-item';
+        const copy = document.createElement('span');
+        copy.className = 'zuvyr-workspace-picker-copy';
+        const title = document.createElement('strong');
+        title.textContent = item.title || item.kind || 'Untitled';
+        const meta = document.createElement('span');
+        meta.textContent = [item.kind,item.project_name,formatBytes(asset.file_size_bytes),pickerDate(item.updated_at)].filter(Boolean).join(' · ');
+        copy.append(title,meta);
+        const add = document.createElement('button');
+        add.type = 'button';
+        add.className = 'zuvyr-workspace-picker-add';
+        add.textContent = 'Add';
+        markSelected(add,asset.id);
+        add.addEventListener('click',() => {
+          try {
+            addCanonicalEntry(row,item,asset);
+            markSelected(add,asset.id);
+          } catch (error) {
+            window.alert(humanError(error));
+          }
+        });
+        card.append(copy,add);
+        body.appendChild(card);
+      });
+    };
+
+    const loadLibrary = async query => {
+      status.textContent = 'Loading…';
+      const params = new URLSearchParams({state:'active',limit:'30'});
+      if (query) params.set('q',query);
+      const data = await requestJson(`/api/workspace/library/items?${params.toString()}`,{method:'GET'});
+      renderLibraryItems(data.items || []);
+    };
+
+    if (mode === 'library') {
+      const search = document.createElement('input');
+      search.type = 'search';
+      search.className = 'zuvyr-workspace-picker-search';
+      search.placeholder = 'Search Library';
+      search.setAttribute('aria-label','Search Library');
+      tools.appendChild(search);
+      let timer = null;
+      search.addEventListener('input',() => {
+        clearTimeout(timer);
+        timer = setTimeout(() => loadLibrary(search.value.trim()).catch(error => showEmpty(humanError(error))),220);
+      });
+      await loadLibrary('');
+      search.focus();
+    } else if (mode === 'recent') {
+      await loadLibrary('');
+    } else {
+      const projectsData = await requestJson('/api/workspace/projects?limit=30',{method:'GET'});
+      body.replaceChildren();
+      const projects = Array.isArray(projectsData.projects) ? projectsData.projects : [];
+      if (!projects.length) {
+        showEmpty('No projects yet.');
+      } else {
+        const back = document.createElement('button');
+        back.type = 'button';
+        back.className = 'zuvyr-workspace-picker-back';
+        back.textContent = '← Projects';
+        back.hidden = true;
+        tools.appendChild(back);
+
+        const renderProjects = () => {
+          back.hidden = true;
+          body.replaceChildren();
+          projects.forEach(project => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'zuvyr-workspace-project-item';
+            const title = document.createElement('strong');
+            title.textContent = project.name || 'Untitled project';
+            const meta = document.createElement('span');
+            meta.textContent = [project.description,pickerDate(project.updated_at)].filter(Boolean).join(' · ');
+            button.append(title,meta);
+            button.addEventListener('click',async () => {
+              body.replaceChildren();
+              const loading = document.createElement('div');
+              loading.className = 'zuvyr-workspace-picker-status';
+              loading.textContent = 'Loading project…';
+              body.appendChild(loading);
+              try {
+                const detail = await requestJson(`/api/workspace/projects/${encodeURIComponent(project.id)}`,{method:'GET'});
+                const items = Array.isArray(detail?.project?.items)
+                  ? detail.project.items.filter(item => item?.canonical_content_id)
+                  : [];
+                back.hidden = false;
+                body.replaceChildren();
+                if (!items.length) {
+                  showEmpty('This project has no reusable files yet.');
+                  return;
+                }
+                items.forEach(projectItem => {
+                  const card = document.createElement('article');
+                  card.className = 'zuvyr-workspace-picker-item';
+                  const copy = document.createElement('span');
+                  copy.className = 'zuvyr-workspace-picker-copy';
+                  const itemTitle = document.createElement('strong');
+                  itemTitle.textContent = projectItem.name || projectItem.kind || 'Project item';
+                  const itemMeta = document.createElement('span');
+                  itemMeta.textContent = projectItem.kind || 'file';
+                  copy.append(itemTitle,itemMeta);
+                  const add = document.createElement('button');
+                  add.type = 'button';
+                  add.className = 'zuvyr-workspace-picker-add';
+                  add.textContent = 'Add';
+                  add.addEventListener('click',async () => {
+                    add.disabled = true;
+                    add.textContent = 'Loading…';
+                    try {
+                      const library = await requestJson(`/api/workspace/library/items/${encodeURIComponent(projectItem.canonical_content_id)}`,{method:'GET'});
+                      const item = library.item;
+                      const asset = activeAssetFor(item);
+                      if (!asset) throw new Error('workspace_asset_not_found');
+                      addCanonicalEntry(row,item,asset);
+                      add.textContent = 'Added';
+                    } catch (error) {
+                      add.disabled = false;
+                      add.textContent = 'Add';
+                      window.alert(humanError(error));
+                    }
+                  });
+                  card.append(copy,add);
+                  body.appendChild(card);
+                });
+              } catch (error) {
+                showEmpty(humanError(error));
+                back.hidden = false;
+              }
+            });
+            body.appendChild(button);
+          });
+        };
+        back.addEventListener('click',renderProjects);
+        renderProjects();
+      }
+    }
+  };
+
+  window.__zuvyrOpenAttachmentPicker = (row,mode) => openWorkspacePicker(row,mode);
+
   const TUS_UPLOAD_THRESHOLD_BYTES = 6 * 1024 * 1024;
   const TUS_CHUNK_BYTES = 6 * 1024 * 1024;
 
@@ -1060,7 +1351,7 @@
       }
     );
     updateBalance(completed);
-    entry.assetId = String(completed?.asset?.id || '');
+    entry.assetId = String(completed?.asset?.attachment_id || completed?.asset?.canonical_asset_id || completed?.asset?.id || '');
     entry.queued = completed?.status === 'queued';
     if (!entry.assetId) throw new Error('attachment_asset_missing');
     if (!entry.queued) setEntryStatus(entry,'ready','Ready');
@@ -1079,8 +1370,8 @@
     const mimeType = String(asset?.mime_type || '');
     const accessUrl = String(asset?.access_url || '');
     return {
-      localId: `history-${String(asset?.id || '')}`,
-      assetId: String(asset?.id || ''),
+      localId: `history-${String(asset?.attachment_id || asset?.canonical_asset_id || asset?.id || '')}`,
+      assetId: String(asset?.attachment_id || asset?.canonical_asset_id || asset?.id || ''),
       previewUrl: mimeType.startsWith('image/') ? accessUrl : '',
       name: String(asset?.original_name || 'Attachment'),
       size: Number(asset?.file_size_bytes) || 0,
@@ -1091,37 +1382,59 @@
 
   window.__zuvyrLoadHistoryAttachments = async conversationId => {
     const assets = await fetchReadyAssets(conversationId);
-    return new Map(
-      assets.map(asset => [
-        String(asset?.id || ''),
-        historyEntryFromAsset(asset)
-      ])
-    );
+    const map = new Map();
+    assets.forEach(asset => {
+      const entry = historyEntryFromAsset(asset);
+      [asset?.attachment_id,asset?.canonical_asset_id,asset?.legacy_asset_id,asset?.id]
+        .map(value => String(value || '').trim())
+        .filter(Boolean)
+        .forEach(id => map.set(id,entry));
+    });
+    return map;
   };
 
   const waitForReadyAssets = async (conversationId,entries) => {
     const wanted = new Set(entries.map(entry => String(entry.assetId)));
     const ready = new Map();
+    entries.forEach(entry => {
+      if (entry.source && entry.assetId) ready.set(String(entry.assetId),entry.source);
+    });
     const deadline = Date.now() + READY_TIMEOUT_MS;
 
     while (Date.now() < deadline) {
-      const assets = await fetchReadyAssets(conversationId);
-      assets.forEach(asset => {
-        const id = String(asset?.id || '');
-        if (wanted.has(id)) ready.set(id,asset);
-      });
+      if (ready.size < wanted.size) {
+        const assets = await fetchReadyAssets(conversationId);
+        assets.forEach(asset => {
+          const aliases = [asset?.attachment_id,asset?.canonical_asset_id,asset?.legacy_asset_id,asset?.id]
+            .map(value => String(value || '').trim())
+            .filter(Boolean);
+          const wantedAlias = aliases.find(id => wanted.has(id));
+          if (wantedAlias) ready.set(wantedAlias,asset);
+        });
+      }
 
       entries.forEach(entry => {
-        const source = ready.get(String(entry.assetId));
+        const key = String(entry.assetId);
+        const source = ready.get(key);
         if (source) {
           entry.source = source;
+          const stable = String(source?.attachment_id || source?.canonical_asset_id || entry.assetId || '');
+          if (stable) {
+            ready.delete(key);
+            entry.assetId = stable;
+            ready.set(stable,source);
+            wanted.delete(key);
+            wanted.add(stable);
+          }
           setEntryStatus(entry,'ready','Ready');
         } else {
           setEntryStatus(entry,'processing','Processing');
         }
       });
 
-      if (ready.size === wanted.size) return ready;
+      if (entries.every(entry => entry.source)) {
+        return new Map(entries.map(entry => [String(entry.assetId),entry.source]));
+      }
       await new Promise(resolve => setTimeout(resolve,READY_POLL_MS));
     }
 
@@ -1136,8 +1449,9 @@
       const isUser = classes.includes('user');
       const isBot = classes.includes('bot');
 
-      if (!isNode && isUser && msgBox?.id === 'msgs-chat') {
-        const row = document.querySelector('#feature-chat .chat-input-row[data-zuvyr-attachment-active="1"]');
+      if (!isNode && isUser && (msgBox?.id === 'msgs-chat' || msgBox?.id === 'msgs-code')) {
+        const feature = msgBox.id === 'msgs-code' ? 'code' : 'chat';
+        const row = document.querySelector(`#feature-${feature} .chat-input-row[data-zuvyr-attachment-active="1"]`);
         const persisted = meta && Array.isArray(meta.attachments)
           ? meta.attachments
           : [];
@@ -1188,11 +1502,11 @@
     if (typeof window.sendChat !== 'function' || window.sendChat.__zuvyrDurableAttachmentsV1) return;
     const original = window.sendChat;
     const wrapped = async function(feature,text,msgBox,userMessage) {
-      if (feature !== 'chat') {
+      if (feature !== 'chat' && feature !== 'code') {
         return original.call(this,feature,text,msgBox,userMessage);
       }
 
-      const row = document.querySelector('#feature-chat .chat-input-row[data-zuvyr-attachment-active="1"]');
+      const row = document.querySelector(`#feature-${feature} .chat-input-row[data-zuvyr-attachment-active="1"]`);
       const entries = entriesFor(row).slice();
       if (!entries.length) {
         return original.call(this,feature,text,msgBox,userMessage);
@@ -1216,7 +1530,7 @@
         window.__zuvyrAttachmentSourceMap = ready;
         window.__zuvyrSendingAttachmentEntries = entries;
         clearAttachments(row);
-        const composer = row?.querySelector('[data-feature="chat"]');
+        const composer = composerFor(row);
         if (composer) composer.style.height = '48px';
         return await original.call(this,feature,outgoingText,msgBox,userMessage);
       } catch (error) {
@@ -1243,12 +1557,12 @@
   const enhance = () => {
     patchAppendMsg();
     patchSendChat();
-    document.querySelectorAll('#feature-chat .chat-input-row').forEach(row => {
-      if (row.dataset.zuvyrAttachMenu === '4') return;
-      const input = row.querySelector('[data-feature="chat"]');
+    document.querySelectorAll('#feature-chat .chat-input-row, #feature-code .chat-input-row').forEach(row => {
+      if (row.dataset.zuvyrAttachMenu === '5') return;
+      const input = composerFor(row);
       if (!input) return;
-      row.dataset.zuvyrAttachMenu = '4';
-      row._zuvyrAttachments = [];
+      row.dataset.zuvyrAttachMenu = '5';
+      if (!Array.isArray(row._zuvyrAttachments)) row._zuvyrAttachments = [];
 
       if (input.tagName === 'TEXTAREA' && input.dataset.zuvyrAutosize !== '1') {
         input.dataset.zuvyrAutosize = '1';
@@ -1276,7 +1590,7 @@
       const menu = document.createElement('div');
       menu.className = 'zuvyr-attach-menu';
       menu.hidden = true;
-      menu.innerHTML = `<button type="button" class="zuvyr-attach-action" data-action="files"><span class="zuvyr-attach-action-icon">${paperclipIcon}</span><span><span class="zuvyr-attach-action-title">Add files or photos</span><span class="zuvyr-attach-action-subtitle">Up to 20 files, 600 MB each</span></span></button><button type="button" class="zuvyr-attach-action" data-action="screenshot"><span class="zuvyr-attach-action-icon">${cameraIcon}</span><span><span class="zuvyr-attach-action-title">Take a screenshot</span><span class="zuvyr-attach-action-subtitle">Choose a screen, window, or tab</span></span></button>`;
+      menu.innerHTML = `<button type="button" class="zuvyr-attach-action" data-action="files"><span class="zuvyr-attach-action-icon">${paperclipIcon}</span><span><span class="zuvyr-attach-action-title">Add files or photos</span><span class="zuvyr-attach-action-subtitle">Up to 20 files, 600 MB each</span></span></button><button type="button" class="zuvyr-attach-action" data-action="recent"><span class="zuvyr-attach-action-icon">◷</span><span><span class="zuvyr-attach-action-title">Recent</span><span class="zuvyr-attach-action-subtitle">Reuse a recent ZUVYR file</span></span></button><button type="button" class="zuvyr-attach-action" data-action="project"><span class="zuvyr-attach-action-icon">▣</span><span><span class="zuvyr-attach-action-title">Project</span><span class="zuvyr-attach-action-subtitle">Choose from a project</span></span></button><button type="button" class="zuvyr-attach-action" data-action="library"><span class="zuvyr-attach-action-icon">⌘</span><span><span class="zuvyr-attach-action-title">Library</span><span class="zuvyr-attach-action-subtitle">Reuse without uploading again</span></span></button><button type="button" class="zuvyr-attach-action" data-action="screenshot"><span class="zuvyr-attach-action-icon">${cameraIcon}</span><span><span class="zuvyr-attach-action-title">Take a screenshot</span><span class="zuvyr-attach-action-subtitle">Choose a screen, window, or tab</span></span></button>`;
 
       const list = document.createElement('div');
       list.className = 'zuvyr-attachment-list';
@@ -1296,6 +1610,12 @@
       menu.querySelector('[data-action="files"]').addEventListener('click',() => {
         picker.value = '';
         picker.click();
+      });
+      ['recent','project','library'].forEach(mode => {
+        menu.querySelector(`[data-action="${mode}"]`).addEventListener('click',() => {
+          setOpen(false);
+          openWorkspacePicker(row,mode).catch(error => window.alert(humanError(error)));
+        });
       });
       menu.querySelector('[data-action="screenshot"]').addEventListener('click',async () => {
         setOpen(false);

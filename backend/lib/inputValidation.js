@@ -114,10 +114,10 @@ function validateAttachmentIds(body, feature, res) {
     return true;
   }
 
-  if (feature !== 'chat') {
+  if (feature !== 'chat' && feature !== 'code') {
     badRequest(
       res,
-      'attachmentIds are supported in chat only.'
+      'attachmentIds are supported in Chat and Code Studio.'
     );
     return false;
   }

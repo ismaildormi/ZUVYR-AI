@@ -12331,7 +12331,7 @@ async function sendChat(feature, text, msgBox, userMessage) {
         feature,
         conversationId,
         turnId,
-        ...(feature === 'chat'
+        ...((feature === 'chat' || feature === 'code')
           ? {
               attachmentIds:
                 Array.isArray(window.__zuvyrChatAttachmentIds)
@@ -12811,10 +12811,10 @@ function setupRoxNewChatButtons() {
 setupRoxNewChatButtons();
 function sendMessage(feature){
   if(roxActiveChatRequests.has(feature))return;
-  if(feature==='chat'&&window.__zuvyrAttachmentUploadActive)return;
+  if((feature==='chat'||feature==='code')&&window.__zuvyrAttachmentUploadActive)return;
   const input = document.querySelector('[data-feature="'+feature+'"]');
   const text = input.value.trim();
-  const attachmentRow = feature === 'chat'
+  const attachmentRow = (feature === 'chat' || feature === 'code')
     ? input.closest('.chat-input-row[data-zuvyr-attachment-active="1"]')
     : null;
   const hasAttachment = Boolean(attachmentRow && attachmentRow._zuvyrAttachment);
@@ -32376,7 +32376,7 @@ async function sendChat(feature, text, msgBox, userMessage) {
         feature,
         conversationId,
         turnId,
-        ...(feature === 'chat'
+        ...((feature === 'chat' || feature === 'code')
           ? {
               attachmentIds:
                 Array.isArray(window.__zuvyrChatAttachmentIds)
@@ -32859,10 +32859,10 @@ function setupRoxNewChatButtons() {
 setupRoxNewChatButtons();
 function sendMessage(feature){
   if(roxActiveChatRequests.has(feature))return;
-  if(feature==='chat'&&window.__zuvyrAttachmentUploadActive)return;
+  if((feature==='chat'||feature==='code')&&window.__zuvyrAttachmentUploadActive)return;
   const input = document.querySelector('[data-feature="'+feature+'"]');
   const text = input.value.trim();
-  const attachmentRow = feature === 'chat'
+  const attachmentRow = (feature === 'chat' || feature === 'code')
     ? input.closest('.chat-input-row[data-zuvyr-attachment-active="1"]')
     : null;
   const hasAttachment = Boolean(attachmentRow && attachmentRow._zuvyrAttachment);

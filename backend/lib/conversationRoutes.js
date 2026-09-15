@@ -20,6 +20,22 @@ const UUID_PATTERN =
 const MAX_SYNC_ATTACHMENT_BYTES =
   50 * 1024 * 1024;
 
+function attachmentPublicRecord(asset) {
+  if (!asset || typeof asset !== 'object') return asset;
+  const legacyId = String(asset.legacy_asset_id || asset.id || '').trim() || null;
+  const canonicalId =
+    String(asset.canonical_asset_id || '').trim() ||
+    (asset.attachment_id && asset.attachment_id !== legacyId
+      ? String(asset.attachment_id).trim()
+      : null);
+  return {
+    ...asset,
+    attachment_id: canonicalId || legacyId,
+    legacy_asset_id: legacyId,
+    canonical_asset_id: canonicalId
+  };
+}
+
 function isConversationId(value) {
   return UUID_PATTERN.test(String(value || ''));
 }
@@ -559,7 +575,7 @@ function createConversationRouter({
 
           return res.status(202).json({
             status: 'queued',
-            asset: queuedAsset,
+            asset: attachmentPublicRecord(queuedAsset),
             processing: {
               status: 'pending',
               jobId: queuedAsset.id
@@ -705,7 +721,7 @@ function createConversationRouter({
 
         return res.status(201).json({
           status: 'success',
-          asset,
+          asset: attachmentPublicRecord(asset),
           extraction: {
             status:
               extractionResult.status,
@@ -816,12 +832,42 @@ function createConversationRouter({
       }
 
       try {
-        const assets = await store.listAssets({
+        const currentAssets = await store.listAssets({
           conversationId: req.params.conversationId,
           ownerId: req.userId,
           scanStatus: 'clean',
           limit: req.query.limit
         });
+
+        let assets = currentAssets.map(attachmentPublicRecord);
+
+        if (
+          typeof store.listReferencedAttachmentIds === 'function' &&
+          typeof store.resolveAttachmentAssets === 'function'
+        ) {
+          const referencedIds = await store.listReferencedAttachmentIds({
+            conversationId: req.params.conversationId,
+            ownerId: req.userId
+          });
+          if (referencedIds.length) {
+            const referenced = await store.resolveAttachmentAssets({
+              conversationId: req.params.conversationId,
+              ownerId: req.userId,
+              attachmentIds: referencedIds
+            });
+            const merged = new Map();
+            for (const candidate of [...assets, ...referenced]) {
+              const normalized = attachmentPublicRecord(candidate);
+              const key = String(
+                normalized.attachment_id ||
+                normalized.canonical_asset_id ||
+                normalized.id || ''
+              );
+              if (key) merged.set(key, normalized);
+            }
+            assets = [...merged.values()];
+          }
+        }
 
         const storageClient = getStorage();
 

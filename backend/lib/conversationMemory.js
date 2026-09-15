@@ -596,6 +596,7 @@ function createConversationStore(db) {
         'id, conversation_id, message_id, asset_type, url, ' +
         'storage_path, storage_bucket, mime_type, original_name, ' +
         'file_size_bytes, sha256, scan_status, extraction_status, ' +
+        'canonical_content_id, canonical_asset_id, ' +
         'metadata, created_at'
       )
       .eq('conversation_id', conversationId)
@@ -619,6 +620,248 @@ function createConversationStore(db) {
     }
 
     return Array.isArray(data) ? data : [];
+  }
+
+  async function listReferencedAttachmentIds({
+    conversationId,
+    ownerId,
+    limit = MAX_CONVERSATION_MESSAGES
+  }) {
+    await requireOwnedConversation(conversationId, ownerId);
+
+    const safeLimit = Math.min(
+      MAX_CONVERSATION_MESSAGES,
+      Math.max(1, Number(limit) || MAX_CONVERSATION_MESSAGES)
+    );
+
+    const { data, error } = await db
+      .from('conversation_messages')
+      .select('metadata, sequence_no')
+      .eq('conversation_id', conversationId)
+      .eq('owner_id', ownerId)
+      .order('sequence_no', { ascending: false })
+      .limit(safeLimit);
+
+    if (error) {
+      const attachmentError =
+        new Error('conversation_attachment_references_failed');
+      attachmentError.cause = error;
+      throw attachmentError;
+    }
+
+    const ids = [];
+    for (const message of data || []) {
+      const values =
+        message && message.metadata &&
+        Array.isArray(message.metadata.attachment_ids)
+          ? message.metadata.attachment_ids
+          : [];
+      for (const value of values) {
+        const id = String(value || '').trim();
+        if (id && !ids.includes(id)) ids.push(id);
+      }
+    }
+
+    return ids;
+  }
+
+  function normalizedCanonicalAsset(asset, content, legacy = null) {
+    const mimeType = String(asset.mime_type || '').toLowerCase();
+    const kind = String(content?.kind || '').toLowerCase();
+    const assetType =
+      kind === 'image' || mimeType.startsWith('image/') ? 'image' :
+      kind === 'video' || mimeType.startsWith('video/') ? 'video' :
+      kind === 'audio' || mimeType.startsWith('audio/') ? 'audio' :
+      kind === 'code' ? 'code' : 'file';
+
+    if (legacy) {
+      return {
+        ...legacy,
+        attachment_id: asset.id,
+        legacy_asset_id: legacy.id,
+        canonical_asset_id: asset.id,
+        canonical_content_id: asset.canonical_content_id,
+        storage_bucket: asset.storage_bucket || legacy.storage_bucket,
+        storage_path: asset.storage_path || legacy.storage_path,
+        mime_type: asset.mime_type || legacy.mime_type,
+        file_size_bytes: Number(asset.file_size_bytes ?? legacy.file_size_bytes ?? 0),
+        sha256: asset.sha256 || legacy.sha256,
+        original_name:
+          legacy.original_name || content?.title || 'Attachment',
+        scan_status: 'clean'
+      };
+    }
+
+    return {
+      id: asset.id,
+      attachment_id: asset.id,
+      legacy_asset_id: null,
+      canonical_asset_id: asset.id,
+      canonical_content_id: asset.canonical_content_id,
+      conversation_id: null,
+      message_id: null,
+      asset_type: assetType,
+      url: null,
+      storage_bucket: asset.storage_bucket,
+      storage_path: asset.storage_path,
+      mime_type: asset.mime_type,
+      original_name: content?.title || 'Attachment',
+      file_size_bytes: Number(asset.file_size_bytes || 0),
+      sha256: asset.sha256 || null,
+      scan_status: 'clean',
+      extraction_status: 'not_required',
+      metadata: {
+        kind: 'source',
+        canonical_reference: true,
+        source_system: content?.source_system || null,
+        source_id: content?.source_id || null
+      },
+      created_at: asset.created_at || null
+    };
+  }
+
+  async function resolveAttachmentAssets({
+    conversationId,
+    ownerId,
+    attachmentIds
+  }) {
+    await requireOwnedConversation(conversationId, ownerId);
+
+    const ids = Array.isArray(attachmentIds)
+      ? [...new Set(
+          attachmentIds
+            .map(value => String(value || '').trim())
+            .filter(Boolean)
+        )]
+      : [];
+
+    if (!ids.length) return [];
+
+    const current = await listAssets({
+      conversationId,
+      ownerId,
+      scanStatus: 'clean',
+      limit: 100
+    });
+
+    const resolved = new Map();
+    for (const asset of current) {
+      const legacyId = String(asset.id || '');
+      const canonicalId = String(asset.canonical_asset_id || '');
+      const attachmentId = canonicalId || legacyId;
+      const normalized = {
+        ...asset,
+        attachment_id: attachmentId,
+        legacy_asset_id: legacyId,
+        canonical_asset_id: canonicalId || null
+      };
+      if (legacyId) resolved.set(legacyId, normalized);
+      if (canonicalId) resolved.set(canonicalId, normalized);
+    }
+
+    const missing = ids.filter(id => !resolved.has(id));
+    if (missing.length) {
+      const { data: canonicalAssets, error: canonicalError } = await db
+        .from('zuvyr_assets')
+        .select(
+          'id, owner_id, canonical_content_id, canonical_version_id, ' +
+          'storage_bucket, storage_path, mime_type, file_size_bytes, sha256, ' +
+          'status, created_at, updated_at'
+        )
+        .eq('owner_id', ownerId)
+        .eq('status', 'active')
+        .in('id', missing);
+
+      if (canonicalError) {
+        const attachmentError =
+          new Error('canonical_attachment_lookup_failed');
+        attachmentError.cause = canonicalError;
+        throw attachmentError;
+      }
+
+      const canonical = Array.isArray(canonicalAssets)
+        ? canonicalAssets
+        : [];
+      const canonicalIds = canonical.map(asset => asset.id);
+      const contentIds = [...new Set(
+        canonical.map(asset => asset.canonical_content_id).filter(Boolean)
+      )];
+
+      let contentRows = [];
+      if (contentIds.length) {
+        const { data, error } = await db
+          .from('zuvyr_content_objects')
+          .select('id, kind, title, source_kind, source_system, source_id')
+          .eq('owner_id', ownerId)
+          .in('id', contentIds);
+        if (error) {
+          const attachmentError =
+            new Error('canonical_attachment_content_lookup_failed');
+          attachmentError.cause = error;
+          throw attachmentError;
+        }
+        contentRows = data || [];
+      }
+
+      let legacyRows = [];
+      if (canonicalIds.length) {
+        const { data, error } = await db
+          .from('conversation_assets')
+          .select(
+            'id, conversation_id, message_id, asset_type, url, storage_path, ' +
+            'storage_bucket, mime_type, original_name, file_size_bytes, sha256, ' +
+            'scan_status, extraction_status, canonical_content_id, ' +
+            'canonical_asset_id, metadata, created_at'
+          )
+          .eq('owner_id', ownerId)
+          .eq('scan_status', 'clean')
+          .in('canonical_asset_id', canonicalIds)
+          .order('created_at', { ascending: false });
+        if (error) {
+          const attachmentError =
+            new Error('canonical_attachment_legacy_lookup_failed');
+          attachmentError.cause = error;
+          throw attachmentError;
+        }
+        legacyRows = data || [];
+      }
+
+      const contentById = new Map(
+        contentRows.map(row => [String(row.id), row])
+      );
+      const legacyByCanonical = new Map();
+      for (const row of legacyRows) {
+        const key = String(row.canonical_asset_id || '');
+        if (!key) continue;
+        const existing = legacyByCanonical.get(key);
+        if (
+          !existing ||
+          String(row.conversation_id) === String(conversationId)
+        ) {
+          legacyByCanonical.set(key, row);
+        }
+      }
+
+      for (const asset of canonical) {
+        resolved.set(
+          String(asset.id),
+          normalizedCanonicalAsset(
+            asset,
+            contentById.get(String(asset.canonical_content_id)),
+            legacyByCanonical.get(String(asset.id)) || null
+          )
+        );
+      }
+    }
+
+    return ids
+      .map(id => {
+        const asset = resolved.get(id);
+        return asset
+          ? { ...asset, requested_attachment_id: id }
+          : null;
+      })
+      .filter(Boolean);
   }
 
   async function addAsset({
@@ -756,6 +999,7 @@ function createConversationStore(db) {
         'id, conversation_id, message_id, asset_type, url, ' +
         'storage_path, storage_bucket, mime_type, original_name, ' +
         'file_size_bytes, sha256, scan_status, extraction_status, ' +
+        'canonical_content_id, canonical_asset_id, ' +
         'metadata, created_at'
       )
       .single();
@@ -882,6 +1126,7 @@ function createConversationStore(db) {
         'id, conversation_id, message_id, asset_type, url, ' +
         'storage_path, storage_bucket, mime_type, original_name, ' +
         'file_size_bytes, sha256, scan_status, extraction_status, ' +
+        'canonical_content_id, canonical_asset_id, ' +
         'metadata, created_at'
       )
       .single();
@@ -1060,6 +1305,8 @@ function createConversationStore(db) {
     compactConversationMemory,
     buildConversationContext,
     listAssets,
+    listReferencedAttachmentIds,
+    resolveAttachmentAssets,
     addAsset,
     updateAssetProcessing,
     replaceAssetChunks,
@@ -1109,6 +1356,10 @@ module.exports = {
     getDefaultStore().buildConversationContext(...args),
   listAssets: (...args) =>
     getDefaultStore().listAssets(...args),
+  listReferencedAttachmentIds: (...args) =>
+    getDefaultStore().listReferencedAttachmentIds(...args),
+  resolveAttachmentAssets: (...args) =>
+    getDefaultStore().resolveAttachmentAssets(...args),
   addAsset: (...args) =>
     getDefaultStore().addAsset(...args),
   updateAssetProcessing: (...args) =>

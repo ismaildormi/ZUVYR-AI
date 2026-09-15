@@ -700,7 +700,7 @@ app.post('/api/chat', requireAuth, rateLimit('chat'), validateChatBody, loadRoxU
     }
   }
 
-  if (hasDurableAttachments) {
+  if (hasDurableAttachments && !isCode) {
     try {
       attachmentAnalysisReservation =
         await reserveCredits({
@@ -876,7 +876,7 @@ app.post('/api/chat', requireAuth, rateLimit('chat'), validateChatBody, loadRoxU
       ? Math.max(featureCost('code').credits, Math.ceil((result.cost_usd * 2) / CREDIT_PRICE_USD))
       : 0;
     const finalAttachmentCredits =
-      hasDurableAttachments
+      hasDurableAttachments && !isCode
         ? Math.max(
             1,
             Math.ceil(
@@ -894,7 +894,7 @@ app.post('/api/chat', requireAuth, rateLimit('chat'), validateChatBody, loadRoxU
         );
     }
 
-    if (hasDurableAttachments) {
+    if (attachmentAnalysisReservation) {
       attachmentAnalysisSettlement =
         await settleCredits(
           attachmentAnalysisRequestId,

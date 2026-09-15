@@ -1,5 +1,11 @@
 'use strict';
 
+// Unit-test-only placeholders: workspaceRoutes constructs unused default stores
+// during router creation even when projectStore is injected. No Supabase request
+// is made by this test; these values only satisfy supabase-js client construction.
+process.env.SUPABASE_URL ||= 'https://unit-test.supabase.co';
+process.env.SUPABASE_SERVICE_ROLE_KEY ||= 'unit-test-service-role-placeholder-not-a-secret';
+
 const assert = require('assert');
 const express = require('express');
 const {
@@ -89,7 +95,9 @@ async function run() {
     let response = await fetch(`${base}/capabilities`);
     assert.strictEqual(response.status, 200);
     let body = await response.json();
-    assert.strictEqual(body.mode, 'projects_crud');
+    assert.strictEqual(body.mode, 'context_graph');
+    assert.strictEqual(body.foundations.projects, true);
+    assert.strictEqual(body.foundations.contextGraph, true);
     assert.strictEqual(body.execution.workspaceWritesEnabled, true);
     assert.strictEqual(body.execution.workflowExecutionEnabled, false);
     assert.strictEqual(body.execution.pluginInstallEnabled, false);

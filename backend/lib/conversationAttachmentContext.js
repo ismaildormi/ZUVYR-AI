@@ -189,16 +189,33 @@ async function buildConversationAttachmentContext({
     );
   }
 
-  const available = await store.listAssets({
-    conversationId,
-    ownerId,
-    scanStatus: 'clean',
-    limit: 100
-  });
+  const available =
+    store && typeof store.resolveAttachmentAssets === 'function'
+      ? await store.resolveAttachmentAssets({
+          conversationId,
+          ownerId,
+          attachmentIds: ids
+        })
+      : await store.listAssets({
+          conversationId,
+          ownerId,
+          scanStatus: 'clean',
+          limit: 100
+        });
 
-  const byId = new Map(
-    available.map(asset => [String(asset.id), asset])
-  );
+  const byId = new Map();
+  for (const asset of available) {
+    const aliases = [
+      asset.requested_attachment_id,
+      asset.attachment_id,
+      asset.canonical_asset_id,
+      asset.legacy_asset_id,
+      asset.id
+    ]
+      .map(value => String(value || '').trim())
+      .filter(Boolean);
+    for (const alias of aliases) byId.set(alias, asset);
+  }
 
   const assets = ids.map(id => {
     const asset = byId.get(id);
@@ -207,7 +224,7 @@ async function buildConversationAttachmentContext({
       throw attachmentContextError(
         'attachment_not_found',
         404,
-        'An attachment was not found in this conversation.'
+        'An attachment was not found or is not owned by this account.'
       );
     }
 
@@ -229,7 +246,9 @@ async function buildConversationAttachmentContext({
       return metadata.chunked === true &&
         Number(metadata.chunk_count) > 0;
     })
-    .map(asset => String(asset.id));
+    .map(asset => String(
+      asset.legacy_asset_id || asset.id
+    ));
   let retrievedChunks = [];
 
   if (chunkedAssetIds.length && normalizedQuery) {
@@ -263,7 +282,7 @@ async function buildConversationAttachmentContext({
   for (const row of Array.isArray(retrievedChunks) ? retrievedChunks : []) {
     const assetId = String(row && row.asset_id || '');
     const content = String(row && row.content || '').trim();
-    if (!byId.has(assetId) || !content) continue;
+    if (!assets.some(asset => String(asset.legacy_asset_id || asset.id) === assetId) || !content) continue;
     if (!chunksByAsset.has(assetId)) chunksByAsset.set(assetId, []);
     chunksByAsset.get(assetId).push({ ...row, content });
   }
@@ -283,10 +302,20 @@ async function buildConversationAttachmentContext({
       String(asset.asset_type || 'file').toLowerCase();
     const extractedText = extractedTextFor(asset);
     const relevantChunks =
-      chunksByAsset.get(String(asset.id)) || [];
+      chunksByAsset.get(String(asset.legacy_asset_id || asset.id)) || [];
+
+    const stableAttachmentId = String(
+      asset.attachment_id ||
+      asset.canonical_asset_id ||
+      asset.requested_attachment_id ||
+      asset.id
+    );
 
     sources.push({
-      id: String(asset.id),
+      id: stableAttachmentId,
+      legacyId: asset.legacy_asset_id ||
+        (stableAttachmentId !== String(asset.id) ? String(asset.id) : null),
+      canonicalContentId: asset.canonical_content_id || null,
       name,
       mimeType: mime,
       assetType,
@@ -450,7 +479,12 @@ async function buildConversationAttachmentContext({
     : '';
 
   return {
-    attachmentIds: ids,
+    attachmentIds: assets.map(asset => String(
+      asset.attachment_id ||
+      asset.canonical_asset_id ||
+      asset.requested_attachment_id ||
+      asset.id
+    )),
     parts,
     sources,
     systemContext,
