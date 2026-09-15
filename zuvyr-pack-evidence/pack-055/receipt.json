@@ -1,0 +1,69 @@
+{
+  "pack_id": "055",
+  "title": "Web Search + Direct URL Reader",
+  "status": "FINALIZER_PREPARED",
+  "parent_pack_finalizer_commit": "2fbdc55ff7a0fbcff3424d2e452b6b44ae2e5024",
+  "source_commit": "a1c35fd081b3df4418aeb9466f8b4217dc2a49e3",
+  "cumulative_source_zip": "ZUVYR_PACK055_FIX1_CUMULATIVE_PREPARED.zip",
+  "cumulative_source_zip_sha256": "6D9DBDB2A571F986D9E3148B138F8B91B4641073670C1120796DA6BE4B867848",
+  "fix_iterations": [
+    {
+      "id": "PACK055-FIX1",
+      "reason": "stale durable-memory exact-string regression expected the pre-Pack055 assistant completion declaration",
+      "resolution": "test-only expectation aligned to the guarded assistant save while preserving ordering invariants; production Pack055 logic unchanged"
+    }
+  ],
+  "verified_capabilities": {
+    "priced_web_search": true,
+    "direct_https_url_reader": true,
+    "durable_pack054_citations": true,
+    "owner_scoped_sources": true,
+    "chat_web_mode_ui": true,
+    "reserve_settle_refund": true,
+    "bounded_tool_calls": true,
+    "private_local_literal_host_block": true,
+    "untrusted_web_content_boundary": true,
+    "standard_chat_preserved": true,
+    "later_external_modes_fail_closed": true
+  },
+  "pricing": {
+    "provider_gateway": "OpenRouter",
+    "grounding_model": "google/gemini-2.5-flash",
+    "search_engine": "exa",
+    "web_search_usd_per_request_auto": 0.007,
+    "direct_url_fetch_tool_cost_usd": 0,
+    "model_tokens_still_billable": true
+  },
+  "tests": {
+    "pack055_web_search_url_reader": "PASS",
+    "pack03_capability_guard": "PASS",
+    "pack03_wiring": "PASS",
+    "pack03_external_engines": "PASS",
+    "pack054_sources_citations": "PASS",
+    "pack053_multimodal_document": "PASS",
+    "pack052_attachment_identity": "PASS",
+    "pack051_chat_core": "PASS",
+    "chat_code_durable_memory": "PASS",
+    "pack014_cost_registry": "PASS",
+    "native_navigation_dom": "PASS"
+  },
+  "database_migration": "NOT_REQUIRED",
+  "source_deployments": {
+    "vercel": {
+      "deployment_id": "dpl_GgGgbrVdbAxFXi4sSnwjqyw97Az7",
+      "status": "READY",
+      "target": "production",
+      "commit": "a1c35fd081b3df4418aeb9466f8b4217dc2a49e3"
+    },
+    "railway_clean_clone_upload": {
+      "deployment_id": "87ea3249-a551-481a-81c1-2f7aac25485d",
+      "status_at_finalizer_preparation": "INITIALIZING",
+      "counted_as_final_verification": false,
+      "note": "Finalizer performs a fresh clean-clone upload. Connector cross-check after finalizer is the authoritative production gate."
+    }
+  },
+  "live_billing_allowed": false,
+  "finalizer_cross_check_required": true,
+  "next_pack": "056 - Crawl + Deep Research",
+  "prepared_at": "2026-09-15"
+}
