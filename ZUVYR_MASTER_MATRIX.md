@@ -564,3 +564,23 @@ Railway evidence SHA256: $ExpectedEvidenceSha
 - LOCKED_VERIFIED only after exact finalizer Vercel/Railway connector cross-check.
 - Next: `PACK059 — Spreadsheets + Presentations`.
 <!-- ZUVYR_PACK_058_FINALIZER_END -->
+
+<!-- ZUVYR_PACK_058_FINALIZER_FIX4_BEGIN -->
+## PACK058 — FINALIZER FIX4 (minimal Git-blob identity verification)
+
+- Initial finalizer commit: `dc27a932c3a4585369be01d3e7a9c8ad280af3e0`
+- Tested Pack058 source commit: `370ecb605a3bef1916d487743fd79d8895593c6b`
+- FINALIZER FIX1/FIX2/FIX3 all failed before changing files.
+- FIX4 removes unnecessary working-tree hash and package-lock JSON parsing.
+- `backend/package.json` and `backend/package-lock.json` must have identical Git blob IDs between source commit, current finalizer, and fresh clean clone.
+- Pack058 multilingual document tests: PASS
+- Full source regressions: PASS
+- Vercel source `dpl_EPxC3zoPmRfopChX7HZafxmqA261`: READY
+- Railway source `b652f28a-a566-4a78-b138-8b13fd74fb7e`: SUCCESS
+- Initial finalizer Vercel `dpl_EM4JwdeAjW43xW9ejq1i8JCNNDv2`: READY
+- Initial finalizer Railway Git trigger `1196e6f2-c3c7-431a-b1d7-b26065013514`: SKIPPED
+- Repair receipt SHA256: `F5A392FFF2C2D21709F42F50CAB1105543BE4B2F707EEFA05E6C22EB83EE48EB`
+- Database migration: `NOT_REQUIRED`
+- `LIVE_BILLING_ALLOWED=false`
+- LOCKED_VERIFIED only after this FIX4 repair commit is READY on Vercel and its clean-clone Railway upload is SUCCESS.
+<!-- ZUVYR_PACK_058_FINALIZER_FIX4_END -->

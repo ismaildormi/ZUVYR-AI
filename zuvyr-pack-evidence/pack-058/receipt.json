@@ -1,77 +1,52 @@
 {
   "pack_id": "058",
   "title": "Documents + Templates DOCX/PDF/TXT/MD",
-  "status": "FINALIZER_PREPARED",
+  "status": "FINALIZER_FIX4_PREPARED",
   "parent_pack": 57,
   "parent_pack_finalizer_commit": "ea10852b0fdddb585ddac883bedde7d884be79a9",
   "parent_cumulative_zip_sha256": "0BE92F4170A9AB946CE64F8A9E6F76C976FF364DA36872571CC0BC2047B9A849",
   "source_commit": "370ecb605a3bef1916d487743fd79d8895593c6b",
   "source_fix_iteration": 2,
-  "cumulative_source_zip": "ZUVYR_PACK058_FIX2_CUMULATIVE_PREPARED.zip",
-  "cumulative_source_zip_sha256": "3F20B19FD7D038C2557C887C3B1C138722909E6B8AEAF1FBF113FC01F805AD60",
-  "package_lock_sha256": "6C8304EC091C24763FD5E6D9FE50BF653694EC98F14AA8ABEC16FEAC6B63E267",
+  "source_cumulative_zip_sha256": "3F20B19FD7D038C2557C887C3B1C138722909E6B8AEAF1FBF113FC01F805AD60",
+  "initial_finalizer_commit": "dc27a932c3a4585369be01d3e7a9c8ad280af3e0",
   "database_migration": "NOT_REQUIRED",
-  "fix_history": [
+  "finalizer_fix_history": [
     {
-      "id": "PACK058-FIX1",
-      "result": "FAILED_BEFORE_COMMIT",
-      "reason": "first Arabic font package exposed a webfont path that fontkit could not embed reliably"
+      "id": "FINALIZER_FIX1",
+      "result": "FAILED_BEFORE_FILE_CHANGES",
+      "reason": "Working-tree byte hash was compared with a clean Git clone byte hash."
     },
     {
-      "id": "PACK058-FIX2",
-      "result": "PASS",
-      "reason": "resolved a real TTF through the package public entry and verified multilingual PDF generation"
+      "id": "FINALIZER_FIX2",
+      "result": "FAILED_BEFORE_FILE_CHANGES",
+      "reason": "Node helper argument binding was not robust in the user's PowerShell/Node environment."
+    },
+    {
+      "id": "FINALIZER_FIX3",
+      "result": "FAILED_BEFORE_FILE_CHANGES",
+      "reason": "PowerShell JSON inspection attempted to index package-lock root key using an empty property name."
+    },
+    {
+      "id": "FINALIZER_FIX4",
+      "result": "PREPARED",
+      "reason": "Use Git blob identity only. No JSON parsing and no working-tree byte hashing are needed because the tested Pack058 source commit is already immutable."
     }
   ],
-  "verified_capabilities": {
-    "docx_generation": true,
-    "pdf_generation": true,
-    "txt_generation": true,
-    "markdown_generation": true,
-    "arabic_french_english_pdf": true,
-    "templates_builtin_and_private": true,
-    "owner_scoped_document_routes": true,
-    "canonical_asset_persistence": true,
-    "project_linking": true,
-    "signed_library_downloads": true,
-    "zero_model_provider_calls": true,
-    "zero_generation_credits": true
+  "verification_policy": {
+    "dependency_identity": "backend/package-lock.json and backend/package.json Git blob IDs must be identical between the tested Pack058 source commit, current finalizer HEAD, and fresh clean clone.",
+    "working_tree_cleanliness": "package.json and package-lock.json must have no uncommitted Git changes.",
+    "source_tests": "Pack058 multilingual document tests and full local regressions already PASS at the tested source commit."
   },
-  "tests": {
-    "pack058_documents_templates": "PASS",
-    "pack058_document_routes": "PASS",
-    "pack057_specialized_research": "PASS",
-    "pack056_deep_research": "PASS",
-    "pack055_web_search": "PASS",
-    "pack054_sources_citations": "PASS",
-    "pack053_multimodal": "PASS",
-    "pack052_attachment_identity_resolution": "PASS",
-    "pack051_chat_core": "PASS",
-    "chat_code_durable_memory": "PASS",
-    "pack014_cost_registry": "PASS",
-    "pack016_entitlements": "PASS",
-    "workspace_context_graph": "PASS",
-    "workspace_project_routes": "PASS",
-    "workspace_library": "PASS",
-    "native_navigation_dom": "PASS"
-  },
-  "source_deployments": {
-    "vercel": {
-      "deployment_id": "dpl_EPxC3zoPmRfopChX7HZafxmqA261",
-      "status": "READY",
-      "target": "production",
-      "commit": "370ecb605a3bef1916d487743fd79d8895593c6b"
-    },
-    "railway_clean_clone_upload": {
-      "deployment_id": "b652f28a-a566-4a78-b138-8b13fd74fb7e",
-      "status_at_finalizer_preparation": "DEPLOYING",
-      "counted_as_final_verification": false,
-      "note": "Finalizer performs a fresh clean-clone upload. Post-finalizer connector cross-check is authoritative."
-    }
+  "verified_source_state": {
+    "multilingual_document_tests": "PASS",
+    "full_local_regressions": "PASS",
+    "vercel_source_deployment": "dpl_EPxC3zoPmRfopChX7HZafxmqA261 READY",
+    "railway_source_deployment": "b652f28a-a566-4a78-b138-8b13fd74fb7e SUCCESS",
+    "initial_finalizer_vercel": "dpl_EM4JwdeAjW43xW9ejq1i8JCNNDv2 READY",
+    "initial_finalizer_railway_git_trigger": "1196e6f2-c3c7-431a-b1d7-b26065013514 SKIPPED"
   },
   "live_billing_allowed": false,
-  "finalizer_cross_check_required": true,
-  "published_visual_checks": "OUTSTANDING_GENERAL_V1_GATE",
+  "repair_requires_fresh_clean_clone_railway_upload": true,
   "next_pack": "059 - Spreadsheets + Presentations",
   "prepared_at": "2026-09-15"
 }
