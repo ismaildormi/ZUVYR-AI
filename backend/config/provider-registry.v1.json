@@ -220,19 +220,18 @@
         "provider_managed"
       ],
       "quotaType": "provider_managed",
-      "termsLicenseNotes": "M10 must confirm account funding, selected model commercial eligibility and current terms.",
+      "termsLicenseNotes": "Pack061 FIX2 revalidated official fal FLUX.1 Schnell on 2026-09-15: commercial use permitted and current price $0.003/MP; live execution remains M12.",
       "adapter": "image.providers",
       "capabilities": [
         {
           "id": "image.generate",
           "verification": "verified_repository",
           "cost": {
-            "mode": "compat_environment_cost",
+            "mode": "registry_verified_entry",
             "authority": "backend/config/cost-registry.v1.json",
-            "requiredEnvironment": [
-              "FAL_IMAGE_COST_USD"
-            ]
-          }
+            "entryId": "fal-image-generation"
+          },
+          "model": "fal-ai/flux/schnell"
         }
       ]
     },

@@ -4,6 +4,7 @@ const { createReplicateImageAdapter, REPLICATE_IMAGE_MODEL } = require('../../..
 
 const DEFAULT_IMAGE_PROVIDER = 'replicate';
 const DEFAULT_IMAGE_MODEL = REPLICATE_IMAGE_MODEL;
+const DEFAULT_FAL_IMAGE_MODEL = 'fal-ai/flux/schnell';
 const providers = new Map();
 
 function registerImageProvider(key, adapter) {
@@ -43,12 +44,13 @@ function normalizeOutput(output) {
 }
 
 function modelFor(providerKey, opts = {}) {
+  if (opts.models && opts.models[providerKey]) return String(opts.models[providerKey]);
   if (opts.model) return String(opts.model);
   if (providerKey === 'replicate') {
     return process.env.REPLICATE_IMAGE_MODEL || DEFAULT_IMAGE_MODEL;
   }
   if (providerKey === 'fal') {
-    return process.env.FAL_IMAGE_MODEL || 'fal-ai/flux/schnell';
+    return process.env.FAL_IMAGE_MODEL || DEFAULT_FAL_IMAGE_MODEL;
   }
   return null;
 }
@@ -92,6 +94,15 @@ function providerFailureEvidence(error) {
   };
 }
 
+function providerAttemptRetryable(attempt) {
+  if (!attempt || attempt.status !== 'error') return false;
+  if (typeof attempt.retryable === 'boolean') return attempt.retryable;
+  const status = Number(attempt.statusCode);
+  if ([400, 401, 402, 403, 404, 409, 422].includes(status)) return false;
+  if (status === 408 || status === 429 || status >= 500) return true;
+  return true;
+}
+
 async function generateImage(prompt, opts = {}) {
   const chain = opts.chain || [DEFAULT_IMAGE_PROVIDER];
   const attempts = [];
@@ -133,6 +144,10 @@ async function generateImage(prompt, opts = {}) {
   const error = new Error('all_image_providers_failed');
   error.code = 'all_image_providers_failed';
   error.attempts = attempts;
+  const actualErrors = attempts.filter(attempt => attempt.status === 'error');
+  error.retryable =
+    actualErrors.length === 0 ||
+    actualErrors.some(providerAttemptRetryable);
   throw error;
 }
 
@@ -142,9 +157,16 @@ registerImageProvider('fal', {
   async generate(prompt, opts = {}) {
     const { fal } = await import('@fal-ai/client');
     fal.config({ credentials: opts.apiKey || process.env.FAL_KEY });
-    const model = opts.model || process.env.FAL_IMAGE_MODEL || 'fal-ai/flux/schnell';
+    const model = opts.model || process.env.FAL_IMAGE_MODEL || DEFAULT_FAL_IMAGE_MODEL;
     const result = await fal.subscribe(model, {
-      input: { prompt, num_images: 1, ...(opts.input || {}) },
+      input: {
+        prompt,
+        image_size: 'landscape_4_3',
+        num_images: 1,
+        enable_safety_checker: true,
+        output_format: 'jpeg',
+        ...(opts.input || {})
+      },
       logs: false,
     });
     const url = result?.data?.images?.[0]?.url;
@@ -175,11 +197,13 @@ registerImageProvider('replicate', {
 module.exports = {
   DEFAULT_IMAGE_PROVIDER,
   DEFAULT_IMAGE_MODEL,
+  DEFAULT_FAL_IMAGE_MODEL,
   registerImageProvider,
   getImageProvider,
   listImageProviders,
   normalizeOutput,
   sanitizeProviderMessage,
   providerFailureEvidence,
+  providerAttemptRetryable,
   generateImage,
 };

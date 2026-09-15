@@ -11,13 +11,15 @@ const { fetchImageBytes, MAX_CANONICAL_IMAGE_BYTES } = require('./lib/imageGener
 async function run() {
   const imageSystem = require('./config/image-system.v1.json');
   assert.equal(imageSystem.version, 'pack-061.image-generate.v1');
-  assert.equal(imageSystem.launchProvider.provider, 'replicate');
-  assert.equal(imageSystem.launchProvider.model, 'black-forest-labs/flux-schnell');
-  assert.equal(imageSystem.launchProvider.pricing.fixedOperationPriceMicroUsd, '3000');
+  assert.equal(imageSystem.launchProvider.provider, 'fal');
+  assert.equal(imageSystem.launchProvider.model, 'fal-ai/flux/schnell');
+  assert.equal(imageSystem.launchProvider.pricing.fixedEffectiveCostMicroUsd, '3000');
   assert.equal(imageSystem.launchProvider.pricing.commercialUseVerified, true);
   assert.equal(imageSystem.launchProvider.externalGate, 'M12');
   assert.equal(imageSystem.operations.generate.status, 'implemented_m12_live_e2e_pending');
   assert.equal(imageSystem.providers.replicate.status, 'verified_launch_provider');
+  assert.equal(imageSystem.providers.fal.status, 'verified_launch_provider_fix2');
+  assert.equal(imageSystem.providers.fal.pricing.pack061EffectiveCostMicroUsd, '3000');
 
   const cost = resolveCostQuote({
     provider: 'replicate',
@@ -33,8 +35,22 @@ async function run() {
   assert.equal(cost.unitType, 'images');
   assert.match(String(cost.source), /replicate\.com\/black-forest-labs\/flux-schnell/);
 
+  const falCost = resolveCostQuote({
+    provider: 'fal',
+    modelToolId: 'fal-ai/flux/schnell',
+    capability: 'image',
+    operationType: 'image_generation'
+  }, {}, {
+    now: Date.parse('2026-09-15T12:00:00Z'),
+    env: { FAL_KEY: 'configured' }
+  });
+  assert.equal(falCost.providerCostMicroUsd, '3000');
+  assert.equal(falCost.verificationStatus, 'verified');
+  assert.match(String(falCost.source), /fal\.ai\/models\/fal-ai\/flux\/schnell/);
+
   const {
     providerFailureEvidence,
+    providerAttemptRetryable,
     sanitizeProviderMessage
   } = require('./src/modules/ai/providers/imageProviders');
 
@@ -53,6 +69,9 @@ async function run() {
   assert.match(providerEvidence.providerMessage, /402 Payment Required/);
   assert.doesNotMatch(providerEvidence.providerMessage, /r8_SUPERSECRET/);
   assert.match(sanitizeProviderMessage('Bearer abc.def.ghi'), /Bearer \[REDACTED\]/);
+  assert.equal(providerAttemptRetryable({ status: 'error', statusCode: 402 }), false);
+  assert.equal(providerAttemptRetryable({ status: 'error', statusCode: 429 }), true);
+  assert.equal(providerAttemptRetryable({ status: 'error', statusCode: 503 }), true);
 
   const basic = normalizeImageRequest({ imageOperation: 'generate' });
   assert.equal(assertImageRequestAvailable(basic).operation, 'generate');
@@ -99,6 +118,11 @@ async function run() {
   assert.match(providers, /providerFailureEvidence\(error\)/);
   assert.match(providers, /statusCode/);
   assert.match(providers, /providerMessage/);
+  assert.match(providers, /DEFAULT_FAL_IMAGE_MODEL/);
+  assert.match(providers, /image_size: 'landscape_4_3'/);
+  assert.match(worker, /chain: \['fal', 'replicate'\]/);
+  assert.match(worker, /DEFAULT_FAL_IMAGE_MODEL/);
+  assert.match(worker, /UnrecoverableError/);
   assert.match(worker, /getExisting\(\{ ownerId: userId, jobId: jobRowId \}\)/);
   assert.match(worker, /persistGenerated\(/);
   assert.match(worker, /await settleCredits\(requestId, finalCredits\)/);
@@ -124,7 +148,7 @@ async function run() {
   const product = require('./config/unified-product.v1.json');
   assert.equal(product.sections.find(item => item.id === 'images').status, 'implemented_m12_live_e2e_pending');
 
-  console.log('PASS: Pack061 pins verified Replicate FLUX Schnell pricing/model, normalizes provider output, stores owned canonical images, settles exact reserved credits, exposes durable history/download identity, and blocks Pack062 options');
+  console.log('PASS: Pack061 FIX2 verifies fal FLUX Schnell launch pricing/model, keeps Replicate fallback diagnostics, stores owned canonical images, settles exact reserved credits, exposes durable history/download identity, and blocks Pack062 options');
   console.log('PROVIDER / NETWORK CALLS: NONE (unit/static verification only; M12 live E2E remains external gate)');
 }
 

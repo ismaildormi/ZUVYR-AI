@@ -89,6 +89,16 @@ assert(
 );
 
 assert.equal(registry.assertRegistryInvariant(env), true);
+const falLive = registry.providerSnapshot('fal', {
+  FAL_KEY: 'configured',
+  ZUVYR_LAUNCH_PROVIDERS: 'fal'
+});
+assert.equal(falLive.credentialPresent, true);
+assert.equal(falLive.launchAuthorized, true);
+assert.equal(falLive.enabled, true);
+assert.equal(falLive.health.state, 'PREFLIGHT_READY');
+assert(falLive.capabilities.some(cap => cap.id === 'image.generate' && cap.eligible));
+
 
 const intelligencePath = path.join(__dirname, 'config/intelligence-core.v1.json');
 if (fs.existsSync(intelligencePath)) {

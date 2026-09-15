@@ -51,27 +51,20 @@ assert.throws(
   { code: 'unknown_cost_entry' }
 );
 
+const falNow = Date.parse('2026-09-15T00:00:01Z');
 const fal = resolveLegacyGenerationCostEntry('fal', 'image', {
-  now,
-  env: { FAL_KEY: 'configured', FAL_IMAGE_COST_USD: '0.025' }
+  now: falNow,
+  env: { FAL_KEY: 'configured' }
 });
-assert.equal(fal.fixedOperationPriceMicroUsd, '25000');
-assert.equal(fal.resolvedPricingSource, 'environment:FAL_IMAGE_COST_USD');
-
-assert.throws(
-  () => resolveLegacyGenerationCostEntry('fal', 'image', {
-    now,
-    env: { FAL_KEY: 'configured' }
-  }),
-  { code: 'cost_entry_runtime_price_missing' }
-);
+assert.equal(fal.fixedOperationPriceMicroUsd, '3000');
+assert.equal(fal.pricingSource, 'fal_official_model_page');
 
 const generation = quoteGeneration('image', {
-  now,
-  env: { FAL_KEY: 'configured', FAL_IMAGE_COST_USD: '0.025' }
+  now: falNow,
+  env: { FAL_KEY: 'configured' }
 });
 assert.equal(generation.provider, 'fal');
-assert.equal(generation.providerCostMicroUsd, '25000');
+assert.equal(generation.providerCostMicroUsd, '3000');
 assert.equal(generation.pricingVersion, registry.version);
 
 const codeUnits = new Map([

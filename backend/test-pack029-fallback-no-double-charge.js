@@ -94,10 +94,17 @@ for (const forbidden of [
 }
 
 const serverSource = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8');
-assert(
-  /routeRequest\(feature \|\| 'chat', routedMessages, \{\s*loadLevel,\s*isPro,\s*requestId\s*\}\)/m.test(serverSource),
-  'server must pass the one logical requestId into router fallback scope'
+const routeCall = serverSource.match(
+  /routeRequest\(feature \|\| 'chat', routedMessages, \{([\s\S]*?)\}\);/
 );
+assert(routeCall, 'server must call routeRequest with an options object');
+const routeOptions = routeCall[1];
+for (const requiredField of ['loadLevel', 'isPro', 'requestId']) {
+  assert(
+    new RegExp(`\\b${requiredField}\\b`).test(routeOptions),
+    `server router fallback scope must preserve ${requiredField}`
+  );
+}
 
 const routeIndex = serverSource.indexOf("routeRequest(feature || 'chat'");
 assert(routeIndex > 0);

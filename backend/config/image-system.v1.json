@@ -55,7 +55,20 @@
       "implementedOperations": [
         "generate"
       ],
-      "status": "registered_non_launch_provider"
+      "status": "verified_launch_provider_fix2",
+      "model": "fal-ai/flux/schnell",
+      "pricing": {
+        "unitType": "megapixels",
+        "priceUsdPerMegapixel": "0.003",
+        "pack061DefaultSize": "landscape_4_3",
+        "pack061DefaultDimensions": "1024x768",
+        "pack061BilledMegapixels": 1,
+        "pack061EffectiveCostMicroUsd": "3000",
+        "pricingSourceUrl": "https://fal.ai/models/fal-ai/flux/schnell",
+        "pricingVerifiedAt": "2026-09-15T00:00:00Z",
+        "pricingReviewBefore": "2026-10-15T00:00:00Z",
+        "commercialUseVerified": true
+      }
     },
     "replicate": {
       "implementedOperations": [
@@ -86,18 +99,28 @@
     ]
   },
   "launchProvider": {
-    "provider": "replicate",
-    "model": "black-forest-labs/flux-schnell",
-    "credentialEnvironment": "REPLICATE_API_TOKEN",
+    "provider": "fal",
+    "model": "fal-ai/flux/schnell",
+    "credentialEnvironment": "FAL_KEY",
     "pricing": {
-      "unitType": "images",
-      "fixedOperationPriceMicroUsd": "3000",
-      "priceUsdPerImage": "0.003",
-      "pricingSourceUrl": "https://replicate.com/black-forest-labs/flux-schnell",
+      "unitType": "megapixels",
+      "fixedEffectiveCostMicroUsd": "3000",
+      "priceUsdPerMegapixel": "0.003",
+      "defaultImageSize": "landscape_4_3",
+      "pricingSourceUrl": "https://fal.ai/models/fal-ai/flux/schnell",
       "pricingVerifiedAt": "2026-09-15T00:00:00Z",
       "pricingReviewBefore": "2026-10-15T00:00:00Z",
       "commercialUseVerified": true
     },
+    "fallbacks": [
+      {
+        "provider": "replicate",
+        "model": "black-forest-labs/flux-schnell",
+        "credentialEnvironment": "REPLICATE_API_TOKEN",
+        "trigger": "fal_provider_failure",
+        "knownM12State": "account_insufficient_credit_402_until_funded"
+      }
+    ],
     "externalGate": "M12",
     "liveE2ERequiredBeforePackDone": true
   }

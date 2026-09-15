@@ -22,7 +22,7 @@ reportEnvironmentValidation(
   { component: 'worker' }
 );
 const { Worker, UnrecoverableError } = require('bullmq');
-const { generateImage, DEFAULT_IMAGE_MODEL } = require('./src/modules/ai/providers/imageProviders');
+const { generateImage, DEFAULT_IMAGE_MODEL, DEFAULT_FAL_IMAGE_MODEL } = require('./src/modules/ai/providers/imageProviders');
 const { buildImageArtifact } = require('./lib/imageArtifactContract');
 const { normalizeImageRequest } = require('./lib/imageRequestContract');
 const { assertImageRequestAvailable } = require('./lib/imageOperationRegistry');
@@ -227,11 +227,24 @@ async function processImageJob(job) {
   let providerResult = null;
 
   if (!persisted) {
-    providerResult = await generateImage(prompt, {
-      chain: ['replicate'],
-      model: IMAGE_MODEL,
-      requestId: requestId || jobRowId
-    });
+    try {
+      providerResult = await generateImage(prompt, {
+        chain: ['fal', 'replicate'],
+        models: {
+          fal: process.env.FAL_IMAGE_MODEL || DEFAULT_FAL_IMAGE_MODEL,
+          replicate: IMAGE_MODEL
+        },
+        requestId: requestId || jobRowId
+      });
+    } catch (providerError) {
+      if (providerError && providerError.retryable === false) {
+        const terminal = new UnrecoverableError(providerError.message);
+        terminal.attempts = providerError.attempts;
+        terminal.code = providerError.code;
+        throw terminal;
+      }
+      throw providerError;
+    }
 
     persisted = await imageRepository.persistGenerated({
       ownerId: userId,
@@ -497,7 +510,11 @@ async function handleJobFailure(job, err, feature) {
   const attemptsMade = job.attemptsMade;
   const maxAttempts = job.opts.attempts;
 
-  if (attemptsMade < maxAttempts) {
+  const exhausted =
+    err.name === 'UnrecoverableError' ||
+    attemptsMade >= maxAttempts;
+
+  if (!exhausted) {
     // BullMQ will retry automatically. Do not save failure or refund yet.
     return;
   }
