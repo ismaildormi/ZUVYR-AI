@@ -25,7 +25,9 @@ const {
 } = require('./attachmentChunking');
 const {
   canAnalyzeWithGemini,
-  analyzeGeminiAttachment
+  analyzeGeminiAttachment,
+  mediaTypeForMime,
+  maxBytesForMediaType
 } = require('./geminiFileAnalysis');
 const {
   canProcessDocumentWithTools,
@@ -203,6 +205,14 @@ function createAttachmentJobProcessor({
         data.creditRequestId,
         'invalid_attachment_credit_request'
       );
+    const baseIngestCredits = Math.max(
+      1,
+      Number(data.baseIngestCredits || data.ingestCredits || 1)
+    );
+    const reservedCredits = Math.max(
+      baseIngestCredits,
+      Number(data.reservedCredits || data.ingestCredits || baseIngestCredits)
+    );
 
     if (
       storageBucket !== ATTACHMENT_BUCKET ||
@@ -452,7 +462,36 @@ function createAttachmentJobProcessor({
           mimeType: attachment.mimeType,
           sizeBytes: downloaded.receivedBytes
         });
+      } else if (result.status === 'provider_required') {
+        const providerMediaType =
+          mediaTypeForMime(attachment.mimeType);
+        const providerLimit =
+          maxBytesForMediaType(providerMediaType);
+
+        if (
+          providerMediaType &&
+          providerLimit > 0 &&
+          downloaded.receivedBytes > providerLimit
+        ) {
+          result = {
+            status: 'unsupported',
+            mode: 'provider_limit',
+            text: '',
+            reason:
+              'The attachment exceeds the bounded provider-analysis limit.',
+            providerLimitBytes: providerLimit
+          };
+        }
       }
+
+      const finalCredits =
+        result.billing &&
+        Number.isInteger(Number(result.billing.chargedCredits))
+          ? Math.max(
+              baseIngestCredits,
+              Number(result.billing.chargedCredits)
+            )
+          : baseIngestCredits;
 
       const finalAsset =
         await store.updateAssetProcessing({
@@ -485,6 +524,18 @@ function createAttachmentJobProcessor({
               result.model || null,
             provider_usage:
               result.usage || null,
+            analysis_language_policy:
+              result.languagePolicy || null,
+            provider_cost_micro_usd:
+              result.billing?.providerCostMicroUsd || null,
+            pricing_version:
+              result.billing?.pricingVersion || null,
+            cost_entry_id:
+              result.billing?.costEntryId || null,
+            processing_final_credits:
+              finalCredits,
+            processing_reserved_credits:
+              reservedCredits,
             provider_file_deletion:
               typeof result.providerFileDeletion === 'function'
                 ? result.providerFileDeletion()
@@ -494,7 +545,24 @@ function createAttachmentJobProcessor({
       return {
         status: result.status,
         asset: finalAsset,
-        sha256: downloaded.sha256
+        sha256: downloaded.sha256,
+        billing: {
+          requestId: creditRequestId,
+          reservedCredits,
+          finalCredits,
+          provider:
+            result.provider || null,
+          model:
+            result.model || null,
+          providerCostMicroUsd:
+            result.billing?.providerCostMicroUsd || null,
+          pricingVersion:
+            result.billing?.pricingVersion || null,
+          costEntryId:
+            result.billing?.costEntryId || null,
+          settlementAudit:
+            result.billing?.settlementAudit || null
+        }
       };
     } finally {
       if (downloaded && downloaded.tempDir) {

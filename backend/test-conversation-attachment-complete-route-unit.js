@@ -5,6 +5,9 @@ const express = require('express');
 const {
   createConversationRouter
 } = require('./lib/conversationRoutes');
+const {
+  DEFAULT_ATTACHMENT_MODEL
+} = require('./lib/attachmentAnalysisPricing');
 
 const CONVERSATION_ID =
   '11111111-1111-4111-8111-111111111111';
@@ -15,6 +18,7 @@ async function run() {
   const storeCalls = [];
   const storageCalls = [];
   const creditCalls = [];
+  const queueCalls = [];
 
   const safeAudio = Buffer.alloc(4096);
   safeAudio.write('ID3', 0, 'ascii');
@@ -137,6 +141,14 @@ async function run() {
     }
   };
 
+
+  const attachmentQueue = {
+    async add(name, data, options) {
+      queueCalls.push({ name, data, options });
+      return { id: options.jobId };
+    }
+  };
+
   const app = express();
 
   app.use(express.json());
@@ -151,7 +163,9 @@ async function run() {
     createConversationRouter({
       store,
       storage,
-      creditManager
+      creditManager,
+      attachmentQueue,
+      attachmentJobOptions: { attempts: 1 }
     })
   );
 
@@ -186,11 +200,11 @@ async function run() {
       }
     );
 
-    assert.strictEqual(response.status, 201);
+    assert.strictEqual(response.status, 202);
 
     let body = await response.json();
 
-    assert.strictEqual(body.status, 'success');
+    assert.strictEqual(body.status, 'queued');
     assert.strictEqual(
       body.asset.assetType,
       'audio'
@@ -211,10 +225,15 @@ async function run() {
       body.extraction.status,
       'provider_required'
     );
+    assert.ok(
+      Number.isSafeInteger(body.creditsReserved) &&
+      body.creditsReserved >= 1
+    );
     assert.strictEqual(
       body.creditsCharged,
-      1
+      body.creditsReserved
     );
+    assert.strictEqual(body.baseIngestCredits, 1);
     assert.strictEqual(
       body.newBalance,
       99
@@ -227,7 +246,11 @@ async function run() {
 
     assert.strictEqual(
       reserveCall[1].creditsConsumed,
-      1
+      body.creditsReserved
+    );
+    assert.strictEqual(
+      reserveCall[1].modelUsed,
+      DEFAULT_ATTACHMENT_MODEL
     );
     assert.strictEqual(
       reserveCall[1].feature,
@@ -239,6 +262,15 @@ async function run() {
         call => call[0] === 'refund'
       ).length,
       0
+    );
+
+    assert.strictEqual(queueCalls.length, 1);
+    assert.strictEqual(queueCalls[0].name, 'process');
+    assert.strictEqual(queueCalls[0].data.assetId, 'asset-1');
+    assert.strictEqual(queueCalls[0].data.baseIngestCredits, 1);
+    assert.strictEqual(
+      queueCalls[0].data.reservedCredits,
+      body.creditsReserved
     );
 
     const addCall =

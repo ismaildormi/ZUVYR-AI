@@ -31,7 +31,7 @@ const { buildVideoArtifact } = require('./lib/videoArtifactContract');
 const { connection } = require('./lib/queue');
 const { startBrainKernelWorker } = require('./lib/brainKernelWorker');
 const { supabaseAdmin } = require('./lib/supabaseAdmin');
-const { refundCredits, logCreditEvent, reportRefundFailure } = require('./gatekeeper');
+const { refundCredits, settleCredits, logCreditEvent, reportRefundFailure } = require('./gatekeeper');
 const { recordRefund } = require('./lib/metrics');
 const {
   completeGenerationConversation,
@@ -63,12 +63,99 @@ const NON_RETRYABLE_ATTACHMENT_ERRORS = new Set([
   'blocked_attachment_type',
   'attachment_password_protected',
   'attachment_size_mismatch',
-  'invalid_attachment_path'
+  'invalid_attachment_path',
+  'attachment_credit_settlement_failed'
 ]);
+
+async function settleAttachmentBilling(job, result) {
+  const billing =
+    result && result.billing && typeof result.billing === 'object'
+      ? result.billing
+      : null;
+
+  if (!billing) return result;
+
+  const requestId = String(
+    billing.requestId || job.data.creditRequestId || ''
+  ).trim();
+  const finalCredits = Number(billing.finalCredits);
+
+  if (
+    !requestId ||
+    !Number.isSafeInteger(finalCredits) ||
+    finalCredits < 1
+  ) {
+    const error = new Error('attachment_credit_settlement_invalid');
+    error.code = 'attachment_credit_settlement_failed';
+    error.preserveProcessedAsset = true;
+    throw error;
+  }
+
+  let lastError = null;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const settlement =
+        await settleCredits(requestId, finalCredits);
+
+      if (
+        result.asset &&
+        result.asset.id &&
+        result.asset.metadata &&
+        typeof result.asset.metadata === 'object'
+      ) {
+        try {
+          result.asset =
+            await conversationMemory.updateAssetProcessing({
+              assetId: result.asset.id,
+              ownerId: job.data.ownerId,
+              metadata: {
+                ...result.asset.metadata,
+                credit_settlement_status: 'settled',
+                credit_settled_credits: finalCredits,
+                credit_settlement_replayed:
+                  Boolean(settlement?.replayed)
+              }
+            });
+        } catch (metadataError) {
+          console.error(
+            '[attachment-worker] settlement metadata save failed:',
+            metadataError.message
+          );
+        }
+      }
+
+      return {
+        ...result,
+        billing: {
+          ...billing,
+          settlement: {
+            status: 'settled',
+            finalCredits,
+            replayed: Boolean(settlement?.replayed)
+          }
+        }
+      };
+    } catch (error) {
+      lastError = error;
+      if (attempt < 3) {
+        await new Promise(resolve =>
+          setTimeout(resolve, attempt * 250)
+        );
+      }
+    }
+  }
+
+  const error = new Error('attachment_credit_settlement_failed');
+  error.code = 'attachment_credit_settlement_failed';
+  error.cause = lastError;
+  error.preserveProcessedAsset = true;
+  throw error;
+}
 
 async function processAttachmentJob(job) {
   try {
-    return await baseAttachmentJobProcessor(job);
+    const result = await baseAttachmentJobProcessor(job);
+    return await settleAttachmentBilling(job, result);
   } catch (error) {
     if (
       NON_RETRYABLE_ATTACHMENT_ERRORS.has(
@@ -297,22 +384,32 @@ async function handleAttachmentFailure(job, err) {
   const rejected =
     code === 'dangerous_attachment_content' ||
     code === 'blocked_attachment_type';
+  const preserveProcessedAsset =
+    code === 'attachment_credit_settlement_failed' ||
+    err.preserveProcessedAsset === true;
 
-  try {
-    await conversationMemory.updateAssetProcessing({
-      assetId,
-      ownerId,
-      scanStatus: rejected ? 'rejected' : 'failed',
-      extractionStatus: 'failed'
-    });
-  } catch (stateError) {
-    console.error(
-      '[attachment-worker] failure state save failed:',
-      stateError.message
-    );
+  if (!preserveProcessedAsset) {
+    try {
+      await conversationMemory.updateAssetProcessing({
+        assetId,
+        ownerId,
+        scanStatus: rejected ? 'rejected' : 'failed',
+        extractionStatus: 'failed'
+      });
+    } catch (stateError) {
+      console.error(
+        '[attachment-worker] failure state save failed:',
+        stateError.message
+      );
+    }
   }
 
-  if (rejected && storageBucket && storagePath) {
+  if (
+    !preserveProcessedAsset &&
+    rejected &&
+    storageBucket &&
+    storagePath
+  ) {
     await supabaseAdmin.storage
       .from(storageBucket)
       .remove([storagePath])

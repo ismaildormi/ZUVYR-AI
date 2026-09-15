@@ -13,6 +13,12 @@ const {
   inspectAttachmentBuffer,
   extractAttachment
 } = require('./attachmentExtraction');
+const {
+  canAnalyzeWithGemini
+} = require('./geminiFileAnalysis');
+const {
+  quoteAttachmentAnalysisReservation
+} = require('./attachmentAnalysisPricing');
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -133,6 +139,48 @@ function createConversationRouter({
     )
       ? configured
       : 1;
+  }
+
+  function attachmentProcessingReservation({
+    mimeType,
+    sizeBytes,
+    extractionResult
+  } = {}) {
+    const baseCredits = attachmentIngestCredits();
+
+    if (
+      canAnalyzeWithGemini({
+        mimeType,
+        sizeBytes,
+        result: extractionResult
+      })
+    ) {
+      const quote =
+        quoteAttachmentAnalysisReservation();
+      const reservedCredits = Math.max(
+        baseCredits,
+        Number(quote.chargedCredits)
+      );
+
+      return {
+        baseCredits,
+        reservedCredits,
+        modelUsed: quote.model,
+        providerCostUpperBoundMicroUsd:
+          quote.providerCostMicroUsd,
+        pricingVersion: quote.pricingVersion,
+        costEntryId: quote.costEntryId
+      };
+    }
+
+    return {
+      baseCredits,
+      reservedCredits: baseCredits,
+      modelUsed: 'attachment-extraction',
+      providerCostUpperBoundMicroUsd: null,
+      pricingVersion: null,
+      costEntryId: null
+    };
   }
 
   router.get('/', async (req, res) => {
@@ -633,6 +681,13 @@ function createConversationRouter({
             mimeType: attachment.mimeType
           });
 
+        const extractionResult =
+          await extractAttachment({
+            buffer,
+            fileName: attachment.fileName,
+            mimeType: attachment.mimeType
+          });
+
         creditRequestId =
           'attachment:' +
           crypto
@@ -642,8 +697,18 @@ function createConversationRouter({
 
         creditApi = getCreditManager();
 
+        const processingReservation =
+          attachmentProcessingReservation({
+            mimeType:
+              inspection.detectedMimeType ||
+              attachment.mimeType,
+            sizeBytes: buffer.length,
+            extractionResult
+          });
         const credits =
-          attachmentIngestCredits();
+          processingReservation.baseCredits;
+        const reservedCredits =
+          processingReservation.reservedCredits;
 
         const reservation =
           await creditApi.reserveCredits({
@@ -651,19 +716,23 @@ function createConversationRouter({
             requestId: creditRequestId,
             feature: 'chat',
             modelUsed:
-              'attachment-extraction',
-            creditsConsumed: credits
+              processingReservation.modelUsed,
+            creditsConsumed: reservedCredits,
+            metadata: {
+              cost_entry_id:
+                processingReservation.costEntryId,
+              pricing_version:
+                processingReservation.pricingVersion,
+              provider_cost_upper_bound_micro_usd:
+                processingReservation
+                  .providerCostUpperBoundMicroUsd,
+              base_ingest_credits: credits,
+              reserved_credits: reservedCredits
+            }
           });
 
         freshReservation =
           !reservation.replayed;
-
-        const extractionResult =
-          await extractAttachment({
-            buffer,
-            fileName: attachment.fileName,
-            mimeType: attachment.mimeType
-          });
 
         const sha256 =
           crypto
@@ -715,9 +784,72 @@ function createConversationRouter({
               credit_request_id:
                 creditRequestId,
               ingest_credits:
-                credits
+                credits,
+              processing_reserved_credits:
+                reservedCredits,
+              pricing_version:
+                processingReservation.pricingVersion,
+              cost_entry_id:
+                processingReservation.costEntryId
             }
           });
+
+        if (extractionResult.status === 'provider_required') {
+          queuedAsset = asset;
+
+          try {
+            await getAttachmentQueue().add(
+              'process',
+              {
+                assetId: asset.id,
+                conversationId: req.params.conversationId,
+                ownerId: req.userId,
+                storageBucket: ATTACHMENT_BUCKET,
+                storagePath: uploadPath,
+                fileName: attachment.fileName,
+                mimeType:
+                  inspection.detectedMimeType ||
+                  attachment.mimeType,
+                sizeBytes: buffer.length,
+                creditRequestId,
+                ingestCredits: credits,
+                baseIngestCredits: credits,
+                reservedCredits
+              },
+              {
+                ...getAttachmentJobOptions(),
+                jobId: asset.id
+              }
+            );
+          } catch (queueError) {
+            const unavailable =
+              new Error('attachment_queue_unavailable');
+            unavailable.code =
+              'attachment_queue_unavailable';
+            unavailable.statusCode = 503;
+            unavailable.cause = queueError;
+            throw unavailable;
+          }
+
+          return res.status(202).json({
+            status: 'queued',
+            asset: attachmentPublicRecord(asset),
+            extraction: {
+              status: extractionResult.status,
+              mode: extractionResult.mode,
+              textAvailable: false,
+              reason: extractionResult.reason || null
+            },
+            processing: {
+              status: 'pending',
+              jobId: asset.id
+            },
+            creditsCharged: reservedCredits,
+            creditsReserved: reservedCredits,
+            baseIngestCredits: credits,
+            newBalance: reservation.newBalance
+          });
+        }
 
         return res.status(201).json({
           status: 'success',

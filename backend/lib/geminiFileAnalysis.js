@@ -1,15 +1,30 @@
 'use strict';
 
 const fs = require('fs');
+const {
+  preflightAttachmentAnalysisPricing,
+  quoteAttachmentAnalysisActual
+} = require('./attachmentAnalysisPricing');
 
 const GEMINI_BASE_URL =
   'https://generativelanguage.googleapis.com';
 const DEFAULT_MODEL =
   process.env.GEMINI_ATTACHMENT_MODEL ||
-  'gemini-3.7-flash';
+  'gemini-3.8-flash';
 const MAX_GEMINI_PDF_BYTES = 50 * 1024 * 1024;
 const DEFAULT_POLL_INTERVAL_MS = 5000;
 const DEFAULT_PROCESSING_TIMEOUT_MS = 30 * 60 * 1000;
+const MAX_GEMINI_IMAGE_BYTES = 20 * 1024 * 1024;
+const MAX_GEMINI_AUDIO_BYTES = 50 * 1024 * 1024;
+const MAX_GEMINI_VIDEO_BYTES = 50 * 1024 * 1024;
+
+
+const SUPPORTED_IMAGE_MIME_TYPES = new Set([
+  'image/bmp',
+  'image/jpeg',
+  'image/png',
+  'image/webp'
+]);
 
 const SUPPORTED_AUDIO_MIME_TYPES = new Set([
   'audio/wav',
@@ -20,6 +35,7 @@ const SUPPORTED_AUDIO_MIME_TYPES = new Set([
   'audio/flac',
   'audio/mpeg',
   'audio/m4a',
+  'audio/mp4',
   'audio/l16',
   'audio/opus',
   'audio/alaw',
@@ -31,6 +47,7 @@ const SUPPORTED_VIDEO_MIME_TYPES = new Set([
   'video/mp4',
   'video/mpeg',
   'video/mov',
+  'video/quicktime',
   'video/avi',
   'video/x-flv',
   'video/mpg',
@@ -55,10 +72,19 @@ function normalizeMimeType(value) {
 
 function mediaTypeForMime(mimeType) {
   const normalized = normalizeMimeType(mimeType);
+  if (SUPPORTED_IMAGE_MIME_TYPES.has(normalized)) return 'image';
   if (SUPPORTED_AUDIO_MIME_TYPES.has(normalized)) return 'audio';
   if (SUPPORTED_VIDEO_MIME_TYPES.has(normalized)) return 'video';
   if (normalized === 'application/pdf') return 'document';
   return null;
+}
+
+function maxBytesForMediaType(mediaType) {
+  if (mediaType === 'image') return MAX_GEMINI_IMAGE_BYTES;
+  if (mediaType === 'audio') return MAX_GEMINI_AUDIO_BYTES;
+  if (mediaType === 'video') return MAX_GEMINI_VIDEO_BYTES;
+  if (mediaType === 'document') return MAX_GEMINI_PDF_BYTES;
+  return 0;
 }
 
 function canAnalyzeWithGemini({ mimeType, sizeBytes, result } = {}) {
@@ -68,10 +94,7 @@ function canAnalyzeWithGemini({ mimeType, sizeBytes, result } = {}) {
   if (!mediaType || !Number.isFinite(normalizedSize) || normalizedSize < 1) {
     return false;
   }
-  if (mediaType === 'document') {
-    return normalizedSize <= MAX_GEMINI_PDF_BYTES;
-  }
-  return true;
+  return normalizedSize <= maxBytesForMediaType(mediaType);
 }
 
 async function readJsonResponse(response, code) {
@@ -108,13 +131,41 @@ function responseText(payload) {
 }
 
 function promptForMediaType(mediaType) {
+  if (mediaType === 'image') {
+    return [
+      'Analyze this image faithfully for later question answering.',
+      'Identify the language or languages of visible text.',
+      'Transcribe important visible text in its original language and script.',
+      'Describe important visual details, layout, charts, labels, and relationships.',
+      'Clearly mark anything unreadable or uncertain and never invent hidden content.',
+      'Return concise Markdown with Languages, Visible text, Visual analysis, and Uncertainties sections.'
+    ].join(' ');
+  }
   if (mediaType === 'audio') {
-    return 'Transcribe and analyze this audio faithfully. Identify language, speakers when possible, key sections, music or sound characteristics, and important details. Return clear Markdown suitable for later question answering. Do not invent inaudible content.';
+    return [
+      'Transcribe and analyze this audio faithfully for later question answering.',
+      'Identify the language or languages and preserve the original language in the transcript.',
+      'Distinguish speakers when possible and include useful timestamps or sections.',
+      'Describe important music or sound events without inventing inaudible content.',
+      'Return concise Markdown with Languages, Transcript, Key sections, and Uncertainties sections.'
+    ].join(' ');
   }
   if (mediaType === 'video') {
-    return 'Analyze this video faithfully using both visuals and audio. Describe key scenes, spoken content, on-screen text, important events, and timestamps when useful. Return clear Markdown suitable for later question answering. Do not invent unseen content.';
+    return [
+      'Analyze this video faithfully using visuals and audio for later question answering.',
+      'Identify spoken and on-screen languages and preserve original wording when transcribing.',
+      'Describe key scenes, spoken content, on-screen text, events, and useful timestamps.',
+      'Clearly mark anything unseen, inaudible, or uncertain and never invent it.',
+      'Return concise Markdown with Languages, Timeline, Transcript/On-screen text, and Uncertainties sections.'
+    ].join(' ');
   }
-  return 'Read this PDF using document vision and OCR. Extract its meaningful text, tables, charts, images, structure, and key facts faithfully. Return clear Markdown suitable for later question answering. State clearly when content is unreadable.';
+  return [
+    'Read this PDF faithfully using document vision and OCR for later question answering.',
+    'Identify the language or languages and preserve original wording and script.',
+    'Extract meaningful text, tables, charts, images, structure, and key facts.',
+    'Clearly mark unreadable or uncertain content and never invent it.',
+    'Return concise Markdown with Languages, Structure, Extracted content, and Uncertainties sections.'
+  ].join(' ');
 }
 
 function wait(ms) {
@@ -144,6 +195,19 @@ async function analyzeGeminiAttachment({
   const normalizedKey = String(apiKey || '').trim();
 
   if (!normalizedKey) throw providerError('gemini_api_key_missing');
+  let pricingPreflight;
+  try {
+    pricingPreflight = preflightAttachmentAnalysisPricing({
+      model,
+      env: process.env
+    });
+  } catch (error) {
+    throw providerError(
+      'gemini_attachment_pricing_unavailable',
+      error.message,
+      { cause: error.code || error.message }
+    );
+  }
   if (!filePath || !fs.existsSync(filePath)) {
     throw providerError('gemini_source_file_missing');
   }
@@ -151,11 +215,13 @@ async function analyzeGeminiAttachment({
   if (!Number.isInteger(normalizedSize) || normalizedSize < 1) {
     throw providerError('gemini_file_size_invalid');
   }
-  if (
-    mediaType === 'document' &&
-    normalizedSize > MAX_GEMINI_PDF_BYTES
-  ) {
-    throw providerError('gemini_pdf_too_large');
+  const mediaLimit = maxBytesForMediaType(mediaType);
+  if (!mediaLimit || normalizedSize > mediaLimit) {
+    throw providerError(
+      'gemini_media_too_large',
+      'Attachment exceeds the ZUVYR provider-analysis limit.',
+      { mediaType, sizeBytes: normalizedSize, maxBytes: mediaLimit }
+    );
   }
 
   const apiHeaders = { 'x-goog-api-key': normalizedKey };
@@ -261,8 +327,33 @@ async function analyzeGeminiAttachment({
       interactionResponse,
       'gemini_interaction_failed'
     );
+    if (
+      interaction.status &&
+      String(interaction.status).toLowerCase() !== 'completed'
+    ) {
+      throw providerError(
+        'gemini_interaction_incomplete',
+        'Gemini attachment analysis did not complete.',
+        { status: interaction.status }
+      );
+    }
     const text = responseText(interaction);
     if (!text) throw providerError('gemini_empty_response');
+
+    let billing;
+    try {
+      billing = quoteAttachmentAnalysisActual({
+        model,
+        usage: interaction.usage || {},
+        env: process.env
+      });
+    } catch (error) {
+      throw providerError(
+        'gemini_attachment_cost_unavailable',
+        error.message,
+        { cause: error.code || error.message }
+      );
+    }
 
     return {
       status: 'ready',
@@ -271,6 +362,9 @@ async function analyzeGeminiAttachment({
       provider: 'google-gemini',
       model,
       usage: interaction.usage || null,
+      billing,
+      languagePolicy: 'preserve_source_language_and_script',
+      pricingPreflight,
       providerFileDeletion: () => ({
         attempted: deletionAttempted,
         succeeded: deletionSucceeded
@@ -299,11 +393,16 @@ module.exports = {
   GEMINI_BASE_URL,
   DEFAULT_MODEL,
   MAX_GEMINI_PDF_BYTES,
+  MAX_GEMINI_IMAGE_BYTES,
+  MAX_GEMINI_AUDIO_BYTES,
+  MAX_GEMINI_VIDEO_BYTES,
+  SUPPORTED_IMAGE_MIME_TYPES,
   SUPPORTED_AUDIO_MIME_TYPES,
   SUPPORTED_VIDEO_MIME_TYPES,
   providerError,
   normalizeMimeType,
   mediaTypeForMime,
+  maxBytesForMediaType,
   canAnalyzeWithGemini,
   responseText,
   analyzeGeminiAttachment
