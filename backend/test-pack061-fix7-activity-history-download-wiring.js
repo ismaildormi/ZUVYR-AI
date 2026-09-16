@@ -58,7 +58,9 @@ assert.strictEqual(
 
 assert.strictEqual(
   count(
-    "'artifact.download',\n        async button=>"
+    "canonicalContentId&&canonicalAssetId\n" +
+    "        ? 'artifact.download'\n" +
+    "        : 'feedback.download'"
   ),
   2
 );
@@ -117,5 +119,5 @@ assert.strictEqual(
 );
 
 console.log(
-  'PASS: Pack061 FIX7 R3 activity-first History + canonical Download action'
+  'PASS: Pack061 FIX7 R5 unified context-aware Download action'
 );

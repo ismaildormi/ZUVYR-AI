@@ -64,9 +64,13 @@ assert.ok(
 );
 
 assert.strictEqual(
-  frontend.split("'artifact.download',\n        async button=>").length - 1,
+  frontend.split(
+    "canonicalContentId&&canonicalAssetId\n" +
+    "        ? 'artifact.download'\n" +
+    "        : 'feedback.download'"
+  ).length - 1,
   2,
-  'both duplicated runtimes must keep the canonical Download action'
+  'both runtimes must route the visible Download action by message type'
 );
 
 assert.strictEqual(
