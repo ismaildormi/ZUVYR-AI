@@ -88,9 +88,6 @@ const downloadFlow = html.slice(
 
 [
   "download.signed_url ||\n      download.signedUrl ||",
-  'const fileResponse = await fetch(signedUrl, {',
-  'URL.createObjectURL(blob)',
-  'link.download = filename;',
   'window.location.assign(signedUrl);',
   "window.alert('Download failed. Please try again.');"
 ].forEach(literal => {
@@ -99,6 +96,16 @@ const downloadFlow = html.slice(
     `Download flow must contain ${literal}`
   );
 });
+
+assert.ok(
+  !downloadFlow.includes('fetch(signedUrl'),
+  'Signed download must not perform a second cross-origin fetch.'
+);
+
+assert.ok(
+  !downloadFlow.includes('URL.createObjectURL'),
+  'Signed download must use the backend attachment URL directly.'
+);
 
 assert.strictEqual(
   count('/* ZUVYR PACK061 FIX5 IMAGE HISTORY RELOAD */'),

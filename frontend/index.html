@@ -12793,44 +12793,10 @@ async function downloadCanonicalGeneration(contentId, assetId, button) {
       throw new Error(data?.code || 'generation_download_failed');
     }
 
-    const mimeType = String(download.mime_type || '').toLowerCase();
-    const extension =
-      mimeType.includes('png') ? 'png' :
-      mimeType.includes('webp') ? 'webp' :
-      mimeType.includes('gif') ? 'gif' :
-      mimeType.includes('mp4') ? 'mp4' :
-      mimeType.includes('webm') ? 'webm' :
-      mimeType.includes('jpeg') || mimeType.includes('jpg') ? 'jpg' :
-      'bin';
-    const filename =
-      'zuvyr-'+String(contentId).slice(0,8)+'.'+extension;
-
-    let objectUrl = '';
-    try {
-      const fileResponse = await fetch(signedUrl, {
-        method: 'GET',
-        credentials: 'omit'
-      });
-      if (!fileResponse.ok) {
-        throw new Error('generation_download_fetch_failed');
-      }
-      const blob = await fileResponse.blob();
-      objectUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = objectUrl;
-      link.download = filename;
-      link.rel = 'noopener';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (blobError) {
-      console.warn('[image-download] blob fallback:', blobError);
-      window.location.assign(signedUrl);
-    } finally {
-      if (objectUrl) {
-        setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-      }
-    }
+    // The backend signs this URL with download=true. Navigating directly
+    // avoids a second cross-origin fetch and preserves the browser's
+    // native attachment download handling.
+    window.location.assign(signedUrl);
   } catch (error) {
     console.error('[image-download] failed:', error);
     window.alert('Download failed. Please try again.');
