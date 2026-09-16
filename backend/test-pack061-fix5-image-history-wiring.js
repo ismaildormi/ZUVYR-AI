@@ -28,7 +28,15 @@ assert.ok(
 );
 
 assert.strictEqual(
-  r(/downloadCanonicalGeneration\s*\(\s*canonicalContentId\s*,\s*canonicalAssetId\s*,\s*downloadButton\s*\)/g),
+  r(/downloadCanonicalGeneration\s*\(\s*canonicalContentId\s*,\s*canonicalAssetId\s*,\s*button\s*\)/g),
+  2
+);
+assert.strictEqual(
+  r(/meta\.canonicalContentId\|\|''/g),
+  2
+);
+assert.strictEqual(
+  r(/meta\.canonicalAssetId\|\|''/g),
   2
 );
 

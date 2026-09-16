@@ -10457,29 +10457,10 @@ function createRoxHistoryMedia(message, feature){
     ''
   ).trim();
 
-  if(canonicalContentId&&canonicalAssetId){
-    const downloadButton=
-      document.createElement('button');
-
-    downloadButton.type='button';
-    downloadButton.className='rox-project-action';
-    downloadButton.textContent=
-      roxT('artifact.download');
-
-    downloadButton.addEventListener(
-      'click',
-      ()=>{
-        downloadCanonicalGeneration(
-          canonicalContentId,
-          canonicalAssetId,
-          downloadButton
-        );
-      }
-    );
-
-    wrap.appendChild(downloadButton);
-  }
-
+  wrap.dataset.zuvyrCanonicalContentId=
+    canonicalContentId;
+  wrap.dataset.zuvyrCanonicalAssetId=
+    canonicalAssetId;
 
   return wrap;
 }
@@ -10571,6 +10552,16 @@ async function openRoxHistoryItem(item, row=null){
             sequenceNo:message.sequence_no,
             createdAt:message.created_at,
             feature,
+            canonicalContentId:String(
+              content.canonicalContentId||
+              content.canonical_content_id||
+              ''
+            ).trim()||null,
+            canonicalAssetId:String(
+              content.canonicalAssetId||
+              content.canonical_asset_id||
+              ''
+            ).trim()||null,
             outputs:[{
               type:messageType,
               url:String(content.url||''),
@@ -11212,6 +11203,13 @@ async function loadRoxHistory(search=''){
         feature==='roxip'?'🖥️':
         '💬';
 
+      const featureLabel=
+        feature==='code'?'Code':
+        feature==='images'?'Images':
+        feature==='videos'?'Video':
+        feature==='roxip'?'ZUVYR IP':
+        'Chat';
+
       const pin=item.pinned?' · 📌':'';
 
       const pinActionLabel=item.pinned
@@ -11235,7 +11233,7 @@ async function loadRoxHistory(search=''){
         '<div><div class="t">'+
         escapeHtml(title)+
         '</div><div class="s">'+
-        escapeHtml(date+pin)+
+        escapeHtml(featureLabel+' · '+date+pin)+
         '</div></div>'+
         '<div class="rox-history-actions">'+
         '<button type="button" '+
@@ -11295,8 +11293,8 @@ async function loadRoxHistory(search=''){
 
     const html=archived
       ? renderHistoryItems(items)
-      : buildHistorySection('Pinned',pinnedItems)+
-        buildHistorySection('Recents',recentItems);
+      : buildHistorySection('Recents',recentItems)+
+        buildHistorySection('Pinned',pinnedItems);
 
     targets.forEach(target=>{
       target.innerHTML=html;
@@ -11920,6 +11918,28 @@ function appendMsg(msgBox, cls, content, isNode, meta = {}) {
         button.textContent = oldSymbol;
       }, 1200);
     });
+
+    const canonicalContentId=String(
+      meta.canonicalContentId||''
+    ).trim();
+
+    const canonicalAssetId=String(
+      meta.canonicalAssetId||''
+    ).trim();
+
+    if(canonicalContentId&&canonicalAssetId){
+      makeAction(
+        '⇩',
+        'artifact.download',
+        async button=>{
+          await downloadCanonicalGeneration(
+            canonicalContentId,
+            canonicalAssetId,
+            button
+          );
+        }
+      );
+    }
 
     makeAction('\uD83D\uDD0A', 'feedback.listen', (button) => {
       if (!('speechSynthesis' in window)) return;
@@ -12905,18 +12925,10 @@ async function pollJob(jobId, feature, msgBox, typing) {
         img.src = data.result_url;
         img.alt = roxT('result.generatedAlt');
         wrap.appendChild(img);
-        if (data.canonical_content_id && data.canonical_asset_id) {
-          const downloadButton = document.createElement('button');
-          downloadButton.type = 'button';
-          downloadButton.className = 'artifact-action-btn';
-          downloadButton.textContent = roxT('artifact.download');
-          downloadButton.addEventListener('click', () => downloadCanonicalGeneration(
-            data.canonical_content_id,
-            data.canonical_asset_id,
-            downloadButton
-          ));
-          wrap.appendChild(downloadButton);
-        }
+        wrap.dataset.zuvyrCanonicalContentId =
+          String(data.canonical_content_id || '');
+        wrap.dataset.zuvyrCanonicalAssetId =
+          String(data.canonical_asset_id || '');
       } else {
         const vid = document.createElement('video');
         vid.src = data.result_url;
@@ -12927,6 +12939,10 @@ async function pollJob(jobId, feature, msgBox, typing) {
       appendMsg(msgBox, 'bot', wrap, true, {
         responseId: data.response_message_id || null,
         feature,
+        canonicalContentId:
+          String(data.canonical_content_id || '').trim() || null,
+        canonicalAssetId:
+          String(data.canonical_asset_id || '').trim() || null,
         outputs: [{
           type: outputType,
           url: String(data.result_url || ''),
@@ -30875,29 +30891,10 @@ function createRoxHistoryMedia(message, feature){
     ''
   ).trim();
 
-  if(canonicalContentId&&canonicalAssetId){
-    const downloadButton=
-      document.createElement('button');
-
-    downloadButton.type='button';
-    downloadButton.className='rox-project-action';
-    downloadButton.textContent=
-      roxT('artifact.download');
-
-    downloadButton.addEventListener(
-      'click',
-      ()=>{
-        downloadCanonicalGeneration(
-          canonicalContentId,
-          canonicalAssetId,
-          downloadButton
-        );
-      }
-    );
-
-    wrap.appendChild(downloadButton);
-  }
-
+  wrap.dataset.zuvyrCanonicalContentId=
+    canonicalContentId;
+  wrap.dataset.zuvyrCanonicalAssetId=
+    canonicalAssetId;
 
   return wrap;
 }
@@ -30989,6 +30986,16 @@ async function openRoxHistoryItem(item, row=null){
             sequenceNo:message.sequence_no,
             createdAt:message.created_at,
             feature,
+            canonicalContentId:String(
+              content.canonicalContentId||
+              content.canonical_content_id||
+              ''
+            ).trim()||null,
+            canonicalAssetId:String(
+              content.canonicalAssetId||
+              content.canonical_asset_id||
+              ''
+            ).trim()||null,
             outputs:[{
               type:messageType,
               url:String(content.url||''),
@@ -31630,6 +31637,13 @@ async function loadRoxHistory(search=''){
         feature==='roxip'?'🖥️':
         '💬';
 
+      const featureLabel=
+        feature==='code'?'Code':
+        feature==='images'?'Images':
+        feature==='videos'?'Video':
+        feature==='roxip'?'ZUVYR IP':
+        'Chat';
+
       const pin=item.pinned?' · 📌':'';
 
       const pinActionLabel=item.pinned
@@ -31653,7 +31667,7 @@ async function loadRoxHistory(search=''){
         '<div><div class="t">'+
         escapeHtml(title)+
         '</div><div class="s">'+
-        escapeHtml(date+pin)+
+        escapeHtml(featureLabel+' · '+date+pin)+
         '</div></div>'+
         '<div class="rox-history-actions">'+
         '<button type="button" '+
@@ -31713,8 +31727,8 @@ async function loadRoxHistory(search=''){
 
     const html=archived
       ? renderHistoryItems(items)
-      : buildHistorySection('Pinned',pinnedItems)+
-        buildHistorySection('Recents',recentItems);
+      : buildHistorySection('Recents',recentItems)+
+        buildHistorySection('Pinned',pinnedItems);
 
     targets.forEach(target=>{
       target.innerHTML=html;
@@ -32338,6 +32352,28 @@ function appendMsg(msgBox, cls, content, isNode, meta = {}) {
         button.textContent = oldSymbol;
       }, 1200);
     });
+
+    const canonicalContentId=String(
+      meta.canonicalContentId||''
+    ).trim();
+
+    const canonicalAssetId=String(
+      meta.canonicalAssetId||''
+    ).trim();
+
+    if(canonicalContentId&&canonicalAssetId){
+      makeAction(
+        '⇩',
+        'artifact.download',
+        async button=>{
+          await downloadCanonicalGeneration(
+            canonicalContentId,
+            canonicalAssetId,
+            button
+          );
+        }
+      );
+    }
 
     makeAction('\uD83D\uDD0A', 'feedback.listen', (button) => {
       if (!('speechSynthesis' in window)) return;
@@ -33268,6 +33304,10 @@ async function pollJob(jobId, feature, msgBox, typing) {
       appendMsg(msgBox, 'bot', wrap, true, {
         responseId: data.response_message_id || null,
         feature,
+        canonicalContentId:
+          String(data.canonical_content_id || '').trim() || null,
+        canonicalAssetId:
+          String(data.canonical_asset_id || '').trim() || null,
         outputs: [{
           type: outputType,
           url: String(data.result_url || ''),
