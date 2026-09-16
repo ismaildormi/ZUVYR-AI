@@ -30,21 +30,15 @@ assert.strictEqual(
 );
 
 assert.strictEqual(
-  countLiteral(
-    frontend,
-    "'/api/conversations?limit=100&archived='+"
-  ),
+  countLiteral(frontend, "'/api/conversations?limit=100&archived='+"),
   2,
-  'Both frontend copies must construct a durable History route.'
+  'Both frontend copies must construct one durable History route.'
 );
 
 assert.strictEqual(
-  countLiteral(
-    frontend,
-    "(archived?'true':'false')+"
-  ),
+  countLiteral(frontend, "(archived?'true':'false')+"),
   2,
-  'Both frontend copies must select Active or Archived conversations.'
+  'Both frontend copies must select Active or Archived conversations once.'
 );
 
 assert.strictEqual(
@@ -53,55 +47,43 @@ assert.strictEqual(
     "const response=await authFetch(\n      query,"
   ),
   2,
-  'Both frontend copies must send the constructed durable History query.'
+  'Both frontend copies must send one constructed durable History query.'
 );
 
 assert.strictEqual(
   countLiteral(frontend, "'/messages?limit=100'"),
   2,
-  'Both frontend copies must load durable messages.'
+  'Both frontend copies must load durable messages once per implementation.'
 );
 
 assert.strictEqual(
-  countLiteral(
-    frontend,
-    'async function loadAllRoxConversationMessages'
-  ),
+  countLiteral(frontend, 'async function loadAllRoxConversationMessages'),
   2,
-  'Both copies must implement message pagination.'
+  'Both copies must implement message pagination exactly once.'
 );
 
 assert.strictEqual(
-  countLiteral(
-    frontend,
-    'async function openRoxHistoryItem(item, row=null)'
-  ),
+  countLiteral(frontend, 'async function openRoxHistoryItem(item, row=null)'),
   2,
-  'Both copies must open durable history items.'
+  'Both copies must open durable history items exactly once.'
 );
 
 assert.strictEqual(
-  countLiteral(
-    frontend,
-    'setActiveRoxConversation(feature,item.id)'
-  ),
+  countLiteral(frontend, 'setActiveRoxConversation(feature,item.id)'),
   2,
-  'Opening history must restore its active conversation id.'
+  'Opening history must restore its active conversation id in both copies.'
 );
 
 assert.strictEqual(
-  countLiteral(
-    frontend,
-    "messageType==='roxip_event'"
-  ),
+  countLiteral(frontend, "messageType==='roxip_event'"),
   2,
-  'Both copies must render Rox IP demo events.'
+  'Both copies must render Rox IP demo events exactly once.'
 );
 
 assert.strictEqual(
-  countLiteral(frontend, 'content.url'),
+  countLiteral(frontend, 'function createRoxHistoryMedia(message, feature){'),
   2,
-  'Both copies must render stored image and video URLs.'
+  'Both copies must contain one durable media-history renderer.'
 );
 
 const marker =

@@ -191,7 +191,7 @@ const patchStart =
   "  router.patch('/:conversationId', async (req, res) => {";
 
 const patchEnd =
-  "  router.get('/:conversationId/messages', async (req, res) => {";
+  "  router.get(\n    '/:conversationId/messages/:messageId/sources',";
 
 const patchSegments = extractSegments(
   routes,

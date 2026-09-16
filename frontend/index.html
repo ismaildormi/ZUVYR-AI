@@ -10445,6 +10445,42 @@ function createRoxHistoryMedia(message, feature){
     wrap.appendChild(video);
   }
 
+  const canonicalContentId=String(
+    content.canonicalContentId||
+    content.canonical_content_id||
+    ''
+  ).trim();
+
+  const canonicalAssetId=String(
+    content.canonicalAssetId||
+    content.canonical_asset_id||
+    ''
+  ).trim();
+
+  if(canonicalContentId&&canonicalAssetId){
+    const downloadButton=
+      document.createElement('button');
+
+    downloadButton.type='button';
+    downloadButton.className='rox-project-action';
+    downloadButton.textContent=
+      roxT('artifact.download');
+
+    downloadButton.addEventListener(
+      'click',
+      ()=>{
+        downloadCanonicalGeneration(
+          canonicalContentId,
+          canonicalAssetId,
+          downloadButton
+        );
+      }
+    );
+
+    wrap.appendChild(downloadButton);
+  }
+
+
   return wrap;
 }
 
@@ -11026,7 +11062,8 @@ async function loadRoxHistory(search=''){
       (archived?'true':'false')+
       (normalizedSearch
         ? '&search='+encodeURIComponent(normalizedSearch)
-        : '');
+        : '')+
+      '&_zuvyr='+Date.now();
     const response=await authFetch(
       query,
       {method:'GET'}
@@ -11274,6 +11311,162 @@ document.querySelectorAll('[data-open="history"]').forEach(el=>{
 // backend (lib/inputValidation.js) already supports a full history up
 // to MAX_MESSAGES_PER_CHAT (40). Kept in memory only (cleared on page
 // reload) — no browser storage involved.
+
+/* ZUVYR PACK061 FIX5 IMAGE HISTORY RELOAD */
+function zuvyrImageConversationStorageKey(){
+  const owner=String(session?.user?.id||'anonymous');
+  return 'zuvyr.pack061.images.active.'+owner;
+}
+
+function rememberRoxImageConversationId(conversationId){
+  try{
+    const key=zuvyrImageConversationStorageKey();
+    const value=String(conversationId||'').trim();
+    if(value){
+      sessionStorage.setItem(key,value);
+    }else{
+      sessionStorage.removeItem(key);
+    }
+  }catch(_){}
+}
+
+function readRememberedRoxImageConversationId(){
+  try{
+    return String(
+      sessionStorage.getItem(
+        zuvyrImageConversationStorageKey()
+      )||''
+    ).trim();
+  }catch(_){
+    return '';
+  }
+}
+
+let zuvyrImageConversationRestorePromise=null;
+
+async function restoreRoxImageConversation(){
+  if(
+    !session||
+    isRoxDemoSession()||
+    activeRoxConversationIds.images
+  ){
+    return;
+  }
+
+  if(zuvyrImageConversationRestorePromise){
+    return zuvyrImageConversationRestorePromise;
+  }
+
+  zuvyrImageConversationRestorePromise=(async()=>{
+    const response=await authFetch(
+      '/api/conversations?feature=images&limit=100&archived=false&_zuvyr='+
+        Date.now(),
+      {method:'GET',cache:'no-store'}
+    );
+
+    const data=await response.json().catch(()=>({}));
+
+    if(!response.ok||data.status!=='success'){
+      throw new Error(
+        data.message||('HTTP '+response.status)
+      );
+    }
+
+    const items=Array.isArray(data.items)
+      ?data.items
+      :[];
+
+    if(!items.length){
+      rememberRoxImageConversationId('');
+      return;
+    }
+
+    const remembered=
+      readRememberedRoxImageConversationId();
+
+    const item=
+      items.find(candidate=>
+        String(candidate?.id||'')===remembered
+      )||
+      items[0];
+
+    if(!item?.id){
+      return;
+    }
+
+    await openRoxHistoryItem(item,null);
+    rememberRoxImageConversationId(item.id);
+  })()
+    .catch(error=>{
+      console.error(
+        '[pack061-fix5] image conversation restore failed:',
+        error
+      );
+    })
+    .finally(()=>{
+      zuvyrImageConversationRestorePromise=null;
+    });
+
+  return zuvyrImageConversationRestorePromise;
+}
+
+function setupRoxImageConversationRestore(){
+  document
+    .querySelectorAll('[data-open="images"]')
+    .forEach(element=>{
+      if(
+        element.dataset.zuvyrPack061RestoreReady===
+        'true'
+      ){
+        return;
+      }
+
+      element.dataset.zuvyrPack061RestoreReady='true';
+
+      element.addEventListener('click',()=>{
+        setTimeout(()=>{
+          restoreRoxImageConversation();
+        },0);
+      });
+    });
+
+  const imageView=
+    document.getElementById('feature-images');
+
+  if(
+    imageView&&
+    typeof MutationObserver!=='undefined'
+  ){
+    const observer=new MutationObserver(()=>{
+      if(imageView.classList.contains('active')){
+        restoreRoxImageConversation();
+      }
+    });
+
+    observer.observe(
+      imageView,
+      {
+        attributes:true,
+        attributeFilter:['class']
+      }
+    );
+  }
+
+  window.addEventListener('pageshow',()=>{
+    setTimeout(()=>{
+      if(
+        document
+          .getElementById('feature-images')
+          ?.classList.contains('active')
+      ){
+        restoreRoxImageConversation();
+      }
+    },350);
+  });
+}
+
+setupRoxImageConversationRestore();
+
 const CHAT_HISTORY_LIMIT = 40; // mirrors backend MAX_MESSAGES_PER_CHAT default
 const conversations = { chat: [], code: [] };
 
@@ -11370,6 +11563,12 @@ function setActiveRoxConversation(feature, conversationId) {
   activeRoxConversationIds[normalizedFeature] =
     conversationId || null;
 
+  if(normalizedFeature==='images'){
+    rememberRoxImageConversationId(
+      activeRoxConversationIds[normalizedFeature]
+    );
+  }
+
   return activeRoxConversationIds[normalizedFeature];
 }
 
@@ -11378,6 +11577,10 @@ function resetActiveRoxConversation(feature) {
     normalizeRoxConversationFeature(feature);
 
   activeRoxConversationIds[normalizedFeature] = null;
+
+  if(normalizedFeature==='images'){
+    rememberRoxImageConversationId('');
+  }
   syncRoxConversationTitle(normalizedFeature, '');
   roxConversationCreationPromises[normalizedFeature] = null;
 
@@ -30534,6 +30737,42 @@ function createRoxHistoryMedia(message, feature){
     wrap.appendChild(video);
   }
 
+  const canonicalContentId=String(
+    content.canonicalContentId||
+    content.canonical_content_id||
+    ''
+  ).trim();
+
+  const canonicalAssetId=String(
+    content.canonicalAssetId||
+    content.canonical_asset_id||
+    ''
+  ).trim();
+
+  if(canonicalContentId&&canonicalAssetId){
+    const downloadButton=
+      document.createElement('button');
+
+    downloadButton.type='button';
+    downloadButton.className='rox-project-action';
+    downloadButton.textContent=
+      roxT('artifact.download');
+
+    downloadButton.addEventListener(
+      'click',
+      ()=>{
+        downloadCanonicalGeneration(
+          canonicalContentId,
+          canonicalAssetId,
+          downloadButton
+        );
+      }
+    );
+
+    wrap.appendChild(downloadButton);
+  }
+
+
   return wrap;
 }
 
@@ -31115,7 +31354,8 @@ async function loadRoxHistory(search=''){
       (archived?'true':'false')+
       (normalizedSearch
         ? '&search='+encodeURIComponent(normalizedSearch)
-        : '');
+        : '')+
+      '&_zuvyr='+Date.now();
     const response=await authFetch(
       query,
       {method:'GET'}
@@ -31363,6 +31603,162 @@ document.querySelectorAll('[data-open="history"]').forEach(el=>{
 // backend (lib/inputValidation.js) already supports a full history up
 // to MAX_MESSAGES_PER_CHAT (40). Kept in memory only (cleared on page
 // reload) — no browser storage involved.
+
+/* ZUVYR PACK061 FIX5 IMAGE HISTORY RELOAD */
+function zuvyrImageConversationStorageKey(){
+  const owner=String(session?.user?.id||'anonymous');
+  return 'zuvyr.pack061.images.active.'+owner;
+}
+
+function rememberRoxImageConversationId(conversationId){
+  try{
+    const key=zuvyrImageConversationStorageKey();
+    const value=String(conversationId||'').trim();
+    if(value){
+      sessionStorage.setItem(key,value);
+    }else{
+      sessionStorage.removeItem(key);
+    }
+  }catch(_){}
+}
+
+function readRememberedRoxImageConversationId(){
+  try{
+    return String(
+      sessionStorage.getItem(
+        zuvyrImageConversationStorageKey()
+      )||''
+    ).trim();
+  }catch(_){
+    return '';
+  }
+}
+
+let zuvyrImageConversationRestorePromise=null;
+
+async function restoreRoxImageConversation(){
+  if(
+    !session||
+    isRoxDemoSession()||
+    activeRoxConversationIds.images
+  ){
+    return;
+  }
+
+  if(zuvyrImageConversationRestorePromise){
+    return zuvyrImageConversationRestorePromise;
+  }
+
+  zuvyrImageConversationRestorePromise=(async()=>{
+    const response=await authFetch(
+      '/api/conversations?feature=images&limit=100&archived=false&_zuvyr='+
+        Date.now(),
+      {method:'GET',cache:'no-store'}
+    );
+
+    const data=await response.json().catch(()=>({}));
+
+    if(!response.ok||data.status!=='success'){
+      throw new Error(
+        data.message||('HTTP '+response.status)
+      );
+    }
+
+    const items=Array.isArray(data.items)
+      ?data.items
+      :[];
+
+    if(!items.length){
+      rememberRoxImageConversationId('');
+      return;
+    }
+
+    const remembered=
+      readRememberedRoxImageConversationId();
+
+    const item=
+      items.find(candidate=>
+        String(candidate?.id||'')===remembered
+      )||
+      items[0];
+
+    if(!item?.id){
+      return;
+    }
+
+    await openRoxHistoryItem(item,null);
+    rememberRoxImageConversationId(item.id);
+  })()
+    .catch(error=>{
+      console.error(
+        '[pack061-fix5] image conversation restore failed:',
+        error
+      );
+    })
+    .finally(()=>{
+      zuvyrImageConversationRestorePromise=null;
+    });
+
+  return zuvyrImageConversationRestorePromise;
+}
+
+function setupRoxImageConversationRestore(){
+  document
+    .querySelectorAll('[data-open="images"]')
+    .forEach(element=>{
+      if(
+        element.dataset.zuvyrPack061RestoreReady===
+        'true'
+      ){
+        return;
+      }
+
+      element.dataset.zuvyrPack061RestoreReady='true';
+
+      element.addEventListener('click',()=>{
+        setTimeout(()=>{
+          restoreRoxImageConversation();
+        },0);
+      });
+    });
+
+  const imageView=
+    document.getElementById('feature-images');
+
+  if(
+    imageView&&
+    typeof MutationObserver!=='undefined'
+  ){
+    const observer=new MutationObserver(()=>{
+      if(imageView.classList.contains('active')){
+        restoreRoxImageConversation();
+      }
+    });
+
+    observer.observe(
+      imageView,
+      {
+        attributes:true,
+        attributeFilter:['class']
+      }
+    );
+  }
+
+  window.addEventListener('pageshow',()=>{
+    setTimeout(()=>{
+      if(
+        document
+          .getElementById('feature-images')
+          ?.classList.contains('active')
+      ){
+        restoreRoxImageConversation();
+      }
+    },350);
+  });
+}
+
+setupRoxImageConversationRestore();
+
 const CHAT_HISTORY_LIMIT = 40; // mirrors backend MAX_MESSAGES_PER_CHAT default
 const conversations = { chat: [], code: [] };
 
@@ -31459,6 +31855,12 @@ function setActiveRoxConversation(feature, conversationId) {
   activeRoxConversationIds[normalizedFeature] =
     conversationId || null;
 
+  if(normalizedFeature==='images'){
+    rememberRoxImageConversationId(
+      activeRoxConversationIds[normalizedFeature]
+    );
+  }
+
   return activeRoxConversationIds[normalizedFeature];
 }
 
@@ -31467,6 +31869,10 @@ function resetActiveRoxConversation(feature) {
     normalizeRoxConversationFeature(feature);
 
   activeRoxConversationIds[normalizedFeature] = null;
+
+  if(normalizedFeature==='images'){
+    rememberRoxImageConversationId('');
+  }
   syncRoxConversationTitle(normalizedFeature, '');
   roxConversationCreationPromises[normalizedFeature] = null;
 
