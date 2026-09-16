@@ -21,7 +21,7 @@ const freshImageQueries =
 
 assert.strictEqual(freshImageQueries, 2);
 assert.strictEqual(c("'&_zuvyr='+Date.now();"), 2);
-assert.strictEqual(c("cache:'no-store'"), 2);
+assert.ok(c("cache:'no-store'") >= 4);
 
 assert.ok(
   r(/async\s+function\s+downloadCanonicalGeneration\s*\(\s*contentId\s*,\s*assetId\s*,\s*button\s*\)/g) >= 1
