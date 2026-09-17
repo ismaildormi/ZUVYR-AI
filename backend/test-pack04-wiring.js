@@ -15,12 +15,15 @@ for (const marker of [
   'image_operation: imageRequest.operation', 'reference_asset_ids: imageRequest.referenceAssetIds',
   'imageOperation: imageRequest?.operation', "app.post('/api/generate-image'"
 ]) assert(server.includes(marker), `Missing server marker: ${marker}`);
-assert(generationServer.indexOf('assertImageRequestAvailable(imageRequest)') < generationServer.indexOf('pricing = quoteGeneration(feature)'));
+assert(
+  generationServer.indexOf('assertImageRequestAvailable(imageRequest)') <
+  generationServer.indexOf('pricing = quoteGeneration(')
+);
 assert(generationServer.indexOf('assertImageRequestAvailable(imageRequest)') < generationServer.indexOf('reservation = await reserveCredits'));
 
 for (const marker of [
   "require('./lib/imageArtifactContract')", 'buildImageArtifact({',
-  'operation: imageOperation', 'result_url: artifact.url'
+  'operation: imageRequest.operation', 'result_url: artifact.url'
 ]) assert(worker.includes(marker), `Missing worker marker: ${marker}`);
 for (const marker of ['operation,', 'referenceAssetIds,', 'sourceAssetId,', 'maskAssetId,', 'reference_asset_ids: referenceAssetIds']) {
   assert(memory.includes(marker), `Missing history marker: ${marker}`);

@@ -1727,7 +1727,10 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
 
   let pricing;
   try {
-    pricing = quoteGeneration(feature);
+    pricing = quoteGeneration(
+      feature,
+      imageRequest ? { imageRequest } : {}
+    );
   } catch (err) {
     console.error(`[${feature}] pricing unavailable:`, err.message);
 

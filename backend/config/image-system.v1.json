@@ -8,8 +8,8 @@
       "requiresMask": false
     },
     "reference_generate": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
+      "enabledByDefault": true,
+      "status": "implemented_pack062_reference_executor",
       "requiresSource": true,
       "requiresMask": false
     },
@@ -20,8 +20,8 @@
       "requiresMask": false
     },
     "variations": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
+      "enabledByDefault": true,
+      "status": "implemented_pack062_reference_executor",
       "requiresSource": true,
       "requiresMask": false
     },
@@ -76,6 +76,40 @@
       ],
       "status": "verified_launch_provider",
       "model": "black-forest-labs/flux-schnell"
+    },
+    "fal-kontext": {
+      "implementedOperations": [
+        "reference_generate",
+        "variations"
+      ],
+      "status": "verified_pack062",
+      "model": "fal-ai/flux-pro/kontext/multi",
+      "pricing": {
+        "unitType": "images",
+        "fixedOperationPriceMicroUsd": "40000",
+        "priceUsdPerImage": "0.04",
+        "pricingSourceUrl": "https://fal.ai/models/fal-ai/flux-pro/kontext/multi",
+        "pricingVerifiedAt": "2026-09-17T00:00:00Z",
+        "pricingReviewBefore": "2026-10-17T00:00:00Z",
+        "commercialUseVerified": true
+      },
+      "capabilities": {
+        "orderedReferenceAssets": true,
+        "sourceAsset": true,
+        "seed": true,
+        "quantity": true,
+        "maxQuantity": 4,
+        "ratios": [
+          "1:1",
+          "16:9",
+          "9:16",
+          "4:3",
+          "3:4"
+        ],
+        "fixedResolution": "1024",
+        "style": false,
+        "mask": false
+      }
     }
   },
   "requestLimits": {
@@ -132,5 +166,16 @@
       "verifiedAt": "2026-09-15T00:00:00Z",
       "fallbackSemantics": "Direct Fal is used only when HF_TOKEN is not configured; it is not a same-request fallback."
     }
+  },
+  "pack062": {
+    "executor": "fal-kontext",
+    "model": "fal-ai/flux-pro/kontext/multi",
+    "operations": [
+      "reference_generate",
+      "variations"
+    ],
+    "referenceOrdering": "preserve_user_order",
+    "quantitySemantics": "single provider request, canonicalize every returned image",
+    "retrySafety": "existing primary with incomplete output manifest fails closed before a second paid provider call"
   }
 }

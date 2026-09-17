@@ -6,6 +6,7 @@
 // exact decision has already been made.
 const {
   resolveLegacyGenerationCostEntry,
+  resolveCostEntry,
   estimateProviderCostMicroUsd
 } = require('./costRegistry');
 const {
@@ -124,7 +125,37 @@ function configuredProviders(feature, env) {
   throw pricingError(`unsupported_dynamic_feature_${feature}`);
 }
 
-function providerQuote(feature, { env = process.env, now = Date.now() } = {}) {
+function providerQuote(feature, {
+  env = process.env,
+  now = Date.now(),
+  imageRequest = null
+} = {}) {
+  if (
+    feature === 'image' &&
+    imageRequest &&
+    ['reference_generate', 'variations'].includes(imageRequest.operation)
+  ) {
+    if (!env.HF_TOKEN && !env.FAL_KEY) {
+      throw pricingError('no_configured_reference_image_provider');
+    }
+
+    const entry = resolveCostEntry({
+      provider: 'fal',
+      modelToolId: 'fal-ai/flux-pro/kontext/multi',
+      capability: 'image_reference',
+      operationType: 'image_reference_generation'
+    }, { env, now });
+
+    const unitCost = BigInt(estimateProviderCostMicroUsd(entry));
+    const quantity = BigInt(imageRequest.options?.quantity || 1);
+
+    return Object.freeze({
+      provider: 'fal-kontext',
+      providerCostMicroUsd: (unitCost * quantity).toString(),
+      pricingVersion: entry.registryVersion
+    });
+  }
+
   const providers = configuredProviders(feature, env).map(provider => {
     const entry = resolveLegacyGenerationCostEntry(provider, feature, { env, now });
     const providerCostMicroUsd = estimateProviderCostMicroUsd(entry);
@@ -136,7 +167,8 @@ function providerQuote(feature, { env = process.env, now = Date.now() } = {}) {
   });
 
   return providers.reduce((mostExpensive, current) =>
-    BigInt(current.providerCostMicroUsd) > BigInt(mostExpensive.providerCostMicroUsd)
+    BigInt(current.providerCostMicroUsd) >
+    BigInt(mostExpensive.providerCostMicroUsd)
       ? current
       : mostExpensive
   );

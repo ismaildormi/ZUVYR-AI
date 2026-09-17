@@ -113,6 +113,7 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
       mimeType: asset.mime_type,
       fileSizeBytes: Number(asset.file_size_bytes || 0),
       sha256: asset.sha256 || null,
+      options: job.image_options || {},
       replayed: true
     });
   }
@@ -195,6 +196,242 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
     });
   }
 
+  async function persistAdditionalGenerated({
+    ownerId,
+    jobId,
+    outputIndex,
+    prompt,
+    providerUrl,
+    provider,
+    model,
+    operation,
+    options
+  }) {
+    const downloaded = await fetchImageBytes(providerUrl, { fetchImpl });
+    const sha256 = crypto
+      .createHash('sha256')
+      .update(downloaded.buffer)
+      .digest('hex');
+    const promptHash = crypto
+      .createHash('sha256')
+      .update(String(prompt || ''))
+      .digest('hex');
+    const title = titleFromPrompt(prompt);
+
+    const record = await contentRepo.ensure({
+      ownerId,
+      projectId: null,
+      kind: 'image',
+      title,
+      sourceKind: 'image_generation',
+      sourceSystem: IMAGE_SOURCE_SYSTEM,
+      sourceId: `image-job:${jobId}:output:${outputIndex}`,
+      sourceVersionKey: sha256,
+      metadata: {
+        imageGeneration: true,
+        pack: 62,
+        jobId,
+        outputIndex,
+        provider,
+        model,
+        operation,
+        promptHash,
+        options
+      },
+      version: {
+        mimeType: downloaded.mimeType,
+        uri: providerUrl,
+        text: null,
+        sha256,
+        payload: {
+          prompt: String(prompt || ''),
+          provider,
+          model,
+          operation,
+          outputIndex,
+          options
+        },
+        provenance: {
+          source: 'pack062_image_reference_variation',
+          jobId,
+          outputIndex,
+          provider,
+          model
+        }
+      }
+    });
+
+    const storagePath = buildCanonicalObjectPath({ ownerId, sha256 });
+    const upload = await storage
+      .from(ASSET_CONFIG.bucket)
+      .upload(storagePath, downloaded.buffer, {
+        contentType: downloaded.mimeType,
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (upload.error && !isDuplicateStorageError(upload.error)) {
+      throw imageRepositoryError(
+        'image_asset_upload_failed',
+        500,
+        upload.error
+      );
+    }
+
+    const registered = await assets.register({
+      ownerId,
+      canonicalContentId: record.contentId,
+      canonicalVersionId: record.versionId,
+      storagePath,
+      mimeType: downloaded.mimeType,
+      fileSizeBytes: downloaded.buffer.length,
+      sha256,
+      retentionClass: 'standard',
+      metadata: {
+        imageGeneration: true,
+        pack: 62,
+        jobId,
+        outputIndex,
+        provider,
+        model,
+        operation,
+        promptHash
+      }
+    });
+
+    return Object.freeze({
+      outputIndex,
+      providerUrl: String(providerUrl),
+      contentId: record.contentId,
+      versionId: record.versionId,
+      assetId: registered.assetId,
+      mimeType: downloaded.mimeType,
+      fileSizeBytes: downloaded.buffer.length,
+      sha256
+    });
+  }
+
+  async function persistGeneratedSet({
+    ownerId,
+    jobId,
+    prompt,
+    providerUrls,
+    provider,
+    model,
+    operation = 'generate',
+    options = {}
+  }) {
+    const urls = Array.isArray(providerUrls)
+      ? providerUrls.map(String).filter(Boolean)
+      : [];
+
+    const quantity = Number(options.quantity || 1);
+    if (
+      !Number.isSafeInteger(quantity) ||
+      quantity < 1 ||
+      quantity > 4 ||
+      urls.length !== quantity
+    ) {
+      throw imageRepositoryError(
+        'image_output_quantity_mismatch',
+        502
+      );
+    }
+
+    const existing = await getExisting({ ownerId, jobId });
+    if (existing) {
+      const manifest = Array.isArray(existing.options?.outputManifest)
+        ? existing.options.outputManifest
+        : [];
+
+      if (quantity === 1) {
+        return Object.freeze({
+          primary: existing,
+          outputs: Object.freeze([existing]),
+          replayed: true
+        });
+      }
+
+      if (manifest.length === quantity) {
+        return Object.freeze({
+          primary: existing,
+          outputs: Object.freeze([...manifest]),
+          replayed: true
+        });
+      }
+
+      throw imageRepositoryError(
+        'image_output_manifest_incomplete',
+        500
+      );
+    }
+
+    const primary = await persistGenerated({
+      ownerId,
+      jobId,
+      prompt,
+      providerUrl: urls[0],
+      provider,
+      model,
+      operation,
+      options
+    });
+
+    const outputs = [primary];
+    for (let index = 1; index < urls.length; index += 1) {
+      outputs.push(
+        await persistAdditionalGenerated({
+          ownerId,
+          jobId,
+          outputIndex: index,
+          prompt,
+          providerUrl: urls[index],
+          provider,
+          model,
+          operation,
+          options
+        })
+      );
+    }
+
+    const outputManifest = outputs.map((item, index) => ({
+      outputIndex: index,
+      contentId: item.contentId,
+      assetId: item.assetId,
+      mimeType: item.mimeType,
+      fileSizeBytes: item.fileSizeBytes,
+      sha256: item.sha256
+    }));
+
+    const update = await db
+      .from('generation_jobs')
+      .update({
+        image_options: {
+          ...options,
+          outputManifest,
+          outputProvider: provider,
+          outputModel: model
+        }
+      })
+      .eq('id', jobId)
+      .eq('user_id', ownerId)
+      .eq('feature', 'image');
+
+    if (update.error) {
+      throw imageRepositoryError(
+        'image_output_manifest_save_failed',
+        500,
+        update.error
+      );
+    }
+
+    return Object.freeze({
+      primary,
+      outputs: Object.freeze(outputs),
+      replayed: false
+    });
+  }
+
   async function listHistory({ ownerId, limit = 24 } = {}) {
     const bounded = Math.max(1, Math.min(50, Number(limit) || 24));
     const result = await db.from('generation_jobs')
@@ -240,7 +477,12 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
     });
   }
 
-  return Object.freeze({ persistGenerated, getExisting, listHistory });
+  return Object.freeze({
+    persistGenerated,
+    persistGeneratedSet,
+    getExisting,
+    listHistory
+  });
 }
 
 function getDefaultImageGenerationRepository() {

@@ -5,6 +5,7 @@ const { createReplicateImageAdapter, REPLICATE_IMAGE_MODEL } = require('../../..
 const DEFAULT_IMAGE_PROVIDER = 'replicate';
 const DEFAULT_IMAGE_MODEL = REPLICATE_IMAGE_MODEL;
 const DEFAULT_FAL_IMAGE_MODEL = 'fal-ai/flux/schnell';
+const DEFAULT_FAL_KONTEXT_MODEL = 'fal-ai/flux-pro/kontext/multi';
 const HF_FAL_ROUTER_BASE = 'https://router.huggingface.co/fal-ai';
 const providers = new Map();
 const { assertImageProviderCapabilities } = require('../../../../lib/imageCapabilityGate');
@@ -47,6 +48,26 @@ function normalizeOutput(output) {
 
   if (output?.url) return output.url;
   return null;
+}
+
+function normalizeOutputUrls(output) {
+  if (Array.isArray(output)) {
+    return output.flatMap(item => normalizeOutputUrls(item));
+  }
+  if (typeof output === 'string') {
+    return /^https:\/\//i.test(output) ? [output] : [];
+  }
+  if (output && Array.isArray(output.images)) {
+    return output.images.flatMap(item => normalizeOutputUrls(item));
+  }
+  if (output && typeof output.url === 'function') {
+    const url = output.url();
+    return typeof url === 'string' ? [url] : [];
+  }
+  if (output?.url && typeof output.url === 'string') {
+    return [output.url];
+  }
+  return [];
 }
 
 function modelFor(providerKey, opts = {}) {
@@ -259,6 +280,144 @@ async function generateViaHuggingFaceFal(prompt, opts = {}) {
   return url;
 }
 
+function buildFalKontextInput(prompt, request, resolved) {
+  const references = Array.isArray(resolved?.references)
+    ? resolved.references.map(item => item?.url).filter(Boolean)
+    : [];
+  const sourceUrl = resolved?.source?.url || null;
+  const imageUrls = [...references];
+
+  if (sourceUrl && !imageUrls.includes(sourceUrl)) {
+    imageUrls.push(sourceUrl);
+  }
+
+  if (imageUrls.length < 1 || imageUrls.length > 4) {
+    const error = new Error('fal_kontext_reference_count_invalid');
+    error.statusCode = 400;
+    error.retryable = false;
+    throw error;
+  }
+
+  const options = request?.options || {};
+  return Object.freeze({
+    prompt: String(prompt || ''),
+    image_urls: Object.freeze([...imageUrls]),
+    aspect_ratio: options.ratio || '1:1',
+    num_images: Number(options.quantity || 1),
+    ...(options.seed === null || options.seed === undefined
+      ? {}
+      : { seed: Number(options.seed) }),
+    output_format: 'jpeg',
+    safety_tolerance: '2'
+  });
+}
+
+async function generateViaHuggingFaceFalKontext(prompt, opts = {}) {
+  const token = String(opts.apiKey || process.env.HF_TOKEN || '').trim();
+  if (!token) {
+    const error = new Error('missing_huggingface_token');
+    error.statusCode = 401;
+    error.retryable = false;
+    throw error;
+  }
+
+  const model = validateFalProviderModel(
+    opts.model || process.env.FAL_KONTEXT_IMAGE_MODEL || DEFAULT_FAL_KONTEXT_MODEL
+  );
+  const request = opts.imageRequest || {};
+  const input = buildFalKontextInput(
+    prompt,
+    request,
+    opts.resolvedImageInputs || {}
+  );
+
+  const fetchImpl = opts.fetchImpl || globalThis.fetch;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  };
+  const query = '?_subdomain=queue';
+  const submitUrl = `${HF_FAL_ROUTER_BASE}/${model}${query}`;
+  const submitted = await fetchJson(
+    submitUrl,
+    { method: 'POST', headers, body: JSON.stringify(input) },
+    fetchImpl
+  );
+
+  if (!submitted || typeof submitted.response_url !== 'string') {
+    const error = new Error('huggingface_fal_missing_response_url');
+    error.providerCode = 'HuggingFaceInferenceProviderOutputError';
+    error.retryable = false;
+    throw error;
+  }
+
+  let routedPath;
+  try {
+    routedPath = new URL(submitted.response_url).pathname;
+  } catch (_) {
+    const error = new Error('huggingface_fal_invalid_response_url');
+    error.providerCode = 'HuggingFaceInferenceProviderOutputError';
+    error.retryable = false;
+    throw error;
+  }
+
+  if (
+    !/^\/fal-ai\/[A-Za-z0-9._/-]+\/requests\/[A-Za-z0-9._-]+$/.test(routedPath) ||
+    routedPath.includes('..')
+  ) {
+    const error = new Error('huggingface_fal_unsafe_response_path');
+    error.providerCode = 'HuggingFaceInferenceProviderOutputError';
+    error.retryable = false;
+    throw error;
+  }
+
+  const statusUrl = `${HF_FAL_ROUTER_BASE}${routedPath}/status${query}`;
+  const resultUrl = `${HF_FAL_ROUTER_BASE}${routedPath}${query}`;
+  let status = String(submitted.status || '').toUpperCase();
+  const deadline = Date.now() + Number(opts.pollTimeoutMs || 90_000);
+
+  while (status !== 'COMPLETED') {
+    if (['FAILED', 'CANCELLED', 'ERROR'].includes(status)) {
+      const error = new Error(`huggingface_fal_${status.toLowerCase()}`);
+      error.providerCode = 'HuggingFaceInferenceProviderJobError';
+      error.retryable = false;
+      throw error;
+    }
+    if (Date.now() >= deadline) {
+      const error = new Error('huggingface_fal_poll_timeout');
+      error.providerCode = 'HuggingFaceInferenceProviderTimeout';
+      error.statusCode = 408;
+      error.retryable = true;
+      throw error;
+    }
+    await new Promise(resolve =>
+      setTimeout(resolve, Number(opts.pollIntervalMs || 500))
+    );
+    const polled = await fetchJson(
+      statusUrl,
+      { method: 'GET', headers },
+      fetchImpl
+    );
+    status = String(polled?.status || '').toUpperCase();
+  }
+
+  const result = await fetchJson(
+    resultUrl,
+    { method: 'GET', headers },
+    fetchImpl
+  );
+  const urls = normalizeOutputUrls(result?.images || result);
+
+  if (urls.length !== Number(input.num_images)) {
+    const error = new Error('huggingface_fal_kontext_output_count_mismatch');
+    error.providerCode = 'HuggingFaceInferenceProviderOutputError';
+    error.retryable = false;
+    throw error;
+  }
+
+  return urls;
+}
+
 async function generateImage(prompt, opts = {}) {
   const chain = opts.chain || [DEFAULT_IMAGE_PROVIDER];
   const attempts = [];
@@ -292,12 +451,24 @@ async function generateImage(prompt, opts = {}) {
       catch (error) { error.statusCode = 400; error.retryable = false; throw error; }
       const startedAt = Date.now();
       const result = await provider.generate(prompt, { ...opts, model });
-      const url = normalizeOutput(result);
+      const urls = normalizeOutputUrls(result);
+      const url = urls[0] || null;
 
       if (!url) throw new Error('provider_returned_no_image_url');
 
-      attempts.push({ provider: providerKey, model, status: 'success', latencyMs: Date.now() - startedAt });
-      return { url, provider: providerKey, model, attempts };
+      attempts.push({
+        provider: providerKey,
+        model,
+        status: 'success',
+        latencyMs: Date.now() - startedAt
+      });
+      return {
+        url,
+        urls: Object.freeze([...urls]),
+        provider: providerKey,
+        model,
+        attempts
+      };
     } catch (error) {
       attempts.push({
         provider: providerKey,
@@ -354,6 +525,55 @@ registerImageProvider('fal', {
   },
 });
 
+registerImageProvider('fal-kontext', {
+  label: 'Fal AI Kontext',
+  capabilities: {
+    operations: ['reference_generate', 'variations'],
+    referenceAssets: true,
+    sourceAsset: true,
+    maskAsset: false,
+    seed: true,
+    quantity: true,
+    maxQuantity: 4
+  },
+  isConfigured: () => Boolean(process.env.HF_TOKEN || process.env.FAL_KEY),
+  async generate(prompt, opts = {}) {
+    const model =
+      opts.model ||
+      process.env.FAL_KONTEXT_IMAGE_MODEL ||
+      DEFAULT_FAL_KONTEXT_MODEL;
+
+    const input = buildFalKontextInput(
+      prompt,
+      opts.imageRequest || {},
+      opts.resolvedImageInputs || {}
+    );
+
+    if (process.env.HF_TOKEN || opts.apiKey) {
+      return generateViaHuggingFaceFalKontext(prompt, {
+        ...opts,
+        model,
+        apiKey: opts.apiKey || process.env.HF_TOKEN
+      });
+    }
+
+    const { fal } = await import('@fal-ai/client');
+    fal.config({ credentials: process.env.FAL_KEY });
+    const result = await fal.subscribe(model, {
+      input,
+      logs: false
+    });
+    const urls = normalizeOutputUrls(result?.data?.images || result?.data);
+    if (urls.length !== input.num_images) {
+      const error = new Error('fal_kontext_output_count_mismatch');
+      error.statusCode = 502;
+      error.retryable = false;
+      throw error;
+    }
+    return urls;
+  }
+});
+
 registerImageProvider('replicate', {
   label: 'Replicate',
   isConfigured: () => Boolean(process.env.REPLICATE_API_TOKEN),
@@ -377,14 +597,18 @@ module.exports = {
   DEFAULT_IMAGE_PROVIDER,
   DEFAULT_IMAGE_MODEL,
   DEFAULT_FAL_IMAGE_MODEL,
+  DEFAULT_FAL_KONTEXT_MODEL,
   HF_FAL_ROUTER_BASE,
   registerImageProvider,
   getImageProvider,
   listImageProviders,
   normalizeOutput,
+  normalizeOutputUrls,
+  buildFalKontextInput,
   sanitizeProviderMessage,
   providerFailureEvidence,
   providerAttemptRetryable,
   generateViaHuggingFaceFal,
+  generateViaHuggingFaceFalKontext,
   generateImage,
 };

@@ -1,0 +1,37 @@
+{
+  "pack": "062",
+  "phase": "FULL_ZIP_INSTALL",
+  "baseCommit": "c2799ddaaeeace6e2470504782b49ee7783d791f",
+  "installedAt": "2026-09-17T21:42:58.343Z",
+  "backupRoot": "zuvyr-pack-backups/pack062-full-20260917214257",
+  "evidenceRoot": "zuvyr-pack-evidence/pack-062/full-install-20260917214257",
+  "touched": [
+    "backend/config/image-system.v1.json",
+    "backend/config/provider-registry.v1.json",
+    "backend/config/cost-registry.v1.json",
+    "backend/lib/imageOperationRegistry.js",
+    "backend/lib/dynamicPricing.js",
+    "backend/src/modules/ai/providers/imageProviders.js",
+    "backend/lib/imageGenerationRepository.js",
+    "backend/worker.js",
+    "backend/server.js",
+    "backend/test-pack062-full-reference-variation.js",
+    "ZUVYR_CONTINUE_HERE.md"
+  ],
+  "sha256": {
+    "backend/config/image-system.v1.json": "50f93a2448db304add2436c34f2971b3ba804c9f83528d63e28cfc7876dfd46a",
+    "backend/config/provider-registry.v1.json": "d1903e7748db11092833504a37471e1d967e42189451441142dd8d642b9a9482",
+    "backend/config/cost-registry.v1.json": "e287e46a56528c18b8937d2619915d91a345d0cacf3b03a5bd5d359ce697a3a1",
+    "backend/lib/imageOperationRegistry.js": "72e276e9c7e4a2dafd2354a8eed7cd2f219f86fcd8426306cd66feabaede28c5",
+    "backend/lib/dynamicPricing.js": "52256efa1d8fa91ddf8a8b42e2ce025d971fa8f134efaad2ad6b6e4745f4b3b3",
+    "backend/src/modules/ai/providers/imageProviders.js": "5cbe1d945ffa4be5e0cd76f8197d74cf4db1362a396ed333b0cb03fea28c4267",
+    "backend/lib/imageGenerationRepository.js": "2a50bffadb0f5930af63d5337b7d100c3820c97d34dba1ac459012ea8415a093",
+    "backend/worker.js": "2faccef90c6814190d20e8ba22374ca79720349a1583944f7d5c953bd55cb215",
+    "backend/server.js": "8a2f7dfddb194af929ad11250a484ecf5d4bc7f62800e3cf23b8eace0f0792b9",
+    "backend/test-pack062-full-reference-variation.js": "4d37ef9d555b124b45b04bc016b1d31c61b04a0f17600e2d31e87a5488b838cb",
+    "ZUVYR_CONTINUE_HERE.md": "a5ed5cae7bf19fcf01dbdac4a0600081266fa5941ba3de8b8f9617567d89854c"
+  },
+  "paidProviderCalls": 0,
+  "reconciledInterruptedPack062Paths": [],
+  "status": "LOCAL_IMPLEMENTED_AWAITING_VERIFY"
+}

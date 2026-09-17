@@ -214,7 +214,8 @@
     },
     "fal": {
       "credentialEnvironment": [
-        "FAL_KEY"
+        "FAL_KEY",
+        "HF_TOKEN"
       ],
       "regions": [
         "provider_managed"
@@ -232,6 +233,16 @@
             "entryId": "fal-image-generation"
           },
           "model": "fal-ai/flux/schnell"
+        },
+        {
+          "id": "image.reference_variation",
+          "verification": "verified_repository",
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryId": "fal-kontext-reference-variation"
+          },
+          "model": "fal-ai/flux-pro/kontext/multi"
         }
       ]
     },

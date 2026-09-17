@@ -22,11 +22,17 @@ reportEnvironmentValidation(
   { component: 'worker' }
 );
 const { Worker, UnrecoverableError } = require('bullmq');
-const { generateImage, DEFAULT_IMAGE_MODEL, DEFAULT_FAL_IMAGE_MODEL } = require('./src/modules/ai/providers/imageProviders');
+const {
+  generateImage,
+  DEFAULT_IMAGE_MODEL,
+  DEFAULT_FAL_IMAGE_MODEL,
+  DEFAULT_FAL_KONTEXT_MODEL
+} = require('./src/modules/ai/providers/imageProviders');
 const { buildImageArtifact } = require('./lib/imageArtifactContract');
 const { normalizeImageRequest } = require('./lib/imageRequestContract');
 const { assertImageRequestAvailable } = require('./lib/imageOperationRegistry');
 const { getDefaultImageGenerationRepository } = require('./lib/imageGenerationRepository');
+const { createImageReferenceResolver } = require('./lib/imageReferenceResolver');
 const { generateVideo, DEFAULT_VIDEO_MODEL } = require('./lib/videoProvider');
 const { normalizeVideoRequest } = require('./lib/videoRequestContract');
 const { assertVideoRequestAvailable } = require('./lib/videoOperationRegistry');
@@ -34,6 +40,10 @@ const { buildVideoArtifact } = require('./lib/videoArtifactContract');
 const { connection } = require('./lib/queue');
 const { startBrainKernelWorker } = require('./lib/brainKernelWorker');
 const { supabaseAdmin } = require('./lib/supabaseAdmin');
+const resolveImageReferences = createImageReferenceResolver({
+  db: supabaseAdmin,
+  storage: supabaseAdmin.storage
+});
 const { refundCredits, settleCredits, logCreditEvent, reportRefundFailure } = require('./gatekeeper');
 const { recordRefund } = require('./lib/metrics');
 const {
@@ -226,13 +236,49 @@ async function processImageJob(job) {
   let persisted = await imageRepository.getExisting({ ownerId: userId, jobId: jobRowId });
   let providerResult = null;
 
+  if (persisted && Number(imageRequest.options.quantity || 1) > 1) {
+    const manifest = Array.isArray(persisted.options?.outputManifest)
+      ? persisted.options.outputManifest
+      : [];
+
+    if (manifest.length !== Number(imageRequest.options.quantity)) {
+      const terminal =
+        new UnrecoverableError('image_output_manifest_incomplete');
+      terminal.code = 'image_output_manifest_incomplete';
+      throw terminal;
+    }
+  }
+
   if (!persisted) {
     try {
+      const isReferenceOperation =
+        ['reference_generate', 'variations'].includes(
+          imageRequest.operation
+        );
+
+      const resolvedImageInputs = isReferenceOperation
+        ? await resolveImageReferences({
+            ownerId: userId,
+            request: imageRequest,
+            requestId: requestId || jobRowId
+          })
+        : null;
+
+      const standardImageProviderOptions = Object.freeze({
+        chain: ['fal', 'replicate']
+      });
+
       providerResult = await generateImage(prompt, {
         imageRequest,
-        chain: ['fal', 'replicate'],
+        resolvedImageInputs,
+        chain: isReferenceOperation
+          ? ['fal-kontext']
+          : standardImageProviderOptions.chain,
         models: {
           fal: process.env.FAL_IMAGE_MODEL || DEFAULT_FAL_IMAGE_MODEL,
+          'fal-kontext':
+            process.env.FAL_KONTEXT_IMAGE_MODEL ||
+            DEFAULT_FAL_KONTEXT_MODEL,
           replicate: IMAGE_MODEL
         },
         requestId: requestId || jobRowId
@@ -247,20 +293,53 @@ async function processImageJob(job) {
       throw providerError;
     }
 
-    persisted = await imageRepository.persistGenerated({
-      ownerId: userId,
-      jobId: jobRowId,
-      prompt,
-      providerUrl: providerResult.url,
-      provider: providerResult.provider,
-      model: providerResult.model,
-      operation: imageRequest.operation,
-      options: imageRequest.options
-    });
+    const providerUrls =
+      providerResult.urls || [providerResult.url];
+
+    if (providerUrls.length === 1) {
+      persisted = await imageRepository.persistGenerated({
+        ownerId: userId,
+        jobId: jobRowId,
+        prompt,
+        providerUrl: providerUrls[0],
+        provider: providerResult.provider,
+        model: providerResult.model,
+        operation: imageRequest.operation,
+        options: imageRequest.options
+      });
+    } else {
+      const persistedSet =
+        await imageRepository.persistGeneratedSet({
+          ownerId: userId,
+          jobId: jobRowId,
+          prompt,
+          providerUrls,
+          provider: providerResult.provider,
+          model: providerResult.model,
+          operation: imageRequest.operation,
+          options: imageRequest.options
+        });
+
+      persisted = persistedSet.primary;
+    }
   }
 
-  const provider = providerResult?.provider || 'replicate';
-  const model = providerResult?.model || IMAGE_MODEL;
+  const provider =
+    providerResult?.provider ||
+    persisted?.options?.outputProvider ||
+    (['reference_generate', 'variations'].includes(imageRequest.operation)
+      ? 'fal-kontext'
+      : 'replicate');
+
+  const model =
+    providerResult?.model ||
+    persisted?.options?.outputModel ||
+    (provider === 'fal-kontext'
+      ? (
+          process.env.FAL_KONTEXT_IMAGE_MODEL ||
+          DEFAULT_FAL_KONTEXT_MODEL
+        )
+      : IMAGE_MODEL);
   const artifact = buildImageArtifact({
     url: persisted.providerUrl,
     operation: imageRequest.operation,
