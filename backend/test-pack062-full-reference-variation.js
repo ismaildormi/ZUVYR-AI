@@ -14,9 +14,13 @@ const {
 const {
   quoteGeneration
 } = require('./lib/dynamicPricing');
+
+const {
+  providerSnapshot
+} = require('./lib/providerRegistry');
 const {
   buildFalKontextInput,
-  generateViaHuggingFaceFalKontext
+  generateImage
 } = require('./src/modules/ai/providers/imageProviders');
 
 async function run() {
@@ -39,6 +43,36 @@ async function run() {
   assert(price);
   assert.equal(price.fixedOperationPriceMicroUsd, '40000');
   assert.equal(price.verificationStatus, 'verified');
+
+  const hfOnlySnapshot = providerSnapshot('fal', {
+    HF_TOKEN: 'hf_only',
+    ZUVYR_LAUNCH_PROVIDERS: 'fal'
+  });
+
+  const hfOnlyReference =
+    hfOnlySnapshot.capabilities.find(
+      item => item.id === 'image.reference_variation'
+    );
+
+  assert(hfOnlyReference);
+  assert.equal(hfOnlyReference.credentialPresent, false);
+  assert.equal(hfOnlyReference.eligible, false);
+
+  const directFalSnapshot = providerSnapshot('fal', {
+    FAL_KEY: 'fal_configured',
+    ZUVYR_LAUNCH_PROVIDERS: 'fal'
+  });
+
+  const directFalReference =
+    directFalSnapshot.capabilities.find(
+      item => item.id === 'image.reference_variation'
+    );
+
+  assert(directFalReference);
+  assert.equal(directFalReference.credentialPresent, true);
+  assert.equal(directFalReference.capabilityVerified, true);
+  assert.equal(directFalReference.costSourceVerified, true);
+  assert.equal(directFalReference.eligible, true);
 
   const refs = [
     '11111111-1111-4111-8111-111111111111',
@@ -64,7 +98,7 @@ async function run() {
   const quote = quoteGeneration('image', {
     imageRequest: request,
     env: {
-      HF_TOKEN: 'configured',
+      FAL_KEY: 'configured',
       CREDIT_PRICE_USD: '0.01',
       TARGET_NET_MARGIN: '0.50',
       PAYMENT_FEE_RATE: '0.06',
@@ -143,68 +177,91 @@ async function run() {
   assert.equal(built.num_images, 3);
   assert.equal(built.seed, 7);
 
-  const calls = [];
-  const fakeFetch = async (url, options = {}) => {
-    calls.push({
-      url: String(url),
-      options
-    });
-
-    const payload =
-      calls.length === 1
-        ? {
-            request_id: 'kontext123',
-            status: 'COMPLETED',
-            response_url:
-              'https://queue.fal.run/fal-ai/flux-pro/kontext/multi/requests/kontext123'
-          }
-        : {
-            images: [
-              { url: 'https://v3.fal.media/out-1.jpeg' },
-              { url: 'https://v3.fal.media/out-2.jpeg' },
-              { url: 'https://v3.fal.media/out-3.jpeg' }
-            ]
-          };
-
-    return {
-      ok: true,
-      status: 200,
-      statusText: 'OK',
-      async text() {
-        return JSON.stringify(payload);
-      }
-    };
-  };
-
-  const urls = await generateViaHuggingFaceFalKontext(
-    'keep the same product, change the background',
-    {
-      apiKey: 'hf_test',
-      imageRequest: request,
-      resolvedImageInputs: {
-        references: [
-          { url: 'https://signed.invalid/a' },
-          { url: 'https://signed.invalid/b' }
-        ],
-        source: null
-      },
-      fetchImpl: fakeFetch,
-      pollIntervalMs: 1,
-      pollTimeoutMs: 1000
-    }
+  assert.throws(
+    () =>
+      quoteGeneration('image', {
+        imageRequest: request,
+        env: {
+          HF_TOKEN: 'configured',
+          CREDIT_PRICE_USD: '0.01',
+          TARGET_NET_MARGIN: '0.50',
+          PAYMENT_FEE_RATE: '0.06',
+          TAX_RESERVE_RATE: '0.10',
+          RISK_RESERVE_RATE: '0.05',
+          INFRA_RESERVE_USD: '0.002'
+        },
+        now: Date.parse('2026-09-18T00:00:00Z')
+      }),
+    /no_configured_reference_image_provider/
   );
 
-  assert.deepEqual(urls, [
-    'https://v3.fal.media/out-1.jpeg',
-    'https://v3.fal.media/out-2.jpeg',
-    'https://v3.fal.media/out-3.jpeg'
-  ]);
+  const calls = [];
+  const fakeFal = {
+    configuredWith: null,
+    config({ credentials }) {
+      this.configuredWith = credentials;
+    },
+    async subscribe(model, options) {
+      calls.push({ model, options });
+      return {
+        data: {
+          images: [
+            { url: 'https://v3.fal.media/out-1.jpeg' },
+            { url: 'https://v3.fal.media/out-2.jpeg' },
+            { url: 'https://v3.fal.media/out-3.jpeg' }
+          ]
+        }
+      };
+    }
+  };
 
-  const submitted = JSON.parse(calls[0].options.body);
-  assert.deepEqual(submitted.image_urls, built.image_urls);
-  assert.equal(submitted.num_images, 3);
-  assert.equal(submitted.seed, 7);
-  assert.equal(submitted.aspect_ratio, '16:9');
+  const previousFalKey = process.env.FAL_KEY;
+  const previousHfToken = process.env.HF_TOKEN;
+  process.env.FAL_KEY = 'fal_test_key';
+  process.env.HF_TOKEN = 'hf_present_but_not_used';
+
+  try {
+    const result = await generateImage(
+      'keep the same product, change the background',
+      {
+        imageRequest: request,
+        chain: ['fal-kontext'],
+        models: {
+          'fal-kontext': 'fal-ai/flux-pro/kontext/multi'
+        },
+        resolvedImageInputs: {
+          references: [
+            { url: 'https://signed.invalid/a' },
+            { url: 'https://signed.invalid/b' }
+          ],
+          source: null
+        },
+        falClient: fakeFal,
+        fetchImpl: async () => {
+          throw new Error('HF_ROUTE_MUST_NOT_BE_USED');
+        }
+      }
+    );
+
+    assert.equal(fakeFal.configuredWith, 'fal_test_key');
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].model, 'fal-ai/flux-pro/kontext/multi');
+    assert.deepEqual(calls[0].options.input.image_urls, built.image_urls);
+    assert.equal(calls[0].options.input.num_images, 3);
+    assert.equal(calls[0].options.input.seed, 7);
+    assert.equal(calls[0].options.input.aspect_ratio, '16:9');
+    assert.equal(result.provider, 'fal-kontext');
+    assert.deepEqual(result.urls, [
+      'https://v3.fal.media/out-1.jpeg',
+      'https://v3.fal.media/out-2.jpeg',
+      'https://v3.fal.media/out-3.jpeg'
+    ]);
+  } finally {
+    if (previousFalKey === undefined) delete process.env.FAL_KEY;
+    else process.env.FAL_KEY = previousFalKey;
+    if (previousHfToken === undefined) delete process.env.HF_TOKEN;
+    else process.env.HF_TOKEN = previousHfToken;
+  }
 
   const server = fs.readFileSync(
     require.resolve('./server.js'),
@@ -244,8 +301,17 @@ async function run() {
     /image_output_manifest_incomplete/
   );
 
+  const providers = fs.readFileSync(
+    require.resolve('./src/modules/ai/providers/imageProviders.js'),
+    'utf8'
+  );
+  assert.doesNotMatch(
+    providers,
+    /generateViaHuggingFaceFalKontext/
+  );
+
   console.log(
-    'PASS: PACK062 full reference/variation contract, ordered owned references, seed/count provider input, quantity pricing and canonical multi-output persistence'
+    'PASS: PACK062 direct Fal Kontext route, ordered owned references, seed/count provider input, quantity pricing and canonical multi-output persistence'
   );
 }
 

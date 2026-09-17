@@ -379,3 +379,22 @@ Unrelated dirty backup HTML files and pre-existing untracked files remain untouc
 - Unsupported ratio/resolution/style/mask: blocked before paid provider call
 - Pack061 generate path: preserved
 - Next: run PACK062_VERIFY.ps1, then explicit commit/push/deployment and authenticated production proof before LOCKED_VERIFIED.
+
+
+## PACK062 NO-COST PROVIDER ROUTE CORRECTION — 2026-09-18
+- No-cost external attempt through Hugging Face Inference Providers failed before inference with HTTP 400: "Model not supported by provider fal-ai" for fal-ai/flux-pro/kontext/multi.
+- ZUVYR internal Plus/top-up credits and Stripe test cards are test-state only; they do not fund upstream provider inference.
+- Official fal API documentation confirms fal-ai/flux-pro/kontext/multi exists and uses direct FAL_KEY authentication.
+- Correct Pack062 runtime route: direct fal only for reference_generate/variations; ordinary Pack061 fal generate may continue using HF routing where supported.
+- Paid live image inference is deferred because no real upstream provider funds are available.
+- No paid call is required for this correction. Acceptance evidence is official API contract + mocked direct-fal runtime + deployed identity + non-billable credential/route preflight.
+- PACK062 must not be described as paid-live-E2E verified unless a future real inference succeeds.
+
+
+## PACK062 V14 DIRECT-FAL CREDENTIAL GATE — 2026-09-18
+- V13 runtime correction was directionally correct: Pack062 Kontext must use direct FAL_KEY because HF returned HTTP 400 model-not-supported.
+- V13 local gate failed because its pre-existing success-pricing fixture still supplied HF_TOKEN after pricing had correctly become FAL_KEY-only.
+- V14 corrects that fixture and strengthens providerRegistry.js so capability-specific credentials are enforced.
+- With HF_TOKEN only, fal image.generate may remain eligible where supported, but image.reference_variation is explicitly ineligible.
+- With FAL_KEY, image.reference_variation can become eligible when its cost entry is verified.
+- No paid provider inference is executed by V14.

@@ -117,16 +117,36 @@ function costSourceVerified(providerId, capability, env = process.env) {
 }
 
 function capabilitySnapshot(providerId, capability, env = process.env) {
-  const capabilityVerified = capability.verification === 'verified_repository';
-  const costVerified = costSourceVerified(providerId, capability, env);
+  const capabilityVerified =
+    capability.verification === 'verified_repository';
+  const costVerified =
+    costSourceVerified(providerId, capability, env);
+
+  const requiredCredentialEnvironment =
+    Array.isArray(capability.requiredCredentialEnvironment)
+      ? capability.requiredCredentialEnvironment
+      : [];
+
+  const capabilityCredentialPresent =
+    requiredCredentialEnvironment.length === 0 ||
+    requiredCredentialEnvironment.every(key => present(env[key]));
+
   return Object.freeze({
     id: capability.id,
     capabilityVerified,
     costSourceVerified: costVerified,
-    eligible: capabilityVerified && costVerified,
-    costAuthority: capability.cost && capability.cost.authority
-      ? capability.cost.authority
-      : registry.costAuthority
+    credentialPresent: capabilityCredentialPresent,
+    credentialEnvironmentNames: [
+      ...requiredCredentialEnvironment
+    ],
+    eligible:
+      capabilityVerified &&
+      costVerified &&
+      capabilityCredentialPresent,
+    costAuthority:
+      capability.cost && capability.cost.authority
+        ? capability.cost.authority
+        : registry.costAuthority
   });
 }
 

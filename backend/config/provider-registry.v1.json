@@ -221,7 +221,7 @@
         "provider_managed"
       ],
       "quotaType": "provider_managed",
-      "termsLicenseNotes": "Pack061 FIX2 revalidated official fal FLUX.1 Schnell on 2026-09-15: commercial use permitted and current price $0.003/MP; live execution remains M12.",
+      "termsLicenseNotes": "Pack061 ordinary FLUX Schnell may route through HF_TOKEN or direct FAL_KEY. Pack062 FLUX Kontext multi requires direct FAL_KEY because Hugging Face Inference Providers returned model-not-supported for provider fal-ai on 2026-09-18.",
       "adapter": "image.providers",
       "capabilities": [
         {
@@ -242,7 +242,17 @@
             "authority": "backend/config/cost-registry.v1.json",
             "entryId": "fal-kontext-reference-variation"
           },
-          "model": "fal-ai/flux-pro/kontext/multi"
+          "model": "fal-ai/flux-pro/kontext/multi",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "routing": {
+            "mode": "direct_fal",
+            "hfInferenceProvidersSupported": false,
+            "hfFailureEvidence": "2026-09-18 HTTP 400: Model not supported by provider fal-ai",
+            "authority": "https://fal.ai/models/fal-ai/flux-pro/kontext/multi/api"
+          },
+          "routeVerification": "direct_fal_repository_verified"
         }
       ]
     },

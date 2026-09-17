@@ -109,6 +109,14 @@
         "fixedResolution": "1024",
         "style": false,
         "mask": false
+      },
+      "routing": {
+        "gateway": "direct_fal",
+        "credentialEnvironment": "FAL_KEY",
+        "hfInferenceProvidersSupported": false,
+        "hfFailureObservedAt": "2026-09-18T00:00:00Z",
+        "hfFailure": "HTTP 400 Model not supported by provider fal-ai",
+        "officialApi": "https://fal.ai/models/fal-ai/flux-pro/kontext/multi/api"
       }
     }
   },
@@ -176,6 +184,12 @@
     ],
     "referenceOrdering": "preserve_user_order",
     "quantitySemantics": "single provider request, canonicalize every returned image",
-    "retrySafety": "existing primary with incomplete output manifest fails closed before a second paid provider call"
+    "retrySafety": "existing primary with incomplete output manifest fails closed before a second paid provider call",
+    "externalExecution": {
+      "runtimeRoute": "direct_fal",
+      "credentialEnvironment": "FAL_KEY",
+      "paidLiveInference": "deferred_no_provider_funds",
+      "noCostVerification": "official_api_contract_plus_mocked_direct_fal_runtime_plus_non_billable_auth_route_preflight"
+    }
   }
 }

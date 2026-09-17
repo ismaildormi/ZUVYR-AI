@@ -1,0 +1,13 @@
+{
+  "pack": "062",
+  "phase": "v14-direct-fal-capability-credential-gate",
+  "previousFailure": "focused success pricing fixture used HF_TOKEN after runtime was corrected to require FAL_KEY",
+  "fixes": [
+    "focused success quote now uses FAL_KEY",
+    "reference/variation capability verification restored to verified_repository",
+    "providerRegistry now enforces capability.requiredCredentialEnvironment",
+    "HF_TOKEN-only cannot make image.reference_variation eligible",
+    "FAL_KEY can make image.reference_variation eligible when cost is verified"
+  ],
+  "paidProviderInferenceCalls": 0
+}

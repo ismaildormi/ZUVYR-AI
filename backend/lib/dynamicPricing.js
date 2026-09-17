@@ -135,7 +135,7 @@ function providerQuote(feature, {
     imageRequest &&
     ['reference_generate', 'variations'].includes(imageRequest.operation)
   ) {
-    if (!env.HF_TOKEN && !env.FAL_KEY) {
+    if (!env.FAL_KEY) {
       throw pricingError('no_configured_reference_image_provider');
     }
 
