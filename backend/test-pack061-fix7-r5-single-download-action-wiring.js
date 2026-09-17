@@ -15,7 +15,7 @@ const count = literal =>
 assert.strictEqual(
   count(
     "makeAction(\n" +
-    "        'â‡©',\n" +
+    "        '⇩',\n" +
     "        'artifact.download'"
   ),
   0,
