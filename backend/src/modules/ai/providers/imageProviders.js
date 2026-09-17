@@ -7,6 +7,9 @@ const DEFAULT_IMAGE_MODEL = REPLICATE_IMAGE_MODEL;
 const DEFAULT_FAL_IMAGE_MODEL = 'fal-ai/flux/schnell';
 const HF_FAL_ROUTER_BASE = 'https://router.huggingface.co/fal-ai';
 const providers = new Map();
+const { assertImageProviderCapabilities } = require('../../../../lib/imageCapabilityGate');
+const { assertImageRequestAvailable } = require('../../../../lib/imageOperationRegistry');
+const { normalizeImageRequest } = require('../../../../lib/imageRequestContract');
 
 function registerImageProvider(key, adapter) {
   if (!key || typeof adapter?.generate !== 'function') {
@@ -16,6 +19,8 @@ function registerImageProvider(key, adapter) {
   providers.set(key, {
     label: adapter.label || key,
     generate: adapter.generate,
+    // Defaults fail closed until an adapter implements a capability.
+    capabilities: Object.freeze({ operations: ['generate'], ...(adapter.capabilities || {}) }),
     isConfigured: adapter.isConfigured || (() => true),
   });
 }
@@ -274,6 +279,17 @@ async function generateImage(prompt, opts = {}) {
     const model = modelFor(providerKey, opts);
 
     try {
+      const request = opts.imageRequest || normalizeImageRequest({
+        imageOperation: opts.imageOperation,
+        referenceAssetIds: opts.referenceAssetIds,
+        sourceAssetId: opts.sourceAssetId,
+        maskAssetId: opts.maskAssetId,
+        imageOptions: opts.imageOptions
+      });
+      assertImageProviderCapabilities(request, provider.capabilities);
+      // Preserve the price/option gate for every fallback, before any provider call.
+      try { assertImageRequestAvailable(request); }
+      catch (error) { error.statusCode = 400; error.retryable = false; throw error; }
       const startedAt = Date.now();
       const result = await provider.generate(prompt, { ...opts, model });
       const url = normalizeOutput(result);

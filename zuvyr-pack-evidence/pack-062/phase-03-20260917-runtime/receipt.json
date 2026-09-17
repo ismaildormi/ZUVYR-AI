@@ -1,0 +1,116 @@
+{
+  "schema_version": "pack062.phase03.v1",
+  "pack": "062",
+  "status": "LOCAL_VERIFIED_PARTIAL",
+  "created_at": "2026-09-17T21:01:45.321Z",
+  "base_commit": "3b57a589cf1827abb97ec240dff45d8f2d291948",
+  "phase02_commit": "3b57a589cf1827abb97ec240dff45d8f2d291948",
+  "tests": [
+    {
+      "name": "test-pack062-capability-gate.js",
+      "result": "PASS",
+      "mode": "local_no_provider_calls"
+    },
+    {
+      "name": "test-pack062-provider-runtime.js",
+      "result": "PASS",
+      "mode": "local_no_provider_calls"
+    },
+    {
+      "name": "test-pack062-reference-resolution.js",
+      "result": "PASS",
+      "mode": "local_no_provider_calls"
+    },
+    {
+      "name": "test-pack061-download-owner-boundary.js",
+      "result": "PASS",
+      "mode": "local_no_provider_calls"
+    },
+    {
+      "name": "test-pack061-fix7-r5-single-download-action-wiring.js",
+      "result": "PASS",
+      "mode": "local_no_provider_calls"
+    },
+    {
+      "name": "test-pack061-fix8-download-runtime.js",
+      "result": "PASS",
+      "mode": "local_no_provider_calls"
+    },
+    {
+      "name": "test-pack061-image-generate.js",
+      "result": "PASS",
+      "mode": "local_no_provider_calls"
+    },
+    {
+      "name": "test-pack061-image-routes-unit.js",
+      "result": "PASS",
+      "mode": "local_no_provider_calls"
+    },
+    {
+      "name": "test-pack042-asset-storage-ownership-lineage.js",
+      "result": "PASS",
+      "mode": "local_no_provider_calls"
+    },
+    {
+      "name": "test-pack029-fallback-no-double-charge.js",
+      "result": "PASS",
+      "mode": "local_no_provider_calls"
+    }
+  ],
+  "implemented": [
+    "worker forwards normalized request",
+    "primary and fallback provider capability checks",
+    "terminal unsupported-option failures",
+    "owner-scoped ordered reference resolver with image/parent checks and egress recording"
+  ],
+  "limitations": [
+    "reference resolver is not yet wired into enabled paid executors",
+    "references/variations/seed/count remain disabled by existing availability and pricing gate",
+    "no new authenticated production proof",
+    "no measured provider cost or margin",
+    "paid proof budget pending user response"
+  ],
+  "next": "Implement priced provider-specific reference/variation executor and integrate resolver, persistence, quantity accounting and contextual UI; verify deployment and authenticated production before LOCK.",
+  "user_value": "Prevent ignored image settings and foreign asset reuse.",
+  "executable_user_actions": "Existing single-image generation preserved; new reference generation remains gated.",
+  "money_opportunity_relevance": "INDIRECT",
+  "money_opportunity_notes": "Reject unsupported inputs before provider charges; no measured savings asserted.",
+  "next_best_action": "Keep existing image download/reuse flow until real reference executors are enabled.",
+  "suggestion_chips": "Existing PACK061 actions preserved; no unbacked reference actions added.",
+  "provenance_behavior": "Local fixture tests distinguished from production proof.",
+  "personalization_behavior": "References scoped by owner; order preserved.",
+  "hard_stop_impact": "No change.",
+  "outcome_tests": [
+    "test-pack062-capability-gate.js",
+    "test-pack062-provider-runtime.js",
+    "test-pack062-reference-resolution.js",
+    "test-pack061-download-owner-boundary.js",
+    "test-pack061-fix7-r5-single-download-action-wiring.js",
+    "test-pack061-fix8-download-runtime.js",
+    "test-pack061-image-generate.js",
+    "test-pack061-image-routes-unit.js",
+    "test-pack042-asset-storage-ownership-lineage.js",
+    "test-pack029-fallback-no-double-charge.js"
+  ],
+  "code_studio_impact": "Shared asset execution boundary foundation; no new Code Studio UI.",
+  "learning_model_impact": "No training data, consent, model weights or serving changes; signed URLs are executor-only inputs.",
+  "provider_calls": 0,
+  "live_billing_changed": false,
+  "next_pack_allowed": false,
+  "sources": [
+    "https://supabase.com/docs/reference/javascript/file-buckets-createsignedurl"
+  ],
+  "file_sha256": {
+    "backend/lib/imageCapabilityGate.js": "07c4c05bce3cc40995316c0043080bf7adfc8c008a0becef753ddc0c1ad0651d",
+    "backend/lib/imageReferenceResolver.js": "6875f38fd9509dd1f415aabadcc4521ee75bb851d6a7233becb420efe8868615",
+    "backend/src/modules/ai/providers/imageProviders.js": "eaade84dd3f11793afa74374326118189747936f43393025feaddf3152086923",
+    "backend/worker.js": "17ab1b9bc50adfde349979c4c20a75999f0a157d823aac6538f2a5cc80180f5b",
+    "backend/test-pack062-provider-runtime.js": "b9994ce901cc590e53a77c9239cd2d2376f27cd271a729efdf8415194ddc0403",
+    "backend/test-pack062-reference-resolution.js": "4cf2cceeffa46e8aede5da8f979402e5036cced536fbdd70d86709e36150775b"
+  },
+  "backup_sha256": {
+    "backend__lib__imageCapabilityGate.js": "dbe7cb646ab6c416585d0e75f24c9bb39e8585faf0591543383c8e340349452a",
+    "backend__src__modules__ai__providers__imageProviders.js": "b0bb4cbb94c97a4465e63f249bda09534024cd42201ee2b5bcc992dc1744a9f1",
+    "backend__worker.js": "a856e1bb353fc69b95dd3dd18b2e7a76091442e81a776e75df2a53163e7b90d6"
+  }
+}

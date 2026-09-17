@@ -1,0 +1,6 @@
+PASS: forced first-provider failure then second-provider success stays inside one privacy-safe logical billing scope
+PASS: provider attempts are bounded by the Pack026-eligible route count
+PASS: terminal attempt replay/late success cannot become a second accepted logical success
+PASS: aiRouter performs zero reserve/settle/refund operations; server keeps one requestId across reserve -> fallback routing -> settle
+PASS: existing gatekeeper/RPC replay, serialization and refund invariants remain the financial authority
+DATABASE / RAILWAY / PROVIDER ACCOUNT / PAYMENT / MODEL NETWORK CALLS: NONE

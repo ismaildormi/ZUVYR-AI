@@ -4,6 +4,8 @@ function capabilityError(code, detail = null) {
   const error = new Error(code);
   error.code = code;
   error.status = 400;
+  error.statusCode = 400;
+  error.retryable = false;
   if (detail) error.detail = detail;
   return error;
 }
@@ -72,6 +74,13 @@ function capabilitySet(capabilities = {}) {
 function assertImageProviderCapabilities(request, capabilities) {
   const normalized = requestShape(request);
   const supported = capabilitySet(capabilities);
+  if (!Number.isSafeInteger(normalized.options.quantity) || normalized.options.quantity < 1) {
+    throw capabilityError('invalid_image_quantity');
+  }
+  if (normalized.options.seed !== null &&
+      (!Number.isSafeInteger(normalized.options.seed) || normalized.options.seed < 0 || normalized.options.seed > 2147483647)) {
+    throw capabilityError('invalid_image_seed');
+  }
 
   if (!supported.operations.has(normalized.operation)) {
     throw capabilityError(

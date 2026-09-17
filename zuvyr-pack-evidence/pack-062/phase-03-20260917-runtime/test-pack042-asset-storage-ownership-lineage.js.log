@@ -1,0 +1,6 @@
+PASS: private signed upload/download foundations remain wired
+PASS: canonical storage path is owner scoped and hash stable
+PASS: owner dedupe + exact content-version binding are defined
+PASS: lineage requires source asset plus exact source content version
+PASS: retention and replay-safe egress bytes are durable
+PASS: unverified egress pricing cannot charge credits

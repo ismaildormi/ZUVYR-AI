@@ -1,0 +1,1 @@
+PASS: PACK062 resolver preserves order, scopes assets and parents, rejects invalid images before signing, deduplicates signing and records egress

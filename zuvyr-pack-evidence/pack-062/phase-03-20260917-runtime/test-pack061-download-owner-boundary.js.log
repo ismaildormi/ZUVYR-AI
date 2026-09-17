@@ -1,0 +1,1 @@
+PASS: actual library repository denies foreign content and foreign asset before signing; own asset uses 60-second attachment URL and egress only

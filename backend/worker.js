@@ -229,6 +229,7 @@ async function processImageJob(job) {
   if (!persisted) {
     try {
       providerResult = await generateImage(prompt, {
+        imageRequest,
         chain: ['fal', 'replicate'],
         models: {
           fal: process.env.FAL_IMAGE_MODEL || DEFAULT_FAL_IMAGE_MODEL,

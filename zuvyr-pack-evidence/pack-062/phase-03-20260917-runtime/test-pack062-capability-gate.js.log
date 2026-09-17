@@ -1,0 +1,1 @@
+PASS: Pack062 provider capability gate preserves ordered references and blocks unsupported operation/reference/source/mask/seed/quantity instead of silently ignoring them

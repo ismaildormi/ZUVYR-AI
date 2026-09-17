@@ -1228,6 +1228,8 @@ This specification is not an execution receipt. Missing historical state must be
 
 ## PACK062 — Image References / Consistency / Variations
 
+Checkpoint: PHASE03_LOCAL_VERIFIED_PARTIAL; 10 local tests PASS. Reference executor, pricing/accounting integration and production proof remain open. Evidence: zuvyr-pack-evidence/pack-062/phase-03-20260917-runtime/receipt.json
+
 - **Objective:** Image References / Consistency / Variations
 - **Scope:** Pass ordered reference assets, supported options/seed/count, character/product consistency features where provider supports them; block ignored options.
 - **Dependencies:** 042, 049, 061

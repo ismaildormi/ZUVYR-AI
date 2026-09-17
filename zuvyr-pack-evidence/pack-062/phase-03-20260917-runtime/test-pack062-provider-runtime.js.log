@@ -1,0 +1,1 @@
+PASS: PACK062 runtime rejects unsupported inputs before primary/fallback calls; default generate preserved; worker forwards normalized request
