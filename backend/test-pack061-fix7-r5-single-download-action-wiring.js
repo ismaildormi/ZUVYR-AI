@@ -15,7 +15,7 @@ const count = literal =>
 assert.strictEqual(
   count(
     "makeAction(\n" +
-    "        '⇩',\n" +
+    "        'â‡©',\n" +
     "        'artifact.download'"
   ),
   0,
@@ -54,8 +54,8 @@ assert.strictEqual(
   count(
     'async function downloadCanonicalGeneration(contentId, assetId, button)'
   ),
-  1,
-  'Canonical helper must remain shared.'
+  2,
+  'Mobile and desktop runtimes must each expose one canonical helper.'
 );
 
 const start = html.indexOf(
