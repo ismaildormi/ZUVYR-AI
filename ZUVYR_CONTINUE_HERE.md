@@ -345,3 +345,11 @@ If this file is opened in a new conversation:
 4. Do not ask the user what they were doing.
 5. Continue from NEXT SINGLE OBJECTIVE.
 6. Use the newest real evidence if it conflicts with older text.
+## PACK062 EXECUTION PROGRESS
+
+- Phase 01: GROUNDING_COMPLETE
+- Phase 02: PROVIDER_CAPABILITY_GATE_COMPLETE
+- Ordered reference identities are preserved.
+- Unsupported provider operation/reference/source/mask/seed/quantity now has a canonical rejection contract instead of silent-ignore semantics.
+- Production runtime is not wired to this gate yet.
+- Next: wire the capability gate into the real provider execution path and resolve owned reference assets without weakening PACK061.
