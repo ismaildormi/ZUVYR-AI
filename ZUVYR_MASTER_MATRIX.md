@@ -634,3 +634,14 @@ Railway evidence SHA256: $ExpectedEvidenceSha
 - LOCKED_VERIFIED only after exact finalizer Vercel/Railway connector cross-check.
 - Next: `PACK061 — Images`.
 <!-- ZUVYR_PACK_060_FINALIZER_END -->
+
+<!-- ZUVYR_150_CONTINUATION_20260917 -->
+## Current continuation — 17 September 2026
+
+- Canonical plan: [001–150 roadmap](docs/zuvyr/ROADMAP_150.md); supersedes old 100-pack limit, preserves historical receipts.
+- Active PACK061: OPEN; source 402577618ce047fe34c725899ab74402335cd1fa.
+- Local/remote source matched; Vercel production READY on exact source. Railway worker/maintenance SUCCESS; backend trigger SKIPPED, latest successful backend commit not returned by connector.
+- Five focused local tests PASS. Authenticated live image/history/download/ownership/accounting/mobile proofs NOT TESTED in this session; browser requires sign-in.
+- Receipt: zuvyr-pack-evidence/pack-061/2026-09-17-codex-continuation/checkpoint.json. No new provider calls or paid generation. Actual net operating margin remains unmeasured; mature-scale target >=50%.
+- V1 owned-model and learning flywheel are roadmap requirements, not implemented/verified claims.
+- PACK062 remains gated by PACK061 lock.

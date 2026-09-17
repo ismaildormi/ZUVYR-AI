@@ -1,0 +1,101 @@
+{
+  "schema_version": "pack061.continuation.v1",
+  "observed_at": "2026-09-17T02:56:53.532Z",
+  "status": "OPEN",
+  "source_commit": "402577618ce047fe34c725899ab74402335cd1fa",
+  "local_remote_main_match": true,
+  "vercel": {
+    "id": "dpl_6q5WcKaKbkCYjDmwk4Tw93KAJRa9",
+    "state": "READY",
+    "target": "production",
+    "alias": "rox-ai-sepia.vercel.app",
+    "source_commit": "402577618ce047fe34c725899ab74402335cd1fa"
+  },
+  "railway": {
+    "backend_latest_trigger": {
+      "id": "cf4ee428-1f50-4259-b7dc-e02603d8f965",
+      "status": "SKIPPED"
+    },
+    "backend_latest_success": {
+      "id": "a7a2e013-ae45-405c-9f99-a46618ea9fd8",
+      "source_commit": "NOT_RETURNED_BY_CONNECTOR"
+    },
+    "worker": {
+      "id": "295f23c8-5a45-453c-9957-65af8ced2726",
+      "status": "SUCCESS",
+      "source_commit": "402577618ce047fe34c725899ab74402335cd1fa"
+    },
+    "maintenance": {
+      "id": "fa06e76c-99e1-408c-b717-696c24ee8fb0",
+      "status": "SUCCESS",
+      "source_commit": "402577618ce047fe34c725899ab74402335cd1fa"
+    },
+    "runtime_diff_from_historical_fix4": "No backend paths changed except test-* files; this does not independently attest the running backend commit"
+  },
+  "tests": [
+    {
+      "command": "node backend/test-pack061-image-generate.js",
+      "result": "PASS",
+      "scope": "local unit/static; not production E2E"
+    },
+    {
+      "command": "node backend/test-pack061-image-routes-unit.js",
+      "result": "PASS",
+      "scope": "local unit/static; not production E2E"
+    },
+    {
+      "command": "node backend/test-pack061-final-image-experience-r6-r1-wiring.js",
+      "result": "PASS",
+      "scope": "local unit/static; not production E2E"
+    },
+    {
+      "command": "node backend/test-pack061-fix5-image-history-wiring.js",
+      "result": "PASS",
+      "scope": "local unit/static; not production E2E"
+    },
+    {
+      "command": "node backend/test-pack061-fix7-r5-single-download-action-wiring.js",
+      "result": "PASS",
+      "scope": "local unit/static; not production E2E"
+    }
+  ],
+  "live": {
+    "site_load": "PASS",
+    "authenticated_session": "UNAVAILABLE_SIGN_IN_REQUIRED",
+    "image_render": "NOT_TESTED",
+    "final_actions": "NOT_TESTED",
+    "history_reload": "NOT_TESTED",
+    "history_reopen": "NOT_TESTED",
+    "authorized_download": "NOT_TESTED",
+    "owner_isolation": "NOT_TESTED",
+    "billing_before_after": "NOT_TESTED",
+    "mobile": "NOT_TESTED"
+  },
+  "new_provider_calls": 0,
+  "new_training_runs": 0,
+  "new_paid_generation": 0,
+  "measured_net_operating_margin": null,
+  "margin_target": 0.5,
+  "roadmap": {
+    "path": "docs/zuvyr/ROADMAP_150.md",
+    "data": "docs/zuvyr/roadmap-150.json",
+    "pack_count": 150,
+    "sha256": "fb077d35a6c388e8f22e3c45647c43727fed68f2d22d939670f528ed23e4d6b2"
+  },
+  "preservation": {
+    "dirty_tracked_files": 31,
+    "unrelated_changes_staged": false,
+    "historical_state": "Existing per-pack entries preserved; missing 051–060 JSON entries are not fabricated from matrix summaries"
+  },
+  "next": "Resume authenticated existing-image production checks after user signs in; no PACK062 execution until PACK061 is LOCKED_VERIFIED",
+  "backups": [
+    {
+      "path": "zuvyr-pack-evidence/pack-061/2026-09-17-codex-continuation/ZUVYR_MASTER_STATE.json.before",
+      "sha256": "d21c8ab1dc687b8b470111449397d24519b3aac77ea4d83e81055011b930e7ac"
+    },
+    {
+      "path": "zuvyr-pack-evidence/pack-061/2026-09-17-codex-continuation/ZUVYR_MASTER_MATRIX.md.before",
+      "sha256": "a8955ae8fe74a50c1c328757a2c3a1dc33be0105dedccbb7daabaabbf12fc421"
+    }
+  ]
+}

@@ -829,5 +829,26 @@
     "receipt_sha256": "8F141DE2858C133DF6FD0ABABDA2834B8B4D0FBF8A382D260DA2FCB52217EBE3",
     "next_pack": "051",
     "finalized_at": "2026-09-14T22:35:02.169Z"
+  },
+  "roadmap": {
+    "version": "150-pack-v1-2026-09-17",
+    "total_packs": 150,
+    "path": "docs/zuvyr/roadmap-150.json",
+    "final_release_pack": "150",
+    "previous_plan_preserved": true
+  },
+  "active_pack": "061",
+  "pack061": {
+    "status": "OPEN",
+    "source_commit": "402577618ce047fe34c725899ab74402335cd1fa",
+    "phase": "SOURCE_DEPLOY_CHECKED_AWAITING_AUTHENTICATED_LIVE_PROOF",
+    "continuation_receipt": "zuvyr-pack-evidence/pack-061/2026-09-17-codex-continuation/checkpoint.json",
+    "continuation_receipt_sha256": "9276bedeee49c13ee66242b296f762db5501a05a0927568655d0d1a4414935c6",
+    "next_pack_allowed": false
+  },
+  "continuation_reconciliation": {
+    "date": "2026-09-17T02:56:53.532Z",
+    "legacy_current_fields_preserved": true,
+    "note": "Older top-level/current state fields reflect PACK050. active_pack=061 is the current continuation; historical 051–060 receipts require separate reconciliation before lock assertions."
   }
 }
