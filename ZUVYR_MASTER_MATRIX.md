@@ -636,12 +636,20 @@ Railway evidence SHA256: $ExpectedEvidenceSha
 <!-- ZUVYR_PACK_060_FINALIZER_END -->
 
 <!-- ZUVYR_150_CONTINUATION_20260917 -->
-## Current continuation — 17 September 2026
+## Current continuation - 17 September 2026
 
-- Canonical plan: [001–150 roadmap](docs/zuvyr/ROADMAP_150.md); supersedes old 100-pack limit, preserves historical receipts.
-- Active PACK061: OPEN; source 402577618ce047fe34c725899ab74402335cd1fa.
-- Local/remote source matched; Vercel production READY on exact source. Railway worker/maintenance SUCCESS; backend trigger SKIPPED, latest successful backend commit not returned by connector.
-- Five focused local tests PASS. Authenticated live image/history/download/ownership/accounting/mobile proofs NOT TESTED in this session; browser requires sign-in.
-- Receipt: zuvyr-pack-evidence/pack-061/2026-09-17-codex-continuation/checkpoint.json. No new provider calls or paid generation. Actual net operating margin remains unmeasured; mature-scale target >=50%.
-- V1 owned-model and learning flywheel are roadmap requirements, not implemented/verified claims.
-- PACK062 remains gated by PACK061 lock.
+- Canonical plan: docs/zuvyr/ROADMAP_150.md; 150 Packs define ZUVYR V1.
+- PACK061 - Image Generate: LOCKED_VERIFIED.
+- Runtime-verified source: f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c.
+- Production deployment contexts: SUCCESS.
+- Production root: HTTP 200.
+- Live next-actions asset matched repository source exactly.
+- M12 authenticated production image generation: VERIFIED.
+- Refresh, history persistence/reopen and authorized download: PASS by authenticated production confirmation.
+- Owner-boundary regression and signed download tests: PASS.
+- Focused PACK061 suite: 8/8 PASS.
+- Final receipt: zuvyr-pack-evidence/pack-061/2026-09-17-final/receipt.json
+- Receipt SHA256: bf17951291b7935743bbc1d3f97e0a122c7cfefe6aa4b61fb807b3ed35710528
+- Actual provider cost for the single manual live generation was not separately captured; no margin value is fabricated.
+- Active PACK062: OPEN - Image References / Consistency / Variations.
+- PACK062 begins at GROUND_EXACT_IMPLEMENTATION.

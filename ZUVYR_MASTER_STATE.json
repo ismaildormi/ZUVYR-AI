@@ -837,13 +837,33 @@
     "final_release_pack": "150",
     "previous_plan_preserved": true
   },
-  "active_pack": "061",
+  "active_pack": "062",
   "pack061": {
-    "status": "OPEN",
-    "source_commit": "402577618ce047fe34c725899ab74402335cd1fa",
-    "phase": "SOURCE_DEPLOY_CHECKED_AWAITING_AUTHENTICATED_LIVE_PROOF",
+    "status": "LOCKED_VERIFIED",
+    "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
+    "phase": "AUTHENTICATED_PRODUCTION_VERIFIED",
+    "external_gate": "M12",
+    "m12_status": "VERIFIED",
     "continuation_receipt": "zuvyr-pack-evidence/pack-061/2026-09-17-codex-continuation/checkpoint.json",
-    "continuation_receipt_sha256": "9276bedeee49c13ee66242b296f762db5501a05a0927568655d0d1a4414935c6",
+    "final_receipt": "zuvyr-pack-evidence/pack-061/2026-09-17-final/receipt.json",
+    "final_receipt_sha256": "bf17951291b7935743bbc1d3f97e0a122c7cfefe6aa4b61fb807b3ed35710528",
+    "deployment_identity_verified": true,
+    "authenticated_live_image_generate": "PASS",
+    "history_reload_reopen": "PASS",
+    "authorized_download": "PASS",
+    "owner_boundary_regression": "PASS",
+    "focused_tests_passed": 8,
+    "live_credit_delta_captured": false,
+    "next_pack_allowed": true,
+    "next_pack": "062",
+    "finalized_at": "2026-09-17T20:40:41.421Z"
+  },
+  "pack062": {
+    "status": "OPEN",
+    "title": "Image References / Consistency / Variations",
+    "phase": "GROUND_EXACT_IMPLEMENTATION",
+    "opened_from_pack061_receipt": "zuvyr-pack-evidence/pack-061/2026-09-17-final/receipt.json",
+    "pack061_receipt_sha256": "bf17951291b7935743bbc1d3f97e0a122c7cfefe6aa4b61fb807b3ed35710528",
     "next_pack_allowed": false
   },
   "continuation_reconciliation": {

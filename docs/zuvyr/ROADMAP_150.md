@@ -1,6 +1,6 @@
 # ZUVYR V1 — Canonical 001–150 roadmap
 
-Date: 2026-09-17. Active: PACK061 OPEN.
+Date: 2026-09-17. Active: PACK062 OPEN. PACK061 LOCKED_VERIFIED.
 
 Latest user MASTER EXECUTION PROMPT overrides attached 100-pack and one-step rules. 001–099 retain numbering and original scope; 100 remains hardening checkpoint; 101–150 extend integration/operational qualification without repeating original feature builds. Historical status is not newly verified.
 
@@ -1224,7 +1224,7 @@ This specification is not an execution receipt. Missing historical state must be
 - **Evidence/receipt requirements:** Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.
 - **Final gate:** LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate.
 - **External gate:** M12
-- **Recorded status:** OPEN
+- **Recorded status:** LOCKED_VERIFIED
 
 ## PACK062 — Image References / Consistency / Variations
 
@@ -1244,7 +1244,7 @@ This specification is not an execution receipt. Missing historical state must be
 - **Evidence/receipt requirements:** Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.
 - **Final gate:** LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate.
 - **External gate:** —
-- **Recorded status:** PLANNED
+- **Recorded status:** OPEN
 
 ## PACK063 — Image Edit / Inpaint / Outpaint
 

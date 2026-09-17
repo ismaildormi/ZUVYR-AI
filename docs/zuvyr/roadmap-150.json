@@ -1550,7 +1550,7 @@
         "060"
       ],
       "systems": "Existing systems described in scope; exact paths must be grounded from the execution baseline",
-      "status": "OPEN",
+      "status": "LOCKED_VERIFIED",
       "objective": "Image Generate",
       "architecture": "Reuse canonical Brain/Kernel, registry/router, content IDs, permissions and one usage ledger. Preserve historical implementation and receipt identity.",
       "ux": "For affected controls, verify loading, empty, error, cancel, retry and reopen states; keyboard, RTL and responsive behavior. Infrastructure-only work has no invented UI requirement.",
@@ -1575,7 +1575,7 @@
         "061"
       ],
       "systems": "Existing systems described in scope; exact paths must be grounded from the execution baseline",
-      "status": "PLANNED",
+      "status": "OPEN",
       "objective": "Image References / Consistency / Variations",
       "architecture": "Reuse canonical Brain/Kernel, registry/router, content IDs, permissions and one usage ledger. Preserve historical implementation and receipt identity.",
       "ux": "For affected controls, verify loading, empty, error, cancel, retry and reopen states; keyboard, RTL and responsive behavior. Infrastructure-only work has no invented UI requirement.",

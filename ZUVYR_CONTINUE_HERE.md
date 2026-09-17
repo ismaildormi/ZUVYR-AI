@@ -33,80 +33,80 @@ Fresh evidence overrides older text.
 
 ## CURRENT SOURCE IDENTITY
 
-Branch: main
+Last production-runtime-verified source:
 
-Local HEAD:
-$head
+`f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c`
 
-Remote main:
-$remote
+PACK061 finalization after this runtime verification changes canonical evidence/state only unless a future diff proves otherwise.
 
-Local/remote match:
-YES
+Before every mutation, still compare local HEAD and origin/main.
 
 ---
 
 ## CURRENT MAIN PACK
 
-Active Pack: **PACK061 — Image Generate**
+Active Pack: **PACK062 - Image References / Consistency / Variations**
 
-Status: **OPEN — FINALIZATION / PRODUCTION PROOF REQUIRED**
+Status: **OPEN - GROUND EXACT IMPLEMENTATION**
 
-Do NOT start PACK062 until PACK061 is genuinely LOCKED_VERIFIED.
+PACK061 - Image Generate is **LOCKED_VERIFIED**.
 
-Current implementation HEAD includes:
+PACK061 final receipt:
 
-- 4025776 — complete Pack061 final image experience
-- 284b6c8 — restore authorized image download in desktop template
-- 3cf5c57 — contextual image prompt follow-up actions
+`zuvyr-pack-evidence/pack-061/2026-09-17-final/receipt.json`
 
-Focused verified local tests from the latest session:
+PACK061 receipt SHA256:
 
-- contextual image identity / exact prompt reuse / next-action replacement / copy / reversible draft / stale-context protection: PASS
-- mobile + desktop signed download runtime / owner denial / network recovery: PASS
-- owner-boundary download security: PASS
-
-Known untracked Pack061 test at last checkpoint:
-
-ackend/test-pack061-download-owner-boundary.js
-
-Do not delete it blindly. Inspect and preserve it.
+`bf17951291b7935743bbc1d3f97e0a122c7cfefe6aa4b61fb807b3ed35710528`
 
 ---
 
-## PACK061 REMAINING GATE
+## PACK061 FINAL STATUS
 
-PACK061 may only become LOCKED_VERIFIED after evidence-backed completion of the remaining production gate.
+PACK061 is **LOCKED_VERIFIED**.
 
-Required final proof includes, where applicable:
+Verified:
 
-- authenticated production Images flow
-- generated/persisted image visible after reload
-- History reopen works
-- authorized signed download works
-- owner isolation preserved
-- accounting/billing evidence remains correct
-- production deployment corresponds to intended source
-- receipt/state updated
-- rollback/recovery evidence recorded
+- production deployment contexts SUCCESS
+- production HTTP 200
+- authenticated image generation PASS
+- refresh PASS
+- image history persistence/reopen PASS
+- authorized download PASS
+- contextual next actions PASS
+- owner-boundary regressions PASS
+- 8/8 focused tests PASS
+- M12 VERIFIED
 
-Do NOT fabricate missing live evidence.
+Do not reopen PACK061 unless a real regression is found.
 
 ---
 
 ## NEXT SINGLE OBJECTIVE
 
-Finish PACK061 from the CURRENT repository state.
+Execute **PACK062 - Image References / Consistency / Variations**.
 
-Do not redesign Images.
-Do not restart earlier Packs.
-Do not re-run large discovery if current source already answers the question.
+Start from the CURRENT repository state.
 
-Once PACK061 is truly LOCKED_VERIFIED:
+First ground the real existing implementation for:
 
-> continue immediately to **PACK062 — Image References / Consistency / Variations**
+- ordered reference assets
+- image reference upload/reuse
+- variation flows
+- seed/count/options
+- provider capability support
+- consistency controls
+- canonical asset ownership
+- cost per requested output
+- reserve/settle/refund behavior
+- history persistence
+- model/provider routing
 
-and then continue sequentially through PACK150.
+Do not invent provider capabilities.
+
+Block options that a selected provider would silently ignore.
+
+Preserve PACK061 behavior.
 
 ---
 

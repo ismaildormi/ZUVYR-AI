@@ -1,0 +1,86 @@
+{
+  "schema_version": "pack061.final.v1",
+  "pack_id": "061",
+  "title": "Image Generate",
+  "status": "LOCKED_VERIFIED",
+  "finalized_at": "2026-09-17T20:40:41.421Z",
+  "runtime_source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
+  "deployment": {
+    "github_combined_status": "success",
+    "vercel": "success",
+    "railway_backend": "success",
+    "railway_maintenance": "success",
+    "railway_worker": "success",
+    "production_url": "https://rox-ai-sepia.vercel.app/",
+    "production_http_status": 200,
+    "unchanged_runtime_identity_after_finalization_docs": true
+  },
+  "production_source_proof": {
+    "live_next_actions_asset_match": true,
+    "local_sha256": "0CDED1DB75404AAC9D6ABB6FEDDD8D3DC936F1388BC855DB787A01B66A82D830",
+    "live_sha256": "0CDED1DB75404AAC9D6ABB6FEDDD8D3DC936F1388BC855DB787A01B66A82D830",
+    "runtime_markers": {
+      "image_next_actions": true,
+      "canonical_download": true,
+      "generate_image_route": true
+    }
+  },
+  "external_gate": {
+    "id": "M12",
+    "status": "VERIFIED",
+    "evidence_type": "authenticated production user flow"
+  },
+  "authenticated_live_proof": {
+    "result": "PASS",
+    "prompt": "A simple red cube on a plain white background",
+    "image_generation": "PASS",
+    "generated_image_rendered": "PASS",
+    "refresh_after_generation": "PASS",
+    "history_persistence": "PASS",
+    "history_reopen": "PASS",
+    "authorized_download": "PASS",
+    "contextual_next_actions": "PASS",
+    "evidence_basis": [
+      "authenticated production execution",
+      "user-confirmed refresh/history/download flow",
+      "user-provided production screenshot"
+    ]
+  },
+  "security": {
+    "owner_scoped_history": "PASS",
+    "foreign_content_download_denial": "PASS",
+    "foreign_asset_download_denial": "PASS",
+    "signed_download_ttl_seconds": 60
+  },
+  "focused_tests": [
+    "backend/test-pack061-image-generate.js",
+    "backend/test-pack061-image-routes-unit.js",
+    "backend/test-pack061-final-image-experience-r6-r1-wiring.js",
+    "backend/test-pack061-fix5-image-history-wiring.js",
+    "backend/test-pack061-fix7-r5-single-download-action-wiring.js",
+    "backend/test-pack061-image-next-actions.js",
+    "backend/test-pack061-fix8-download-runtime.js",
+    "backend/test-pack061-download-owner-boundary.js"
+  ],
+  "focused_test_result": "8/8 PASS",
+  "accounting": {
+    "static_exact_credit_regression": "PASS",
+    "authenticated_generation_completed": true,
+    "live_credit_balance_delta_separately_captured": false
+  },
+  "cost": {
+    "new_test_provider_calls": 0,
+    "authenticated_production_generation_count": 1,
+    "exact_provider_cost_for_manual_live_generation": null,
+    "mature_scale_margin_target": ">=50%",
+    "measured_margin_claimed": false
+  },
+  "rollback": {
+    "canonical_backups_created_before_finalization": true,
+    "runtime_verified_source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
+    "destructive_reset_used": false,
+    "stash_used": false
+  },
+  "next_pack": "062",
+  "next_pack_title": "Image References / Consistency / Variations"
+}
