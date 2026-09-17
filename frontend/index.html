@@ -2598,6 +2598,73 @@ html[data-rox-density="compact"] .chat-input-row{
   display:none!important;
 }
 
+.msg-actions.rox-gpt-actions.is-media-actions{
+  gap:4px;
+  margin-top:9px;
+}
+
+.msg-actions.rox-gpt-actions .rox-media-primary-action{
+  width:auto;
+  min-width:96px;
+  padding:0 11px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  color:#eef4ff;
+  border:1px solid rgba(255,90,31,.26);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,72,23,.20),
+      rgba(255,90,31,.14)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.msg-actions.rox-gpt-actions .rox-media-primary-action:hover,
+.msg-actions.rox-gpt-actions .rox-media-primary-action:focus-visible{
+  color:#fff;
+  border-color:rgba(255,112,64,.48);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,72,23,.30),
+      rgba(255,90,31,.22)
+    );
+}
+
+.rox-media-action-label{
+  display:inline-block;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.01em;
+  white-space:nowrap;
+}
+
+.msg[data-zuvyr-media-output="1"] img,
+.msg[data-zuvyr-media-output="1"] video{
+  cursor:zoom-in;
+}
+
+.msg[data-zuvyr-media-output="1"] img:focus-visible,
+.msg[data-zuvyr-media-output="1"] video:focus-visible{
+  outline:2px solid rgba(255,90,31,.82);
+  outline-offset:4px;
+}
+
+@media(max-width:560px){
+  .msg-actions.rox-gpt-actions .rox-media-primary-action{
+    min-width:88px;
+    padding:0 9px;
+  }
+
+  .rox-media-action-label{
+    font-size:11.5px;
+  }
+}
+
 .rox-gpt-more-wrap{
   position:relative;
   display:flex;
@@ -15537,6 +15604,10 @@ initAuth();
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6.5 9H3v6h3.5L11 19V5Z"></path><path d="M15 9a4 4 0 0 1 0 6"></path><path d="M18 6a8 8 0 0 1 0 12"></path></svg>',
     share:
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3"></path><path d="m7 8 5-5 5 5"></path><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path></svg>',
+    download:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg>',
+    expand:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5"></path><path d="m3 3 6 6"></path><path d="M16 3h5v5"></path><path d="m21 3-6 6"></path><path d="M8 21H3v-5"></path><path d="m3 21 6-6"></path><path d="M16 21h5v-5"></path><path d="m21 21-6-6"></path></svg>',
     retry:
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.34 5.66"></path><path d="M20 4v7h-7"></path></svg>'
   };
@@ -15711,7 +15782,126 @@ initAuth();
                 branchFailed:'Could not create the branch.'
               };
 
-    Object.assign(labels,extraLabels);
+    const mediaLabels = actionLanguage.startsWith('ar')
+      ? {
+          copyPrompt:'نسخ الطلب',
+          promptCopied:'تم نسخ الطلب',
+          openMedia:'فتح بالحجم الكامل'
+        }
+      : actionLanguage.startsWith('fr')
+        ? {
+            copyPrompt:'Copier le prompt',
+            promptCopied:'Prompt copié',
+            openMedia:'Ouvrir en plein écran'
+          }
+        : actionLanguage.startsWith('es')
+          ? {
+              copyPrompt:'Copiar prompt',
+              promptCopied:'Prompt copiado',
+              openMedia:'Abrir a tamaño completo'
+            }
+          : actionLanguage.startsWith('zh')
+            ? {
+                copyPrompt:'复制提示词',
+                promptCopied:'提示词已复制',
+                openMedia:'全屏查看'
+              }
+            : {
+                copyPrompt:'Copy prompt',
+                promptCopied:'Prompt copied',
+                openMedia:'Open full size'
+              };
+
+    Object.assign(labels,extraLabels,mediaLabels);
+
+    const message =
+      actions.previousElementSibling?.classList.contains('msg')
+        ? actions.previousElementSibling
+        : null;
+
+    const messageMeta =
+      message?._zuvyrMeta &&
+      typeof message._zuvyrMeta === 'object'
+        ? message._zuvyrMeta
+        : {};
+
+    const messageFeature = String(
+      messageMeta.feature || ''
+    ).trim().toLowerCase();
+
+    const isMediaMessage =
+      messageFeature === 'images' ||
+      messageFeature === 'videos';
+
+    const mediaNode = isMediaMessage
+      ? message?.querySelector('img,video')
+      : null;
+
+    const getPreviousUserMessage = () => {
+      let previous = message?.previousElementSibling || null;
+
+      while (previous) {
+        if (
+          previous.classList?.contains('msg') &&
+          previous.classList.contains('user')
+        ) {
+          return previous;
+        }
+
+        previous = previous.previousElementSibling;
+      }
+
+      return null;
+    };
+
+    const getPreviousPrompt = () =>
+      String(
+        getPreviousUserMessage()?.innerText ||
+        getPreviousUserMessage()?.textContent ||
+        ''
+      ).trim();
+
+    const openMedia = async () => {
+      if (!mediaNode) return;
+
+      if (typeof mediaNode.requestFullscreen === 'function') {
+        try {
+          await mediaNode.requestFullscreen();
+          return;
+        } catch (_) {}
+      }
+
+      const url = String(
+        mediaNode.currentSrc ||
+        mediaNode.src ||
+        ''
+      ).trim();
+
+      if (url) {
+        window.open(url,'_blank','noopener');
+      }
+    };
+
+    const copyPrompt = async () => {
+      const prompt = getPreviousPrompt();
+      if (!prompt) return false;
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(prompt);
+      } else {
+        const area = document.createElement('textarea');
+        area.value = prompt;
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        area.remove();
+      }
+
+      return true;
+    };
+
     const copyButton = buttons[0];
     const listenButton = buttons[1];
     const likeButton = buttons[2];
@@ -15720,7 +15910,42 @@ initAuth();
     const downloadButton = buttons[5];
 
     actions.dataset.roxGptActions = 'true';
+    actions.dataset.zuvyrMessageFeature =
+      messageFeature || 'chat';
     actions.classList.add('rox-gpt-actions');
+
+    if (isMediaMessage) {
+      actions.classList.add('is-media-actions');
+
+      if (message) {
+        message.dataset.zuvyrMediaOutput = '1';
+      }
+
+      if (
+        mediaNode &&
+        mediaNode.dataset.zuvyrMediaOpenBound !== 'true'
+      ) {
+        mediaNode.dataset.zuvyrMediaOpenBound = 'true';
+        mediaNode.tabIndex = 0;
+        mediaNode.setAttribute('role','button');
+        mediaNode.title = labels.openMedia;
+        mediaNode.setAttribute('aria-label',labels.openMedia);
+
+        mediaNode.addEventListener('click',() => {
+          openMedia();
+        });
+
+        mediaNode.addEventListener('keydown',event => {
+          if (
+            event.key === 'Enter' ||
+            event.key === ' '
+          ) {
+            event.preventDefault();
+            openMedia();
+          }
+        });
+      }
+    }
 
     copyButton.innerHTML = icon.copy;
     copyButton.title = labels.copy;
@@ -15735,12 +15960,38 @@ initAuth();
     dislikeButton.setAttribute('aria-label',labels.dislike);
 
     listenButton.classList.add('rox-gpt-hidden-action');
-    downloadButton.classList.add('rox-gpt-hidden-action');
 
-    shareButton.classList.remove('rox-gpt-hidden-action');
-    shareButton.innerHTML = icon.share;
-    shareButton.title = labels.share;
-    shareButton.setAttribute('aria-label',labels.share);
+    if (isMediaMessage) {
+      copyButton.classList.add('rox-gpt-hidden-action');
+      shareButton.classList.add('rox-gpt-hidden-action');
+
+      downloadButton.classList.remove('rox-gpt-hidden-action');
+      downloadButton.classList.add('rox-media-primary-action');
+      downloadButton.innerHTML =
+        icon.download +
+        '<span class="rox-media-action-label"></span>';
+
+      const downloadLabel =
+        downloadButton.title ||
+        downloadButton.getAttribute('aria-label') ||
+        'Download';
+
+      downloadButton
+        .querySelector('.rox-media-action-label')
+        .textContent = downloadLabel;
+
+      downloadButton.title = downloadLabel;
+      downloadButton.setAttribute(
+        'aria-label',
+        downloadLabel
+      );
+    } else {
+      downloadButton.classList.add('rox-gpt-hidden-action');
+      shareButton.classList.remove('rox-gpt-hidden-action');
+      shareButton.innerHTML = icon.share;
+      shareButton.title = labels.share;
+      shareButton.setAttribute('aria-label',labels.share);
+    }
 
     const retryButton = document.createElement('button');
     retryButton.type = 'button';
@@ -15750,25 +16001,24 @@ initAuth();
     retryButton.setAttribute('aria-label',labels.retry);
 
     retryButton.addEventListener('click',() => {
-      let previous = actions.previousElementSibling;
+      const text = getPreviousPrompt();
 
-      while (previous) {
-        if (
-          previous.classList?.contains('msg') &&
-          previous.classList.contains('user')
-        ) break;
-
-        previous = previous.previousElementSibling;
-      }
-
-      const text = String(
-        previous?.innerText||
-        previous?.textContent||
-        ''
-      ).trim();
+      const retryFeature = [
+        'chat',
+        'code',
+        'images',
+        'videos',
+        'roxip'
+      ].includes(messageFeature)
+        ? messageFeature
+        : 'chat';
 
       const composer = document.querySelector(
-        '#feature-chat [data-feature="chat"]'
+        '#feature-' +
+        retryFeature +
+        ' [data-feature="' +
+        retryFeature +
+        '"]'
       );
 
       if (!text || !composer) return;
@@ -15780,7 +16030,7 @@ initAuth();
       composer.focus();
 
       if (typeof sendMessage === 'function') {
-        sendMessage('chat');
+        sendMessage(retryFeature);
       }
     });
 
@@ -15800,11 +16050,6 @@ initAuth();
     menu.className = 'rox-gpt-more-menu';
     menu.setAttribute('role','menu');
     menu.hidden = true;
-
-    const message =
-      actions.previousElementSibling?.classList.contains('msg')
-        ? actions.previousElementSibling
-        : null;
 
     const messageDate = new Date(
       message?.dataset.zuvyrCreatedAt||
@@ -15937,7 +16182,54 @@ initAuth();
       false
     );
 
-    menu.append(time,sourcesButton,branchButton,readButton);
+    const copyPromptButton = makeMenuItem(
+      icon.copy,
+      labels.copyPrompt,
+      async () => {
+        menu.hidden = true;
+        moreButton.setAttribute('aria-expanded','false');
+
+        try {
+          const copied = await copyPrompt();
+
+          if (copied) {
+            showNote(actions,labels.promptCopied);
+          }
+        } catch (error) {
+          console.error(
+            'ZUVYR prompt copy failed:',
+            error
+          );
+        }
+      },
+      false
+    );
+
+    const openMediaButton = makeMenuItem(
+      icon.expand,
+      labels.openMedia,
+      () => {
+        menu.hidden = true;
+        moreButton.setAttribute('aria-expanded','false');
+        openMedia();
+      },
+      !mediaNode
+    );
+
+    if (isMediaMessage) {
+      menu.append(
+        time,
+        copyPromptButton,
+        openMediaButton
+      );
+    } else {
+      menu.append(
+        time,
+        sourcesButton,
+        branchButton,
+        readButton
+      );
+    }
     wrap.append(moreButton,menu);
     actions.appendChild(retryButton);
     actions.appendChild(wrap);
@@ -22416,6 +22708,73 @@ html[data-rox-density="compact"] .chat-input-row{
 
 .msg-actions.rox-gpt-actions .rox-gpt-hidden-action{
   display:none!important;
+}
+
+.msg-actions.rox-gpt-actions.is-media-actions{
+  gap:4px;
+  margin-top:9px;
+}
+
+.msg-actions.rox-gpt-actions .rox-media-primary-action{
+  width:auto;
+  min-width:96px;
+  padding:0 11px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  color:#eef4ff;
+  border:1px solid rgba(255,90,31,.26);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,72,23,.20),
+      rgba(255,90,31,.14)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.msg-actions.rox-gpt-actions .rox-media-primary-action:hover,
+.msg-actions.rox-gpt-actions .rox-media-primary-action:focus-visible{
+  color:#fff;
+  border-color:rgba(255,112,64,.48);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,72,23,.30),
+      rgba(255,90,31,.22)
+    );
+}
+
+.rox-media-action-label{
+  display:inline-block;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.01em;
+  white-space:nowrap;
+}
+
+.msg[data-zuvyr-media-output="1"] img,
+.msg[data-zuvyr-media-output="1"] video{
+  cursor:zoom-in;
+}
+
+.msg[data-zuvyr-media-output="1"] img:focus-visible,
+.msg[data-zuvyr-media-output="1"] video:focus-visible{
+  outline:2px solid rgba(255,90,31,.82);
+  outline-offset:4px;
+}
+
+@media(max-width:560px){
+  .msg-actions.rox-gpt-actions .rox-media-primary-action{
+    min-width:88px;
+    padding:0 9px;
+  }
+
+  .rox-media-action-label{
+    font-size:11.5px;
+  }
 }
 
 .rox-gpt-more-wrap{
@@ -36520,6 +36879,10 @@ document.addEventListener("DOMContentLoaded",function(){
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6.5 9H3v6h3.5L11 19V5Z"></path><path d="M15 9a4 4 0 0 1 0 6"></path><path d="M18 6a8 8 0 0 1 0 12"></path></svg>',
     share:
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3"></path><path d="m7 8 5-5 5 5"></path><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path></svg>',
+    download:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg>',
+    expand:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5"></path><path d="m3 3 6 6"></path><path d="M16 3h5v5"></path><path d="m21 3-6 6"></path><path d="M8 21H3v-5"></path><path d="m3 21 6-6"></path><path d="M16 21h5v-5"></path><path d="m21 21-6-6"></path></svg>',
     retry:
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.34 5.66"></path><path d="M20 4v7h-7"></path></svg>'
   };
@@ -36694,7 +37057,126 @@ document.addEventListener("DOMContentLoaded",function(){
                 branchFailed:'Could not create the branch.'
               };
 
-    Object.assign(labels,extraLabels);
+    const mediaLabels = actionLanguage.startsWith('ar')
+      ? {
+          copyPrompt:'نسخ الطلب',
+          promptCopied:'تم نسخ الطلب',
+          openMedia:'فتح بالحجم الكامل'
+        }
+      : actionLanguage.startsWith('fr')
+        ? {
+            copyPrompt:'Copier le prompt',
+            promptCopied:'Prompt copié',
+            openMedia:'Ouvrir en plein écran'
+          }
+        : actionLanguage.startsWith('es')
+          ? {
+              copyPrompt:'Copiar prompt',
+              promptCopied:'Prompt copiado',
+              openMedia:'Abrir a tamaño completo'
+            }
+          : actionLanguage.startsWith('zh')
+            ? {
+                copyPrompt:'复制提示词',
+                promptCopied:'提示词已复制',
+                openMedia:'全屏查看'
+              }
+            : {
+                copyPrompt:'Copy prompt',
+                promptCopied:'Prompt copied',
+                openMedia:'Open full size'
+              };
+
+    Object.assign(labels,extraLabels,mediaLabels);
+
+    const message =
+      actions.previousElementSibling?.classList.contains('msg')
+        ? actions.previousElementSibling
+        : null;
+
+    const messageMeta =
+      message?._zuvyrMeta &&
+      typeof message._zuvyrMeta === 'object'
+        ? message._zuvyrMeta
+        : {};
+
+    const messageFeature = String(
+      messageMeta.feature || ''
+    ).trim().toLowerCase();
+
+    const isMediaMessage =
+      messageFeature === 'images' ||
+      messageFeature === 'videos';
+
+    const mediaNode = isMediaMessage
+      ? message?.querySelector('img,video')
+      : null;
+
+    const getPreviousUserMessage = () => {
+      let previous = message?.previousElementSibling || null;
+
+      while (previous) {
+        if (
+          previous.classList?.contains('msg') &&
+          previous.classList.contains('user')
+        ) {
+          return previous;
+        }
+
+        previous = previous.previousElementSibling;
+      }
+
+      return null;
+    };
+
+    const getPreviousPrompt = () =>
+      String(
+        getPreviousUserMessage()?.innerText ||
+        getPreviousUserMessage()?.textContent ||
+        ''
+      ).trim();
+
+    const openMedia = async () => {
+      if (!mediaNode) return;
+
+      if (typeof mediaNode.requestFullscreen === 'function') {
+        try {
+          await mediaNode.requestFullscreen();
+          return;
+        } catch (_) {}
+      }
+
+      const url = String(
+        mediaNode.currentSrc ||
+        mediaNode.src ||
+        ''
+      ).trim();
+
+      if (url) {
+        window.open(url,'_blank','noopener');
+      }
+    };
+
+    const copyPrompt = async () => {
+      const prompt = getPreviousPrompt();
+      if (!prompt) return false;
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(prompt);
+      } else {
+        const area = document.createElement('textarea');
+        area.value = prompt;
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        area.remove();
+      }
+
+      return true;
+    };
+
     const copyButton = buttons[0];
     const listenButton = buttons[1];
     const likeButton = buttons[2];
@@ -36703,7 +37185,42 @@ document.addEventListener("DOMContentLoaded",function(){
     const downloadButton = buttons[5];
 
     actions.dataset.roxGptActions = 'true';
+    actions.dataset.zuvyrMessageFeature =
+      messageFeature || 'chat';
     actions.classList.add('rox-gpt-actions');
+
+    if (isMediaMessage) {
+      actions.classList.add('is-media-actions');
+
+      if (message) {
+        message.dataset.zuvyrMediaOutput = '1';
+      }
+
+      if (
+        mediaNode &&
+        mediaNode.dataset.zuvyrMediaOpenBound !== 'true'
+      ) {
+        mediaNode.dataset.zuvyrMediaOpenBound = 'true';
+        mediaNode.tabIndex = 0;
+        mediaNode.setAttribute('role','button');
+        mediaNode.title = labels.openMedia;
+        mediaNode.setAttribute('aria-label',labels.openMedia);
+
+        mediaNode.addEventListener('click',() => {
+          openMedia();
+        });
+
+        mediaNode.addEventListener('keydown',event => {
+          if (
+            event.key === 'Enter' ||
+            event.key === ' '
+          ) {
+            event.preventDefault();
+            openMedia();
+          }
+        });
+      }
+    }
 
     copyButton.innerHTML = icon.copy;
     copyButton.title = labels.copy;
@@ -36718,12 +37235,38 @@ document.addEventListener("DOMContentLoaded",function(){
     dislikeButton.setAttribute('aria-label',labels.dislike);
 
     listenButton.classList.add('rox-gpt-hidden-action');
-    downloadButton.classList.add('rox-gpt-hidden-action');
 
-    shareButton.classList.remove('rox-gpt-hidden-action');
-    shareButton.innerHTML = icon.share;
-    shareButton.title = labels.share;
-    shareButton.setAttribute('aria-label',labels.share);
+    if (isMediaMessage) {
+      copyButton.classList.add('rox-gpt-hidden-action');
+      shareButton.classList.add('rox-gpt-hidden-action');
+
+      downloadButton.classList.remove('rox-gpt-hidden-action');
+      downloadButton.classList.add('rox-media-primary-action');
+      downloadButton.innerHTML =
+        icon.download +
+        '<span class="rox-media-action-label"></span>';
+
+      const downloadLabel =
+        downloadButton.title ||
+        downloadButton.getAttribute('aria-label') ||
+        'Download';
+
+      downloadButton
+        .querySelector('.rox-media-action-label')
+        .textContent = downloadLabel;
+
+      downloadButton.title = downloadLabel;
+      downloadButton.setAttribute(
+        'aria-label',
+        downloadLabel
+      );
+    } else {
+      downloadButton.classList.add('rox-gpt-hidden-action');
+      shareButton.classList.remove('rox-gpt-hidden-action');
+      shareButton.innerHTML = icon.share;
+      shareButton.title = labels.share;
+      shareButton.setAttribute('aria-label',labels.share);
+    }
 
     const retryButton = document.createElement('button');
     retryButton.type = 'button';
@@ -36733,25 +37276,24 @@ document.addEventListener("DOMContentLoaded",function(){
     retryButton.setAttribute('aria-label',labels.retry);
 
     retryButton.addEventListener('click',() => {
-      let previous = actions.previousElementSibling;
+      const text = getPreviousPrompt();
 
-      while (previous) {
-        if (
-          previous.classList?.contains('msg') &&
-          previous.classList.contains('user')
-        ) break;
-
-        previous = previous.previousElementSibling;
-      }
-
-      const text = String(
-        previous?.innerText||
-        previous?.textContent||
-        ''
-      ).trim();
+      const retryFeature = [
+        'chat',
+        'code',
+        'images',
+        'videos',
+        'roxip'
+      ].includes(messageFeature)
+        ? messageFeature
+        : 'chat';
 
       const composer = document.querySelector(
-        '#feature-chat [data-feature="chat"]'
+        '#feature-' +
+        retryFeature +
+        ' [data-feature="' +
+        retryFeature +
+        '"]'
       );
 
       if (!text || !composer) return;
@@ -36763,7 +37305,7 @@ document.addEventListener("DOMContentLoaded",function(){
       composer.focus();
 
       if (typeof sendMessage === 'function') {
-        sendMessage('chat');
+        sendMessage(retryFeature);
       }
     });
 
@@ -36783,11 +37325,6 @@ document.addEventListener("DOMContentLoaded",function(){
     menu.className = 'rox-gpt-more-menu';
     menu.setAttribute('role','menu');
     menu.hidden = true;
-
-    const message =
-      actions.previousElementSibling?.classList.contains('msg')
-        ? actions.previousElementSibling
-        : null;
 
     const messageDate = new Date(
       message?.dataset.zuvyrCreatedAt||
@@ -36920,7 +37457,54 @@ document.addEventListener("DOMContentLoaded",function(){
       false
     );
 
-    menu.append(time,sourcesButton,branchButton,readButton);
+    const copyPromptButton = makeMenuItem(
+      icon.copy,
+      labels.copyPrompt,
+      async () => {
+        menu.hidden = true;
+        moreButton.setAttribute('aria-expanded','false');
+
+        try {
+          const copied = await copyPrompt();
+
+          if (copied) {
+            showNote(actions,labels.promptCopied);
+          }
+        } catch (error) {
+          console.error(
+            'ZUVYR prompt copy failed:',
+            error
+          );
+        }
+      },
+      false
+    );
+
+    const openMediaButton = makeMenuItem(
+      icon.expand,
+      labels.openMedia,
+      () => {
+        menu.hidden = true;
+        moreButton.setAttribute('aria-expanded','false');
+        openMedia();
+      },
+      !mediaNode
+    );
+
+    if (isMediaMessage) {
+      menu.append(
+        time,
+        copyPromptButton,
+        openMediaButton
+      );
+    } else {
+      menu.append(
+        time,
+        sourcesButton,
+        branchButton,
+        readButton
+      );
+    }
     wrap.append(moreButton,menu);
     actions.appendChild(retryButton);
     actions.appendChild(wrap);
