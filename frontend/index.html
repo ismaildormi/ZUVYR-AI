@@ -33534,6 +33534,40 @@ const GEN_ROUTES = { images: '/api/generate-image', videos: '/api/generate-video
 const GEN_POLL_MS = 2500;
 const GEN_TIMEOUT_MS = 120000;
 
+async function downloadCanonicalGeneration(contentId, assetId, button) {
+  if (!contentId || !assetId) return;
+  if (button) button.disabled = true;
+  try {
+    const res = await authFetch('/api/workspace/library/items/' + encodeURIComponent(contentId) + '/download', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assetId })
+    });
+    const data = await res.json().catch(() => ({}));
+    const download = data && data.download && typeof data.download === 'object'
+      ? data.download
+      : {};
+    const signedUrl = String(
+      download.signed_url ||
+      download.signedUrl ||
+      ''
+    ).trim();
+    if (!res.ok || !signedUrl) {
+      throw new Error(data?.code || 'generation_download_failed');
+    }
+
+    // The backend signs this URL with download=true. Navigating directly
+    // avoids a second cross-origin fetch and preserves the browser's
+    // native attachment download handling.
+    window.location.assign(signedUrl);
+  } catch (error) {
+    console.error('[image-download] failed:', error);
+    window.alert('Download failed. Please try again.');
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
 async function sendGeneration(feature, text, msgBox) {
   const typing = appendTyping(msgBox);
   try {
