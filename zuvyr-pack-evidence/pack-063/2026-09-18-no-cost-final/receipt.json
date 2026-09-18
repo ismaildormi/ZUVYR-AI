@@ -1,0 +1,81 @@
+{
+  "pack": "063",
+  "title": "Image Edit / Inpaint / Outpaint",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonicalLockedVerified": false,
+  "sourceCommit": "787996f367cf1e28a034001929eb9aefe383c1ba",
+  "baselineCommit": "ec972d85381e57984a535a2a983ec603e7403ab5",
+  "localVerification": {
+    "pack063Focused": "2/2 PASS",
+    "pack062Regression": "4/4 PASS",
+    "pack061Regression": "8/8 PASS",
+    "costRegistryWiring": "4/4 PASS",
+    "providerNetworkCallsDuringTests": 0
+  },
+  "deployment": {
+    "backend": {
+      "deploymentId": "fa217b4e-e35f-4630-be7b-a6a8f29d880f",
+      "status": "SUCCESS",
+      "healthcheck": "/readyz PASS"
+    },
+    "worker": {
+      "deploymentId": "6708aef3-f240-4c36-a245-24d456a9b53c",
+      "status": "SUCCESS"
+    },
+    "githubCommitStatuses": "SUCCESS",
+    "vercelStatus": "SUCCESS"
+  },
+  "noCostExternalProof": {
+    "authentication": "DIRECT_FAL_KEY_ACCEPTED",
+    "models": [
+      {
+        "model": "fal-ai/flux-pro/kontext",
+        "operation": "edit",
+        "statusLookup": 404,
+        "result": "PASS"
+      },
+      {
+        "model": "fal-ai/qwen-image-edit/inpaint",
+        "operation": "inpaint",
+        "statusLookup": 404,
+        "result": "PASS"
+      },
+      {
+        "model": "fal-ai/image-apps-v2/outpaint",
+        "operation": "expand",
+        "statusLookup": 404,
+        "result": "PASS"
+      }
+    ],
+    "mode": "STATUS_LOOKUP_ONLY",
+    "paidInferenceCalls": 0
+  },
+  "productionDatabaseObservation": {
+    "editJobs": 0,
+    "inpaintJobs": 0,
+    "expandJobs": 0,
+    "paidExecutionObserved": false
+  },
+  "safety": {
+    "paidExecutionDefault": false,
+    "pack063PaidExecutionEnvironmentPresent": false,
+    "variableMegapixelActivationEnvironmentPresent": false,
+    "unknownVariableMpSettlementRemainsBlocked": true
+  },
+  "rollbackEvidence": {
+    "ownerScopedRollbackRouteUnit": "PASS",
+    "immutableOriginalSourcePreserved": true,
+    "providerCallsOnRollback": 0,
+    "productionRollbackExecuted": false,
+    "reason": "No destructive or paid production mutation was created during Pack063 verification."
+  },
+  "limitations": [
+    "No real paid edit output was generated.",
+    "No real paid inpaint output was generated.",
+    "No real paid outpaint output was generated.",
+    "Actual provider output quality and billed megapixel settlement remain deferred."
+  ],
+  "paidLiveE2E": "DEFERRED_NO_PROVIDER_FUNDS",
+  "progression": "USER_APPROVED_NO_COST_DEFERRED_GATE",
+  "nextPack": "064"
+}

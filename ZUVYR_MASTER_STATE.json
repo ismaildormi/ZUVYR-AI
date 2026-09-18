@@ -837,7 +837,7 @@
     "final_release_pack": "150",
     "previous_plan_preserved": true
   },
-  "active_pack": "063",
+  "active_pack": "064",
   "pack061": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
@@ -888,7 +888,7 @@
     "note": "Older top-level/current state fields reflect PACK050. active_pack=061 is the current continuation; historical 051–060 receipts require separate reconciliation before lock assertions."
   },
   "pack063": {
-    "status": "OPEN",
+    "status": "LOCKED_ENGINEERING_VERIFIED",
     "title": "Image Edit / Inpaint / Outpaint",
     "dependencies": [
       "042",
@@ -897,6 +897,61 @@
       "062"
     ],
     "opened_from_pack062": "NO_COST_EXTERNAL_GATE_VERIFIED",
+    "paid_execution_allowed": false,
+    "next_pack_allowed": true,
+    "source_commit": "787996f367cf1e28a034001929eb9aefe383c1ba",
+    "baseline_commit": "ec972d85381e57984a535a2a983ec603e7403ab5",
+    "local_pack063_tests": "2/2 PASS",
+    "pack062_regression": "4/4 PASS",
+    "pack061_regression": "8/8 PASS",
+    "cost_registry_wiring": "4/4 PASS",
+    "railway_backend_deployment": "fa217b4e-e35f-4630-be7b-a6a8f29d880f",
+    "railway_backend_status": "SUCCESS",
+    "railway_worker_deployment": "6708aef3-f240-4c36-a245-24d456a9b53c",
+    "railway_worker_status": "SUCCESS",
+    "no_cost_fal_preflight": "PASS",
+    "fal_edit_endpoint": "fal-ai/flux-pro/kontext",
+    "fal_inpaint_endpoint": "fal-ai/qwen-image-edit/inpaint",
+    "fal_outpaint_endpoint": "fal-ai/image-apps-v2/outpaint",
+    "fal_status_lookup_results": [
+      404,
+      404,
+      404
+    ],
+    "paid_provider_inference_calls": 0,
+    "production_edit_jobs": 0,
+    "production_inpaint_jobs": 0,
+    "production_expand_jobs": 0,
+    "rollback_route": "OWNER_SCOPED_PASS",
+    "source_lineage": "PASS",
+    "paid_execution_default": false,
+    "paid_live_e2e": "DEFERRED_NO_PROVIDER_FUNDS",
+    "canonical_locked_verified": false,
+    "advance_exception": "USER_APPROVED_NO_COST_DEFERRED_GATE",
+    "final_no_cost_receipt": "zuvyr-pack-evidence/pack-063/2026-09-18-no-cost-final/receipt.json",
+    "final_receipt_sha256": "0918ca4b3e095495e6f29cdb9596af3f8419867597b40bbdb510007da8659137",
+    "next_pack": "064"
+  },
+  "pack064": {
+    "status": "OPEN",
+    "title": "Image Utility Pipeline",
+    "dependencies": [
+      "042",
+      "049",
+      "061",
+      "063"
+    ],
+    "scope": [
+      "remove_background",
+      "upscale",
+      "relight",
+      "crop_resize",
+      "canvas",
+      "layers",
+      "text",
+      "batch"
+    ],
+    "rule": "Only expose operations backed by a verified real executor.",
     "paid_execution_allowed": false,
     "next_pack_allowed": false
   }

@@ -476,3 +476,48 @@ Official provider evidence reviewed 2026-09-18:
 - V3 makes the generic activation gate evaluate only the object-shaped condition while preserving legacy arrays.
 - Pack063 focused coverage now asserts both legacy Groq eligibility and Pack063 conditional inpaint eligibility.
 - Paid provider calls remain 0.
+
+
+## PACK063 NO-COST FINAL RECONCILIATION — 2026-09-18
+
+- Source commit: 787996f367cf1e28a034001929eb9aefe383c1ba
+- Baseline: ec972d85381e57984a535a2a983ec603e7403ab5
+- PACK063 focused tests: 2/2 PASS
+- PACK062 regression: 4/4 PASS
+- PACK061 regression: 8/8 PASS
+- Cost / registry / wiring: 4/4 PASS
+- Railway backend: fa217b4e-e35f-4630-be7b-a6a8f29d880f — SUCCESS
+- Railway worker: 6708aef3-f240-4c36-a245-24d456a9b53c — SUCCESS
+- Fal direct authentication: ACCEPTED
+- fal-ai/flux-pro/kontext status-only preflight: PASS / 404 expected
+- fal-ai/qwen-image-edit/inpaint status-only preflight: PASS / 404 expected
+- fal-ai/image-apps-v2/outpaint status-only preflight: PASS / 404 expected
+- Paid inference calls: 0
+- Production edit/inpaint/expand jobs created during verification: 0
+- Owner-scoped zero-provider rollback: PASS
+- Immutable source lineage: PASS
+- Paid execution remains OFF
+- Paid live generation: DEFERRED_NO_PROVIDER_FUNDS
+- Status: LOCKED_ENGINEERING_VERIFIED
+- Canonical LOCKED_VERIFIED: NO
+- Receipt: zuvyr-pack-evidence/pack-063/2026-09-18-no-cost-final/receipt.json
+- Receipt SHA256: 0918ca4b3e095495e6f29cdb9596af3f8419867597b40bbdb510007da8659137
+- User-approved no-cost progression: YES
+- Active pack after reconciliation: PACK064
+
+## PACK064 OPEN — Image Utility Pipeline
+
+Canonical scope:
+- Background removal
+- Upscale
+- Relight
+- Crop / resize
+- Canvas
+- Layers
+- Text
+- Batch
+
+Pack064 rule:
+Every V1-advertised utility must have a real executor.
+Unsupported, unpriced or unverified operations remain blocked/hidden.
+No paid provider execution is allowed while provider funds are unavailable.
