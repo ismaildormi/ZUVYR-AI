@@ -837,7 +837,7 @@
     "final_release_pack": "150",
     "previous_plan_preserved": true
   },
-  "active_pack": "064",
+  "active_pack": "065",
   "pack061": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
@@ -933,7 +933,7 @@
     "next_pack": "064"
   },
   "pack064": {
-    "status": "OPEN",
+    "status": "LOCKED_ENGINEERING_VERIFIED",
     "title": "Image Utility Pipeline",
     "dependencies": [
       "042",
@@ -952,6 +952,92 @@
       "batch"
     ],
     "rule": "Only expose operations backed by a verified real executor.",
+    "paid_execution_allowed": false,
+    "next_pack_allowed": true,
+    "baseline_commit": "dbab88432ec1a7c0decb88891c6a85b319e6d5d0",
+    "source_commit": "1262294675dbb3a0e118a0428718725f2b45bcfe",
+    "phase01_local": "PASS",
+    "phase02_local": "PASS",
+    "phase03_local": "PASS",
+    "pack064_focused_tests": "6/6 PASS",
+    "pack063_regression": "2/2 PASS",
+    "pack062_regression": "4/4 PASS",
+    "pack061_regression": "8/8 PASS",
+    "cost_registry_wiring": "4/4 PASS",
+    "migration": {
+      "name": "pack064_image_utility_operations",
+      "status": "APPLIED_VERIFIED",
+      "production_constraint_verified": true
+    },
+    "railway_backend_deployment": "d29d4cf5-e39d-4bef-8a3c-bebe92c609b6",
+    "railway_backend_status": "SUCCESS",
+    "railway_worker_deployment": "c07c521a-6cd3-43cf-a75f-a66e337618ab",
+    "railway_worker_status": "SUCCESS",
+    "github_commit_status": "SUCCESS",
+    "vercel_status": "SUCCESS",
+    "no_cost_fal_preflight": "PASS",
+    "fal_background_endpoint": "fal-ai/birefnet/v2",
+    "fal_relight_endpoint": "fal-ai/image-apps-v2/relighting",
+    "fal_status_lookup_results": [
+      404,
+      404
+    ],
+    "paid_provider_inference_calls": 0,
+    "production_jobs": {
+      "remove_background": 0,
+      "relight": 0,
+      "crop": 0,
+      "resize": 0,
+      "canvas": 0,
+      "layers": 0,
+      "text": 0,
+      "batch": 0,
+      "upscale": 0
+    },
+    "external_execution_default": false,
+    "external_execution_environment_present_backend": false,
+    "external_execution_environment_present_worker": false,
+    "local_runtime": "sharp@0.34.4",
+    "local_operations": [
+      "crop",
+      "resize",
+      "canvas",
+      "layers",
+      "text",
+      "batch"
+    ],
+    "guarded_external_operations": [
+      "remove_background",
+      "relight"
+    ],
+    "upscale_status": "BLOCKED_PENDING_EXACT_PRECHARGE_OUTPUT_MP_QUOTE",
+    "feature_flags_ui_exposed": false,
+    "paid_live_e2e": "DEFERRED_NO_PROVIDER_FUNDS",
+    "real_production_user_flow": "NOT_EXECUTED",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "No dated authenticated production user-flow proof; external provider execution remained disabled and Pack064 UI remained unexposed.",
+    "advance_exception": "USER_APPROVED_NO_COST_DEFERRED_GATE",
+    "final_no_cost_receipt": "zuvyr-pack-evidence/pack-064/2026-09-18-no-cost-final/receipt.json",
+    "final_receipt_sha256": "3c58e81a55112b28f93f0c3c77e0dc0c9a4f41ea58524285605c57653ae90363",
+    "next_pack": "065"
+  },
+  "pack065": {
+    "status": "OPEN",
+    "title": "Image Studio Checkpoint",
+    "dependencies": [
+      "061",
+      "062",
+      "063",
+      "064"
+    ],
+    "scope": [
+      "responsive_image_studio",
+      "actions_send_to",
+      "history_versions",
+      "export",
+      "provider_failure_refund_tests"
+    ],
+    "acceptance": "All advertised V1 image operations pass live proof or are explicitly removed from V1 UI.",
     "paid_execution_allowed": false,
     "next_pack_allowed": false
   }

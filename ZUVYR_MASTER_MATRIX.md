@@ -690,3 +690,38 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - Next: `PACK064 — Image Utility Pipeline`
 
 <!-- ZUVYR_PACK_063_ENGINEERING_FINALIZER_END -->
+
+
+<!-- ZUVYR_PACK_064_ENGINEERING_FINALIZER_BEGIN -->
+## PACK064 — Image Utility Pipeline — NO-COST ENGINEERING FINALIZER
+
+- Baseline: `dbab88432ec1a7c0decb88891c6a85b319e6d5d0`
+- Source commit: `1262294675dbb3a0e118a0428718725f2b45bcfe`
+- Status: `LOCKED_ENGINEERING_VERIFIED`
+- Canonical `LOCKED_VERIFIED`: NO
+- Canonical gate reason: no dated authenticated production user-flow proof
+- PACK064 final focused suite: `6/6 PASS`
+- PACK063 regression: `2/2 PASS`
+- PACK062 regression: `4/4 PASS`
+- PACK061 regression: `8/8 PASS`
+- Cost / registry / wiring: `4/4 PASS`
+- Supabase migration: `pack064_image_utility_operations` — APPLIED_VERIFIED
+- Backend deployment: `d29d4cf5-e39d-4bef-8a3c-bebe92c609b6` — SUCCESS
+- Worker deployment: `c07c521a-6cd3-43cf-a75f-a66e337618ab` — SUCCESS
+- GitHub / Vercel commit status: SUCCESS
+- Fal background-removal status-only preflight: PASS / 404 expected
+- Fal relighting status-only preflight: PASS / 404 expected
+- Paid provider inference calls: `0`
+- Production Pack064 jobs observed: `0`
+- PACK064 external execution environment present: NO
+- Local executor: `sharp@0.34.4`
+- Local executor operations: crop / resize / canvas / layers / text / batch
+- Guarded external operations: remove_background / relight
+- Upscale: BLOCKED_PENDING_EXACT_PRECHARGE_OUTPUT_MP_QUOTE
+- Feature flags / Image Studio UI exposure: unchanged
+- Receipt: `zuvyr-pack-evidence/pack-064/2026-09-18-no-cost-final/receipt.json`
+- Receipt SHA256: `3c58e81a55112b28f93f0c3c77e0dc0c9a4f41ea58524285605c57653ae90363`
+- Progression: user-approved no-cost deferred gate
+- Next: `PACK065 — Image Studio Checkpoint`
+
+<!-- ZUVYR_PACK_064_ENGINEERING_FINALIZER_END -->

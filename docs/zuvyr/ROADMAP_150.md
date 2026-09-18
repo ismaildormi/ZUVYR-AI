@@ -1,6 +1,6 @@
 # ZUVYR V1 — Canonical 001–150 roadmap
 
-Date: 2026-09-18. Active: PACK064 OPEN. PACK063 LOCKED_ENGINEERING_VERIFIED with paid-live E2E deferred.
+Date: 2026-09-18. Active: PACK065 OPEN. PACK063 LOCKED_ENGINEERING_VERIFIED with paid-live E2E deferred.
 
 Latest user MASTER EXECUTION PROMPT overrides attached 100-pack and one-step rules. 001–099 retain numbering and original scope; 100 remains hardening checkpoint; 101–150 extend integration/operational qualification without repeating original feature builds. Historical status is not newly verified.
 
@@ -1290,7 +1290,9 @@ Pack063 no-cost progression note: paid edit/inpaint/outpaint inference remains d
 - **Evidence/receipt requirements:** Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.
 - **Final gate:** LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate.
 - **External gate:** —
-- **Recorded status:** OPEN
+- **Recorded status:** LOCKED_ENGINEERING_VERIFIED — PRODUCTION_USER_FLOW_DEFERRED
+
+Pack064 no-cost progression note: engineering/runtime/deployment/migration/preflight are verified, but canonical LOCKED_VERIFIED remains false because no dated authenticated production user-flow was executed.
 
 ## PACK065 — Image Studio Checkpoint
 
@@ -1310,7 +1312,7 @@ Pack063 no-cost progression note: paid edit/inpaint/outpaint inference remains d
 - **Evidence/receipt requirements:** Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.
 - **Final gate:** LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate.
 - **External gate:** —
-- **Recorded status:** PLANNED
+- **Recorded status:** OPEN
 
 ## PACK066 — Text-to-Video
 

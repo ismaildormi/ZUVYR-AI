@@ -1,0 +1,83 @@
+﻿{
+  "pack": "064",
+  "title": "Image Utility Pipeline",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonicalLockedVerified": false,
+  "baselineCommit": "dbab88432ec1a7c0decb88891c6a85b319e6d5d0",
+  "sourceCommit": "1262294675dbb3a0e118a0428718725f2b45bcfe",
+  "localVerification": {
+    "pack064Focused": "6/6 PASS",
+    "pack063Regression": "2/2 PASS",
+    "pack062Regression": "4/4 PASS",
+    "pack061Regression": "8/8 PASS",
+    "costRegistryWiring": "4/4 PASS"
+  },
+  "migration": {
+    "name": "pack064_image_utility_operations",
+    "status": "APPLIED_VERIFIED",
+    "productionConstraintVerified": true
+  },
+  "deployment": {
+    "backend": {
+      "deploymentId": "d29d4cf5-e39d-4bef-8a3c-bebe92c609b6",
+      "status": "SUCCESS",
+      "healthcheck": "PASS"
+    },
+    "worker": {
+      "deploymentId": "c07c521a-6cd3-43cf-a75f-a66e337618ab",
+      "status": "SUCCESS"
+    },
+    "githubCommitStatus": "SUCCESS",
+    "vercelStatus": "SUCCESS"
+  },
+  "noCostExternalProof": {
+    "authentication": "DIRECT_FAL_KEY_ACCEPTED",
+    "models": [
+      {
+        "model": "fal-ai/birefnet/v2",
+        "operation": "remove_background",
+        "statusLookup": 404,
+        "result": "PASS"
+      },
+      {
+        "model": "fal-ai/image-apps-v2/relighting",
+        "operation": "relight",
+        "statusLookup": 404,
+        "result": "PASS"
+      }
+    ],
+    "mode": "STATUS_LOOKUP_ONLY",
+    "paidInferenceCalls": 0
+  },
+  "productionDatabaseObservation": {
+    "remove_background": 0,
+    "relight": 0,
+    "crop": 0,
+    "resize": 0,
+    "canvas": 0,
+    "layers": 0,
+    "text": 0,
+    "batch": 0,
+    "upscale": 0
+  },
+  "executionSafety": {
+    "externalExecutionDefault": false,
+    "externalExecutionEnvironmentPresentBackend": false,
+    "externalExecutionEnvironmentPresentWorker": false,
+    "localRuntime": "sharp@0.34.4",
+    "localProviderCalls": 0,
+    "upscaleStatus": "BLOCKED_PENDING_EXACT_PRECHARGE_OUTPUT_MP_QUOTE",
+    "featureFlagsUiExposed": false
+  },
+  "limitations": [
+    "No authenticated production Pack064 user flow was executed.",
+    "No real background-removal inference was submitted.",
+    "No real relighting inference was submitted.",
+    "Image Studio UI exposure is deferred to Pack065.",
+    "Upscale remains blocked until exact pre-charge output-megapixel pricing is authoritative."
+  ],
+  "paidLiveE2E": "DEFERRED_NO_PROVIDER_FUNDS",
+  "canonicalGateReason": "No dated authenticated production user-flow proof.",
+  "progression": "USER_APPROVED_NO_COST_DEFERRED_GATE",
+  "nextPack": "065"
+}

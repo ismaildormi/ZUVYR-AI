@@ -645,3 +645,49 @@ Phase02 wiring:
 - AI provider calls: 0.
 - Payment calls: 0.
 - No commit/push/deploy occurred before this correction.
+
+
+## PACK064 NO-COST FINAL RECONCILIATION — 2026-09-18
+
+- Baseline commit: dbab88432ec1a7c0decb88891c6a85b319e6d5d0
+- Source commit: 1262294675dbb3a0e118a0428718725f2b45bcfe
+- PACK064 focused final gate: 6/6 PASS
+- PACK063 regression: 2/2 PASS
+- PACK062 regression: 4/4 PASS
+- PACK061 regression: 8/8 PASS
+- Cost / registry / wiring: 4/4 PASS
+- Supabase migration: pack064_image_utility_operations — APPLIED_VERIFIED
+- Production image-operation constraint includes Pack064 utility operations
+- Railway backend deployment: d29d4cf5-e39d-4bef-8a3c-bebe92c609b6 — SUCCESS
+- Railway worker deployment: c07c521a-6cd3-43cf-a75f-a66e337618ab — SUCCESS
+- GitHub/Vercel commit statuses: SUCCESS
+- Direct Fal no-cost status-only preflight:
+  - fal-ai/birefnet/v2 -> PASS / 404 expected
+  - fal-ai/image-apps-v2/relighting -> PASS / 404 expected
+- Paid inference calls: 0
+- PACK064_EXTERNAL_EXECUTION_ENABLED absent on production backend and worker
+- Production Pack064 jobs observed: 0 across remove_background, relight, crop, resize, canvas, layers, text, batch and upscale
+- Local runtime: sharp@0.34.4
+- Local operations wired: crop, resize, canvas, layers, text, batch
+- Guarded external operations wired: remove_background, relight
+- Upscale: BLOCKED_PENDING_EXACT_PRECHARGE_OUTPUT_MP_QUOTE
+- Feature flags / Image Studio UI exposure: unchanged / not exposed by Pack064
+- Status: LOCKED_ENGINEERING_VERIFIED
+- Canonical LOCKED_VERIFIED: NO
+- Reason canonical gate remains open: no authenticated production user-flow proof
+- Paid live E2E: DEFERRED_NO_PROVIDER_FUNDS
+- Receipt: zuvyr-pack-evidence/pack-064/2026-09-18-no-cost-final/receipt.json
+- Receipt SHA256: 3c58e81a55112b28f93f0c3c77e0dc0c9a4f41ea58524285605c57653ae90363
+- User-approved no-cost progression: YES
+- Active pack after reconciliation: PACK065
+
+## PACK065 OPEN — Image Studio Checkpoint
+
+Canonical objective:
+Complete responsive Image Studio, actions/send-to/history/versions/export and provider-failure/refund tests.
+
+Canonical acceptance:
+All advertised V1 image operations pass live proof or are explicitly removed from V1 UI.
+
+Pack065 must not advertise blocked/unverified operations as working.
+Pack064 upscale remains blocked until exact pre-charge output-megapixel pricing exists.
