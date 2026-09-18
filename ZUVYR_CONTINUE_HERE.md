@@ -777,3 +777,63 @@ Phase03 deploy candidate:
   - unauthenticated Image Studio API request denied.
 - authenticated owner history/reopen/export/send-to/version/rollback proof remains a separate canonical gate when an authenticated session is available.
 - paid inference calls remain 0.
+
+
+## PACK065 NO-COST FINAL RECONCILIATION — 2026-09-18
+
+- Baseline commit: 91a0c6c398d93fe36053c8baeea38969830bf2b1
+- Source commit: 6b5076d27648a7dceef76b3b28553ed3df06b60b
+- PACK065 final focused gate: 6/6 PASS
+- Worker memory regression: PASS
+- PACK064 regression: 6/6 PASS
+- PACK063 regression: 2/2 PASS
+- PACK062 regression: 4/4 PASS
+- PACK061 regression: 8/8 PASS
+- PACK049 universal actions: 2/2 PASS
+- Provider failure/refund:
+  - retry-pending refund: BLOCKED
+  - exhausted/unrecoverable refund: VERIFIED
+  - double-refund protection: VERIFIED
+  - refund failure persistence: VERIFIED
+- GitHub commit status: SUCCESS
+- Vercel production deployment: dpl_6zjUoprc9VQgu7q6nEfh1ZtfDzdh — READY
+- Railway backend deployment: e5ae13a0-4c18-4c69-b43d-132a3b66ce8b — SUCCESS
+- Railway worker deployment: 1a0bf109-f099-4b40-a4e6-cd1c715b3f3c — SUCCESS
+- Railway backend healthcheck path: /readyz
+- No schema migration required.
+- Paid provider calls: 0
+- Production no-cost proof:
+  - backend /readyz: PASS
+  - unauthenticated Image Studio API denial: PASS
+  - Vercel Image Studio static marker: PASS
+  - old misleading Enhance/upscale advertisement: ABSENT
+- Operation truth:
+  - Generate: historical live proof from Pack061
+  - Reference / variations: gated
+  - Edit / inpaint / expand: gated
+  - Background removal / relight: gated
+  - Crop / resize / canvas / layers / text / batch: backend verified; not claimed as authenticated live owner flow
+  - Upscale: blocked pending exact pre-charge output-MP quote
+- Authenticated owner action proof: DEFERRED_NO_SESSION_TOKEN
+- Status: LOCKED_ENGINEERING_VERIFIED
+- Canonical LOCKED_VERIFIED: NO
+- Canonical reason: authenticated owner production history/reopen/export/Send-To/version/rollback proof remains deferred
+- Receipt: zuvyr-pack-evidence/pack-065/2026-09-18-no-cost-final/receipt.json
+- Receipt SHA256: c790329fff91a0a2c6a94595f1ccb57c53894466926e3c104f06d62a2480103f
+- User-approved no-cost progression: YES
+- Active pack after reconciliation: PACK066
+
+## PACK066 OPEN — Text-to-Video
+
+Canonical objective:
+Bind verified text-to-video provider execution with exact supported option mapping, async progress, actual duration/cost settlement and canonical storage.
+
+Canonical acceptance:
+Playable text-to-video matches supported settings and settles using actual billable units.
+
+Pack066 must preserve:
+- paid execution OFF unless an exact verified provider/cost gate is explicitly authorized
+- no fabricated provider or cost state
+- unsupported options hidden/blocked
+- reserve/settle/refund accounting
+- owner-scoped canonical storage and history

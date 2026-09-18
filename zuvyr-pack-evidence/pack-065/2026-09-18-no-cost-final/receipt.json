@@ -1,0 +1,60 @@
+﻿{
+    "pack":  "065",
+    "title":  "Image Studio Checkpoint",
+    "status":  "LOCKED_ENGINEERING_VERIFIED",
+    "canonicalLockedVerified":  false,
+    "baselineCommit":  "91a0c6c398d93fe36053c8baeea38969830bf2b1",
+    "sourceCommit":  "6b5076d27648a7dceef76b3b28553ed3df06b60b",
+    "localVerification":  {
+                              "pack065Focused":  "6/6 PASS",
+                              "workerMemoryRegression":  "PASS",
+                              "pack064Regression":  "6/6 PASS",
+                              "pack063Regression":  "2/2 PASS",
+                              "pack062Regression":  "4/4 PASS",
+                              "pack061Regression":  "8/8 PASS",
+                              "pack049UniversalActions":  "2/2 PASS"
+                          },
+    "refundVerification":  {
+                               "retryPendingRefund":  "BLOCKED",
+                               "exhaustedUnrecoverableRefund":  "VERIFIED",
+                               "doubleRefundProtection":  "VERIFIED",
+                               "refundFailurePersistence":  "VERIFIED"
+                           },
+    "deployment":  {
+                       "githubCommitStatus":  "SUCCESS",
+                       "vercel":  {
+                                      "deploymentId":  "dpl_6zjUoprc9VQgu7q6nEfh1ZtfDzdh",
+                                      "status":  "READY"
+                                  },
+                       "backend":  {
+                                       "deploymentId":  "e5ae13a0-4c18-4c69-b43d-132a3b66ce8b",
+                                       "status":  "SUCCESS",
+                                       "readyzStatus":  200
+                                   },
+                       "worker":  {
+                                      "deploymentId":  "1a0bf109-f099-4b40-a4e6-cd1c715b3f3c",
+                                      "status":  "SUCCESS"
+                                  }
+                   },
+    "productionProof":  {
+                            "backendReadyz":  "PASS",
+                            "unauthenticatedImageStudioApi":  "PASS",
+                            "unauthenticatedImageStudioApiStatus":  401,
+                            "vercelImageStudioStatic":  "PASS",
+                            "misleadingEnhanceUpscaleAdvertisingAbsent":  true,
+                            "authenticatedOwnerActions":  "DEFERRED_NO_SESSION_TOKEN"
+                        },
+    "operationTruth":  {
+                           "generate":  "HISTORICAL_LIVE_PROOF_PACK061",
+                           "referenceVariations":  "GATED",
+                           "editInpaintExpand":  "GATED",
+                           "backgroundRelight":  "GATED",
+                           "localUtilities":  "BACKEND_VERIFIED_NOT_CLAIMED_AS_AUTHENTICATED_LIVE_USER_FLOW",
+                           "upscale":  "BLOCKED_PENDING_EXACT_PRECHARGE_OUTPUT_MP_QUOTE"
+                       },
+    "paidProviderCalls":  0,
+    "migrationRequired":  false,
+    "canonicalGateReason":  "Authenticated owner production action proof for history/reopen/export/Send-To/version/rollback was not executed because no authenticated session token was available.",
+    "progression":  "USER_APPROVED_NO_COST_DEFERRED_GATE",
+    "nextPack":  "066"
+}

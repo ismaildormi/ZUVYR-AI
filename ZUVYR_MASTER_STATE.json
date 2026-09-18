@@ -837,7 +837,7 @@
     "final_release_pack": "150",
     "previous_plan_preserved": true
   },
-  "active_pack": "065",
+  "active_pack": "066",
   "pack061": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
@@ -1022,7 +1022,7 @@
     "next_pack": "065"
   },
   "pack065": {
-    "status": "OPEN",
+    "status": "LOCKED_ENGINEERING_VERIFIED",
     "title": "Image Studio Checkpoint",
     "dependencies": [
       "061",
@@ -1038,6 +1038,92 @@
       "provider_failure_refund_tests"
     ],
     "acceptance": "All advertised V1 image operations pass live proof or are explicitly removed from V1 UI.",
+    "paid_execution_allowed": false,
+    "next_pack_allowed": true,
+    "baseline_commit": "91a0c6c398d93fe36053c8baeea38969830bf2b1",
+    "source_commit": "6b5076d27648a7dceef76b3b28553ed3df06b60b",
+    "phase01_local": "PASS",
+    "phase02_local": "PASS",
+    "phase03_local": "PASS",
+    "focused_tests": "6/6 PASS",
+    "worker_memory_regression": "PASS",
+    "pack064_regression": "6/6 PASS",
+    "pack063_regression": "2/2 PASS",
+    "pack062_regression": "4/4 PASS",
+    "pack061_regression": "8/8 PASS",
+    "pack049_universal_actions": "2/2 PASS",
+    "provider_failure_refund": {
+      "retry_pending_refund": "BLOCKED",
+      "exhausted_unrecoverable_refund": "VERIFIED",
+      "double_refund_protection": "VERIFIED",
+      "refund_failure_persistence": "VERIFIED"
+    },
+    "deployment": {
+      "github_commit_status": "SUCCESS",
+      "vercel": {
+        "deployment_id": "dpl_6zjUoprc9VQgu7q6nEfh1ZtfDzdh",
+        "status": "READY"
+      },
+      "backend": {
+        "deployment_id": "e5ae13a0-4c18-4c69-b43d-132a3b66ce8b",
+        "status": "SUCCESS",
+        "healthcheck_path": "/readyz"
+      },
+      "worker": {
+        "deployment_id": "1a0bf109-f099-4b40-a4e6-cd1c715b3f3c",
+        "status": "SUCCESS"
+      }
+    },
+    "production_proof": {
+      "backend_readyz": "PASS",
+      "unauthenticated_image_studio_api_denial": "PASS",
+      "vercel_image_studio_static": "PASS",
+      "misleading_enhance_upscale_advertising_absent": true,
+      "authenticated_owner_actions": "DEFERRED_NO_SESSION_TOKEN"
+    },
+    "operation_truth": {
+      "generate": "HISTORICAL_LIVE_PROOF_PACK061",
+      "reference_variations": "GATED",
+      "edit_inpaint_expand": "GATED",
+      "remove_background_relight": "GATED",
+      "local_utilities": "BACKEND_VERIFIED_NOT_CLAIMED_AS_AUTHENTICATED_LIVE_USER_FLOW",
+      "upscale": "BLOCKED_PENDING_EXACT_PRECHARGE_OUTPUT_MP_QUOTE"
+    },
+    "paid_provider_calls": 0,
+    "migration_required": false,
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "Authenticated owner production action proof for history/reopen/export/Send-To/version/rollback was not executed because no authenticated session token was available.",
+    "advance_exception": "USER_APPROVED_NO_COST_DEFERRED_GATE",
+    "final_no_cost_receipt": "zuvyr-pack-evidence/pack-065/2026-09-18-no-cost-final/receipt.json",
+    "final_receipt_sha256": "c790329fff91a0a2c6a94595f1ccb57c53894466926e3c104f06d62a2480103f",
+    "next_pack": "066"
+  },
+  "pack066": {
+    "status": "OPEN",
+    "title": "Text-to-Video",
+    "dependencies": [
+      "020",
+      "023",
+      "029",
+      "037",
+      "038",
+      "039",
+      "041",
+      "042",
+      "047",
+      "049",
+      "050",
+      "065"
+    ],
+    "scope": [
+      "verified_video_provider_binding",
+      "duration_resolution_aspect_fps_audio_mapping",
+      "async_progress",
+      "actual_duration_cost_settlement",
+      "canonical_storage"
+    ],
+    "acceptance": "Playable text-to-video matches supported settings and settles using actual billable units.",
+    "external_gate": "M13",
     "paid_execution_allowed": false,
     "next_pack_allowed": false
   }

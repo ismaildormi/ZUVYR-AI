@@ -1,0 +1,25 @@
+{
+  "pack": "065",
+  "phase": "phase03-deploy-candidate",
+  "baseCommit": "91a0c6c398d93fe36053c8baeea38969830bf2b1",
+  "phase01": "LOCAL_VERIFIED",
+  "phase02": "LOCAL_VERIFIED",
+  "migrationRequired": false,
+  "aiProviderCallsBeforeDeploy": 0,
+  "paymentCallsBeforeDeploy": 0,
+  "truthfulUiGate": {
+    "generate": "historical_live_proof_pack061",
+    "referenceVariations": "gated",
+    "editInpaintExpand": "gated",
+    "backgroundRelight": "gated",
+    "localUtilities": "backend_verified_not_claimed_live",
+    "upscale": "blocked"
+  },
+  "productionProofPlan": {
+    "frontendStaticMarker": true,
+    "misleadingEnhanceAbsent": true,
+    "backendReadyz": true,
+    "unauthenticatedApiDenied": true,
+    "authenticatedOwnerActions": "DEFERRED_UNTIL_SESSION_AVAILABLE"
+  }
+}
