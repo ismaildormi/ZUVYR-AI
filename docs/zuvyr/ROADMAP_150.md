@@ -1,6 +1,6 @@
 # ZUVYR V1 — Canonical 001–150 roadmap
 
-Date: 2026-09-17. Active: PACK062 OPEN. PACK061 LOCKED_VERIFIED.
+Date: 2026-09-18. Active: PACK063 OPEN. PACK062 LOCKED_ENGINEERING_VERIFIED with paid-live E2E deferred.
 
 Latest user MASTER EXECUTION PROMPT overrides attached 100-pack and one-step rules. 001–099 retain numbering and original scope; 100 remains hardening checkpoint; 101–150 extend integration/operational qualification without repeating original feature builds. Historical status is not newly verified.
 
@@ -1246,7 +1246,9 @@ Checkpoint: PHASE03_LOCAL_VERIFIED_PARTIAL; 10 local tests PASS. Reference execu
 - **Evidence/receipt requirements:** Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.
 - **Final gate:** LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate.
 - **External gate:** —
-- **Recorded status:** OPEN
+- **Recorded status:** LOCKED_ENGINEERING_VERIFIED — PAID_LIVE_E2E_DEFERRED
+
+User-approved no-cost progression note: PACK062 paid provider inference remains deferred; this does not satisfy the canonical paid-live LOCKED_VERIFIED gate and must not be represented as such.
 
 ## PACK063 — Image Edit / Inpaint / Outpaint
 
@@ -1266,7 +1268,7 @@ Checkpoint: PHASE03_LOCAL_VERIFIED_PARTIAL; 10 local tests PASS. Reference execu
 - **Evidence/receipt requirements:** Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.
 - **Final gate:** LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate.
 - **External gate:** —
-- **Recorded status:** PLANNED
+- **Recorded status:** OPEN
 
 ## PACK064 — Image Utility Pipeline
 

@@ -398,3 +398,35 @@ Unrelated dirty backup HTML files and pre-existing untracked files remain untouc
 - With HF_TOKEN only, fal image.generate may remain eligible where supported, but image.reference_variation is explicitly ineligible.
 - With FAL_KEY, image.reference_variation can become eligible when its cost entry is verified.
 - No paid provider inference is executed by V14.
+
+
+## PACK062 NO-COST FINAL RECONCILIATION — 2026-09-18
+
+- Source commit: 40b48e752c056458c89cbf0632e63465ec805bbc
+- Local Pack062 tests: 4/4 PASS
+- Pack061 regressions: 8/8 PASS
+- Cost/registry/wiring: 4/4 PASS
+- Railway backend deployment: SUCCESS
+- Railway worker deployment: SUCCESS
+- Direct Fal authentication: ACCEPTED
+- Model endpoint: fal-ai/flux-pro/kontext/multi
+- Non-billable status lookup: HTTP 404 for deliberate nonexistent request ID
+- Paid inference calls: 0
+- Paid live image generation: DEFERRED_NO_PROVIDER_FUNDS
+- Status: LOCKED_ENGINEERING_VERIFIED
+- Canonical LOCKED_VERIFIED: NO — paid live E2E remains explicitly deferred
+- User-approved progression: YES
+- Active pack after reconciliation: PACK063
+
+## PACK063 OPEN — Image Edit / Inpaint / Outpaint
+
+Canonical objective:
+Implement source+mask editing, erase/replace, expand/outpaint,
+version lineage and rollback.
+
+Research baseline:
+- fal-ai/flux-pro/kontext — general source-image editing
+- fal-ai/qwen-image-edit/inpaint — source + mask inpainting
+- fal-ai/image-apps-v2/outpaint — directional expansion/outpaint
+- Direct provider credential: FAL_KEY
+- Paid provider execution remains disabled while real provider funds are unavailable.

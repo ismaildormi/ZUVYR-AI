@@ -837,7 +837,7 @@
     "final_release_pack": "150",
     "previous_plan_preserved": true
   },
-  "active_pack": "062",
+  "active_pack": "063",
   "pack061": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
@@ -859,18 +859,45 @@
     "finalized_at": "2026-09-17T20:40:41.421Z"
   },
   "pack062": {
-    "status": "OPEN",
+    "status": "LOCKED_ENGINEERING_VERIFIED",
     "title": "Image References / Consistency / Variations",
-    "phase": "PHASE03_LOCAL_VERIFIED_PARTIAL",
+    "phase": "NO_COST_EXTERNAL_GATE_VERIFIED",
     "opened_from_pack061_receipt": "zuvyr-pack-evidence/pack-061/2026-09-17-final/receipt.json",
     "pack061_receipt_sha256": "bf17951291b7935743bbc1d3f97e0a122c7cfefe6aa4b61fb807b3ed35710528",
-    "next_pack_allowed": false,
+    "next_pack_allowed": true,
     "checkpoint_receipt": "zuvyr-pack-evidence/pack-062/phase-03-20260917-runtime/receipt.json",
-    "checkpoint_receipt_sha256": "d05b9f9b635c7d2018f12da29ab45efcaa7fac2b92dcc2435d3db937e6cbb12f"
+    "checkpoint_receipt_sha256": "d05b9f9b635c7d2018f12da29ab45efcaa7fac2b92dcc2435d3db937e6cbb12f",
+    "source_commit": "40b48e752c056458c89cbf0632e63465ec805bbc",
+    "local_pack062_tests": "4/4 PASS",
+    "pack061_regression": "8/8 PASS",
+    "cost_registry_wiring": "4/4 PASS",
+    "direct_fal_preflight": "PASS",
+    "direct_fal_auth": "ACCEPTED",
+    "direct_fal_model": "fal-ai/flux-pro/kontext/multi",
+    "direct_fal_status_lookup": 404,
+    "paid_provider_inference_calls": 0,
+    "paid_live_e2e": "DEFERRED_NO_PROVIDER_FUNDS",
+    "canonical_locked_verified": false,
+    "advance_exception": "USER_APPROVED_NO_COST_DEFERRED_GATE",
+    "next_pack": "063",
+    "final_no_cost_receipt": "zuvyr-pack-evidence/pack-062/2026-09-18-no-cost-final/receipt.json"
   },
   "continuation_reconciliation": {
     "date": "2026-09-17T02:56:53.532Z",
     "legacy_current_fields_preserved": true,
     "note": "Older top-level/current state fields reflect PACK050. active_pack=061 is the current continuation; historical 051–060 receipts require separate reconciliation before lock assertions."
+  },
+  "pack063": {
+    "status": "OPEN",
+    "title": "Image Edit / Inpaint / Outpaint",
+    "dependencies": [
+      "042",
+      "049",
+      "061",
+      "062"
+    ],
+    "opened_from_pack062": "NO_COST_EXTERNAL_GATE_VERIFIED",
+    "paid_execution_allowed": false,
+    "next_pack_allowed": false
   }
 }

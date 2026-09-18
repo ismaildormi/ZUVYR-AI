@@ -1,0 +1,33 @@
+{
+  "pack": "062",
+  "title": "Image References / Consistency / Variations",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonicalLockedVerified": false,
+  "paidLiveE2E": "DEFERRED_NO_PROVIDER_FUNDS",
+  "advancePolicy": "USER_APPROVED_NO_COST_DEFERRED_GATE",
+  "sourceCommit": "40b48e752c056458c89cbf0632e63465ec805bbc",
+  "localGate": {
+    "pack062": "4/4 PASS",
+    "pack061Regression": "8/8 PASS",
+    "costRegistryWiring": "4/4 PASS"
+  },
+  "productionDeployment": {
+    "backend": "SUCCESS",
+    "worker": "SUCCESS"
+  },
+  "externalNoCostProof": {
+    "provider": "fal",
+    "authentication": "DIRECT_FAL_KEY_ACCEPTED",
+    "model": "fal-ai/flux-pro/kontext/multi",
+    "mode": "STATUS_LOOKUP_ONLY",
+    "nonexistentRequestStatus": 404,
+    "paidInferenceCalls": 0,
+    "result": "PASS"
+  },
+  "limitations": [
+    "No paid reference_generate inference was executed.",
+    "No paid variations inference was executed.",
+    "Actual upstream image output and upstream billing remain deferred."
+  ],
+  "nextPack": "063"
+}
