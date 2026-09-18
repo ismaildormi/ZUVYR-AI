@@ -1,0 +1,26 @@
+{
+  "pack": "064",
+  "phase": "phase02-runtime-wiring",
+  "baseCommit": "dbab88432ec1a7c0decb88891c6a85b319e6d5d0",
+  "phase01Status": "LOCAL_VERIFIED",
+  "aiProviderCalls": 0,
+  "paymentCalls": 0,
+  "migrationApplied": false,
+  "productionDeployed": false,
+  "featureFlagsChanged": false,
+  "wiredOperations": [
+    "remove_background",
+    "relight",
+    "crop",
+    "resize",
+    "canvas",
+    "layers",
+    "text",
+    "batch"
+  ],
+  "blockedOperations": {
+    "upscale": "exact_precharge_output_megapixel_quote_not_yet_wired"
+  },
+  "externalGate": "PACK064_EXTERNAL_EXECUTION_ENABLED",
+  "localRuntime": "sharp@0.34.4"
+}

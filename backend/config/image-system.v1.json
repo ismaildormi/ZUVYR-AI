@@ -27,16 +27,18 @@
       "requiresMask": false
     },
     "remove_background": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
+      "enabledByDefault": true,
+      "status": "implemented_pack064_external_gate_off",
       "requiresSource": true,
-      "requiresMask": false
+      "requiresMask": false,
+      "sourceMustBeExplicit": true
     },
     "upscale": {
       "enabledByDefault": false,
-      "status": "blocked_unpriced",
+      "status": "blocked_pack064_exact_precharge_output_megapixel_pricing",
       "requiresSource": true,
-      "requiresMask": false
+      "requiresMask": false,
+      "sourceMustBeExplicit": true
     },
     "inpaint": {
       "enabledByDefault": true,
@@ -48,6 +50,55 @@
     "expand": {
       "enabledByDefault": true,
       "status": "implemented_pack063_paid_live_deferred",
+      "requiresSource": true,
+      "requiresMask": false,
+      "sourceMustBeExplicit": true
+    },
+    "relight": {
+      "enabledByDefault": true,
+      "status": "implemented_pack064_external_gate_off",
+      "requiresSource": true,
+      "requiresMask": false,
+      "sourceMustBeExplicit": true
+    },
+    "crop": {
+      "enabledByDefault": true,
+      "status": "implemented_pack064_local_runtime",
+      "requiresSource": true,
+      "requiresMask": false,
+      "sourceMustBeExplicit": true
+    },
+    "resize": {
+      "enabledByDefault": true,
+      "status": "implemented_pack064_local_runtime",
+      "requiresSource": true,
+      "requiresMask": false,
+      "sourceMustBeExplicit": true
+    },
+    "canvas": {
+      "enabledByDefault": true,
+      "status": "implemented_pack064_local_runtime",
+      "requiresSource": true,
+      "requiresMask": false,
+      "sourceMustBeExplicit": true
+    },
+    "layers": {
+      "enabledByDefault": true,
+      "status": "implemented_pack064_local_runtime",
+      "requiresSource": true,
+      "requiresMask": false,
+      "sourceMustBeExplicit": true
+    },
+    "text": {
+      "enabledByDefault": true,
+      "status": "implemented_pack064_local_runtime",
+      "requiresSource": true,
+      "requiresMask": false,
+      "sourceMustBeExplicit": true
+    },
+    "batch": {
+      "enabledByDefault": true,
+      "status": "implemented_pack064_local_runtime",
       "requiresSource": true,
       "requiresMask": false,
       "sourceMustBeExplicit": true
@@ -231,6 +282,147 @@
         "credentialEnvironment": "FAL_KEY",
         "officialApi": "https://fal.ai/models/fal-ai/image-apps-v2/outpaint/api"
       }
+    },
+    "fal-background": {
+      "implementedOperations": [
+        "remove_background"
+      ],
+      "status": "pack064_repository_executor_foundation",
+      "model": "fal-ai/birefnet/v2",
+      "pricing": {
+        "unitType": "compute_seconds",
+        "publishedPriceUsdPerComputeSecond": "0",
+        "pricingSourceUrl": "https://fal.ai/models/fal-ai/birefnet/v2",
+        "pricingVerifiedAt": "2026-09-18T00:00:00Z",
+        "pricingReviewBefore": "2026-10-18T00:00:00Z",
+        "commercialUseVerified": true
+      },
+      "routing": {
+        "gateway": "direct_fal",
+        "credentialEnvironment": "FAL_KEY",
+        "officialApi": "https://fal.ai/models/fal-ai/birefnet/v2/api"
+      },
+      "capabilities": {
+        "sourceAsset": true,
+        "maskAsset": false,
+        "seed": false,
+        "quantity": false,
+        "maxQuantity": 1
+      }
+    },
+    "fal-upscale": {
+      "implementedOperations": [
+        "upscale"
+      ],
+      "status": "pack064_repository_executor_foundation_runtime_mp_quote_pending",
+      "model": "fal-ai/flux-vision-upscaler",
+      "pricing": {
+        "unitType": "megapixels",
+        "priceUsdPerMegapixel": "0.1",
+        "pricingSourceUrl": "https://fal.ai/models/fal-ai/flux-vision-upscaler",
+        "pricingVerifiedAt": "2026-09-18T00:00:00Z",
+        "pricingReviewBefore": "2026-10-18T00:00:00Z",
+        "commercialUseVerified": true,
+        "activationState": "blocked_until_precharge_output_mp_quote"
+      },
+      "routing": {
+        "gateway": "direct_fal",
+        "credentialEnvironment": "FAL_KEY",
+        "officialApi": "https://fal.ai/models/fal-ai/flux-vision-upscaler/api"
+      },
+      "capabilities": {
+        "sourceAsset": true,
+        "maskAsset": false,
+        "seed": true,
+        "quantity": false,
+        "maxQuantity": 1,
+        "upscaleFactorMin": 1,
+        "upscaleFactorMax": 4,
+        "creativityMin": 0,
+        "creativityMax": 1
+      }
+    },
+    "fal-relight": {
+      "implementedOperations": [
+        "relight"
+      ],
+      "status": "pack064_repository_executor_foundation",
+      "model": "fal-ai/image-apps-v2/relighting",
+      "pricing": {
+        "unitType": "images",
+        "fixedOperationPriceMicroUsd": "40000",
+        "priceUsdPerImage": "0.04",
+        "pricingSourceUrl": "https://fal.ai/models/fal-ai/image-apps-v2/relighting",
+        "pricingVerifiedAt": "2026-09-18T00:00:00Z",
+        "pricingReviewBefore": "2026-10-18T00:00:00Z",
+        "commercialUseVerified": true
+      },
+      "routing": {
+        "gateway": "direct_fal",
+        "credentialEnvironment": "FAL_KEY",
+        "officialApi": "https://fal.ai/models/fal-ai/image-apps-v2/relighting/api"
+      },
+      "capabilities": {
+        "sourceAsset": true,
+        "maskAsset": false,
+        "seed": false,
+        "quantity": false,
+        "maxQuantity": 1,
+        "ratios": [
+          "1:1",
+          "16:9",
+          "9:16",
+          "4:3",
+          "3:4"
+        ],
+        "lightingStyles": [
+          "natural",
+          "studio",
+          "golden_hour",
+          "blue_hour",
+          "dramatic",
+          "soft",
+          "hard",
+          "backlight",
+          "side_light",
+          "front_light",
+          "rim_light",
+          "sunset",
+          "sunrise",
+          "neon",
+          "candlelight",
+          "moonlight",
+          "spotlight",
+          "ambient"
+        ]
+      }
+    },
+    "local-sharp": {
+      "implementedOperations": [
+        "crop",
+        "resize",
+        "canvas",
+        "layers",
+        "text",
+        "batch"
+      ],
+      "status": "pack064_local_executor_foundation",
+      "model": "sharp@0.34.4",
+      "pricing": {
+        "unitType": "processing_operations",
+        "providerCostMicroUsd": "0",
+        "externalProviderCalls": 0,
+        "pricingSource": "local_runtime_only"
+      },
+      "capabilities": {
+        "canonicalOutput": "png",
+        "maxDimension": 8192,
+        "maxLayers": 4,
+        "batchActions": [
+          "crop",
+          "resize"
+        ]
+      }
     }
   },
   "requestLimits": {
@@ -333,5 +525,69 @@
     "lineage": "immutable source asset + source content/version lineage on derived output",
     "rollback": "owner-scoped rollback target returns original source asset; no provider call",
     "externalExecution": "deferred_no_provider_funds"
+  },
+  "pack064": {
+    "phase": "PHASE03_DEPLOY_CANDIDATE",
+    "externalExecutionEnabled": false,
+    "localExecutionWired": true,
+    "productionMigrationApplied": true,
+    "operations": {
+      "remove_background": {
+        "executor": "fal-background",
+        "model": "fal-ai/birefnet/v2",
+        "exposed": false,
+        "runtimeWired": true,
+        "externalGate": "PACK064_EXTERNAL_EXECUTION_ENABLED"
+      },
+      "upscale": {
+        "executor": "fal-upscale",
+        "model": "fal-ai/flux-vision-upscaler",
+        "exposed": false,
+        "runtimeWired": false,
+        "blocker": "exact_precharge_output_megapixel_quote"
+      },
+      "relight": {
+        "executor": "fal-relight",
+        "model": "fal-ai/image-apps-v2/relighting",
+        "exposed": false,
+        "runtimeWired": true,
+        "externalGate": "PACK064_EXTERNAL_EXECUTION_ENABLED"
+      },
+      "crop": {
+        "executor": "local-sharp",
+        "exposed": false,
+        "runtimeWired": true
+      },
+      "resize": {
+        "executor": "local-sharp",
+        "exposed": false,
+        "runtimeWired": true
+      },
+      "canvas": {
+        "executor": "local-sharp",
+        "exposed": false,
+        "runtimeWired": true
+      },
+      "layers": {
+        "executor": "local-sharp",
+        "exposed": false,
+        "runtimeWired": true
+      },
+      "text": {
+        "executor": "local-sharp",
+        "exposed": false,
+        "runtimeWired": true
+      },
+      "batch": {
+        "executor": "local-sharp",
+        "exposed": false,
+        "runtimeWired": true
+      }
+    },
+    "rule": "Feature flags remain off. Local tools may execute only through authenticated owner-scoped API/runtime. External Fal tools fail closed unless PACK064_EXTERNAL_EXECUTION_ENABLED=true. Upscale remains blocked.",
+    "externalExecutionEnvironment": "PACK064_EXTERNAL_EXECUTION_ENABLED",
+    "externalExecutionDefault": false,
+    "productionMigrationIdentity": "pack064_image_utility_operations",
+    "productionMigrationVerifiedAt": "2026-09-18T02:00:00Z"
   }
 }

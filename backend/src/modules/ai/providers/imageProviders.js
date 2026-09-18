@@ -9,6 +9,9 @@ const DEFAULT_FAL_KONTEXT_MODEL = 'fal-ai/flux-pro/kontext/multi';
 const DEFAULT_FAL_EDIT_MODEL = 'fal-ai/flux-pro/kontext';
 const DEFAULT_FAL_INPAINT_MODEL = 'fal-ai/qwen-image-edit/inpaint';
 const DEFAULT_FAL_OUTPAINT_MODEL = 'fal-ai/image-apps-v2/outpaint';
+const DEFAULT_FAL_BACKGROUND_MODEL = 'fal-ai/birefnet/v2';
+const DEFAULT_FAL_UPSCALE_MODEL = 'fal-ai/flux-vision-upscaler';
+const DEFAULT_FAL_RELIGHT_MODEL = 'fal-ai/image-apps-v2/relighting';
 const HF_FAL_ROUTER_BASE = 'https://router.huggingface.co/fal-ai';
 const providers = new Map();
 const { assertImageProviderCapabilities } = require('../../../../lib/imageCapabilityGate');
@@ -439,6 +442,169 @@ async function generateDirectFalImages({
   );
 }
 
+
+function buildFalBackgroundRemovalInput(request, resolved) {
+  const sourceUrl = resolved?.source?.url || null;
+  if (!sourceUrl) {
+    const error = new Error('fal_background_source_required');
+    error.statusCode = 400;
+    error.retryable = false;
+    throw error;
+  }
+
+  return Object.freeze({
+    image_url: sourceUrl,
+    model: 'General Use (Light)',
+    operating_resolution: '1024x1024',
+    refine_foreground: true,
+    output_format: 'png'
+  });
+}
+
+function buildFalUpscaleInput(request, resolved) {
+  const sourceUrl = resolved?.source?.url || null;
+  if (!sourceUrl) {
+    const error = new Error('fal_upscale_source_required');
+    error.statusCode = 400;
+    error.retryable = false;
+    throw error;
+  }
+
+  const options = request?.options || {};
+  const upscaleFactor =
+    options.upscaleFactor === undefined
+      ? 2
+      : Number(options.upscaleFactor);
+
+  const creativity =
+    options.upscaleCreativity === undefined
+      ? 0.3
+      : Number(options.upscaleCreativity);
+
+  if (
+    !Number.isFinite(upscaleFactor) ||
+    upscaleFactor < 1 ||
+    upscaleFactor > 4
+  ) {
+    const error = new Error('invalid_fal_upscale_factor');
+    error.statusCode = 400;
+    error.retryable = false;
+    throw error;
+  }
+
+  if (
+    !Number.isFinite(creativity) ||
+    creativity < 0 ||
+    creativity > 1
+  ) {
+    const error = new Error('invalid_fal_upscale_creativity');
+    error.statusCode = 400;
+    error.retryable = false;
+    throw error;
+  }
+
+  return Object.freeze({
+    image_url: sourceUrl,
+    upscale_factor: upscaleFactor,
+    creativity,
+    guidance: 1,
+    steps: 20,
+    enable_safety_checker: true,
+    ...(options.seed === null || options.seed === undefined
+      ? {}
+      : { seed: Number(options.seed) })
+  });
+}
+
+function buildFalRelightInput(request, resolved) {
+  const sourceUrl = resolved?.source?.url || null;
+  if (!sourceUrl) {
+    const error = new Error('fal_relight_source_required');
+    error.statusCode = 400;
+    error.retryable = false;
+    throw error;
+  }
+
+  const options = request?.options || {};
+  const lightingStyle =
+    String(options.lightingStyle || 'natural')
+      .trim()
+      .toLowerCase();
+
+  const styles = new Set([
+    'natural',
+    'studio',
+    'golden_hour',
+    'blue_hour',
+    'dramatic',
+    'soft',
+    'hard',
+    'backlight',
+    'side_light',
+    'front_light',
+    'rim_light',
+    'sunset',
+    'sunrise',
+    'neon',
+    'candlelight',
+    'moonlight',
+    'spotlight',
+    'ambient'
+  ]);
+
+  if (!styles.has(lightingStyle)) {
+    const error = new Error('invalid_fal_relight_style');
+    error.statusCode = 400;
+    error.retryable = false;
+    throw error;
+  }
+
+  return Object.freeze({
+    image_url: sourceUrl,
+    lighting_style: lightingStyle,
+    aspect_ratio: {
+      ratio: options.ratio || '1:1'
+    }
+  });
+}
+
+async function directFalSingleImage({
+  model,
+  input,
+  falClient,
+  apiKey,
+  outputSelector
+}) {
+  const client =
+    falClient ||
+    (await import('@fal-ai/client')).fal;
+
+  client.config({
+    credentials: apiKey || process.env.FAL_KEY
+  });
+
+  const result = await client.subscribe(model, {
+    input,
+    logs: false
+  });
+
+  const selected =
+    typeof outputSelector === 'function'
+      ? outputSelector(result)
+      : result?.data;
+
+  const urls = normalizeOutputUrls(selected);
+
+  if (urls.length !== 1) {
+    const error = new Error('fal_utility_output_count_mismatch');
+    error.statusCode = 502;
+    error.retryable = false;
+    throw error;
+  }
+
+  return urls;
+}
+
 async function generateImage(prompt, opts = {}) {
   const chain = opts.chain || [DEFAULT_IMAGE_PROVIDER];
   const attempts = [];
@@ -718,6 +884,106 @@ registerImageProvider('fal-outpaint', {
   }
 });
 
+
+registerImageProvider('fal-background', {
+  label: 'Fal AI BiRefNet V2 Background Removal',
+  capabilities: {
+    operations: ['remove_background'],
+    sourceAsset: true,
+    maskAsset: false,
+    seed: false,
+    quantity: false,
+    maxQuantity: 1
+  },
+  isConfigured: () => Boolean(process.env.FAL_KEY),
+  async generate(_prompt, opts = {}) {
+    const model =
+      opts.model ||
+      process.env.FAL_BACKGROUND_IMAGE_MODEL ||
+      DEFAULT_FAL_BACKGROUND_MODEL;
+
+    const input = buildFalBackgroundRemovalInput(
+      opts.imageRequest || {},
+      opts.resolvedImageInputs || {}
+    );
+
+    return directFalSingleImage({
+      model,
+      input,
+      falClient: opts.falClient,
+      apiKey: opts.apiKey || process.env.FAL_KEY,
+      outputSelector: result =>
+        result?.data?.image || result?.data
+    });
+  }
+});
+
+registerImageProvider('fal-upscale', {
+  label: 'Fal AI Flux Vision Upscaler',
+  capabilities: {
+    operations: ['upscale'],
+    sourceAsset: true,
+    maskAsset: false,
+    seed: true,
+    quantity: false,
+    maxQuantity: 1
+  },
+  isConfigured: () => Boolean(process.env.FAL_KEY),
+  async generate(_prompt, opts = {}) {
+    const model =
+      opts.model ||
+      process.env.FAL_UPSCALE_IMAGE_MODEL ||
+      DEFAULT_FAL_UPSCALE_MODEL;
+
+    const input = buildFalUpscaleInput(
+      opts.imageRequest || {},
+      opts.resolvedImageInputs || {}
+    );
+
+    return directFalSingleImage({
+      model,
+      input,
+      falClient: opts.falClient,
+      apiKey: opts.apiKey || process.env.FAL_KEY,
+      outputSelector: result =>
+        result?.data?.image || result?.data
+    });
+  }
+});
+
+registerImageProvider('fal-relight', {
+  label: 'Fal AI Image Apps V2 Relighting',
+  capabilities: {
+    operations: ['relight'],
+    sourceAsset: true,
+    maskAsset: false,
+    seed: false,
+    quantity: false,
+    maxQuantity: 1
+  },
+  isConfigured: () => Boolean(process.env.FAL_KEY),
+  async generate(_prompt, opts = {}) {
+    const model =
+      opts.model ||
+      process.env.FAL_RELIGHT_IMAGE_MODEL ||
+      DEFAULT_FAL_RELIGHT_MODEL;
+
+    const input = buildFalRelightInput(
+      opts.imageRequest || {},
+      opts.resolvedImageInputs || {}
+    );
+
+    return directFalSingleImage({
+      model,
+      input,
+      falClient: opts.falClient,
+      apiKey: opts.apiKey || process.env.FAL_KEY,
+      outputSelector: result =>
+        result?.data?.images || result?.data
+    });
+  }
+});
+
 registerImageProvider('replicate', {
   label: 'Replicate',
   isConfigured: () => Boolean(process.env.REPLICATE_API_TOKEN),
@@ -745,6 +1011,9 @@ module.exports = {
   DEFAULT_FAL_EDIT_MODEL,
   DEFAULT_FAL_INPAINT_MODEL,
   DEFAULT_FAL_OUTPAINT_MODEL,
+  DEFAULT_FAL_BACKGROUND_MODEL,
+  DEFAULT_FAL_UPSCALE_MODEL,
+  DEFAULT_FAL_RELIGHT_MODEL,
   HF_FAL_ROUTER_BASE,
   registerImageProvider,
   getImageProvider,
@@ -755,6 +1024,9 @@ module.exports = {
   buildFalEditInput,
   buildFalInpaintInput,
   buildFalOutpaintInput,
+  buildFalBackgroundRemovalInput,
+  buildFalUpscaleInput,
+  buildFalRelightInput,
   sanitizeProviderMessage,
   providerFailureEvidence,
   providerAttemptRetryable,

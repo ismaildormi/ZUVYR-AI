@@ -29,12 +29,21 @@ const {
   DEFAULT_FAL_KONTEXT_MODEL,
   DEFAULT_FAL_EDIT_MODEL,
   DEFAULT_FAL_INPAINT_MODEL,
-  DEFAULT_FAL_OUTPAINT_MODEL
+  DEFAULT_FAL_OUTPAINT_MODEL,
+  DEFAULT_FAL_BACKGROUND_MODEL,
+  DEFAULT_FAL_UPSCALE_MODEL,
+  DEFAULT_FAL_RELIGHT_MODEL
 } = require('./src/modules/ai/providers/imageProviders');
 const { buildImageArtifact } = require('./lib/imageArtifactContract');
 const { normalizeImageRequest } = require('./lib/imageRequestContract');
 const { assertImageRequestAvailable } = require('./lib/imageOperationRegistry');
 const { getDefaultImageGenerationRepository } = require('./lib/imageGenerationRepository');
+const {
+  executeLocalImageUtility
+} = require('./lib/localImageUtilities');
+const {
+  getDefaultLocalImageUtilityRepository
+} = require('./lib/localImageUtilityRepository');
 const { createImageReferenceResolver } = require('./lib/imageReferenceResolver');
 const { generateVideo, DEFAULT_VIDEO_MODEL } = require('./lib/videoProvider');
 const { normalizeVideoRequest } = require('./lib/videoRequestContract');
@@ -228,6 +237,8 @@ async function processImageJob(job) {
   assertImageRequestAvailable(imageRequest);
 
   const imageRepository = getDefaultImageGenerationRepository();
+  const localUtilityRepository =
+    getDefaultLocalImageUtilityRepository();
 
   await markJob(jobRowId, {
     status: 'processing',
@@ -253,132 +264,227 @@ async function processImageJob(job) {
   }
 
   if (!persisted) {
-    try {
-      const executorByOperation = {
-        reference_generate: 'fal-kontext',
-        variations: 'fal-kontext',
-        edit: 'fal-edit',
-        inpaint: 'fal-inpaint',
-        expand: 'fal-outpaint'
-      };
+    const localUtilityOperations = new Set([
+      'crop',
+      'resize',
+      'canvas',
+      'layers',
+      'text',
+      'batch'
+    ]);
 
-      const selectedExecutor =
-        executorByOperation[imageRequest.operation] || null;
+    if (localUtilityOperations.has(imageRequest.operation)) {
+      const inputs =
+        await localUtilityRepository.loadOwnedInputs({
+          ownerId: userId,
+          request: imageRequest
+        });
 
-      const isPack063Operation =
-        ['edit', 'inpaint', 'expand'].includes(
-          imageRequest.operation
-        );
+      const utilityResult =
+        await executeLocalImageUtility({
+          operation: imageRequest.operation,
+          sourceBuffer: inputs.sourceBuffer,
+          referenceBuffers: inputs.referenceBuffers,
+          options: imageRequest.options
+        });
 
-      if (
-        isPack063Operation &&
-        String(
-          process.env.PACK063_PAID_EXECUTION_ENABLED || ''
-        ).toLowerCase() !== 'true'
-      ) {
-        const terminal =
-          new UnrecoverableError(
-            'pack063_paid_execution_disabled'
-          );
-        terminal.code =
-          'pack063_paid_execution_disabled';
-        throw terminal;
-      }
-
-      const resolvedImageInputs = selectedExecutor
-        ? await resolveImageReferences({
-            ownerId: userId,
-            request: imageRequest,
-            requestId: requestId || jobRowId
-          })
-        : null;
-
-      const standardImageProviderOptions = Object.freeze({
-        chain: ['fal', 'replicate']
-      });
-
-      providerResult = await generateImage(prompt, {
-        imageRequest,
-        resolvedImageInputs,
-        chain: selectedExecutor
-          ? [selectedExecutor]
-          : standardImageProviderOptions.chain,
-        models: {
-          fal: process.env.FAL_IMAGE_MODEL || DEFAULT_FAL_IMAGE_MODEL,
-          'fal-kontext':
-            process.env.FAL_KONTEXT_IMAGE_MODEL ||
-            DEFAULT_FAL_KONTEXT_MODEL,
-          'fal-edit':
-            process.env.FAL_EDIT_IMAGE_MODEL ||
-            DEFAULT_FAL_EDIT_MODEL,
-          'fal-inpaint':
-            process.env.FAL_INPAINT_IMAGE_MODEL ||
-            DEFAULT_FAL_INPAINT_MODEL,
-          'fal-outpaint':
-            process.env.FAL_OUTPAINT_IMAGE_MODEL ||
-            DEFAULT_FAL_OUTPAINT_MODEL,
-          replicate: IMAGE_MODEL
-        },
-        requestId: requestId || jobRowId
-      });
-
-      providerResult.editLineage =
-        resolvedImageInputs
-          ? {
-              sourceAssetId:
-                resolvedImageInputs.source?.assetId || null,
-              sourceContentId:
-                resolvedImageInputs.source?.contentId || null,
-              sourceVersionId:
-                resolvedImageInputs.source?.versionId || null,
-              maskAssetId:
-                resolvedImageInputs.mask?.assetId || null,
-              maskContentId:
-                resolvedImageInputs.mask?.contentId || null,
-              maskVersionId:
-                resolvedImageInputs.mask?.versionId || null
-            }
-          : {};
-    } catch (providerError) {
-      if (providerError && providerError.retryable === false) {
-        const terminal = new UnrecoverableError(providerError.message);
-        terminal.attempts = providerError.attempts;
-        terminal.code = providerError.code;
-        throw terminal;
-      }
-      throw providerError;
-    }
-
-    const providerUrls =
-      providerResult.urls || [providerResult.url];
-
-    if (providerUrls.length === 1) {
-      persisted = await imageRepository.persistGenerated({
-        ownerId: userId,
-        jobId: jobRowId,
-        prompt,
-        providerUrl: providerUrls[0],
-        provider: providerResult.provider,
-        model: providerResult.model,
-        operation: imageRequest.operation,
-        options: imageRequest.options,
-        lineage: providerResult.editLineage || {}
-      });
-    } else {
       const persistedSet =
-        await imageRepository.persistGeneratedSet({
+        await localUtilityRepository.persistOutputs({
           ownerId: userId,
           jobId: jobRowId,
           prompt,
-          providerUrls,
-          provider: providerResult.provider,
-          model: providerResult.model,
           operation: imageRequest.operation,
           options: imageRequest.options,
-          lineage: providerResult.editLineage || {}
+          lineage: inputs.lineage,
+          outputs: utilityResult.outputs
         });
 
       persisted = persistedSet.primary;
+
+      providerResult = {
+        url: persisted.providerUrl,
+        urls: Object.freeze(
+          persistedSet.outputs.map(
+            item => item.providerUrl
+          )
+        ),
+        provider: 'local-sharp',
+        model: 'sharp@0.34.4',
+        attempts: [],
+        editLineage: inputs.lineage
+      };
+    } else {
+      try {
+        const executorByOperation = {
+          reference_generate: 'fal-kontext',
+          variations: 'fal-kontext',
+          edit: 'fal-edit',
+          inpaint: 'fal-inpaint',
+          expand: 'fal-outpaint',
+          remove_background: 'fal-background',
+          relight: 'fal-relight'
+        };
+
+        const selectedExecutor =
+          executorByOperation[imageRequest.operation] || null;
+
+        const isPack063Operation =
+          ['edit', 'inpaint', 'expand'].includes(
+            imageRequest.operation
+          );
+
+        const isPack064ExternalOperation =
+          ['remove_background', 'relight'].includes(
+            imageRequest.operation
+          );
+
+        if (
+          isPack063Operation &&
+          String(
+            process.env.PACK063_PAID_EXECUTION_ENABLED || ''
+          ).toLowerCase() !== 'true'
+        ) {
+          const terminal =
+            new UnrecoverableError(
+              'pack063_paid_execution_disabled'
+            );
+          terminal.code =
+            'pack063_paid_execution_disabled';
+          throw terminal;
+        }
+
+        if (
+          isPack064ExternalOperation &&
+          String(
+            process.env.PACK064_EXTERNAL_EXECUTION_ENABLED || ''
+          ).toLowerCase() !== 'true'
+        ) {
+          const terminal =
+            new UnrecoverableError(
+              'pack064_external_execution_disabled'
+            );
+          terminal.code =
+            'pack064_external_execution_disabled';
+          throw terminal;
+        }
+
+        const resolvedImageInputs = selectedExecutor
+          ? await resolveImageReferences({
+              ownerId: userId,
+              request: imageRequest,
+              requestId: requestId || jobRowId
+            })
+          : null;
+
+        const standardImageProviderOptions = Object.freeze({
+          chain: ['fal', 'replicate']
+        });
+
+        providerResult = await generateImage(prompt, {
+          imageRequest,
+          resolvedImageInputs,
+          chain: selectedExecutor
+            ? [selectedExecutor]
+            : standardImageProviderOptions.chain,
+          models: {
+            fal:
+              process.env.FAL_IMAGE_MODEL ||
+              DEFAULT_FAL_IMAGE_MODEL,
+            'fal-kontext':
+              process.env.FAL_KONTEXT_IMAGE_MODEL ||
+              DEFAULT_FAL_KONTEXT_MODEL,
+            'fal-edit':
+              process.env.FAL_EDIT_IMAGE_MODEL ||
+              DEFAULT_FAL_EDIT_MODEL,
+            'fal-inpaint':
+              process.env.FAL_INPAINT_IMAGE_MODEL ||
+              DEFAULT_FAL_INPAINT_MODEL,
+            'fal-outpaint':
+              process.env.FAL_OUTPAINT_IMAGE_MODEL ||
+              DEFAULT_FAL_OUTPAINT_MODEL,
+            'fal-background':
+              process.env.FAL_BACKGROUND_IMAGE_MODEL ||
+              DEFAULT_FAL_BACKGROUND_MODEL,
+            'fal-upscale':
+              process.env.FAL_UPSCALE_IMAGE_MODEL ||
+              DEFAULT_FAL_UPSCALE_MODEL,
+            'fal-relight':
+              process.env.FAL_RELIGHT_IMAGE_MODEL ||
+              DEFAULT_FAL_RELIGHT_MODEL,
+            replicate: IMAGE_MODEL
+          },
+          requestId: requestId || jobRowId
+        });
+
+        providerResult.editLineage =
+          resolvedImageInputs
+            ? {
+                sourceAssetId:
+                  resolvedImageInputs.source?.assetId || null,
+                sourceContentId:
+                  resolvedImageInputs.source?.contentId || null,
+                sourceVersionId:
+                  resolvedImageInputs.source?.versionId || null,
+                maskAssetId:
+                  resolvedImageInputs.mask?.assetId || null,
+                maskContentId:
+                  resolvedImageInputs.mask?.contentId || null,
+                maskVersionId:
+                  resolvedImageInputs.mask?.versionId || null
+              }
+            : {};
+      } catch (providerError) {
+        if (
+          providerError &&
+          providerError.retryable === false
+        ) {
+          const terminal =
+            new UnrecoverableError(
+              providerError.message
+            );
+          terminal.attempts =
+            providerError.attempts;
+          terminal.code =
+            providerError.code;
+          throw terminal;
+        }
+        throw providerError;
+      }
+
+      const providerUrls =
+        providerResult.urls || [providerResult.url];
+
+      if (providerUrls.length === 1) {
+        persisted =
+          await imageRepository.persistGenerated({
+            ownerId: userId,
+            jobId: jobRowId,
+            prompt,
+            providerUrl: providerUrls[0],
+            provider: providerResult.provider,
+            model: providerResult.model,
+            operation: imageRequest.operation,
+            options: imageRequest.options,
+            lineage:
+              providerResult.editLineage || {}
+          });
+      } else {
+        const persistedSet =
+          await imageRepository.persistGeneratedSet({
+            ownerId: userId,
+            jobId: jobRowId,
+            prompt,
+            providerUrls,
+            provider: providerResult.provider,
+            model: providerResult.model,
+            operation: imageRequest.operation,
+            options: imageRequest.options,
+            lineage:
+              providerResult.editLineage || {}
+          });
+
+        persisted = persistedSet.primary;
+      }
     }
   }
 
@@ -390,7 +496,15 @@ async function processImageJob(job) {
       variations: 'fal-kontext',
       edit: 'fal-edit',
       inpaint: 'fal-inpaint',
-      expand: 'fal-outpaint'
+      expand: 'fal-outpaint',
+      remove_background: 'fal-background',
+      relight: 'fal-relight',
+      crop: 'local-sharp',
+      resize: 'local-sharp',
+      canvas: 'local-sharp',
+      layers: 'local-sharp',
+      text: 'local-sharp',
+      batch: 'local-sharp'
     }[imageRequest.operation] || 'replicate');
 
   const model =
@@ -408,7 +522,18 @@ async function processImageJob(job) {
         DEFAULT_FAL_INPAINT_MODEL,
       'fal-outpaint':
         process.env.FAL_OUTPAINT_IMAGE_MODEL ||
-        DEFAULT_FAL_OUTPAINT_MODEL
+        DEFAULT_FAL_OUTPAINT_MODEL,
+      'fal-background':
+        process.env.FAL_BACKGROUND_IMAGE_MODEL ||
+        DEFAULT_FAL_BACKGROUND_MODEL,
+      'fal-upscale':
+        process.env.FAL_UPSCALE_IMAGE_MODEL ||
+        DEFAULT_FAL_UPSCALE_MODEL,
+      'fal-relight':
+        process.env.FAL_RELIGHT_IMAGE_MODEL ||
+        DEFAULT_FAL_RELIGHT_MODEL,
+      'local-sharp':
+        'sharp@0.34.4'
     }[provider] || IMAGE_MODEL);
   const artifact = buildImageArtifact({
     url: persisted.providerUrl,

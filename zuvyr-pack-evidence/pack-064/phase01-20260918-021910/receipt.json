@@ -1,0 +1,26 @@
+{
+  "pack": "064",
+  "phase": "phase01-executor-foundation",
+  "baseCommit": "dbab88432ec1a7c0decb88891c6a85b319e6d5d0",
+  "externalProviderCalls": 0,
+  "paymentCalls": 0,
+  "productionMigrationApplied": false,
+  "operationsExposed": false,
+  "externalExecutors": {
+    "remove_background": "fal-ai/birefnet/v2",
+    "upscale": "fal-ai/flux-vision-upscaler",
+    "relight": "fal-ai/image-apps-v2/relighting"
+  },
+  "localExecutor": {
+    "runtime": "sharp@0.34.4",
+    "operations": [
+      "crop",
+      "resize",
+      "canvas",
+      "layers",
+      "text",
+      "batch"
+    ],
+    "providerCalls": 0
+  }
+}

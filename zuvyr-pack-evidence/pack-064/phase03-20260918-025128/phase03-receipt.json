@@ -1,0 +1,38 @@
+{
+  "pack": "064",
+  "phase": "phase03-deploy-candidate",
+  "baseCommit": "dbab88432ec1a7c0decb88891c6a85b319e6d5d0",
+  "phase01": "LOCAL_VERIFIED",
+  "phase02": "LOCAL_VERIFIED",
+  "migration": {
+    "name": "pack064_image_utility_operations",
+    "project": "tqoqsgaymygmqrzddvtu",
+    "applied": true,
+    "verifiedConstraintOperations": [
+      "generate",
+      "reference_generate",
+      "edit",
+      "variations",
+      "remove_background",
+      "upscale",
+      "inpaint",
+      "expand",
+      "relight",
+      "crop",
+      "resize",
+      "canvas",
+      "layers",
+      "text",
+      "batch"
+    ],
+    "pack064JobsObservedAfterApply": 0
+  },
+  "aiProviderCallsBeforeDeploy": 0,
+  "paymentCallsBeforeDeploy": 0,
+  "externalExecutionDefault": false,
+  "featureFlagsChanged": false,
+  "upscale": {
+    "status": "BLOCKED",
+    "blocker": "exact_precharge_output_megapixel_quote"
+  }
+}

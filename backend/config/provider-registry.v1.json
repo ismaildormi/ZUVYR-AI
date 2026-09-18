@@ -221,7 +221,7 @@
         "provider_managed"
       ],
       "quotaType": "provider_managed",
-      "termsLicenseNotes": "Pack061 ordinary FLUX Schnell may route through HF_TOKEN or direct FAL_KEY. Pack062 FLUX Kontext multi requires direct FAL_KEY because Hugging Face Inference Providers returned model-not-supported for provider fal-ai on 2026-09-18. Pack063 adds direct-Fal source edit, Qwen inpaint and directional outpaint adapters. Paid Pack063 execution remains disabled by default; inpaint/outpaint variable-MP billing activation is fail-closed.",
+      "termsLicenseNotes": "Pack061 ordinary FLUX Schnell may route through HF_TOKEN or direct FAL_KEY. Pack062 FLUX Kontext multi requires direct FAL_KEY because Hugging Face Inference Providers returned model-not-supported for provider fal-ai on 2026-09-18. Pack063 adds direct-Fal source edit, Qwen inpaint and directional outpaint adapters. Paid Pack063 execution remains disabled by default; inpaint/outpaint variable-MP billing activation is fail-closed. Pack064 Phase01 adds repository adapters for BiRefNet v2 background removal, Flux Vision Upscaler and Image Apps v2 relighting. No operation is exposed or externally executed until Phase02 completes pricing/persistence/runtime wiring.",
       "adapter": "image.providers",
       "capabilities": [
         {
@@ -311,6 +311,65 @@
           "routing": {
             "mode": "direct_fal",
             "authority": "https://fal.ai/models/fal-ai/image-apps-v2/outpaint/api"
+          }
+        },
+        {
+          "id": "image.remove_background",
+          "verification": "verified_repository",
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryId": "fal-birefnet-v2-background-removal",
+            "requiredEnvironment": {
+              "name": "PACK064_EXTERNAL_EXECUTION_ENABLED",
+              "value": "true"
+            }
+          },
+          "model": "fal-ai/birefnet/v2",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/fal-ai/birefnet/v2/api"
+          }
+        },
+        {
+          "id": "image.upscale",
+          "verification": "repository_adapter_verified_pricing_activation_pending",
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryId": "fal-flux-vision-upscaler"
+          },
+          "model": "fal-ai/flux-vision-upscaler",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/fal-ai/flux-vision-upscaler/api"
+          }
+        },
+        {
+          "id": "image.relight",
+          "verification": "verified_repository",
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryId": "fal-image-apps-v2-relighting",
+            "requiredEnvironment": {
+              "name": "PACK064_EXTERNAL_EXECUTION_ENABLED",
+              "value": "true"
+            }
+          },
+          "model": "fal-ai/image-apps-v2/relighting",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/fal-ai/image-apps-v2/relighting/api"
           }
         }
       ]

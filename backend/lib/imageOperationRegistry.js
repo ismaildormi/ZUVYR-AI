@@ -190,6 +190,179 @@ function assertImageRequestAvailable(request) {
     return definition;
   }
 
+  if (definition.operation === 'remove_background') {
+    if (
+      (request?.referenceAssetIds || []).length > 0 ||
+      request?.maskAssetId ||
+      options.quantity !== 1 ||
+      options.seed !== null ||
+      options.style
+    ) {
+      throw imageOperationError(
+        'image_background_configuration_unsupported',
+        definition.operation
+      );
+    }
+    return definition;
+  }
+
+  if (definition.operation === 'relight') {
+    const ratios =
+      config.providers?.['fal-relight']?.capabilities?.ratios ||
+      ['1:1', '16:9', '9:16', '4:3', '3:4'];
+
+    if (
+      (request?.referenceAssetIds || []).length > 0 ||
+      request?.maskAssetId ||
+      options.quantity !== 1 ||
+      options.seed !== null ||
+      options.style ||
+      !ratios.includes(options.ratio)
+    ) {
+      throw imageOperationError(
+        'image_relight_configuration_unsupported',
+        definition.operation
+      );
+    }
+    return definition;
+  }
+
+  if (definition.operation === 'upscale') {
+    throw imageOperationError(
+      'image_upscale_exact_precharge_pricing_unavailable',
+      definition.operation
+    );
+  }
+
+  if (
+    ['crop', 'resize', 'canvas', 'layers', 'text', 'batch'].includes(
+      definition.operation
+    )
+  ) {
+    if (
+      request?.maskAssetId ||
+      options.quantity !== 1 ||
+      options.seed !== null ||
+      options.style
+    ) {
+      throw imageOperationError(
+        'image_local_utility_configuration_unsupported',
+        definition.operation
+      );
+    }
+
+    const refs = request?.referenceAssetIds || [];
+
+    if (
+      ['crop', 'resize', 'canvas', 'text'].includes(definition.operation) &&
+      refs.length > 0
+    ) {
+      throw imageOperationError(
+        'image_local_utility_references_unsupported',
+        definition.operation
+      );
+    }
+
+    if (definition.operation === 'crop') {
+      if (
+        !Number.isSafeInteger(options.cropWidth) ||
+        !Number.isSafeInteger(options.cropHeight)
+      ) {
+        throw imageOperationError(
+          'image_crop_dimensions_required',
+          definition.operation
+        );
+      }
+    }
+
+    if (definition.operation === 'resize') {
+      if (
+        !Number.isSafeInteger(options.resizeWidth) ||
+        !Number.isSafeInteger(options.resizeHeight)
+      ) {
+        throw imageOperationError(
+          'image_resize_dimensions_required',
+          definition.operation
+        );
+      }
+    }
+
+    if (definition.operation === 'canvas') {
+      if (
+        !Number.isSafeInteger(options.canvasWidth) ||
+        !Number.isSafeInteger(options.canvasHeight)
+      ) {
+        throw imageOperationError(
+          'image_canvas_dimensions_required',
+          definition.operation
+        );
+      }
+    }
+
+    if (definition.operation === 'layers') {
+      if (
+        refs.length < 1 ||
+        !Array.isArray(options.layerPlacements) ||
+        options.layerPlacements.length !== refs.length
+      ) {
+        throw imageOperationError(
+          'image_layer_inputs_required',
+          definition.operation
+        );
+      }
+    }
+
+    if (
+      definition.operation === 'text' &&
+      !String(options.textValue || '').trim()
+    ) {
+      throw imageOperationError(
+        'image_text_value_required',
+        definition.operation
+      );
+    }
+
+    if (definition.operation === 'batch') {
+      if (
+        refs.length < 1 ||
+        !['crop', 'resize'].includes(options.batchAction)
+      ) {
+        throw imageOperationError(
+          'image_batch_inputs_required',
+          definition.operation
+        );
+      }
+
+      if (
+        options.batchAction === 'crop' &&
+        (
+          !Number.isSafeInteger(options.cropWidth) ||
+          !Number.isSafeInteger(options.cropHeight)
+        )
+      ) {
+        throw imageOperationError(
+          'image_batch_crop_dimensions_required',
+          definition.operation
+        );
+      }
+
+      if (
+        options.batchAction === 'resize' &&
+        (
+          !Number.isSafeInteger(options.resizeWidth) ||
+          !Number.isSafeInteger(options.resizeHeight)
+        )
+      ) {
+        throw imageOperationError(
+          'image_batch_resize_dimensions_required',
+          definition.operation
+        );
+      }
+    }
+
+    return definition;
+  }
+
   return definition;
 }
 

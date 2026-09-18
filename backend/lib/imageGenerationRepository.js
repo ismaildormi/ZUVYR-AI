@@ -1,13 +1,61 @@
 'use strict';
 
 const crypto = require('node:crypto');
-const { CONFIG: ASSET_CONFIG, buildCanonicalObjectPath } = require('./assetStorageContract');
+const {
+  CONFIG: ASSET_CONFIG,
+  buildCanonicalObjectPath,
+  assertOwnedStoragePath
+} = require('./assetStorageContract');
 const { createAssetStorageKernel } = require('./assetStorageKernel');
 const { createContentRepository } = require('./contentRepository');
 
 const IMAGE_SOURCE_SYSTEM = 'generation_job';
 const MAX_CANONICAL_IMAGE_BYTES = 25 * 1024 * 1024;
 const ALLOWED_IMAGE_MIME = new Set(['image/webp', 'image/png', 'image/jpeg']);
+
+const PACK063_IMAGE_OPERATIONS = new Set([
+  'edit',
+  'inpaint',
+  'expand'
+]);
+
+const PACK064_IMAGE_OPERATIONS = new Set([
+  'remove_background',
+  'relight',
+  'crop',
+  'resize',
+  'canvas',
+  'layers',
+  'text',
+  'batch'
+]);
+
+const PACK064_LOCAL_OPERATIONS = new Set([
+  'crop',
+  'resize',
+  'canvas',
+  'layers',
+  'text',
+  'batch'
+]);
+
+function packForOperation(operation, additional = false) {
+  if (PACK064_IMAGE_OPERATIONS.has(operation)) return 64;
+  if (PACK063_IMAGE_OPERATIONS.has(operation)) return 63;
+  return additional ? 62 : 61;
+}
+
+function provenanceForOperation(operation, additional = false) {
+  if (PACK064_IMAGE_OPERATIONS.has(operation)) {
+    return 'pack064_image_utility';
+  }
+  if (PACK063_IMAGE_OPERATIONS.has(operation)) {
+    return 'pack063_image_edit';
+  }
+  return additional
+    ? 'pack062_image_reference_variation'
+    : 'pack061_image_generate';
+}
 
 function imageRepositoryError(code, status = 500, cause = null) {
   const error = new Error(code);
@@ -105,9 +153,49 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
     if (!job || !job.canonical_content_id) return null;
     const asset = await newestAsset(ownerId, job.canonical_content_id);
     if (!asset) return null;
+
+    let providerUrl = job.result_url || null;
+
+    if (PACK064_LOCAL_OPERATIONS.has(job.image_operation)) {
+      const resolved = await assets.resolveOwned({
+        ownerId,
+        assetId: asset.id
+      });
+
+      if (!resolved || resolved.assetId !== asset.id) {
+        throw imageRepositoryError(
+          'image_local_replay_asset_not_found',
+          404
+        );
+      }
+
+      const storagePath = assertOwnedStoragePath({
+        ownerId,
+        storagePath: resolved.storagePath
+      });
+
+      const signed = await storage
+        .from(resolved.storageBucket || ASSET_CONFIG.bucket)
+        .createSignedUrl(storagePath, 300);
+
+      if (
+        signed.error ||
+        !signed.data ||
+        !signed.data.signedUrl
+      ) {
+        throw imageRepositoryError(
+          'image_local_replay_sign_failed',
+          500,
+          signed.error
+        );
+      }
+
+      providerUrl = signed.data.signedUrl;
+    }
+
     return Object.freeze({
       jobId: job.id,
-      providerUrl: job.result_url || null,
+      providerUrl,
       contentId: job.canonical_content_id,
       assetId: asset.id,
       mimeType: asset.mime_type,
@@ -148,7 +236,7 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
       sourceVersionKey: sha256,
       metadata: {
         imageGeneration: true,
-        pack: ['edit', 'inpaint', 'expand'].includes(operation) ? 63 : 61,
+        pack: packForOperation(operation, false),
         jobId,
         provider,
         model,
@@ -171,9 +259,7 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
           lineage
         },
         provenance: {
-          source: ['edit', 'inpaint', 'expand'].includes(operation)
-            ? 'pack063_image_edit'
-            : 'pack061_image_generate',
+          source: provenanceForOperation(operation, false),
           jobId,
           provider,
           model,
@@ -274,7 +360,7 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
       sourceVersionKey: sha256,
       metadata: {
         imageGeneration: true,
-        pack: ['edit', 'inpaint', 'expand'].includes(operation) ? 63 : 62,
+        pack: packForOperation(operation, true),
         jobId,
         outputIndex,
         provider,
@@ -299,9 +385,7 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
           lineage
         },
         provenance: {
-          source: ['edit', 'inpaint', 'expand'].includes(operation)
-            ? 'pack063_image_edit'
-            : 'pack062_image_reference_variation',
+          source: provenanceForOperation(operation, true),
           jobId,
           outputIndex,
           provider,
@@ -339,7 +423,7 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
       retentionClass: 'standard',
       metadata: {
         imageGeneration: true,
-        pack: 62,
+        pack: packForOperation(operation, true),
         jobId,
         outputIndex,
         provider,

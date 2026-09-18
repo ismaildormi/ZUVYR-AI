@@ -521,3 +521,127 @@ Pack064 rule:
 Every V1-advertised utility must have a real executor.
 Unsupported, unpriced or unverified operations remain blocked/hidden.
 No paid provider execution is allowed while provider funds are unavailable.
+
+
+## PACK064 PHASE01 — EXECUTOR FOUNDATION / LOCAL VERIFICATION PENDING
+
+Base: dbab88432ec1a7c0decb88891c6a85b319e6d5d0
+
+Research-grounded external executors:
+- remove_background -> fal-ai/birefnet/v2
+  - official page displayed $0 per compute second on 2026-09-18
+  - FAL_KEY direct route
+- upscale -> fal-ai/flux-vision-upscaler
+  - official page displayed $0.10 per output megapixel
+  - repository adapter built, but production remains blocked until exact pre-charge output-MP quoting is wired
+- relight -> fal-ai/image-apps-v2/relighting
+  - official page displayed $0.04 per image
+  - FAL_KEY direct route
+
+Real local zero-provider executor:
+- crop
+- resize
+- canvas
+- layers
+- text
+- batch (crop/resize across 2–5 owned image inputs)
+- runtime: sharp@0.34.4
+- provider calls: 0
+
+Safety:
+- All Pack064 operations remain disabled/unexposed in Phase01.
+- No migration is applied.
+- No provider/network/payment call is executed by tests.
+- Phase02 must wire request validation, dynamic pricing, canonical persistence, worker execution, exact migration and owner-scoped live/local proof before Pack064 can advance.
+
+
+## PACK064 PHASE01 V2 ASYNC TEST CORRECTION — LOCAL VERIFICATION PENDING
+- Phase01 implementation applied successfully.
+- sharp@0.34.4 loaded successfully.
+- First focused test failed only because an async rejection was asserted with assert.throws().
+- executeLocalImageUtility() is async, so unsupported batch actions reject a Promise rather than throwing synchronously.
+- V2 changes only that test assertion to await assert.rejects().
+- Runtime implementation is unchanged.
+- AI provider calls: 0.
+- Payment calls: 0.
+- Migration applied: NO.
+- Production deployment: NO.
+
+
+## PACK064 PHASE02 — RUNTIME WIRING / LOCAL VERIFICATION PENDING
+
+Base remains: dbab88432ec1a7c0decb88891c6a85b319e6d5d0
+Phase01: LOCAL_VERIFIED.
+
+Phase02 wiring:
+- remove_background -> direct Fal BiRefNet v2 executor
+- relight -> direct Fal Image Apps v2 relighting executor
+- both external executors fail closed unless PACK064_EXTERNAL_EXECUTION_ENABLED=true
+- upscale remains disabled until server can quote exact output megapixels before credit reservation
+- crop / resize / canvas / layers / text / batch route to local sharp@0.34.4
+- local input bytes are loaded from owner-scoped canonical assets
+- local outputs are immutable canonical image content/version/assets with output manifests
+- local job replay refreshes a short-lived signed URL instead of re-running the transformation
+- Pack064 source/reference lineage is persisted
+- feature flags remain OFF; no Pack064 UI is exposed in this phase
+- migration 32 remains staged only; production constraint is not changed by this bundle
+- AI provider calls during verification: 0
+- payment calls during verification: 0
+
+
+## PACK064 PHASE02 V2 STATE-AWARE TEST CORRECTION — LOCAL VERIFICATION PENDING
+- Phase02 implementation applied successfully.
+- First Phase02 focused test passed.
+- The second focused test failed because it still asserted the deliberate Phase01 state: every Pack064 operation disabled and runtime unwired.
+- Phase02 intentionally wires remove_background, relight, crop, resize, canvas, layers, text and batch while keeping UI/feature flags unexposed.
+- Upscale remains disabled because exact pre-charge output-megapixel pricing is not yet wired.
+- V2 updates only the stale Phase01 state assertions; provider adapter/cost tests remain intact.
+- Runtime implementation is unchanged by V2.
+- AI provider calls: 0.
+- Payment calls: 0.
+- Migration applied: NO.
+- Production deployment: NO.
+
+
+## PACK064 PHASE02 V3 CANONICAL ASSET BUCKET TEST FIX — LOCAL VERIFICATION PENDING
+- Phase02 request/pricing test passed.
+- Local repository test then failed with image_utility_asset_unsupported before any provider/network/payment call.
+- Root cause: the test fixture hardcoded an invented/obsolete storage bucket "zuvyr-assets".
+- Pack042 authoritative asset-storage config uses bucket "conversation-files".
+- The runtime repository was correct to reject the wrong bucket.
+- V3 changes only the test fixture to import and use ASSET_CONFIG.bucket from backend/config/asset-storage.v1.json.
+- Runtime implementation is unchanged.
+- AI provider calls: 0.
+- Payment calls: 0.
+- Migration applied: NO.
+- Production deployment: NO.
+
+
+## PACK064 PHASE03 DEPLOY CANDIDATE — 2026-09-18
+
+- Phase01 local verification: PASS
+- Phase02 local verification: PASS
+- Supabase migration applied through approved connector:
+  - identity: pack064_image_utility_operations
+  - production generation_jobs image-operation constraint now admits:
+    generate, reference_generate, edit, variations, remove_background, upscale, inpaint, expand, relight, crop, resize, canvas, layers, text, batch
+  - production Pack064 jobs observed immediately after migration: 0
+- Official Fal pricing rechecked 2026-09-18:
+  - fal-ai/birefnet/v2 page displays $0 per compute second
+  - fal-ai/image-apps-v2/relighting displays $0.04 per image
+  - fal-ai/flux-vision-upscaler is billed per output megapixel; Pack064 keeps upscale blocked until exact pre-charge output-MP quoting is authoritative
+- External Pack064 execution default: OFF
+- Feature flags / UI exposure: unchanged
+- Phase03 goal: commit/push/deploy exact backend runtime, perform no-cost direct-Fal status preflight, then gather no-cost production evidence.
+
+
+## PACK064 PHASE03 V2 STATE-AWARE TEST CORRECTION — DEPLOY GATE PENDING
+- Phase03 source patch applied successfully.
+- First Phase03 focused test passed.
+- provider-foundation then failed because it still asserted the prior Phase02 phase string and migrationApplied=false.
+- Phase03 intentionally changes state to PHASE03_DEPLOY_CANDIDATE and records migration pack064_image_utility_operations as applied.
+- V2 updates only those stale state assertions and preserves all provider/cost/runtime checks.
+- Runtime implementation is unchanged.
+- AI provider calls: 0.
+- Payment calls: 0.
+- No commit/push/deploy occurred before this correction.

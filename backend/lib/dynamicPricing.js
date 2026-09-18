@@ -133,6 +133,94 @@ function providerQuote(feature, {
   if (
     feature === 'image' &&
     imageRequest &&
+    ['crop', 'resize', 'canvas', 'layers', 'text', 'batch'].includes(
+      imageRequest.operation
+    )
+  ) {
+    const spec = {
+      crop: ['image_crop', 'image_crop_processing'],
+      resize: ['image_resize', 'image_resize_processing'],
+      canvas: ['image_canvas', 'image_canvas_processing'],
+      layers: ['image_layers', 'image_layer_composite'],
+      text: ['image_text', 'image_text_overlay'],
+      batch: ['image_batch', 'image_batch_processing']
+    }[imageRequest.operation];
+
+    const entry = resolveCostEntry({
+      provider: 'local',
+      modelToolId: 'sharp@0.34.4',
+      capability: spec[0],
+      operationType: spec[1]
+    }, { env, now });
+
+    return Object.freeze({
+      provider: 'local-sharp',
+      providerCostMicroUsd:
+        estimateProviderCostMicroUsd(entry),
+      pricingVersion: entry.registryVersion
+    });
+  }
+
+  if (
+    feature === 'image' &&
+    imageRequest &&
+    ['remove_background', 'relight'].includes(imageRequest.operation)
+  ) {
+    if (
+      String(
+        env.PACK064_EXTERNAL_EXECUTION_ENABLED || ''
+      ).toLowerCase() !== 'true'
+    ) {
+      throw pricingError('pack064_external_execution_disabled');
+    }
+
+    if (!env.FAL_KEY) {
+      throw pricingError('no_configured_pack064_image_provider');
+    }
+
+    const spec = {
+      remove_background: {
+        provider: 'fal-background',
+        modelToolId: 'fal-ai/birefnet/v2',
+        capability: 'image_remove_background',
+        operationType: 'image_background_removal'
+      },
+      relight: {
+        provider: 'fal-relight',
+        modelToolId: 'fal-ai/image-apps-v2/relighting',
+        capability: 'image_relight',
+        operationType: 'image_relighting'
+      }
+    }[imageRequest.operation];
+
+    const entry = resolveCostEntry({
+      provider: 'fal',
+      modelToolId: spec.modelToolId,
+      capability: spec.capability,
+      operationType: spec.operationType
+    }, { env, now });
+
+    return Object.freeze({
+      provider: spec.provider,
+      providerCostMicroUsd:
+        estimateProviderCostMicroUsd(entry),
+      pricingVersion: entry.registryVersion
+    });
+  }
+
+  if (
+    feature === 'image' &&
+    imageRequest &&
+    imageRequest.operation === 'upscale'
+  ) {
+    throw pricingError(
+      'pack064_upscale_exact_precharge_pricing_unavailable'
+    );
+  }
+
+  if (
+    feature === 'image' &&
+    imageRequest &&
     ['edit', 'inpaint', 'expand'].includes(imageRequest.operation)
   ) {
     if (String(env.PACK063_PAID_EXECUTION_ENABLED || '').toLowerCase() !== 'true') {
