@@ -99,6 +99,97 @@ function assertImageRequestAvailable(request) {
     return definition;
   }
 
+
+  if (definition.operation === 'edit') {
+    const ratios =
+      config.providers?.['fal-edit']?.capabilities?.ratios || ['1:1'];
+
+    if ((request?.referenceAssetIds || []).length > 0) {
+      throw imageOperationError('image_edit_references_unsupported', definition.operation);
+    }
+    if (request?.maskAssetId) {
+      throw imageOperationError('image_edit_mask_unsupported', definition.operation);
+    }
+    if (options.resolution !== '1024') {
+      throw imageOperationError('image_edit_resolution_unsupported', definition.operation);
+    }
+    if (options.style) {
+      throw imageOperationError('image_edit_style_unsupported', definition.operation);
+    }
+    if (!ratios.includes(options.ratio)) {
+      throw imageOperationError('image_edit_ratio_unsupported', definition.operation);
+    }
+    if (
+      options.strength !== undefined ||
+      options.expandLeft !== undefined ||
+      options.expandRight !== undefined ||
+      options.expandTop !== undefined ||
+      options.expandBottom !== undefined ||
+      options.zoomOutPercentage !== undefined
+    ) {
+      throw imageOperationError('image_edit_option_unsupported', definition.operation);
+    }
+    return definition;
+  }
+
+  if (definition.operation === 'inpaint') {
+    const ratios =
+      config.providers?.['fal-inpaint']?.capabilities?.ratios || ['1:1'];
+
+    if ((request?.referenceAssetIds || []).length > 0) {
+      throw imageOperationError('image_inpaint_references_unsupported', definition.operation);
+    }
+    if (!request?.sourceAssetId || !request?.maskAssetId) {
+      throw imageOperationError('image_inpaint_source_mask_required', definition.operation);
+    }
+    if (options.resolution !== '1024') {
+      throw imageOperationError('image_inpaint_resolution_unsupported', definition.operation);
+    }
+    if (options.style) {
+      throw imageOperationError('image_inpaint_style_unsupported', definition.operation);
+    }
+    if (!ratios.includes(options.ratio)) {
+      throw imageOperationError('image_inpaint_ratio_unsupported', definition.operation);
+    }
+    if (
+      options.expandLeft !== undefined ||
+      options.expandRight !== undefined ||
+      options.expandTop !== undefined ||
+      options.expandBottom !== undefined ||
+      options.zoomOutPercentage !== undefined
+    ) {
+      throw imageOperationError('image_inpaint_expand_option_unsupported', definition.operation);
+    }
+    return definition;
+  }
+
+  if (definition.operation === 'expand') {
+    if ((request?.referenceAssetIds || []).length > 0) {
+      throw imageOperationError('image_outpaint_references_unsupported', definition.operation);
+    }
+    if (request?.maskAssetId) {
+      throw imageOperationError('image_outpaint_mask_unsupported', definition.operation);
+    }
+    if (options.ratio !== '1:1' || options.resolution !== '1024') {
+      throw imageOperationError('image_outpaint_fixed_canvas_contract', definition.operation);
+    }
+    if (options.style || options.strength !== undefined) {
+      throw imageOperationError('image_outpaint_option_unsupported', definition.operation);
+    }
+
+    const expansion =
+      Number(options.expandLeft || 0) +
+      Number(options.expandRight || 0) +
+      Number(options.expandTop || 0) +
+      Number(options.expandBottom || 0);
+
+    const zoom = Number(options.zoomOutPercentage || 0);
+    if (expansion <= 0 && zoom <= 0) {
+      throw imageOperationError('image_outpaint_change_required', definition.operation);
+    }
+    return definition;
+  }
+
   return definition;
 }
 

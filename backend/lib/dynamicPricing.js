@@ -133,6 +133,57 @@ function providerQuote(feature, {
   if (
     feature === 'image' &&
     imageRequest &&
+    ['edit', 'inpaint', 'expand'].includes(imageRequest.operation)
+  ) {
+    if (String(env.PACK063_PAID_EXECUTION_ENABLED || '').toLowerCase() !== 'true') {
+      throw pricingError('pack063_paid_execution_disabled');
+    }
+    if (!env.FAL_KEY) {
+      throw pricingError('no_configured_pack063_image_provider');
+    }
+
+    const operation = imageRequest.operation;
+    const spec = {
+      edit: {
+        provider: 'fal-edit',
+        modelToolId: 'fal-ai/flux-pro/kontext',
+        capability: 'image_edit',
+        operationType: 'image_edit_generation'
+      },
+      inpaint: {
+        provider: 'fal-inpaint',
+        modelToolId: 'fal-ai/qwen-image-edit/inpaint',
+        capability: 'image_inpaint',
+        operationType: 'image_inpainting'
+      },
+      expand: {
+        provider: 'fal-outpaint',
+        modelToolId: 'fal-ai/image-apps-v2/outpaint',
+        capability: 'image_outpaint',
+        operationType: 'image_outpainting'
+      }
+    }[operation];
+
+    const entry = resolveCostEntry({
+      provider: 'fal',
+      modelToolId: spec.modelToolId,
+      capability: spec.capability,
+      operationType: spec.operationType
+    }, { env, now });
+
+    const unitCost = BigInt(estimateProviderCostMicroUsd(entry));
+    const quantity = BigInt(imageRequest.options?.quantity || 1);
+
+    return Object.freeze({
+      provider: spec.provider,
+      providerCostMicroUsd: (unitCost * quantity).toString(),
+      pricingVersion: entry.registryVersion
+    });
+  }
+
+  if (
+    feature === 'image' &&
+    imageRequest &&
     ['reference_generate', 'variations'].includes(imageRequest.operation)
   ) {
     if (!env.FAL_KEY) {

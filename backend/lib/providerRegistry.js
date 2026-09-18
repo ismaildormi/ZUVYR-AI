@@ -131,10 +131,24 @@ function capabilitySnapshot(providerId, capability, env = process.env) {
     requiredCredentialEnvironment.length === 0 ||
     requiredCredentialEnvironment.every(key => present(env[key]));
 
+  const costRequirement =
+    capability?.cost?.requiredEnvironment || null;
+
+  const costConditionMet =
+    !costRequirement ||
+    Array.isArray(costRequirement) ||
+    (
+      typeof costRequirement === 'object' &&
+      present(costRequirement.name) &&
+      String(env[costRequirement.name] || '') ===
+        String(costRequirement.value || '')
+    );
+
   return Object.freeze({
     id: capability.id,
     capabilityVerified,
     costSourceVerified: costVerified,
+    costConditionMet,
     credentialPresent: capabilityCredentialPresent,
     credentialEnvironmentNames: [
       ...requiredCredentialEnvironment
@@ -142,6 +156,7 @@ function capabilitySnapshot(providerId, capability, env = process.env) {
     eligible:
       capabilityVerified &&
       costVerified &&
+      costConditionMet &&
       capabilityCredentialPresent,
     costAuthority:
       capability.cost && capability.cost.authority

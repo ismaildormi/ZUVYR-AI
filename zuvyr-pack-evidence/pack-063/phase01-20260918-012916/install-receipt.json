@@ -1,0 +1,26 @@
+{
+  "pack": "063",
+  "phase": "phase01-local-implementation",
+  "baseCommit": "ec972d85381e57984a535a2a983ec603e7403ab5",
+  "paidProviderCalls": 0,
+  "paidExecutionDefault": false,
+  "providerResearch": {
+    "edit": {
+      "model": "fal-ai/flux-pro/kontext",
+      "publishedPrice": "$0.04/image"
+    },
+    "inpaint": {
+      "model": "fal-ai/qwen-image-edit/inpaint",
+      "publishedPrice": "$0.03/megapixel"
+    },
+    "outpaint": {
+      "model": "fal-ai/image-apps-v2/outpaint",
+      "publishedPrice": "$0.035/megapixel"
+    }
+  },
+  "financialSafety": {
+    "envGate": "PACK063_PAID_EXECUTION_ENABLED",
+    "default": false,
+    "variableMpActivation": "PACK063_ONE_MP_BILLING_CONFIRMED"
+  }
+}

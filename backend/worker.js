@@ -26,7 +26,10 @@ const {
   generateImage,
   DEFAULT_IMAGE_MODEL,
   DEFAULT_FAL_IMAGE_MODEL,
-  DEFAULT_FAL_KONTEXT_MODEL
+  DEFAULT_FAL_KONTEXT_MODEL,
+  DEFAULT_FAL_EDIT_MODEL,
+  DEFAULT_FAL_INPAINT_MODEL,
+  DEFAULT_FAL_OUTPAINT_MODEL
 } = require('./src/modules/ai/providers/imageProviders');
 const { buildImageArtifact } = require('./lib/imageArtifactContract');
 const { normalizeImageRequest } = require('./lib/imageRequestContract');
@@ -251,12 +254,38 @@ async function processImageJob(job) {
 
   if (!persisted) {
     try {
-      const isReferenceOperation =
-        ['reference_generate', 'variations'].includes(
+      const executorByOperation = {
+        reference_generate: 'fal-kontext',
+        variations: 'fal-kontext',
+        edit: 'fal-edit',
+        inpaint: 'fal-inpaint',
+        expand: 'fal-outpaint'
+      };
+
+      const selectedExecutor =
+        executorByOperation[imageRequest.operation] || null;
+
+      const isPack063Operation =
+        ['edit', 'inpaint', 'expand'].includes(
           imageRequest.operation
         );
 
-      const resolvedImageInputs = isReferenceOperation
+      if (
+        isPack063Operation &&
+        String(
+          process.env.PACK063_PAID_EXECUTION_ENABLED || ''
+        ).toLowerCase() !== 'true'
+      ) {
+        const terminal =
+          new UnrecoverableError(
+            'pack063_paid_execution_disabled'
+          );
+        terminal.code =
+          'pack063_paid_execution_disabled';
+        throw terminal;
+      }
+
+      const resolvedImageInputs = selectedExecutor
         ? await resolveImageReferences({
             ownerId: userId,
             request: imageRequest,
@@ -271,18 +300,45 @@ async function processImageJob(job) {
       providerResult = await generateImage(prompt, {
         imageRequest,
         resolvedImageInputs,
-        chain: isReferenceOperation
-          ? ['fal-kontext']
+        chain: selectedExecutor
+          ? [selectedExecutor]
           : standardImageProviderOptions.chain,
         models: {
           fal: process.env.FAL_IMAGE_MODEL || DEFAULT_FAL_IMAGE_MODEL,
           'fal-kontext':
             process.env.FAL_KONTEXT_IMAGE_MODEL ||
             DEFAULT_FAL_KONTEXT_MODEL,
+          'fal-edit':
+            process.env.FAL_EDIT_IMAGE_MODEL ||
+            DEFAULT_FAL_EDIT_MODEL,
+          'fal-inpaint':
+            process.env.FAL_INPAINT_IMAGE_MODEL ||
+            DEFAULT_FAL_INPAINT_MODEL,
+          'fal-outpaint':
+            process.env.FAL_OUTPAINT_IMAGE_MODEL ||
+            DEFAULT_FAL_OUTPAINT_MODEL,
           replicate: IMAGE_MODEL
         },
         requestId: requestId || jobRowId
       });
+
+      providerResult.editLineage =
+        resolvedImageInputs
+          ? {
+              sourceAssetId:
+                resolvedImageInputs.source?.assetId || null,
+              sourceContentId:
+                resolvedImageInputs.source?.contentId || null,
+              sourceVersionId:
+                resolvedImageInputs.source?.versionId || null,
+              maskAssetId:
+                resolvedImageInputs.mask?.assetId || null,
+              maskContentId:
+                resolvedImageInputs.mask?.contentId || null,
+              maskVersionId:
+                resolvedImageInputs.mask?.versionId || null
+            }
+          : {};
     } catch (providerError) {
       if (providerError && providerError.retryable === false) {
         const terminal = new UnrecoverableError(providerError.message);
@@ -305,7 +361,8 @@ async function processImageJob(job) {
         provider: providerResult.provider,
         model: providerResult.model,
         operation: imageRequest.operation,
-        options: imageRequest.options
+        options: imageRequest.options,
+        lineage: providerResult.editLineage || {}
       });
     } else {
       const persistedSet =
@@ -317,7 +374,8 @@ async function processImageJob(job) {
           provider: providerResult.provider,
           model: providerResult.model,
           operation: imageRequest.operation,
-          options: imageRequest.options
+          options: imageRequest.options,
+          lineage: providerResult.editLineage || {}
         });
 
       persisted = persistedSet.primary;
@@ -327,19 +385,31 @@ async function processImageJob(job) {
   const provider =
     providerResult?.provider ||
     persisted?.options?.outputProvider ||
-    (['reference_generate', 'variations'].includes(imageRequest.operation)
-      ? 'fal-kontext'
-      : 'replicate');
+    ({
+      reference_generate: 'fal-kontext',
+      variations: 'fal-kontext',
+      edit: 'fal-edit',
+      inpaint: 'fal-inpaint',
+      expand: 'fal-outpaint'
+    }[imageRequest.operation] || 'replicate');
 
   const model =
     providerResult?.model ||
     persisted?.options?.outputModel ||
-    (provider === 'fal-kontext'
-      ? (
-          process.env.FAL_KONTEXT_IMAGE_MODEL ||
-          DEFAULT_FAL_KONTEXT_MODEL
-        )
-      : IMAGE_MODEL);
+    ({
+      'fal-kontext':
+        process.env.FAL_KONTEXT_IMAGE_MODEL ||
+        DEFAULT_FAL_KONTEXT_MODEL,
+      'fal-edit':
+        process.env.FAL_EDIT_IMAGE_MODEL ||
+        DEFAULT_FAL_EDIT_MODEL,
+      'fal-inpaint':
+        process.env.FAL_INPAINT_IMAGE_MODEL ||
+        DEFAULT_FAL_INPAINT_MODEL,
+      'fal-outpaint':
+        process.env.FAL_OUTPAINT_IMAGE_MODEL ||
+        DEFAULT_FAL_OUTPAINT_MODEL
+    }[provider] || IMAGE_MODEL);
   const artifact = buildImageArtifact({
     url: persisted.providerUrl,
     operation: imageRequest.operation,

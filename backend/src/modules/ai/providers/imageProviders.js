@@ -6,6 +6,9 @@ const DEFAULT_IMAGE_PROVIDER = 'replicate';
 const DEFAULT_IMAGE_MODEL = REPLICATE_IMAGE_MODEL;
 const DEFAULT_FAL_IMAGE_MODEL = 'fal-ai/flux/schnell';
 const DEFAULT_FAL_KONTEXT_MODEL = 'fal-ai/flux-pro/kontext/multi';
+const DEFAULT_FAL_EDIT_MODEL = 'fal-ai/flux-pro/kontext';
+const DEFAULT_FAL_INPAINT_MODEL = 'fal-ai/qwen-image-edit/inpaint';
+const DEFAULT_FAL_OUTPAINT_MODEL = 'fal-ai/image-apps-v2/outpaint';
 const HF_FAL_ROUTER_BASE = 'https://router.huggingface.co/fal-ai';
 const providers = new Map();
 const { assertImageProviderCapabilities } = require('../../../../lib/imageCapabilityGate');
@@ -312,6 +315,130 @@ function buildFalKontextInput(prompt, request, resolved) {
   });
 }
 
+
+function buildFalEditInput(prompt, request, resolved) {
+  const sourceUrl = resolved?.source?.url || null;
+  if (!sourceUrl) {
+    const error = new Error('fal_edit_source_required');
+    error.statusCode = 400;
+    error.retryable = false;
+    throw error;
+  }
+
+  const options = request?.options || {};
+  return Object.freeze({
+    prompt: String(prompt || ''),
+    image_url: sourceUrl,
+    aspect_ratio: options.ratio || '1:1',
+    num_images: Number(options.quantity || 1),
+    ...(options.seed === null || options.seed === undefined
+      ? {}
+      : { seed: Number(options.seed) }),
+    output_format: 'jpeg',
+    safety_tolerance: '2'
+  });
+}
+
+function buildFalInpaintInput(prompt, request, resolved) {
+  const sourceUrl = resolved?.source?.url || null;
+  const maskUrl = resolved?.mask?.url || null;
+  if (!sourceUrl || !maskUrl) {
+    const error = new Error('fal_inpaint_source_mask_required');
+    error.statusCode = 400;
+    error.retryable = false;
+    throw error;
+  }
+
+  const options = request?.options || {};
+  const imageSizeByRatio = {
+    '1:1': 'square_hd',
+    '16:9': 'landscape_16_9',
+    '9:16': 'portrait_16_9',
+    '4:3': 'landscape_4_3',
+    '3:4': 'portrait_4_3'
+  };
+
+  return Object.freeze({
+    prompt: String(prompt || ''),
+    image_url: sourceUrl,
+    mask_url: maskUrl,
+    image_size: imageSizeByRatio[options.ratio || '1:1'],
+    num_images: Number(options.quantity || 1),
+    ...(options.seed === null || options.seed === undefined
+      ? {}
+      : { seed: Number(options.seed) }),
+    ...(options.strength === undefined
+      ? {}
+      : { strength: Number(options.strength) }),
+    acceleration: 'regular',
+    enable_safety_checker: true,
+    output_format: 'png'
+  });
+}
+
+function buildFalOutpaintInput(prompt, request, resolved) {
+  const sourceUrl = resolved?.source?.url || null;
+  if (!sourceUrl) {
+    const error = new Error('fal_outpaint_source_required');
+    error.statusCode = 400;
+    error.retryable = false;
+    throw error;
+  }
+
+  const options = request?.options || {};
+  const input = {
+    image_url: sourceUrl,
+    prompt: String(prompt || ''),
+    num_images: Number(options.quantity || 1),
+    enable_safety_checker: true,
+    output_format: 'png'
+  };
+
+  for (const [optionKey, providerKey] of [
+    ['expandLeft', 'expand_left'],
+    ['expandRight', 'expand_right'],
+    ['expandTop', 'expand_top'],
+    ['expandBottom', 'expand_bottom']
+  ]) {
+    if (options[optionKey] !== undefined) {
+      input[providerKey] = Number(options[optionKey]);
+    }
+  }
+
+  if (options.zoomOutPercentage !== undefined) {
+    input.zoom_out_percentage = Number(options.zoomOutPercentage);
+  }
+  if (options.seed !== null && options.seed !== undefined) {
+    input.seed = Number(options.seed);
+  }
+
+  return Object.freeze(input);
+}
+
+async function generateDirectFalImages({
+  model,
+  input,
+  apiKey,
+  falClient
+}) {
+  const client =
+    falClient ||
+    (await import('@fal-ai/client')).fal;
+
+  client.config({
+    credentials: apiKey || process.env.FAL_KEY
+  });
+
+  const result = await client.subscribe(model, {
+    input,
+    logs: false
+  });
+
+  return normalizeOutputUrls(
+    result?.data?.images || result?.data || result
+  );
+}
+
 async function generateImage(prompt, opts = {}) {
   const chain = opts.chain || [DEFAULT_IMAGE_PROVIDER];
   const attempts = [];
@@ -470,6 +597,127 @@ registerImageProvider('fal-kontext', {
   }
 });
 
+
+registerImageProvider('fal-edit', {
+  label: 'Fal AI Kontext Edit',
+  capabilities: {
+    operations: ['edit'],
+    sourceAsset: true,
+    maskAsset: false,
+    seed: true,
+    quantity: true,
+    maxQuantity: 4
+  },
+  isConfigured: () => Boolean(process.env.FAL_KEY),
+  async generate(prompt, opts = {}) {
+    const model =
+      opts.model ||
+      process.env.FAL_EDIT_IMAGE_MODEL ||
+      DEFAULT_FAL_EDIT_MODEL;
+
+    const input = buildFalEditInput(
+      prompt,
+      opts.imageRequest || {},
+      opts.resolvedImageInputs || {}
+    );
+
+    const urls = await generateDirectFalImages({
+      model,
+      input,
+      apiKey: opts.apiKey || process.env.FAL_KEY,
+      falClient: opts.falClient
+    });
+
+    if (urls.length !== Number(input.num_images)) {
+      const error = new Error('fal_edit_output_count_mismatch');
+      error.statusCode = 502;
+      error.retryable = false;
+      throw error;
+    }
+    return urls;
+  }
+});
+
+registerImageProvider('fal-inpaint', {
+  label: 'Fal AI Qwen Inpaint',
+  capabilities: {
+    operations: ['inpaint'],
+    sourceAsset: true,
+    maskAsset: true,
+    seed: true,
+    quantity: true,
+    maxQuantity: 4
+  },
+  isConfigured: () => Boolean(process.env.FAL_KEY),
+  async generate(prompt, opts = {}) {
+    const model =
+      opts.model ||
+      process.env.FAL_INPAINT_IMAGE_MODEL ||
+      DEFAULT_FAL_INPAINT_MODEL;
+
+    const input = buildFalInpaintInput(
+      prompt,
+      opts.imageRequest || {},
+      opts.resolvedImageInputs || {}
+    );
+
+    const urls = await generateDirectFalImages({
+      model,
+      input,
+      apiKey: opts.apiKey || process.env.FAL_KEY,
+      falClient: opts.falClient
+    });
+
+    if (urls.length !== Number(input.num_images)) {
+      const error = new Error('fal_inpaint_output_count_mismatch');
+      error.statusCode = 502;
+      error.retryable = false;
+      throw error;
+    }
+    return urls;
+  }
+});
+
+registerImageProvider('fal-outpaint', {
+  label: 'Fal AI Outpaint',
+  capabilities: {
+    operations: ['expand'],
+    sourceAsset: true,
+    maskAsset: false,
+    seed: true,
+    quantity: true,
+    maxQuantity: 4
+  },
+  isConfigured: () => Boolean(process.env.FAL_KEY),
+  async generate(prompt, opts = {}) {
+    const model =
+      opts.model ||
+      process.env.FAL_OUTPAINT_IMAGE_MODEL ||
+      DEFAULT_FAL_OUTPAINT_MODEL;
+
+    const input = buildFalOutpaintInput(
+      prompt,
+      opts.imageRequest || {},
+      opts.resolvedImageInputs || {}
+    );
+
+    const urls = await generateDirectFalImages({
+      model,
+      input,
+      apiKey: opts.apiKey || process.env.FAL_KEY,
+      falClient: opts.falClient
+    });
+
+    if (urls.length !== Number(input.num_images)) {
+      const error = new Error('fal_outpaint_output_count_mismatch');
+      error.statusCode = 502;
+      error.retryable = false;
+      throw error;
+    }
+    return urls;
+  }
+});
+
 registerImageProvider('replicate', {
   label: 'Replicate',
   isConfigured: () => Boolean(process.env.REPLICATE_API_TOKEN),
@@ -494,6 +742,9 @@ module.exports = {
   DEFAULT_IMAGE_MODEL,
   DEFAULT_FAL_IMAGE_MODEL,
   DEFAULT_FAL_KONTEXT_MODEL,
+  DEFAULT_FAL_EDIT_MODEL,
+  DEFAULT_FAL_INPAINT_MODEL,
+  DEFAULT_FAL_OUTPAINT_MODEL,
   HF_FAL_ROUTER_BASE,
   registerImageProvider,
   getImageProvider,
@@ -501,6 +752,9 @@ module.exports = {
   normalizeOutput,
   normalizeOutputUrls,
   buildFalKontextInput,
+  buildFalEditInput,
+  buildFalInpaintInput,
+  buildFalOutpaintInput,
   sanitizeProviderMessage,
   providerFailureEvidence,
   providerAttemptRetryable,

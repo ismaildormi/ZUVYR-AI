@@ -286,7 +286,15 @@ async function run() {
   );
   assert.match(
     worker,
-    /\['fal-kontext'\]/
+    /reference_generate:\s*'fal-kontext'/
+  );
+  assert.match(
+    worker,
+    /variations:\s*'fal-kontext'/
+  );
+  assert.match(
+    worker,
+    /chain:\s*selectedExecutor\s*\?\s*\[selectedExecutor\]\s*:\s*standardImageProviderOptions\.chain/
   );
   assert.match(
     worker,

@@ -430,3 +430,49 @@ Research baseline:
 - fal-ai/image-apps-v2/outpaint — directional expansion/outpaint
 - Direct provider credential: FAL_KEY
 - Paid provider execution remains disabled while real provider funds are unavailable.
+
+
+## PACK063 PHASE01 IMPLEMENTATION — LOCAL VERIFICATION PENDING
+
+Base: ec972d85381e57984a535a2a983ec603e7403ab5
+
+Implemented in this phase:
+- General source image edit adapter: fal-ai/flux-pro/kontext
+- Mask inpaint adapter: fal-ai/qwen-image-edit/inpaint
+- Directional/zoom outpaint adapter: fal-ai/image-apps-v2/outpaint
+- Owner-scoped source+mask resolution reuses Pack062 resolver
+- Edit/inpaint/outpaint options validated before provider call
+- Source content/version lineage persisted on derived outputs
+- Owner-scoped zero-provider rollback returns the immutable original source
+- Pack063 paid execution is OFF by default with PACK063_PAID_EXECUTION_ENABLED
+- Inpaint/outpaint per-megapixel production activation is fail-closed pending exact MP settlement; conditional 1-MP engineering basis only
+- No paid provider calls in local verification
+
+Official provider evidence reviewed 2026-09-18:
+- https://fal.ai/models/fal-ai/flux-pro/kontext/api
+- https://fal.ai/models/fal-ai/qwen-image-edit/inpaint/api
+- https://fal.ai/models/fal-ai/image-apps-v2/outpaint/api
+
+
+## PACK063 PHASE01 V2 REGRESSION ADAPTATION — LOCAL VERIFICATION PENDING
+- Pack063 V1 focused implementation test passed.
+- Pack062 first three regressions passed.
+- Pack062 full regression failed only because it statically expected the pre-Pack063 literal chain ['fal-kontext'].
+- Pack063 preserves the same Pack062 behavior through executorByOperation:
+  reference_generate -> fal-kontext; variations -> fal-kontext.
+- V2 updates the regression to assert both explicit operation mappings and selectedExecutor routing, rather than weakening/removing the Pack062 guarantee.
+- V2 also adds an owner-scoped HTTP unit test for Pack063 zero-provider rollback.
+- Paid provider calls remain 0.
+
+
+## PACK063 PHASE01 V3 PACK021 COMPATIBILITY — LOCAL VERIFICATION PENDING
+- Pack063 V2 focused tests passed: edit/inpaint/outpaint + owner-scoped rollback.
+- Pack062 regressions passed 4/4.
+- Pack061 regressions passed 8/8.
+- Pack014 cost registry passed.
+- Pack021 then failed because Pack063 providerRegistry costConditionMet logic interpreted legacy array-shaped cost.requiredEnvironment as false.
+- Pack021 Groq uses array-shaped requiredEnvironment and its mode-specific validation is already handled by costSourceVerified().
+- Pack063 inpaint/outpaint use the new object-shaped {name,value} activation condition.
+- V3 makes the generic activation gate evaluate only the object-shaped condition while preserving legacy arrays.
+- Pack063 focused coverage now asserts both legacy Groq eligibility and Pack063 conditional inpaint eligibility.
+- Paid provider calls remain 0.

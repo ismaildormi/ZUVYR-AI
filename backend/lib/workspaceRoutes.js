@@ -197,6 +197,53 @@ function createWorkspaceRouter(options = {}) {
       return res.status(500).json({status:'error',code:'image_history_operation_failed',message:'Image history could not be loaded.'});
     }
   });
+
+  router.post('/images/:jobId/rollback', async (req,res) => {
+    try {
+      const result = await imageGenerationStore.rollbackEdit({
+        ownerId: req.userId,
+        jobId: uuid(
+          req.params.jobId,
+          'invalid_image_rollback_job_id'
+        )
+      });
+
+      return res.json({
+        status: 'success',
+        rollback: result,
+        providerCalls: 0,
+        sourcePreserved: true
+      });
+    } catch (error) {
+      const code = String(error?.code || error?.message || '');
+      if (code.startsWith('invalid_')) {
+        return validation(res, error);
+      }
+      if (code === 'image_job_not_found' || code === 'image_rollback_source_not_found') {
+        return res.status(404).json({
+          status: 'error',
+          code,
+          message: 'Image rollback source was not found.'
+        });
+      }
+      if (code === 'image_rollback_not_available' || code === 'image_rollback_source_missing') {
+        return res.status(409).json({
+          status: 'error',
+          code,
+          message: 'This image job has no reversible edit source.'
+        });
+      }
+      console.error(
+        '[workspace/images] rollback failed:',
+        code || 'unknown'
+      );
+      return res.status(500).json({
+        status: 'error',
+        code: 'image_rollback_operation_failed',
+        message: 'Image rollback could not be completed.'
+      });
+    }
+  });
   function memoryFailure(res, error) {
     const code = error?.code || 'workspace_memory_operation_failed';
     if (code === 'workspace_memory_not_found') return res.status(404).json({status:'error',code,message:'Memory was not found.'});

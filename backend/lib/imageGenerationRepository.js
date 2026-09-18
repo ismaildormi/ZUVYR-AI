@@ -118,7 +118,17 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
     });
   }
 
-  async function persistGenerated({ ownerId, jobId, prompt, providerUrl, provider, model, operation = 'generate', options = {} }) {
+  async function persistGenerated({
+    ownerId,
+    jobId,
+    prompt,
+    providerUrl,
+    provider,
+    model,
+    operation = 'generate',
+    options = {},
+    lineage = {}
+  }) {
     const existing = await getExisting({ ownerId, jobId });
     if (existing) return existing;
 
@@ -138,21 +148,37 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
       sourceVersionKey: sha256,
       metadata: {
         imageGeneration: true,
-        pack: 61,
+        pack: ['edit', 'inpaint', 'expand'].includes(operation) ? 63 : 61,
         jobId,
         provider,
         model,
         operation,
         promptHash,
-        options
+        options,
+        lineage
       },
       version: {
         mimeType: downloaded.mimeType,
         uri: providerUrl,
         text: null,
         sha256,
-        payload: { prompt: String(prompt || ''), provider, model, operation, options },
-        provenance: { source: 'pack061_image_generate', jobId, provider, model }
+        payload: {
+          prompt: String(prompt || ''),
+          provider,
+          model,
+          operation,
+          options,
+          lineage
+        },
+        provenance: {
+          source: ['edit', 'inpaint', 'expand'].includes(operation)
+            ? 'pack063_image_edit'
+            : 'pack061_image_generate',
+          jobId,
+          provider,
+          model,
+          lineage
+        }
       }
     });
 
@@ -173,11 +199,29 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
       fileSizeBytes: downloaded.buffer.length,
       sha256,
       retentionClass: 'standard',
-      metadata: { imageGeneration: true, pack: 61, jobId, provider, model, operation, promptHash }
+      metadata: {
+        imageGeneration: true,
+        pack: ['edit', 'inpaint', 'expand'].includes(operation) ? 63 : 61,
+        jobId,
+        provider,
+        model,
+        operation,
+        promptHash,
+        lineage
+      }
     });
 
     const update = await db.from('generation_jobs')
-      .update({ canonical_content_id: record.contentId, result_url: String(providerUrl) })
+      .update({
+        canonical_content_id: record.contentId,
+        result_url: String(providerUrl),
+        image_options: {
+          ...options,
+          outputProvider: provider,
+          outputModel: model,
+          editLineage: lineage
+        }
+      })
       .eq('id', jobId)
       .eq('user_id', ownerId)
       .eq('feature', 'image');
@@ -205,7 +249,8 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
     provider,
     model,
     operation,
-    options
+    options,
+    lineage = {}
   }) {
     const downloaded = await fetchImageBytes(providerUrl, { fetchImpl });
     const sha256 = crypto
@@ -229,14 +274,15 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
       sourceVersionKey: sha256,
       metadata: {
         imageGeneration: true,
-        pack: 62,
+        pack: ['edit', 'inpaint', 'expand'].includes(operation) ? 63 : 62,
         jobId,
         outputIndex,
         provider,
         model,
         operation,
         promptHash,
-        options
+        options,
+        lineage
       },
       version: {
         mimeType: downloaded.mimeType,
@@ -249,14 +295,18 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
           model,
           operation,
           outputIndex,
-          options
+          options,
+          lineage
         },
         provenance: {
-          source: 'pack062_image_reference_variation',
+          source: ['edit', 'inpaint', 'expand'].includes(operation)
+            ? 'pack063_image_edit'
+            : 'pack062_image_reference_variation',
           jobId,
           outputIndex,
           provider,
-          model
+          model,
+          lineage
         }
       }
     });
@@ -295,7 +345,8 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
         provider,
         model,
         operation,
-        promptHash
+        promptHash,
+        lineage
       }
     });
 
@@ -319,7 +370,8 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
     provider,
     model,
     operation = 'generate',
-    options = {}
+    options = {},
+    lineage = {}
   }) {
     const urls = Array.isArray(providerUrls)
       ? providerUrls.map(String).filter(Boolean)
@@ -374,7 +426,8 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
       provider,
       model,
       operation,
-      options
+      options,
+      lineage
     });
 
     const outputs = [primary];
@@ -389,7 +442,8 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
           provider,
           model,
           operation,
-          options
+          options,
+          lineage
         })
       );
     }
@@ -410,7 +464,8 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
           ...options,
           outputManifest,
           outputProvider: provider,
-          outputModel: model
+          outputModel: model,
+          editLineage: lineage
         }
       })
       .eq('id', jobId)
@@ -477,11 +532,77 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
     });
   }
 
+
+  async function rollbackEdit({ ownerId, jobId }) {
+    const job = await ownedJob(ownerId, jobId);
+    if (!job) {
+      throw imageRepositoryError('image_job_not_found', 404);
+    }
+
+    if (!['edit', 'inpaint', 'expand'].includes(job.image_operation)) {
+      throw imageRepositoryError('image_rollback_not_available', 409);
+    }
+
+    const lineage =
+      job.image_options &&
+      typeof job.image_options === 'object'
+        ? job.image_options.editLineage || {}
+        : {};
+
+    const sourceAssetId =
+      lineage.sourceAssetId || null;
+
+    if (!sourceAssetId) {
+      throw imageRepositoryError('image_rollback_source_missing', 409);
+    }
+
+    const assetResult = await db
+      .from('zuvyr_assets')
+      .select(
+        'id,owner_id,canonical_content_id,canonical_version_id,status,mime_type,file_size_bytes'
+      )
+      .eq('id', sourceAssetId)
+      .eq('owner_id', ownerId)
+      .eq('status', 'active')
+      .maybeSingle();
+
+    if (assetResult.error) {
+      throw imageRepositoryError(
+        'image_rollback_source_lookup_failed',
+        500,
+        assetResult.error
+      );
+    }
+
+    if (!assetResult.data) {
+      throw imageRepositoryError(
+        'image_rollback_source_not_found',
+        404
+      );
+    }
+
+    return Object.freeze({
+      jobId: job.id,
+      operation: job.image_operation,
+      rolledBack: true,
+      providerCalls: 0,
+      sourceAssetId: assetResult.data.id,
+      sourceContentId:
+        assetResult.data.canonical_content_id,
+      sourceVersionId:
+        assetResult.data.canonical_version_id,
+      mimeType: assetResult.data.mime_type,
+      fileSizeBytes:
+        Number(assetResult.data.file_size_bytes || 0)
+    });
+  }
+
   return Object.freeze({
     persistGenerated,
     persistGeneratedSet,
     getExisting,
-    listHistory
+    listHistory,
+    rollbackEdit
   });
 }
 

@@ -14,10 +14,11 @@
       "requiresMask": false
     },
     "edit": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
+      "enabledByDefault": true,
+      "status": "implemented_pack063_paid_live_deferred",
       "requiresSource": true,
-      "requiresMask": false
+      "requiresMask": false,
+      "sourceMustBeExplicit": true
     },
     "variations": {
       "enabledByDefault": true,
@@ -38,16 +39,18 @@
       "requiresMask": false
     },
     "inpaint": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
+      "enabledByDefault": true,
+      "status": "implemented_pack063_paid_live_deferred",
       "requiresSource": true,
-      "requiresMask": true
+      "requiresMask": true,
+      "sourceMustBeExplicit": true
     },
     "expand": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
+      "enabledByDefault": true,
+      "status": "implemented_pack063_paid_live_deferred",
       "requiresSource": true,
-      "requiresMask": false
+      "requiresMask": false,
+      "sourceMustBeExplicit": true
     }
   },
   "providers": {
@@ -117,6 +120,116 @@
         "hfFailureObservedAt": "2026-09-18T00:00:00Z",
         "hfFailure": "HTTP 400 Model not supported by provider fal-ai",
         "officialApi": "https://fal.ai/models/fal-ai/flux-pro/kontext/multi/api"
+      }
+    },
+    "fal-edit": {
+      "implementedOperations": [
+        "edit"
+      ],
+      "status": "verified_repository_pack063",
+      "model": "fal-ai/flux-pro/kontext",
+      "pricing": {
+        "unitType": "images",
+        "fixedOperationPriceMicroUsd": "40000",
+        "priceUsdPerImage": "0.04",
+        "pricingSourceUrl": "https://fal.ai/models/fal-ai/flux-pro/kontext",
+        "pricingVerifiedAt": "2026-09-18T00:00:00Z",
+        "pricingReviewBefore": "2026-10-18T00:00:00Z",
+        "commercialUseVerified": true
+      },
+      "capabilities": {
+        "sourceAsset": true,
+        "maskAsset": false,
+        "seed": true,
+        "quantity": true,
+        "maxQuantity": 4,
+        "ratios": [
+          "1:1",
+          "16:9",
+          "9:16",
+          "4:3",
+          "3:4"
+        ],
+        "fixedResolution": "1024",
+        "style": false
+      },
+      "routing": {
+        "gateway": "direct_fal",
+        "credentialEnvironment": "FAL_KEY",
+        "officialApi": "https://fal.ai/models/fal-ai/flux-pro/kontext/api"
+      }
+    },
+    "fal-inpaint": {
+      "implementedOperations": [
+        "inpaint"
+      ],
+      "status": "verified_repository_pack063_pricing_activation_deferred",
+      "model": "fal-ai/qwen-image-edit/inpaint",
+      "pricing": {
+        "unitType": "megapixels",
+        "priceUsdPerMegapixel": "0.03",
+        "engineeringReservationBasisMegapixels": 1,
+        "pricingSourceUrl": "https://fal.ai/models/fal-ai/qwen-image-edit/inpaint",
+        "pricingVerifiedAt": "2026-09-18T00:00:00Z",
+        "pricingReviewBefore": "2026-10-18T00:00:00Z",
+        "commercialUseVerified": true,
+        "activationEnvironment": "PACK063_ONE_MP_BILLING_CONFIRMED"
+      },
+      "capabilities": {
+        "sourceAsset": true,
+        "maskAsset": true,
+        "seed": true,
+        "quantity": true,
+        "maxQuantity": 4,
+        "strength": true,
+        "ratios": [
+          "1:1",
+          "16:9",
+          "9:16",
+          "4:3",
+          "3:4"
+        ],
+        "fixedResolution": "1024",
+        "style": false
+      },
+      "routing": {
+        "gateway": "direct_fal",
+        "credentialEnvironment": "FAL_KEY",
+        "officialApi": "https://fal.ai/models/fal-ai/qwen-image-edit/inpaint/api"
+      }
+    },
+    "fal-outpaint": {
+      "implementedOperations": [
+        "expand"
+      ],
+      "status": "verified_repository_pack063_pricing_activation_deferred",
+      "model": "fal-ai/image-apps-v2/outpaint",
+      "pricing": {
+        "unitType": "megapixels",
+        "priceUsdPerMegapixel": "0.035",
+        "engineeringReservationBasisMegapixels": 1,
+        "pricingSourceUrl": "https://fal.ai/models/fal-ai/image-apps-v2/outpaint",
+        "pricingVerifiedAt": "2026-09-18T00:00:00Z",
+        "pricingReviewBefore": "2026-10-18T00:00:00Z",
+        "commercialUseVerified": true,
+        "activationEnvironment": "PACK063_ONE_MP_BILLING_CONFIRMED"
+      },
+      "capabilities": {
+        "sourceAsset": true,
+        "maskAsset": false,
+        "seed": true,
+        "quantity": true,
+        "maxQuantity": 4,
+        "expansionPixelsMax": 700,
+        "zoomOutPercentage": true,
+        "fixedRequestRatio": "1:1",
+        "fixedResolution": "1024",
+        "style": false
+      },
+      "routing": {
+        "gateway": "direct_fal",
+        "credentialEnvironment": "FAL_KEY",
+        "officialApi": "https://fal.ai/models/fal-ai/image-apps-v2/outpaint/api"
       }
     }
   },
@@ -191,5 +304,34 @@
       "paidLiveInference": "deferred_no_provider_funds",
       "noCostVerification": "official_api_contract_plus_mocked_direct_fal_runtime_plus_non_billable_auth_route_preflight"
     }
+  },
+  "pack063": {
+    "operations": [
+      "edit",
+      "inpaint",
+      "expand"
+    ],
+    "paidExecutionEnvironment": "PACK063_PAID_EXECUTION_ENABLED",
+    "paidExecutionDefault": false,
+    "liveBillingAllowed": false,
+    "executors": {
+      "edit": {
+        "provider": "fal-edit",
+        "model": "fal-ai/flux-pro/kontext"
+      },
+      "inpaint": {
+        "provider": "fal-inpaint",
+        "model": "fal-ai/qwen-image-edit/inpaint",
+        "pricingActivationEnvironment": "PACK063_ONE_MP_BILLING_CONFIRMED"
+      },
+      "expand": {
+        "provider": "fal-outpaint",
+        "model": "fal-ai/image-apps-v2/outpaint",
+        "pricingActivationEnvironment": "PACK063_ONE_MP_BILLING_CONFIRMED"
+      }
+    },
+    "lineage": "immutable source asset + source content/version lineage on derived output",
+    "rollback": "owner-scoped rollback target returns original source asset; no provider call",
+    "externalExecution": "deferred_no_provider_funds"
   }
 }
