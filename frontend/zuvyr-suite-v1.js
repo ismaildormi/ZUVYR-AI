@@ -4,7 +4,7 @@
   window.__zuvyrSuiteV1Loaded = true;
 
   var sections = [
-    ['dashboard','⌂','Dashboard','ready'],['images','◇','Images','connect'],['video','▷','Video','connect'],
+    ['dashboard','⌂','Dashboard','ready'],['images','◇','Images','ready'],['video','▷','Video','connect'],
     ['code','</>','Code Studio','ready'],['voice','◉','Voice','connect'],['music','♫','Music','connect'],
     ['ip','✦','ZUVYR IP','plan'],['research','⌕','Research','ready'],['library','▦','Library','ready'],
     ['projects','▣','Projects','ready'],['documents','▤','Documents','ready'],['spreadsheets','▥','Spreadsheets','ready'],
@@ -13,7 +13,7 @@
   ];
   var copy = {
     dashboard:['Work','Continue projects, assets, research, code and history from one coordinated workspace.'],
-    images:['Images','Generate, edit, upscale and organize visual assets after a verified provider is connected.'],
+    images:['Image Studio','Reopen canonical image history, export owned assets, inspect versions and Send-To without pretending blocked image operations are live.'],
     video:['Video','Plan text-to-video, image-to-video, editing, subtitles and export in one job surface.'],
     code:['Code Studio','Build multi-file projects and request approved image or video assets when the experience needs them.'],
     voice:['Voice','Prepare transcription, speech and voice conversations with transparent minute usage.'],
@@ -55,7 +55,7 @@
   }
   function toolCards(id) {
     var maps = {
-      images:[['Generate','Prompt, reference, ratio and resolution'],['Edit','Variations, inpainting and expand'],['Enhance','Remove background, upscale and repair']],
+      images:[['History & reopen','Canonical image jobs with fresh owner-scoped previews'],['Actions & export','Download, Send-To, versions and reversible edit rollback'],['Creation gates','Only live-proven operations may be advertised; upscale stays blocked']],
       video:[['Generate','Text or image to video'],['Jobs','Queue, progress, preview and cancel'],['Edit & export','Extend, subtitles and enhance']],
       voice:[['Transcribe','Speech to text with minute tracking'],['Speak','Text to speech and voice selection'],['Voice chat','Transcript, waveform and STOP']],
       music:[['Music','Prompt, duration and variants'],['Audio tools','Cleanup, remix and stems'],['Audio to video','Scenes, subtitles and export']],
@@ -411,12 +411,562 @@
         '<div class="zs-actions"><button class="zs-primary" type="submit" data-zs-presentation-generate>Generate PPTX</button><span class="zs-hint">Local rendering · 16:9 · provider calls 0</span></div>'+
       '</form><div class="zs-result" data-zs-presentation-result></div></div><div class="zs-card wide"><h2>Recent presentations</h2><div class="zs-document-list" data-zs-presentation-list></div></div></div>';
   }
+  var imageStudioState={
+    history:[],
+    loading:false,
+    error:null,
+    selected:null,
+    libraryItem:null
+  };
+
+  function imageStudioView(){
+    return heading('images')+
+      '<div class="zs-banner"><span>◇</span><div><b>Image Studio checkpoint.</b> This surface exposes canonical history and zero-provider actions only. Reference/edit/background/relight remain gated until live proof; upscale stays blocked.</div></div>'+
+      '<div class="zs-grid">'+
+        '<div class="zs-card wide"><div class="zs-actions" style="justify-content:space-between;align-items:center"><div><h2 style="margin:0">Image history</h2><p style="margin:.35rem 0 0">Owner-scoped canonical jobs. Reopen uses a fresh signed preview and never reruns the model.</p></div><button type="button" class="zs-secondary" data-zs-image-refresh>Refresh</button></div><div data-zs-image-history style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:14px"><div class="zs-muted">Open Images to load history.</div></div></div>'+
+        '<div class="zs-card wide"><h2>Selected image</h2><div data-zs-image-detail><div class="zs-empty"><div><strong>No image selected</strong><span>Choose an item from history to reopen it safely.</span></div></div></div></div>'+
+        '<div class="zs-card half"><h2>V1 operation truth</h2><div class="zs-chip-row"><span class="zs-chip">Generate · Pack061 live proof</span><span class="zs-chip">Reference / variations · gated</span><span class="zs-chip">Edit / inpaint / expand · gated</span><span class="zs-chip">Background / relight · gated</span><span class="zs-chip">Crop / resize / canvas / layers / text / batch · backend verified</span><span class="zs-chip">Upscale · blocked</span></div></div>'+
+        '<div class="zs-card half"><h2>Checkpoint rule</h2><p>Pack065 will not present an operation as live until production evidence exists. Unsupported or unpriced controls stay absent instead of silently doing something else.</p></div>'+
+      '</div>';
+  }
+
+  function imageStudioNode(){
+    return suite.querySelector(
+      '[data-zs-view="images"]'
+    );
+  }
+
+  async function imageStudioRequest(path,options){
+    if(typeof window.authFetch!=='function'){
+      throw new Error(
+        'Authenticated workspace is unavailable.'
+      );
+    }
+
+    var response=
+      await window.authFetch(
+        path,
+        options||{
+          method:'GET',
+          cache:'no-store'
+        }
+      );
+
+    var data={};
+    try{
+      data=await response.json();
+    }catch(_){}
+
+    if(!response.ok||data.status==='error'){
+      throw new Error(
+        data.message||
+        data.code||
+        'Image Studio request failed.'
+      );
+    }
+
+    return data;
+  }
+
+  function imageStudioDate(value){
+    if(!value)return '';
+    var date=new Date(value);
+    return Number.isFinite(date.getTime())
+      ?date.toLocaleString()
+      :'';
+  }
+
+  function imageStudioOperation(value){
+    return String(value||'generate')
+      .replace(/_/g,' ');
+  }
+
+  function renderImageStudioHistory(){
+    var view=imageStudioNode();
+    if(!view)return;
+
+    var list=
+      view.querySelector(
+        '[data-zs-image-history]'
+      );
+
+    if(!list)return;
+
+    if(imageStudioState.loading){
+      list.innerHTML=
+        '<div class="zs-muted">Loading image history…</div>';
+      return;
+    }
+
+    if(imageStudioState.error){
+      list.innerHTML=
+        '<div class="zs-empty"><div><strong>History needs attention</strong><span>'+
+        esc(imageStudioState.error)+
+        '</span></div></div>';
+      return;
+    }
+
+    if(!imageStudioState.history.length){
+      list.innerHTML=
+        '<div class="zs-empty"><div><strong>No canonical image jobs yet</strong><span>Only persisted owner-scoped image results appear here.</span></div></div>';
+      return;
+    }
+
+    list.innerHTML=
+      imageStudioState.history
+        .map(function(item){
+          var ready=
+            item.status==='completed'&&
+            item.contentId&&
+            item.assetId;
+
+          return '<article class="zs-tool" style="min-width:0">'+
+            '<div class="zs-tool-top"><span class="zs-tool-icon">◇</span><span class="zs-tool-state">'+
+            esc(imageStudioOperation(item.operation))+
+            '</span></div>'+
+            '<h3 style="overflow-wrap:anywhere">'+
+            esc(
+              item.prompt||
+              imageStudioOperation(item.operation)
+            )+
+            '</h3>'+
+            '<p>'+
+            esc(item.status||'unknown')+
+            (item.createdAt
+              ?' · '+esc(imageStudioDate(item.createdAt))
+              :'')+
+            '</p>'+
+            (item.error
+              ?'<p class="zs-note">'+esc(item.error)+'</p>'
+              :'')+
+            '<div class="zs-actions">'+
+              '<button type="button" class="zs-secondary" data-zs-image-open="'+
+              esc(item.jobId)+
+              '" '+(ready?'':'disabled')+'>Open</button>'+
+            '</div>'+
+          '</article>';
+        })
+        .join('');
+  }
+
+  function imageStudioVersionsHtml(item){
+    var versions=
+      Array.isArray(item?.versions)
+        ?item.versions
+        :[];
+
+    if(!versions.length){
+      return '<div class="zs-muted">No version records available.</div>';
+    }
+
+    return '<div style="display:grid;gap:8px">'+
+      versions.slice(0,12).map(function(version){
+        var current=
+          version.id===item.current_version_id;
+
+        return '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08)">'+
+          '<span><strong>Version '+esc(version.version_number||'—')+'</strong> '+
+          (current?'<span class="zs-chip">current</span>':'')+
+          '<br><small>'+esc(version.mime_type||'image')+
+          (version.created_at?' · '+esc(imageStudioDate(version.created_at)):'')+
+          '</small></span>'+
+          (current
+            ?''
+            :'<button type="button" class="zs-secondary" data-zs-image-restore-version="'+
+              esc(version.id)+
+              '">Restore</button>')+
+        '</div>';
+      }).join('')+
+    '</div>';
+  }
+
+  function renderImageStudioDetail(){
+    var view=imageStudioNode();
+    if(!view)return;
+
+    var box=
+      view.querySelector(
+        '[data-zs-image-detail]'
+      );
+
+    if(!box)return;
+
+    var selected=imageStudioState.selected;
+
+    if(!selected){
+      box.innerHTML=
+        '<div class="zs-empty"><div><strong>No image selected</strong><span>Choose an item from history to reopen it safely.</span></div></div>';
+      return;
+    }
+
+    var library=
+      imageStudioState.libraryItem;
+
+    var destinations=[
+      ['chat','Chat'],
+      ['projects','Projects'],
+      ['code','Code Studio'],
+      ['video','Video']
+    ];
+
+    box.innerHTML=
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">'+
+        '<div>'+
+          '<img src="'+esc(selected.previewUrl)+'" alt="Selected canonical image preview" style="display:block;width:100%;max-height:520px;object-fit:contain;border-radius:14px;background:rgba(255,255,255,.04)">'+
+          '<p class="zs-note">Fresh signed preview · expires in '+esc(selected.previewExpiresInSeconds||300)+'s · provider calls 0</p>'+
+        '</div>'+
+        '<div style="min-width:0">'+
+          '<h3>'+esc(imageStudioOperation(selected.operation))+'</h3>'+
+          '<p style="overflow-wrap:anywhere">'+esc(selected.prompt||'No prompt recorded')+'</p>'+
+          '<div class="zs-chip-row">'+
+            '<span class="zs-chip">'+esc(selected.status||'unknown')+'</span>'+
+            '<span class="zs-chip">'+esc(selected.mimeType||'image')+'</span>'+
+            '<span class="zs-chip">'+esc(String(selected.fileSizeBytes||0))+' bytes</span>'+
+            (selected.reversible?'<span class="zs-chip">rollback available</span>':'')+
+          '</div>'+
+          '<div class="zs-actions" style="margin-top:12px;flex-wrap:wrap">'+
+            '<button type="button" class="zs-primary" data-zs-image-download="'+esc(selected.contentId)+'" data-asset-id="'+esc(selected.assetId)+'">Download / export</button>'+
+            '<select data-zs-image-send-destination aria-label="Send image to">'+
+              destinations.map(function(entry){return '<option value="'+entry[0]+'">'+entry[1]+'</option>';}).join('')+
+            '</select>'+
+            '<button type="button" class="zs-secondary" data-zs-image-send="'+esc(selected.contentId)+'">Send-To</button>'+
+            (selected.reversible
+              ?'<button type="button" class="zs-secondary" data-zs-image-rollback="'+esc(selected.jobId)+'">Rollback to source</button>'
+              :'')+
+          '</div>'+
+          '<div style="margin-top:18px"><h3>Versions</h3>'+
+          imageStudioVersionsHtml(library)+
+          '</div>'+
+        '</div>'+
+      '</div>';
+  }
+
+  async function loadImageStudioHistory(force){
+    if(imageStudioState.loading&&!force)return;
+
+    imageStudioState.loading=true;
+    imageStudioState.error=null;
+    renderImageStudioHistory();
+
+    try{
+      var data=
+        await imageStudioRequest(
+          '/api/workspace/images/history?limit=36'
+        );
+
+      imageStudioState.history=
+        Array.isArray(data.history)
+          ?data.history
+          :[];
+    }catch(error){
+      imageStudioState.history=[];
+      imageStudioState.error=
+        error.message;
+    }finally{
+      imageStudioState.loading=false;
+      renderImageStudioHistory();
+    }
+  }
+
+  async function openImageStudioItem(jobId){
+    imageStudioState.error=null;
+
+    try{
+      var data=
+        await imageStudioRequest(
+          '/api/workspace/images/'+
+          encodeURIComponent(jobId)+
+          '/reopen'
+        );
+
+      imageStudioState.selected=
+        data.item||null;
+      imageStudioState.libraryItem=null;
+
+      if(
+        imageStudioState.selected&&
+        imageStudioState.selected.contentId
+      ){
+        var library=
+          await imageStudioRequest(
+            '/api/workspace/library/items/'+
+            encodeURIComponent(
+              imageStudioState.selected.contentId
+            )
+          );
+
+        imageStudioState.libraryItem=
+          library.item||null;
+      }
+
+      renderImageStudioDetail();
+    }catch(error){
+      toast(error.message);
+    }
+  }
+
+  async function exportImageStudioItem(contentId,assetId){
+    try{
+      var data=
+        await imageStudioRequest(
+          '/api/workspace/library/items/'+
+          encodeURIComponent(contentId)+
+          '/download',
+          {
+            method:'POST',
+            headers:{
+              'Content-Type':'application/json'
+            },
+            body:JSON.stringify({
+              assetId:assetId
+            })
+          }
+        );
+
+      var url=
+        data.download&&
+        data.download.signed_url;
+
+      if(!url){
+        throw new Error(
+          'Download URL was not returned.'
+        );
+      }
+
+      var anchor=
+        document.createElement('a');
+      anchor.href=url;
+      anchor.rel='noopener';
+      anchor.download='';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+
+      toast('Image export prepared.');
+    }catch(error){
+      toast(error.message);
+    }
+  }
+
+  async function sendImageStudioItem(contentId,destination){
+    try{
+      var data=
+        await imageStudioRequest(
+          '/api/workspace/library/items/'+
+          encodeURIComponent(contentId)+
+          '/send-to',
+          {
+            method:'POST',
+            headers:{
+              'Content-Type':'application/json'
+            },
+            body:JSON.stringify({
+              destination:destination,
+              metadata:{
+                source:'pack065_image_studio'
+              }
+            })
+          }
+        );
+
+      var handoff=
+        data.handoff||{};
+
+      if(
+        handoff.persisted===false&&
+        destination==='code'
+      ){
+        toast(
+          'Code Studio requires a target code project before the canonical handoff can be persisted.'
+        );
+        return;
+      }
+
+      toast(
+        'Sent canonical image to '+
+        destination+
+        ' without re-upload.'
+      );
+    }catch(error){
+      toast(error.message);
+    }
+  }
+
+  async function restoreImageStudioVersion(versionId){
+    var selected=
+      imageStudioState.selected;
+
+    if(
+      !selected||
+      !selected.contentId
+    )return;
+
+    if(
+      typeof window.confirm==='function'&&
+      !window.confirm(
+        'Restore this canonical image version?'
+      )
+    )return;
+
+    try{
+      await imageStudioRequest(
+        '/api/workspace/library/items/'+
+        encodeURIComponent(selected.contentId)+
+        '/versions/'+
+        encodeURIComponent(versionId)+
+        '/restore',
+        {
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json'
+          },
+          body:JSON.stringify({
+            metadata:{
+              source:'pack065_image_studio'
+            }
+          })
+        }
+      );
+
+      toast('Image version restored.');
+      await openImageStudioItem(
+        selected.jobId
+      );
+      await loadImageStudioHistory(true);
+    }catch(error){
+      toast(error.message);
+    }
+  }
+
+  async function rollbackImageStudioEdit(jobId){
+    if(
+      typeof window.confirm==='function'&&
+      !window.confirm(
+        'Reopen the immutable source version for this edit?'
+      )
+    )return;
+
+    try{
+      var data=
+        await imageStudioRequest(
+          '/api/workspace/images/'+
+          encodeURIComponent(jobId)+
+          '/rollback',
+          {
+            method:'POST',
+            headers:{
+              'Content-Type':'application/json'
+            },
+            body:'{}'
+          }
+        );
+
+      var rollback=
+        data.rollback||{};
+
+      toast(
+        'Source preserved: '+
+        String(
+          rollback.sourceVersionId||
+          rollback.sourceAssetId||
+          'verified'
+        )
+      );
+    }catch(error){
+      toast(error.message);
+    }
+  }
+
+  function bindImageStudio(){
+    var view=imageStudioNode();
+
+    if(
+      !view||
+      view.dataset.imageStudioBound==='true'
+    )return;
+
+    view.dataset.imageStudioBound='true';
+
+    view.addEventListener(
+      'click',
+      function(event){
+        var target=
+          event.target&&
+          event.target.closest
+            ?event.target.closest(
+              '[data-zs-image-refresh],[data-zs-image-open],[data-zs-image-download],[data-zs-image-send],[data-zs-image-restore-version],[data-zs-image-rollback]'
+            )
+            :null;
+
+        if(!target)return;
+
+        if(target.hasAttribute('data-zs-image-refresh')){
+          loadImageStudioHistory(true);
+          return;
+        }
+
+        if(target.hasAttribute('data-zs-image-open')){
+          openImageStudioItem(
+            target.getAttribute(
+              'data-zs-image-open'
+            )
+          );
+          return;
+        }
+
+        if(target.hasAttribute('data-zs-image-download')){
+          exportImageStudioItem(
+            target.getAttribute(
+              'data-zs-image-download'
+            ),
+            target.getAttribute(
+              'data-asset-id'
+            )
+          );
+          return;
+        }
+
+        if(target.hasAttribute('data-zs-image-send')){
+          var select=
+            view.querySelector(
+              '[data-zs-image-send-destination]'
+            );
+
+          sendImageStudioItem(
+            target.getAttribute(
+              'data-zs-image-send'
+            ),
+            select?select.value:'chat'
+          );
+          return;
+        }
+
+        if(target.hasAttribute('data-zs-image-restore-version')){
+          restoreImageStudioVersion(
+            target.getAttribute(
+              'data-zs-image-restore-version'
+            )
+          );
+          return;
+        }
+
+        if(target.hasAttribute('data-zs-image-rollback')){
+          rollbackImageStudioEdit(
+            target.getAttribute(
+              'data-zs-image-rollback'
+            )
+          );
+        }
+      }
+    );
+  }
+
   function genericView(id) {
     var state=sections.find(function(s){return s[0]===id;})[3];
     var extra=id==='code'?orchestrator('code'):toolCards(id);
     return heading(id)+'<div class="zs-banner"><span>◎</span><div><b>'+(state==='ready'?'Interface foundation is ready.':'Ready to connect safely.')+'</b> '+(state==='ready'?'Use the existing backend foundation and connect verified data next.':'Provider execution stays off until pricing, limits and settlement pass verification.')+'</div></div>'+extra;
   }
-  function viewHtml(id) { if(id==='dashboard')return dashboard(); if(id==='ip')return ipView(); if(id==='usage')return usageView(); if(id==='research')return researchView(); if(id==='documents')return documentsView(); if(id==='spreadsheets')return spreadsheetsView(); if(id==='presentations')return presentationsView(); return genericView(id); }
+  function viewHtml(id) { if(id==='dashboard')return dashboard(); if(id==='images')return imageStudioView(); if(id==='ip')return ipView(); if(id==='usage')return usageView(); if(id==='research')return researchView(); if(id==='documents')return documentsView(); if(id==='spreadsheets')return spreadsheetsView(); if(id==='presentations')return presentationsView(); return genericView(id); }
 
   // Native navigation integration 01. Existing Chat, Images, Video, Code,
   // IP, Projects, History, Settings and payment handlers retain ownership.
@@ -522,6 +1072,10 @@
   function show(id){
     if(id==='usage')loadUsage();else clearUsage();
     if(id==='documents')loadDocuments();
+    if(id==='images'){
+      bindImageStudio();
+      loadImageStudioHistory();
+    }
     if(id==='spreadsheets'||id==='presentations')loadOfficeItems(id);
     suite.querySelectorAll('[data-zs-view]').forEach(function(v){v.dataset.active=String(v.dataset.zsView===id);});
     document.querySelectorAll('[data-zuvyr-section]').forEach(function(el){var active=el.dataset.zuvyrSection===id;el.classList.toggle('active',active);if(active)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});

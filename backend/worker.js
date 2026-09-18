@@ -59,6 +59,9 @@ const resolveImageReferences = createImageReferenceResolver({
 const { refundCredits, settleCredits, logCreditEvent, reportRefundFailure } = require('./gatekeeper');
 const { recordRefund } = require('./lib/metrics');
 const {
+  isGenerationFailureExhausted
+} = require('./lib/generationFailurePolicy');
+const {
   completeGenerationConversation,
   failGenerationConversation
 } = require('./lib/conversationGeneration');
@@ -786,8 +789,11 @@ async function handleJobFailure(job, err, feature) {
   const maxAttempts = job.opts.attempts;
 
   const exhausted =
-    err.name === 'UnrecoverableError' ||
-    attemptsMade >= maxAttempts;
+    isGenerationFailureExhausted({
+      error: err,
+      attemptsMade,
+      maxAttempts
+    });
 
   if (!exhausted) {
     // BullMQ will retry automatically. Do not save failure or refund yet.

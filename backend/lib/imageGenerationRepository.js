@@ -617,6 +617,120 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
   }
 
 
+  async function reopenStudioItem({ ownerId, jobId }) {
+    const job = await ownedJob(ownerId, jobId);
+
+    if (!job || !job.canonical_content_id) {
+      throw imageRepositoryError(
+        'image_studio_item_not_found',
+        404
+      );
+    }
+
+    const asset =
+      await newestAsset(
+        ownerId,
+        job.canonical_content_id
+      );
+
+    if (!asset) {
+      throw imageRepositoryError(
+        'image_studio_asset_not_found',
+        404
+      );
+    }
+
+    const resolved =
+      await assets.resolveOwned({
+        ownerId,
+        assetId: asset.id
+      });
+
+    if (
+      !resolved ||
+      resolved.assetId !== asset.id
+    ) {
+      throw imageRepositoryError(
+        'image_studio_asset_not_found',
+        404
+      );
+    }
+
+    const storagePath =
+      assertOwnedStoragePath({
+        ownerId,
+        storagePath:
+          resolved.storagePath
+      });
+
+    const signed =
+      await storage
+        .from(
+          resolved.storageBucket ||
+          ASSET_CONFIG.bucket
+        )
+        .createSignedUrl(
+          storagePath,
+          300
+        );
+
+    if (
+      signed.error ||
+      !signed.data?.signedUrl
+    ) {
+      throw imageRepositoryError(
+        'image_studio_preview_sign_failed',
+        500,
+        signed.error
+      );
+    }
+
+    const options =
+      job.image_options &&
+      typeof job.image_options === 'object'
+        ? job.image_options
+        : {};
+
+    const lineage =
+      options.editLineage ||
+      options.utilityLineage ||
+      {};
+
+    return Object.freeze({
+      jobId: job.id,
+      status: job.status,
+      prompt: job.prompt || '',
+      operation:
+        job.image_operation ||
+        'generate',
+      options,
+      contentId:
+        job.canonical_content_id,
+      assetId:
+        asset.id,
+      mimeType:
+        asset.mime_type || null,
+      fileSizeBytes:
+        Number(
+          asset.file_size_bytes || 0
+        ),
+      previewUrl:
+        signed.data.signedUrl,
+      previewExpiresInSeconds: 300,
+      downloadable: true,
+      reversible:
+        ['edit', 'inpaint', 'expand']
+          .includes(job.image_operation) &&
+        Boolean(lineage.sourceAssetId),
+      lineage,
+      createdAt:
+        job.created_at,
+      completedAt:
+        job.completed_at || null,
+      providerCalls: 0
+    });
+  }
+
   async function rollbackEdit({ ownerId, jobId }) {
     const job = await ownedJob(ownerId, jobId);
     if (!job) {
@@ -686,6 +800,7 @@ function createImageGenerationRepository({ db, storage, contentRepository = null
     persistGeneratedSet,
     getExisting,
     listHistory,
+    reopenStudioItem,
     rollbackEdit
   });
 }

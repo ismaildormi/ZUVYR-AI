@@ -691,3 +691,89 @@ All advertised V1 image operations pass live proof or are explicitly removed fro
 
 Pack065 must not advertise blocked/unverified operations as working.
 Pack064 upscale remains blocked until exact pre-charge output-megapixel pricing exists.
+
+
+## PACK065 PHASE01 — TRUTHFUL IMAGE STUDIO / LOCAL VERIFICATION PENDING
+
+Base: 91a0c6c398d93fe36053c8baeea38969830bf2b1
+
+Phase01 implementation:
+- Replace the generic Images placeholder with a real responsive Image Studio checkpoint surface.
+- Remove misleading V1 advertising for generic Generate/Edit/Enhance cards.
+- Surface operation truth instead:
+  - Pack061 generate has historical authenticated live proof.
+  - Pack062 reference/variations remain gated.
+  - Pack063 edit/inpaint/expand remain gated.
+  - Pack064 background/relight remain gated.
+  - Pack064 local crop/resize/canvas/layers/text/batch are backend-verified but not yet claimed as production user-flow verified.
+  - Upscale remains blocked.
+- Add owner-scoped canonical history loading.
+- Add no-provider canonical reopen with a fresh 300-second signed preview.
+- Add Download/export through Pack044 Library signing/egress.
+- Add Pack049 Send-To canonical-reference handoff.
+- Add version listing + restore.
+- Add Pack063 immutable-source rollback action.
+- Responsive layout uses auto-fit/minmax; semantic buttons/selects preserve keyboard access and inherited RTL.
+- No provider/payment call is made by Phase01 verification.
+- No migration or deploy is performed in this phase.
+
+Next after local verification:
+- provider-failure/refund checkpoint tests
+- authenticated no-cost production proof for the Image Studio history/actions path
+- only then final Pack065 UI advertisement reconciliation.
+
+
+## PACK065 PHASE02 — PROVIDER FAILURE / REFUND CHECKPOINT — LOCAL VERIFICATION PENDING
+
+Base remains: 91a0c6c398d93fe36053c8baeea38969830bf2b1
+Phase01: LOCAL_VERIFIED.
+
+Phase02 implementation:
+- Add one pure generation-failure exhaustion policy and use it in the real image/video worker failure handler.
+- Preserve existing worker refund order and canonical gatekeeper refund RPC.
+- Retry-pending jobs do not persist terminal failure and do not refund.
+- Exhausted or UnrecoverableError jobs persist failed state before refund.
+- Successful refund records the existing refund metric.
+- Refund RPC failure is persisted through reportRefundFailure.
+- Error detail audit logging remains after refund/refund-failure handling.
+- Existing gatekeeper unit tests remain authoritative for idempotent/double-refund protection.
+- Image Studio explicitly renders job errors, disables Open for non-canonical results and keeps unverified paid operations gated.
+- No provider, payment, database or production call is made by the new focused tests.
+- No migration or deploy is performed in this phase.
+
+Next after local verification:
+- Phase03 exact staging / commit / push / backend+worker+frontend deploy.
+- No-cost production proof for static Image Studio truth UI and authenticated API denial boundary.
+- Authenticated owner action proof remains a separate canonical gate if no user session token is available.
+
+
+## PACK065 PHASE03 — DEPLOY CANDIDATE / NO-COST PRODUCTION PROOF PENDING
+
+Base: 91a0c6c398d93fe36053c8baeea38969830bf2b1
+
+Phase01:
+- truthful responsive Image Studio implemented and locally verified.
+
+Phase02:
+- provider-failure/refund checkpoint locally verified.
+- retry-pending refund blocked.
+- exhausted/unrecoverable refund verified through canonical idempotent refund path.
+- double-refund protection and refund-failure persistence verified.
+
+Phase03 deploy candidate:
+- no schema migration required.
+- feature truth remains conservative:
+  - Pack061 generate: historical live proof.
+  - Pack062 reference/variations: gated.
+  - Pack063 edit/inpaint/expand: gated.
+  - Pack064 remove_background/relight: gated.
+  - Pack064 local crop/resize/canvas/layers/text/batch: backend verified but not advertised as production user-flow proven.
+  - upscale: blocked.
+- deploy frontend via Git/Vercel plus backend and worker via Railway.
+- production proof allowed without provider spend:
+  - public Image Studio static marker present.
+  - misleading Enhance/upscale advertising absent.
+  - backend /readyz healthy.
+  - unauthenticated Image Studio API request denied.
+- authenticated owner history/reopen/export/send-to/version/rollback proof remains a separate canonical gate when an authenticated session is available.
+- paid inference calls remain 0.

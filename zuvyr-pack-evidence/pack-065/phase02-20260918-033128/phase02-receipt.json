@@ -1,0 +1,23 @@
+{
+  "pack": "065",
+  "phase": "provider-failure-refund-checkpoint",
+  "baseCommit": "91a0c6c398d93fe36053c8baeea38969830bf2b1",
+  "phase01": "LOCAL_VERIFIED",
+  "aiProviderCalls": 0,
+  "paymentCalls": 0,
+  "databaseCalls": 0,
+  "migrationApplied": false,
+  "productionDeployed": false,
+  "verified": {
+    "retryPendingNoRefund": true,
+    "exhaustedRefund": true,
+    "unrecoverableRefund": true,
+    "canonicalRefundPath": "refund_credit_and_log",
+    "doubleRefundProtection": "covered_by_existing_test-gatekeeper-unit",
+    "refundFailurePersistence": true,
+    "failedStateBeforeRefund": true,
+    "auditLogAfterRefundHandling": true,
+    "failedUiState": true,
+    "unverifiedOperationsRemainGated": true
+  }
+}

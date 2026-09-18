@@ -1,0 +1,28 @@
+{
+  "pack": "065",
+  "phase": "truthful-image-studio",
+  "baseCommit": "91a0c6c398d93fe36053c8baeea38969830bf2b1",
+  "aiProviderCalls": 0,
+  "paymentCalls": 0,
+  "migrationApplied": false,
+  "productionDeployed": false,
+  "implementation": {
+    "history": true,
+    "canonicalReopen": true,
+    "freshPreviewSigningSeconds": 300,
+    "downloadExport": true,
+    "sendTo": true,
+    "versionsRestore": true,
+    "editRollback": true,
+    "responsive": true,
+    "keyboardSemanticControls": true
+  },
+  "truthGate": {
+    "generate": "historical_live_proof_pack061",
+    "referenceVariations": "gated",
+    "editInpaintExpand": "gated",
+    "backgroundRelight": "gated",
+    "localUtilities": "backend_verified_not_yet_live_user_flow",
+    "upscale": "blocked"
+  }
+}

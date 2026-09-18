@@ -198,6 +198,64 @@ function createWorkspaceRouter(options = {}) {
     }
   });
 
+  router.get('/images/:jobId/reopen', async (req,res) => {
+    try {
+      const item =
+        await imageGenerationStore.reopenStudioItem({
+          ownerId:
+            req.userId,
+          jobId:
+            uuid(
+              req.params.jobId,
+              'invalid_image_studio_job_id'
+            )
+        });
+
+      return res.json({
+        status: 'success',
+        item,
+        pack: 65,
+        providerCalls: 0
+      });
+    } catch (error) {
+      const code =
+        String(
+          error?.code ||
+          error?.message ||
+          ''
+        );
+
+      if (code.startsWith('invalid_')) {
+        return validation(res, error);
+      }
+
+      if (
+        code === 'image_studio_item_not_found' ||
+        code === 'image_studio_asset_not_found'
+      ) {
+        return res.status(404).json({
+          status: 'error',
+          code,
+          message:
+            'Image Studio item was not found.'
+        });
+      }
+
+      console.error(
+        '[workspace/images] reopen failed:',
+        code || 'unknown'
+      );
+
+      return res.status(500).json({
+        status: 'error',
+        code:
+          'image_studio_reopen_failed',
+        message:
+          'Image Studio item could not be reopened.'
+      });
+    }
+  });
+
   router.post('/images/:jobId/rollback', async (req,res) => {
     try {
       const result = await imageGenerationStore.rollbackEdit({
