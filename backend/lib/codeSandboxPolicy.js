@@ -160,25 +160,21 @@ function buildProviderCreateBody({ localSessionId, env = process.env } = {}) {
 
 function assertNoSecretInjection(body) {
   const forbidden = config.secrets.forbiddenNamePatterns
-    .map(value => String(value || '').trim().toUpperCase())
+    .map(value => String(value || '').toUpperCase())
     .filter(Boolean);
 
-  const stack = [body || {}];
-  while (stack.length) {
-    const current = stack.pop();
-    if (!current || typeof current !== 'object') continue;
-    if (Array.isArray(current)) {
-      for (const value of current) stack.push(value);
-      continue;
-    }
-    for (const [key, value] of Object.entries(current)) {
-      const normalizedKey = String(key || '').toUpperCase();
-      if (forbidden.some(pattern => normalizedKey.includes(pattern))) {
+  function walkKeys(value, path = []) {
+    if (!value || typeof value !== 'object') return;
+    for (const [key, child] of Object.entries(value)) {
+      const upperKey = String(key).toUpperCase();
+      if (forbidden.some(pattern => upperKey.includes(pattern))) {
         throw sandboxError('code_sandbox_secret_injection_blocked');
       }
-      if (value && typeof value === 'object') stack.push(value);
+      walkKeys(child, path.concat(key));
     }
   }
+
+  walkKeys(body);
 
   const keys = Object.keys(body?.env || {});
   for (const key of keys) {
@@ -186,6 +182,7 @@ function assertNoSecretInjection(body) {
       throw sandboxError('code_sandbox_environment_key_blocked');
     }
   }
+
   return true;
 }
 
