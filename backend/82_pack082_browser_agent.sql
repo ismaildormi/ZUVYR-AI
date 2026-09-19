@@ -1,13 +1,11 @@
--- ZUVYR V1 PACK082 — Browser Agent authority and Permission Center extension.
-
--- Clean rebuild after rejecting a corrupted duplicate draft. Additive / compatibility-preserving.
-
--- PACK081 runtime/provider gates remain authoritative; raw typed values are not persisted.
-
-
+-- ZUVYR V1 PACK082 — Browser Agent authority, approvals and durable Brain deferral.
+-- Clean rebuild after rejecting a corrupted duplicate draft. This migration is
+-- additive except for replacing canonical permission/cancel functions with
+-- compatibility-preserving extensions.
 
 alter table public.zuvyr_permission_grants
   drop constraint if exists zuvyr_permission_grants_action_class_check;
+
 alter table public.zuvyr_permission_grants
   add constraint zuvyr_permission_grants_action_class_check
   check (action_class in (
@@ -20,13 +18,12 @@ alter table public.zuvyr_permission_grants
 
 alter table public.zuvyr_permission_grants
   drop constraint if exists zuvyr_permission_grants_resource_namespace_check;
+
 alter table public.zuvyr_permission_grants
   add constraint zuvyr_permission_grants_resource_namespace_check
   check (resource_namespace in (
     'workspace_project','code_project','browser_session'
   ));
-
-
 
 create table if not exists public.browser_agent_runs (
   id uuid primary key default gen_random_uuid(),
@@ -57,7 +54,7 @@ create table if not exists public.browser_agent_runs (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   finished_at timestamptz,
-  unique(owner_id, request_id)
+  unique(owner_id,request_id)
 );
 
 create table if not exists public.browser_agent_actions (
@@ -78,6 +75,9 @@ create table if not exists public.browser_agent_actions (
   input_length integer check (
     input_length is null or input_length between 0 and 4000
   ),
+  input_text_redacted text check (
+    input_text_redacted is null or char_length(input_text_redacted) <= 4000
+  ),
   risk text not null check (risk in ('low','medium','high','critical')),
   permission_action text check (
     permission_action is null or permission_action in (
@@ -88,74 +88,91 @@ create table if not exists public.browser_agent_actions (
     'planned','approval_required','approved','executing',
     'succeeded','failed','uncertain','cancelled'
   )),
-  permission_grant_id uuid
-    references public.zuvyr_permission_grants(id) on delete set null,
-  before_artifact_id uuid
-    references public.browser_session_artifacts(id) on delete set null,
-  after_artifact_id uuid
-    references public.browser_session_artifacts(id) on delete set null,
-  outcome jsonb not null default '{}'::jsonb
-    check (jsonb_typeof(outcome)='object'),
+  permission_grant_id uuid references public.zuvyr_permission_grants(id) on delete set null,
+  before_artifact_id uuid references public.browser_session_artifacts(id) on delete set null,
+  after_artifact_id uuid references public.browser_session_artifacts(id) on delete set null,
+  outcome jsonb not null default '{}'::jsonb check (jsonb_typeof(outcome)='object'),
   failure_code text,
   started_at timestamptz,
   finished_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique(run_id, sequence_no),
-  unique(owner_id, request_id)
+  unique(run_id,sequence_no),
+  unique(owner_id,request_id),
+  check (
+    (
+      action_type='type'
+      and input_sha256 is not null
+      and input_length is not null
+      and input_text_redacted is not null
+    )
+    or
+    (
+      action_type<>'type'
+      and input_sha256 is null
+      and input_length is null
+      and input_text_redacted is null
+    )
+  )
 );
+
+comment on column public.browser_agent_actions.input_text_redacted is
+  'Only policy-screened non-credential text needed for durable approved typing. Passwords, OTPs, payment-card data and credential-like inputs are rejected before persistence.';
 
 create table if not exists public.browser_agent_reasoning_turns (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references public.profiles(id) on delete cascade,
   run_id uuid not null references public.browser_agent_runs(id) on delete cascade,
   request_id text not null check (char_length(request_id) between 1 and 200),
-  observation_sha256 text not null
-    check (observation_sha256 ~ '^[0-9a-f]{64}$'),
+  observation_sha256 text not null check (observation_sha256 ~ '^[0-9a-f]{64}$'),
   status text not null default 'processing'
     check (status in ('processing','succeeded','failed')),
   decision_summary jsonb not null default '{}'::jsonb
     check (jsonb_typeof(decision_summary)='object'),
   action_id uuid references public.browser_agent_actions(id) on delete set null,
-  model text,
-  provider_cost_micro_usd bigint
-    check (provider_cost_micro_usd is null or provider_cost_micro_usd >= 0),
-  credits_charged integer
-    check (credits_charged is null or credits_charged >= 0),
+  model text check (model is null or char_length(model) <= 200),
+  provider_cost_micro_usd bigint check (
+    provider_cost_micro_usd is null or provider_cost_micro_usd >= 0
+  ),
+  credits_charged integer check (
+    credits_charged is null or credits_charged >= 0
+  ),
   failure_code text,
   created_at timestamptz not null default now(),
   completed_at timestamptz,
-  unique(owner_id, request_id)
+  unique(owner_id,request_id)
 );
 
 create index if not exists browser_agent_runs_owner_updated_idx
-  on public.browser_agent_runs(owner_id, updated_at desc);
+  on public.browser_agent_runs(owner_id,updated_at desc);
+
 create index if not exists browser_agent_runs_session_idx
-  on public.browser_agent_runs(browser_session_id, updated_at desc);
+  on public.browser_agent_runs(browser_session_id,updated_at desc);
+
 create unique index if not exists browser_agent_runs_one_active_session_idx
   on public.browser_agent_runs(browser_session_id)
   where status in ('planned','running','approval_required','stopping');
 
 create index if not exists browser_agent_actions_run_sequence_idx
-  on public.browser_agent_actions(run_id, sequence_no);
+  on public.browser_agent_actions(run_id,sequence_no);
+
 create index if not exists browser_agent_actions_owner_created_idx
-  on public.browser_agent_actions(owner_id, created_at desc);
+  on public.browser_agent_actions(owner_id,created_at desc);
+
 create index if not exists browser_agent_reasoning_run_created_idx
-  on public.browser_agent_reasoning_turns(run_id, created_at desc);
+  on public.browser_agent_reasoning_turns(run_id,created_at desc);
 
 alter table public.browser_agent_runs enable row level security;
 alter table public.browser_agent_actions enable row level security;
 alter table public.browser_agent_reasoning_turns enable row level security;
 
-revoke all on public.browser_agent_runs from public, anon, authenticated;
-revoke all on public.browser_agent_actions from public, anon, authenticated;
-revoke all on public.browser_agent_reasoning_turns from public, anon, authenticated;
+revoke all on public.browser_agent_runs from public,anon,authenticated;
+revoke all on public.browser_agent_actions from public,anon,authenticated;
+revoke all on public.browser_agent_reasoning_turns from public,anon,authenticated;
 
-grant select, insert, update on public.browser_agent_runs to service_role;
-grant select, insert, update on public.browser_agent_actions to service_role;
-grant select, insert, update on public.browser_agent_reasoning_turns to service_role;
-
-
+grant select,insert,update on public.browser_agent_runs to service_role;
+grant select,insert,update on public.browser_agent_actions to service_role;
+grant select,insert,update on public.browser_agent_reasoning_turns to service_role;
 
 create or replace function public.zuvyr_permission_resource_owned(
   p_owner_id uuid,
@@ -171,36 +188,40 @@ begin
   if p_owner_id is null or nullif(trim(p_resource_id),'') is null then
     return false;
   end if;
+
   if p_resource_id !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$' then
     return false;
   end if;
+
   if p_resource_namespace = 'workspace_project' then
     return exists (
-      select 1 from public.workspace_projects p
-      where p.id = p_resource_id::uuid
-        and p.owner_id = p_owner_id
+      select 1
+      from public.workspace_projects p
+      where p.id=p_resource_id::uuid
+        and p.owner_id=p_owner_id
         and p.archived_at is null
     );
   elsif p_resource_namespace = 'code_project' then
     return exists (
-      select 1 from public.code_projects p
-      where p.id = p_resource_id::uuid
-        and p.owner_id = p_owner_id
-        and p.status = 'active'
+      select 1
+      from public.code_projects p
+      where p.id=p_resource_id::uuid
+        and p.owner_id=p_owner_id
+        and p.status='active'
     );
   elsif p_resource_namespace = 'browser_session' then
     return exists (
-      select 1 from public.browser_sessions s
-      where s.id = p_resource_id::uuid
-        and s.owner_id = p_owner_id
+      select 1
+      from public.browser_sessions s
+      where s.id=p_resource_id::uuid
+        and s.owner_id=p_owner_id
         and s.status in ('running','detached')
     );
   end if;
+
   return false;
 end;
 $pack082_owned$;
-
-
 
 create or replace function public.create_zuvyr_permission_grant(
   p_owner_id uuid,
@@ -219,7 +240,7 @@ create or replace function public.create_zuvyr_permission_grant(
 language plpgsql
 security definer
 set search_path = public, pg_temp
-as $pack082_permission_grant$
+as $$
 declare
   v_action text := lower(trim(coalesce(p_action_class,'')));
   v_mode text := lower(trim(coalesce(p_grant_mode,'')));
@@ -237,13 +258,7 @@ begin
   if p_explicit_consent is distinct from true then
     return jsonb_build_object('success',false,'error','permission_explicit_consent_required');
   end if;
-  if v_action not in (
-    'project.read','project.write',
-    'dependency.install','runtime.execute',
-    'preview.view','preview.open','network.egress',
-    'deploy.execute','deploy.rollback',
-    'browser.interact','browser.input','browser.submit','browser.upload'
-  ) then
+  if v_action not in ('project.read','project.write','dependency.install','runtime.execute','preview.view','preview.open','network.egress','deploy.execute','deploy.rollback','browser.interact','browser.input','browser.submit','browser.upload') then
     return jsonb_build_object('success',false,'error','invalid_permission_action');
   end if;
   if v_mode not in ('allow_once','session','scoped') then
@@ -268,6 +283,7 @@ begin
   if v_mode = 'scoped' and v_scope <> 'project' then
     return jsonb_build_object('success',false,'error','permission_mode_scope_mismatch');
   end if;
+
   if v_scope = 'project' and v_session is not null then
     return jsonb_build_object('success',false,'error','permission_session_not_allowed');
   end if;
@@ -286,7 +302,8 @@ begin
        or v_session <> v_resource then
       return jsonb_build_object('success',false,'error','permission_scope_action_mismatch');
     end if;
-    if v_action in ('browser.submit','browser.upload') and v_mode <> 'allow_once' then
+    if v_action in ('browser.submit','browser.upload')
+       and v_mode <> 'allow_once' then
       return jsonb_build_object('success',false,'error','permission_browser_allow_once_required');
     end if;
     if v_action in ('browser.interact','browser.input')
@@ -300,10 +317,7 @@ begin
     if v_action in ('deploy.execute','deploy.rollback') and v_mode <> 'allow_once' then
       return jsonb_build_object('success',false,'error','permission_deploy_allow_once_required');
     end if;
-    if v_action in (
-      'dependency.install','runtime.execute',
-      'preview.view','preview.open','network.egress'
-    ) and v_mode not in ('allow_once','session') then
+    if v_action in ('dependency.install','runtime.execute','preview.view','preview.open','network.egress') and v_mode not in ('allow_once','session') then
       return jsonb_build_object('success',false,'error','permission_mode_action_mismatch');
     end if;
   end if;
@@ -323,7 +337,6 @@ begin
     when 'browser.submit' then 600
     when 'browser.upload' then 600
   end;
-
   v_expected_consequence := 'permission.' || v_action || '.v1';
   if v_consequence <> v_expected_consequence then
     return jsonb_build_object('success',false,'error','permission_consequence_mismatch');
@@ -331,9 +344,7 @@ begin
   if v_fp !~ '^[0-9a-f]{64}$' then
     return jsonb_build_object('success',false,'error','invalid_permission_confirmation_fingerprint');
   end if;
-  if p_expires_at is null
-     or p_expires_at <= now()
-     or p_expires_at > now() + make_interval(secs => v_max_seconds) then
+  if p_expires_at is null or p_expires_at <= now() or p_expires_at > now() + make_interval(secs => v_max_seconds) then
     return jsonb_build_object('success',false,'error','permission_expiry_invalid');
   end if;
   if coalesce(jsonb_typeof(p_constraints),'') <> 'object' then
@@ -354,18 +365,14 @@ begin
       return jsonb_build_object('success',false,'error','invalid_permission_network_host');
     end if;
     for v_host in
-      select lower(trim(value))
-      from jsonb_array_elements_text(p_constraints->'allowedHosts') h(value)
+      select lower(trim(value)) from jsonb_array_elements_text(p_constraints->'allowedHosts') h(value)
     loop
       if v_host = '' or v_host = '*' or length(v_host) > 253
          or position('.' in v_host) = 0
          or v_host !~ '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$' then
         return jsonb_build_object('success',false,'error','invalid_permission_network_host');
       end if;
-      if v_host in (
-           'localhost','0.0.0.0','127.0.0.1',
-           'host.docker.internal','metadata.google.internal'
-         )
+      if v_host in ('localhost','0.0.0.0','127.0.0.1','host.docker.internal','metadata.google.internal')
          or v_host like '%.local'
          or v_host like '%.internal'
          or v_host ~ '^10\.'
@@ -378,50 +385,57 @@ begin
   end if;
 
   if v_action like 'browser.%' then
-    if p_constraints ? 'host' then
-      v_host := lower(trim(coalesce(p_constraints->>'host','')));
-      if v_host = ''
-         or v_host = '*'
-         or length(v_host) > 253
-         or position('.' in v_host) = 0
-         or v_host !~ '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*
+    if not (p_constraints ? 'host') then
+      return jsonb_build_object('success',false,'error','permission_browser_host_required');
+    end if;
+
+    v_host := lower(trim(coalesce(p_constraints->>'host','')));
+    if v_host = ''
+       or v_host = '*'
+       or length(v_host) > 253
+       or position('.' in v_host) = 0
+       or v_host !~ '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$'
+       or v_host in (
+         'localhost','0.0.0.0','127.0.0.1',
+         'host.docker.internal','metadata.google.internal'
+       )
+       or v_host like '%.localhost'
+       or v_host like '%.local'
+       or v_host like '%.internal'
+       or v_host ~ '^10\.'
+       or v_host ~ '^192\.168\.'
+       or v_host ~ '^172\.(1[6-9]|2[0-9]|3[01])\.'
+       or v_host ~ '^169\.254\.' then
+      return jsonb_build_object('success',false,'error','permission_browser_host_invalid');
+    end if;
+
+    if not (p_constraints ? 'actionFingerprint')
+       or coalesce(p_constraints->>'actionFingerprint','') !~ '^[0-9a-f]{64}$' then
+      return jsonb_build_object('success',false,'error','permission_browser_action_fingerprint_required');
+    end if;
+  end if;
 
   insert into public.zuvyr_permission_grants(
-    owner_id, action_class, grant_mode, scope_type,
-    resource_namespace, resource_id, session_id,
-    consequence_id, confirmation_fingerprint,
-    constraints, expires_at
+    owner_id, action_class, grant_mode, scope_type, resource_namespace, resource_id,
+    session_id, consequence_id, confirmation_fingerprint, constraints, expires_at
   ) values (
-    p_owner_id, v_action, v_mode, v_scope,
-    v_ns, v_resource, v_session,
-    v_consequence, v_fp,
-    coalesce(p_constraints,'{}'::jsonb), p_expires_at
-  )
-  returning id into v_id;
+    p_owner_id, v_action, v_mode, v_scope, v_ns, v_resource,
+    v_session, v_consequence, v_fp, coalesce(p_constraints,'{}'::jsonb), p_expires_at
+  ) returning id into v_id;
 
   insert into public.zuvyr_permission_audit_events(
     owner_id, grant_id, action_class, event_type, reason,
-    resource_namespace, resource_id, session_id, metadata
+    resource_namespace, resource_id, session_id,
+    metadata
   ) values (
     p_owner_id, v_id, v_action, 'grant_created', 'explicit_confirmation',
     v_ns, v_resource, v_session,
-    jsonb_build_object(
-      'grantMode',v_mode,
-      'scopeType',v_scope,
-      'consequenceId',v_consequence
-    )
+    jsonb_build_object('grantMode',v_mode,'scopeType',v_scope,'consequenceId',v_consequence)
   );
 
-  return jsonb_build_object(
-    'success',true,
-    'grant_id',v_id,
-    'expires_at',p_expires_at,
-    'action_class',v_action
-  );
+  return jsonb_build_object('success',true,'grant_id',v_id,'expires_at',p_expires_at,'action_class',v_action);
 end;
-$pack082_permission_grant$;
-
-
+$$;
 
 create or replace function public.reserve_zuvyr_browser_agent_run_pack082(
   p_owner_id uuid,
@@ -565,8 +579,6 @@ select * into v_existing
 end;
 $pack082_reserve_run$;
 
-
-
 create or replace function public.transition_zuvyr_browser_agent_run_pack082(
   p_owner_id uuid,
   p_run_id uuid,
@@ -636,8 +648,6 @@ begin
   );
 end;
 $pack082_transition_run$;
-
-
 
 create or replace function public.reserve_zuvyr_browser_agent_action_pack082(
   p_owner_id uuid,
@@ -718,8 +728,6 @@ begin
   );
 end;
 $pack082_reserve_action$;
-
-
 
 create or replace function public.transition_zuvyr_browser_agent_action_pack082(
   p_owner_id uuid,
@@ -811,8 +819,6 @@ begin
 end;
 $pack082_transition_action$;
 
-
-
 create or replace function public.request_stop_zuvyr_browser_agent_run_pack082(
   p_owner_id uuid,
   p_run_id uuid,
@@ -879,16 +885,15 @@ end;
 $pack082_stop_run$;
 
 
-
+-- Canonical Brain Kernel human-approval bridge.
 alter table public.zuvyr_task_steps
   drop constraint if exists zuvyr_task_steps_state_allowed;
+
 alter table public.zuvyr_task_steps
   add constraint zuvyr_task_steps_state_allowed
   check (state in (
     'pending','running','deferred','succeeded','failed','cancelled'
   ));
-
-
 
 create or replace function public.defer_zuvyr_task_step_pack082(
   p_step_id bigint,
@@ -958,8 +963,6 @@ begin
   );
 end;
 $pack082_defer_task_step$;
-
-
 
 create or replace function public.resume_zuvyr_task_step_pack082(
   p_task_run_id uuid,
@@ -1069,8 +1072,6 @@ begin
 end;
 $pack082_resume_task_step$;
 
-
-
 create or replace function public.request_cancel_zuvyr_task(
   p_task_run_id uuid,
   p_user_id uuid,
@@ -1172,8 +1173,6 @@ begin
 end;
 $pack082_request_cancel_task$;
 
-
-
 create or replace function public.cancel_zuvyr_task_step(
   p_step_id bigint,
   p_worker_owner text,
@@ -1258,7 +1257,6 @@ end;
 $pack082_cancel_task_step$;
 
 
-
 revoke all on function public.zuvyr_permission_resource_owned(uuid,text,text)
   from public,anon,authenticated;
 revoke all on function public.create_zuvyr_permission_grant(
@@ -1272,7 +1270,7 @@ revoke all on function public.transition_zuvyr_browser_agent_run_pack082(
   uuid,uuid,text,text,text,text
 ) from public,anon,authenticated;
 revoke all on function public.reserve_zuvyr_browser_agent_action_pack082(
-  uuid,uuid,text,text,text,jsonb,text,integer,text,text
+  uuid,uuid,text,text,text,jsonb,text,integer,text,text,text
 ) from public,anon,authenticated;
 revoke all on function public.transition_zuvyr_browser_agent_action_pack082(
   uuid,uuid,text,text,uuid,uuid,uuid,jsonb,text
@@ -1280,7 +1278,6 @@ revoke all on function public.transition_zuvyr_browser_agent_action_pack082(
 revoke all on function public.request_stop_zuvyr_browser_agent_run_pack082(
   uuid,uuid,text
 ) from public,anon,authenticated;
-
 revoke all on function public.defer_zuvyr_task_step_pack082(
   bigint,text,uuid,jsonb
 ) from public,anon,authenticated;
@@ -1297,7 +1294,6 @@ grant execute on function public.zuvyr_permission_resource_owned(uuid,text,text)
 grant execute on function public.create_zuvyr_permission_grant(
   uuid,text,text,text,text,text,text,text,text,timestamptz,boolean,jsonb
 ) to service_role;
-
 grant execute on function public.reserve_zuvyr_browser_agent_run_pack082(
   uuid,uuid,uuid,uuid,text,text,text,text,text,jsonb,integer
 ) to service_role;
@@ -1305,7 +1301,7 @@ grant execute on function public.transition_zuvyr_browser_agent_run_pack082(
   uuid,uuid,text,text,text,text
 ) to service_role;
 grant execute on function public.reserve_zuvyr_browser_agent_action_pack082(
-  uuid,uuid,text,text,text,jsonb,text,integer,text,text
+  uuid,uuid,text,text,text,jsonb,text,integer,text,text,text
 ) to service_role;
 grant execute on function public.transition_zuvyr_browser_agent_action_pack082(
   uuid,uuid,text,text,uuid,uuid,uuid,jsonb,text
@@ -1313,7 +1309,6 @@ grant execute on function public.transition_zuvyr_browser_agent_action_pack082(
 grant execute on function public.request_stop_zuvyr_browser_agent_run_pack082(
   uuid,uuid,text
 ) to service_role;
-
 grant execute on function public.defer_zuvyr_task_step_pack082(
   bigint,text,uuid,jsonb
 ) to service_role;
@@ -1325,12 +1320,10 @@ grant execute on function public.request_cancel_zuvyr_task(uuid,uuid,text)
 grant execute on function public.cancel_zuvyr_task_step(bigint,text,uuid,jsonb)
   to service_role;
 
-
-
 comment on table public.browser_agent_runs is
-  'PACK082 owner-scoped Browser Agent runs linked to the canonical PACK081 browser session and optional durable task identity.';
+  'PACK082 durable Browser Agent runs bound to one owned PACK081 browser session and optional canonical Brain task.';
 comment on table public.browser_agent_actions is
-  'PACK082 idempotent browser actions. Raw typed values are never persisted; only digest/length, scoped targets, permission lineage and consequence receipts are stored.';
+  'PACK082 action receipts. Consequence-bearing and ambiguous actions are approval-gated and never blindly retried.';
 comment on table public.browser_agent_reasoning_turns is
-  'PACK082 idempotent AI reasoning receipts. Stores observation/action fingerprints and measured billing only; raw typed text and secrets are intentionally absent.';
+  'PACK082 idempotent model-decision receipts. Stores hashes, summaries and cost lineage, not chain-of-thought.';
 
