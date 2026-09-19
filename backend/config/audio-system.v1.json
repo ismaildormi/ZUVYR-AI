@@ -28,10 +28,12 @@
       "paidExecutionEnvironment": "PACK072_TTS_PAID_EXECUTION_ENABLED"
     },
     "voice_chat": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
+      "enabledByDefault": true,
+      "status": "implemented_pack073_browser_runtime",
       "unitType": "audio_seconds",
-      "requiresConsent": true
+      "requiresConsent": true,
+      "paidExecutionEnvironment": null,
+      "billingAuthority": false
     },
     "music_generation": {
       "enabledByDefault": false,
@@ -113,6 +115,15 @@
       "models": {
         "audio_cleanup": "ffmpeg-alpine"
       }
+    },
+    "browser": {
+      "status": "verified_pack073_client_runtime",
+      "implementedOperations": [
+        "voice_chat"
+      ],
+      "models": {
+        "voice_chat": "web-speech-api"
+      }
     }
   },
   "requestLimits": {
@@ -176,7 +187,11 @@
     "storeRawAudioEnabledByDefault": false,
     "explicitMicrophoneConsentRequired": true,
     "visibleRecordingIndicatorRequired": true,
-    "stopControlRequired": true
+    "stopControlRequired": true,
+    "bargeInEnabledByDefault": true,
+    "globalStopRequired": true,
+    "sessionTranscriptRetentionDefault": "transcript_only",
+    "rawAudioStoredByZuvyr": false
   },
   "pack071": {
     "phase": "IMPLEMENTED_PAID_LIVE_DEFERRED",
@@ -250,6 +265,38 @@
       "explicitVoiceRightsRequired": true,
       "providerVerificationRequired": true,
       "trainingRightsIndependent": true
+    }
+  },
+  "pack073": {
+    "phase": "IMPLEMENTED_BROWSER_RUNTIME",
+    "realtimeVoice": {
+      "provider": "browser",
+      "transport": "web_speech_api",
+      "model": "web-speech-api",
+      "providerCostMicroUsd": "0",
+      "providerBillingAuthority": false,
+      "paidProviderExecution": false,
+      "stateMachine": [
+        "ready",
+        "listening",
+        "processing",
+        "speaking",
+        "stopped",
+        "failed"
+      ],
+      "bargeIn": true,
+      "globalStop": true,
+      "transcriptTurns": true,
+      "retentionModes": [
+        "transcript_only",
+        "none"
+      ]
+    },
+    "privacy": {
+      "explicitMicrophoneConsentRequired": true,
+      "visibleRecordingIndicatorRequired": true,
+      "rawAudioStoredByZuvyr": false,
+      "trainingPermissionIndependent": true
     }
   }
 }
