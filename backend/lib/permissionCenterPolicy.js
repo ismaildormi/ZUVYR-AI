@@ -73,6 +73,15 @@ const ACTIONS = Object.freeze({
     maxGrantSeconds: 600,
     modes: Object.freeze(['allow_once']),
     scopes: Object.freeze(['project_session']),
+    namespaces: Object.freeze(['code_project']),
+  }),
+  'deploy.rollback': Object.freeze({
+    risk: 'critical',
+    consequenceId: 'permission.deploy.rollback.v1',
+    consequence: 'Allow one rollback attempt for this owned Code Studio project and deployment.',
+    maxGrantSeconds: 600,
+    modes: Object.freeze(['allow_once']),
+    scopes: Object.freeze(['project_session']),
     namespaces: Object.freeze(['code_project'])
   })
 });
