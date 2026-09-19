@@ -1131,8 +1131,7 @@
 
   async function addCandidate() {
     const dataset=await currentDatasetDetail();
-    const versionId=dataset?.dataset?.currentVersionId || dataset?.currentVersion?.id ||
-      dataset?.versions?.[0]?.id;
+    const versionId=dataset?.currentVersionId || dataset?.versions?.[0]?.id;
     if(!versionId) throw new Error('Current dataset version is unavailable.');
     const candidateId=String(panel()?.querySelector('[data-zuvyr-pack095-candidate-id]')?.value||'').trim();
     if(!candidateId) throw new Error('Enter a PACK094 candidate UUID.');
@@ -1147,8 +1146,7 @@
 
   async function freezeSelected() {
     const dataset=await currentDatasetDetail();
-    const versionId=dataset?.dataset?.currentVersionId || dataset?.currentVersion?.id ||
-      dataset?.versions?.[0]?.id;
+    const versionId=dataset?.currentVersionId || dataset?.versions?.[0]?.id;
     if(!versionId) throw new Error('Current dataset version is unavailable.');
     await api('/api/model-lab/dataset-versions/'+encodeURIComponent(versionId)+'/freeze',{
       method:'POST',
