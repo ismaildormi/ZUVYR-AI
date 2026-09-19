@@ -35,7 +35,7 @@ const { validateChatBody, validatePromptBody, validateImageBody, validateVideoBo
 const { normalizeSurfaceRequest } = require('./lib/universalRequest');
 const { loadRoxUserMiddleware, gatekeeperMiddleware, reserveCredits, refundCredits, settleCredits, logCreditEvent, reportRefundFailure } = require('./gatekeeper');
 const { routeRequest } = require('./aiRouter');
-const { imageQueue, videoQueue, audioQueue, defaultJobOptions, connection: queueConnection } = require('./lib/queue');
+const { imageQueue, videoQueue, audioQueue, model3dQueue, defaultJobOptions, connection: queueConnection } = require('./lib/queue');
 const {
   normalizeAiPreferences,
   buildTextPreferencePrompt,
@@ -82,6 +82,7 @@ const { createPermissionCenterRouter } = require('./lib/permissionCenterRoutes')
 const {
   createAudioStudioRouter
 } = require('./lib/audioStudioRoutes');
+const { createModel3dRouter } = require('./lib/model3dRoutes');
 const {
   createWorkspaceRouter
 } = require('./lib/workspaceRoutes');
@@ -2280,6 +2281,25 @@ app.post('/api/generate-video', requireAuth, rateLimit('video'), validateVideoBo
   )
 );
 
+app.use(
+  '/api/model3d',
+  requireAuth,
+  rateLimit('3d'),
+  gatekeeperMiddleware,
+  requirePlanFeature('3d'),
+  createModel3dRouter({
+    db: supabaseAdmin,
+    storage: supabaseAdmin.storage,
+    queue: model3dQueue,
+    defaultJobOptions,
+    reserveCredits,
+    refundCredits,
+    reportRefundFailure,
+    recordRefund,
+    env: process.env
+  })
+);
+
 app.post('/api/video-jobs/:jobId/cancel', requireAuth, async (req, res) => {
   const jobId = String(req.params.jobId || '').trim().toLowerCase();
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(jobId)) {
@@ -2493,12 +2513,14 @@ app.get('/api/job-status/:jobId', requireAuth, async (req, res) => {
 
 // --- Queue depth -> metrics, polled periodically ---
 async function reportQueueDepths() {
-  const [imgWaiting, vidWaiting] = await Promise.all([
+  const [imgWaiting, vidWaiting, model3dWaiting] = await Promise.all([
     imageQueue.getWaitingCount(),
     videoQueue.getWaitingCount(),
+    model3dQueue.getWaitingCount(),
   ]);
   setQueueDepth('rox-image-generation', imgWaiting);
   setQueueDepth('rox-video-generation', vidWaiting);
+  setQueueDepth('zuvyr-3d-generation', model3dWaiting);
 }
 const queueDepthInterval = setInterval(reportQueueDepths, 10_000);
 
