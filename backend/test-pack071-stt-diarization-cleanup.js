@@ -258,7 +258,10 @@ async function run(){
     "router.get('/jobs/:jobId'",
     "router.post('/jobs/:jobId/cancel'",
     "quoteGeneration('audio'",
-    'creditApi.reserveCredits({'
+    'creditApi.reserveCredits({',
+    "'audio_transcription'",
+    "'audio_cleanup'",
+    'modelUsed: pricing.provider'
   ]) assert(routes.includes(marker),marker);
 
   for(const marker of [
