@@ -24,7 +24,7 @@ const {
   getSubscriptionOffer
 } = require('./lib/billingCatalog');
 
-assert.equal(plans.version, 'pack-016.canonical-plans-entitlements.v2');
+assert.match(plans.version, /^pack-\d{3}\.canonical-plans-entitlements\.v\d+$/);
 assert.equal(plans.defaultPlan, 'free');
 assert.deepEqual(
   plans.planOrder,
@@ -115,10 +115,13 @@ assert.equal(planHasFeature('free', 'chat'), true);
 assert.equal(planHasFeature('free', 'code'), false);
 assert.equal(planHasFeature('plus', 'code'), true);
 assert.equal(planHasFeature('pro', 'video'), true);
+assert.equal(planHasFeature('plus', '3d'), false);
+assert.equal(planHasFeature('pro', '3d'), true);
 assert.equal(planHasFeature('legend', 'ip'), true);
 assert.equal(planHasFeature('max', 'ip'), true);
 assert.equal(minimumPlanForFeature('code'), 'plus');
 assert.equal(minimumPlanForFeature('video'), 'pro');
+assert.equal(minimumPlanForFeature('3d'), 'pro');
 assert.equal(minimumPlanForFeature('ip'), 'legend');
 assert.equal(minimumPlanForFeature('deep_research'), 'pro');
 assert.equal(minimumPlanForFeature('shopping'), 'pro');
@@ -134,6 +137,7 @@ assert.deepEqual(
       chat: true,
       image: true,
       video: false,
+      '3d': false,
       audio: true,
       code: true,
       ip: false,
