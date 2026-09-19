@@ -345,6 +345,80 @@ function createLearningPipelineRepository(client) {
     return Object.freeze((result.data || []).map(publicCandidate));
   }
 
+  async function listEvents(ownerId, { limit = 100 } = {}) {
+    const result = await client
+      .from('zuvyr_learning_events')
+      .select('id,source_kind,source_id,event_type,capability,provider,model_tool,outcome,task_success,tool_success,latency_ms,retry_count,failure_category,provider_result,actual_cost_microusd,cost_known,cost_per_successful_task_microusd,repair_outcome,domain,difficulty,learning_value_score,contains_user_content,metadata,created_at,updated_at')
+      .eq('owner_id', ownerId)
+      .order('created_at', { ascending: false })
+      .limit(Math.max(1, Math.min(200, Number(limit) || 100)));
+    if (result.error) throw learningError('pack094_learning_events_lookup_failed', result.error);
+    return Object.freeze((result.data || []).map(row => Object.freeze({
+      id: row.id,
+      sourceKind: row.source_kind,
+      sourceId: row.source_id,
+      eventType: row.event_type,
+      capability: row.capability || null,
+      provider: row.provider || null,
+      modelTool: row.model_tool || null,
+      outcome: row.outcome,
+      taskSuccess: row.task_success,
+      toolSuccess: row.tool_success,
+      latencyMs: row.latency_ms === null ? null : Number(row.latency_ms),
+      retryCount: Number(row.retry_count || 0),
+      failureCategory: row.failure_category || null,
+      providerResult: row.provider_result || null,
+      actualCostMicrousd:
+        row.actual_cost_microusd === null ? null : Number(row.actual_cost_microusd),
+      costKnown: row.cost_known === true,
+      costPerSuccessfulTaskMicrousd:
+        row.cost_per_successful_task_microusd === null
+          ? null
+          : Number(row.cost_per_successful_task_microusd),
+      repairOutcome: row.repair_outcome || null,
+      domain: row.domain || null,
+      difficulty: row.difficulty === null ? null : Number(row.difficulty),
+      learningValueScore: Number(row.learning_value_score || 0),
+      containsUserContent: false,
+      metadata: row.metadata && typeof row.metadata === 'object' ? row.metadata : {},
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    })));
+  }
+
+  async function recordRepairOutcome({
+    ownerId,
+    sourceId,
+    capability,
+    repairOutcome,
+    provider = null,
+    modelTool = null,
+    latencyMs = null,
+    actualCostMicrousd = null,
+    costKnown = false
+  } = {}) {
+    const result = await client.rpc('record_zuvyr_repair_learning_pack094', {
+      p_owner_id: ownerId,
+      p_source_id: sourceId,
+      p_capability: capability,
+      p_repair_outcome: repairOutcome,
+      p_provider: provider,
+      p_model_tool: modelTool,
+      p_latency_ms: latencyMs,
+      p_actual_cost_microusd: actualCostMicrousd,
+      p_cost_known: costKnown === true
+    });
+    if (result.error) {
+      throw learningError(rpcCode(result.error, 'pack094_repair_signal_failed'), result.error);
+    }
+    return Object.freeze({
+      id: result.data.id,
+      outcome: result.data.outcome,
+      repairOutcome: result.data.repair_outcome,
+      learningValueScore: Number(result.data.learning_value_score || 0)
+    });
+  }
+
   async function summary(ownerId) {
     const [
       consent,
@@ -413,6 +487,8 @@ function createLearningPipelineRepository(client) {
     revokeRights,
     prepareTextCandidate,
     listCandidates,
+    listEvents,
+    recordRepairOutcome,
     summary,
     listFailures
   });
