@@ -4,6 +4,7 @@ const crypto = require('node:crypto');
 const express = require('express');
 const { publicInventory, assertAudioOperationAvailable } = require('./audioOperationRegistry');
 const { normalizeAudioRequest } = require('./audioRequestContract');
+const { resolveTtsModel } = require('./audioProvider');
 const { buildAudioJobSnapshot } = require('./audioJobContract');
 const { normalizeVoiceSessionRequest } = require('./voiceSessionContract');
 const { quoteGeneration } = require('./dynamicPricing');
@@ -72,6 +73,7 @@ function createAudioStudioRouter({
     try {
       request = normalizeAudioRequest(req.body);
       operationAvailability = assertAudioOperationAvailable(request.operation, { env });
+      if (request.operation === 'text_to_speech') resolveTtsModel(request);
     } catch (error) {
       return res.status(statusFor(error)).json({
         status: 'error',
