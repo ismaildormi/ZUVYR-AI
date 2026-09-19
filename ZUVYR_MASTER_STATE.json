@@ -835,7 +835,7 @@
     "previous_plan_preserved": true,
     "priority_override": "MODEL_FIRST_BYO_COMPUTE_2026_09_19"
   },
-  "active_pack": "095",
+  "active_pack": "096",
   "pack061": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
@@ -1842,7 +1842,7 @@
     "effective_date": "2026-09-19",
     "current_inflight_pack": null,
     "current_inflight_may_finish": false,
-    "next_pack_after_current_inflight": "095",
+    "next_pack_after_current_inflight": "096",
     "priority_sequence": [
       "094 - Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
       "095 - ZUVYR Model Lab",
@@ -1916,9 +1916,10 @@
       "primary_eval_objective": "task_success_and_total_cost_per_successful_task"
     },
     "completed_inflight_pack": "083",
-    "active_priority_pack": "095",
+    "active_priority_pack": "096",
     "completed_priority_packs": [
-      "094"
+      "094",
+      "095"
     ]
   },
   "pack083": {
@@ -2054,5 +2055,87 @@
     "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
     "next_pack": "095",
     "next_pack_title": "ZUVYR Model Lab"
+  },
+  "pack095": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "ZUVYR Model Lab",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "PACK095 source, CI, Supabase Model Lab authority and exact Railway production deployment are verified. Canonical Vercel production remains stale and authenticated production owner/admin Model Lab UI acceptance remains deferred. Live training/BYOC serving belongs to PACK096/M21.",
+    "implementation_pr": 39,
+    "implementation_candidate_commit": "2b6bbc460d65626e22c9dbd2f79fb64fb164198f",
+    "implementation_merge_commit": "008b3cfff6393da41f24ab4008d054737019add5",
+    "github_ci_run": 35469559689,
+    "backend_quality": "PASS",
+    "release_quality": "PASS",
+    "migration": {
+      "version": "20260919211025",
+      "name": "pack095_model_lab",
+      "status": "APPLIED_VERIFIED"
+    },
+    "database": {
+      "control_plane_tables_expected": 15,
+      "control_plane_tables_present": 15,
+      "all_new_tables_rls": true,
+      "direct_browser_policy_count": 0,
+      "security_definer_functions_expected": 12,
+      "security_definer_functions_present": 12
+    },
+    "production": {
+      "railway": {
+        "exact_commit": "008b3cfff6393da41f24ab4008d054737019add5",
+        "backend": {
+          "deployment": "9a21a95f-b6ec-402e-bf1f-a0821091aa1b",
+          "status": "SUCCESS"
+        },
+        "worker": {
+          "deployment": "8843133a-3e76-4860-a6ac-d85162f07ff5",
+          "status": "SUCCESS"
+        },
+        "maintenance": {
+          "deployment": "d1a94290-b5b1-4995-9813-6b593002dd38",
+          "status": "SUCCESS"
+        }
+      },
+      "vercel": {
+        "production_deployment": "dpl_5LyUdRjpxQNMjTB8BBN8nt4CvwtZ",
+        "production_status": "READY_BUT_STALE",
+        "production_commit": "60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4",
+        "pack095_preview": "dpl_3zTu9WqZSdCS4CvaeXVZnfqm9gjg",
+        "pack095_preview_status": "READY_PROTECTED",
+        "pack095_preview_commit": "e2179c47b92eb0673fc7fcce230e778ada3ff6d3"
+      }
+    },
+    "model_lab": {
+      "control_plane_tables": 15,
+      "rollout_stages": [
+        "LAB",
+        "EVAL",
+        "SHADOW",
+        "CANARY",
+        "SECONDARY",
+        "PRIMARY"
+      ],
+      "compute_connector_registry": true,
+      "pack094_candidate_rights_revalidation": true,
+      "credentials_browser_exposed": false,
+      "live_generation_policy": false
+    },
+    "economics": {
+      "live_billing_allowed": false,
+      "paid_training_calls_during_verification": 0,
+      "paid_compute_calls_during_verification": 0,
+      "zuvyr_owned_model_api_software_fee_usd": 0,
+      "zuvyr_owned_model_usage_fee_usd": 0,
+      "inference_markup_usd": 0
+    },
+    "deferred_gates": [
+      "DEFERRED_PRODUCTION_FRONTEND_GATE",
+      "PACK095_AUTHENTICATED_PRODUCTION_ADMIN_UI_ACCEPTANCE"
+    ],
+    "receipt_path": "zuvyr-pack-evidence/pack-095/2026-09-19-engineering-checkpoint/receipt.json",
+    "receipt_git_blob": "3ac15fbf56938bd77ced04d992a5abd2ec197e87",
+    "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+    "next_pack": "096",
+    "next_pack_title": "ZUVYR 7 Manager / Operator — V1 Production Model + V2 Bridge"
   }
 }
