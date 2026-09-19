@@ -50,6 +50,10 @@ create unique index if not exists code_sandbox_sessions_one_active_project_idx
 create index if not exists code_sandbox_sessions_owner_updated_idx
   on public.code_sandbox_sessions(owner_id, updated_at desc);
 
+create unique index if not exists code_sandbox_sessions_provider_session_unique_idx
+  on public.code_sandbox_sessions(provider_session_id)
+  where provider_session_id is not null;
+
 create index if not exists code_sandbox_sessions_expiry_idx
   on public.code_sandbox_sessions(status, expires_at, idle_expires_at)
   where status in ('reserved','provisioning','running','stopping');
@@ -200,6 +204,28 @@ begin
   );
 exception
   when unique_violation then
+    select *
+      into v_existing
+    from public.code_sandbox_sessions
+    where owner_id = p_owner_id
+      and request_id = p_request_id;
+
+    if v_existing.id is not null then
+      if v_existing.project_id <> p_project_id
+         or v_existing.preview_token_hash <> p_preview_token_hash then
+        raise exception 'pack076_idempotency_scope_mismatch';
+      end if;
+
+      return jsonb_build_object(
+        'replayed', true,
+        'session_id', v_existing.id,
+        'status', v_existing.status,
+        'project_id', v_existing.project_id,
+        'expires_at', v_existing.expires_at,
+        'idle_expires_at', v_existing.idle_expires_at
+      );
+    end if;
+
     raise exception 'pack076_active_session_exists';
 end;
 $pack076_reserve$;
