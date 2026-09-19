@@ -534,6 +534,8 @@ body.zuvyr-ui #feature-chat .chat-input-row.zuvyr-voice-listening
 }
 
 body.zuvyr-ui #feature-chat .chat-input-row.zuvyr-voice-listening
+.zuvyr-voice-cancel,
+body.zuvyr-ui #feature-chat .chat-input-row[data-zuvyr-voice-session-id]
 .zuvyr-voice-cancel {
   display: grid !important;
   place-items: center !important;
@@ -549,6 +551,8 @@ body.zuvyr-ui #feature-chat .chat-input-row.zuvyr-voice-listening
 }
 
 body.zuvyr-ui #feature-chat .chat-input-row.zuvyr-voice-listening
+.zuvyr-voice-cancel:hover,
+body.zuvyr-ui #feature-chat .chat-input-row[data-zuvyr-voice-session-id]
 .zuvyr-voice-cancel:hover {
   background: rgba(255,255,255,.09);
 }
