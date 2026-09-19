@@ -102,7 +102,20 @@ create table if not exists public.browser_agent_actions (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique(run_id, sequence_no),
-  unique(owner_id, request_id)
+  unique(owner_id, request_id),
+  check (
+    (
+      action_type='type'
+      and input_sha256 is not null
+      and input_length is not null
+    )
+    or
+    (
+      action_type<>'type'
+      and input_sha256 is null
+      and input_length is null
+    )
+  )
 );
 
 create table if not exists public.browser_agent_reasoning_turns (
@@ -673,6 +686,14 @@ begin
   if v_run.id is null then raise exception 'pack082_run_not_found'; end if;
   if v_run.status not in ('running','approval_required') or v_run.stop_requested then
     raise exception 'pack082_run_not_executable';
+  end if;
+
+  if p_action_type='type' then
+    if p_input_sha256 is null or p_input_length is null then
+      raise exception 'pack082_type_input_digest_required';
+    end if;
+  elsif p_input_sha256 is not null or p_input_length is not null then
+    raise exception 'pack082_non_type_input_digest_forbidden';
   end if;
 
   select * into v_existing
