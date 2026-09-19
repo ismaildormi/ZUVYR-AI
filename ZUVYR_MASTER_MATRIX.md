@@ -783,3 +783,29 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - Deferred: `DEFERRED_PRODUCTION_FRONTEND_GATE`, `PACK094_AUTHENTICATED_PRODUCTION_DATA_RIGHTS_UI_ACCEPTANCE`.
 - Receipt Git blob: `a14a37f7e7d1da33c012816d47b3ba4562e6088b`.
 - Model-first progression: **PACK095 active**; PACK096 next; PACK084–PACK093 deferred/not cancelled.
+
+
+## PACK095 — ZUVYR Model Lab — 2026-09-19 checkpoint
+
+- Status: **LOCKED_ENGINEERING_VERIFIED**
+- Canonical LOCKED_VERIFIED: **NO**
+- Implementation merge commit: `008b3cfff6393da41f24ab4008d054737019add5`
+- Final Backend/Release CI: **PASS / PASS** — run `35469559689`
+- Supabase migration: `20260919211025 pack095_model_lab` — **APPLIED_VERIFIED**
+- Model Lab/Compute Connector control-plane tables: **15/15 present**
+- RLS: **ON for all 15**
+- Direct browser policy count: **0**
+- SECURITY DEFINER control functions: **12/12 present**
+- Railway exact merge commit: backend/worker/maintenance **SUCCESS / SUCCESS / SUCCESS**
+- BYOC credential browser exposure: **NO**
+- Rollout stages: `LAB→EVAL→SHADOW→CANARY→SECONDARY→PRIMARY`
+- Live training/compute/provider calls during verification: **0**
+- ZUVYR owned-model API/software fee: **$0**
+- ZUVYR owned-model usage fee: **$0**
+- Inference markup: **$0**
+- Vercel production: **STALE** at `60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4`
+- PACK095 preview: `dpl_3zTu9WqZSdCS4CvaeXVZnfqm9gjg` — READY_PROTECTED
+- Deferred: `DEFERRED_PRODUCTION_FRONTEND_GATE`, `PACK095_AUTHENTICATED_PRODUCTION_ADMIN_UI_ACCEPTANCE`
+- Receipt Git blob: `3ac15fbf56938bd77ced04d992a5abd2ec197e87`
+- Progression: **USER_APPROVED_DEFERRED_GATE_CONTINUATION**
+- Next active model-first Pack: **PACK096 — ZUVYR 7 Manager / Operator — V1 Production Model + V2 Bridge**
