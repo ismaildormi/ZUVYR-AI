@@ -73,9 +73,25 @@ async function guardNetworkEgressBeforeExecution(input) {
   return Object.freeze({ ...result, targetHost });
 }
 
+async function guardDeploymentBeforeExecution(input) {
+  return consumeCodePermission({
+    ...input,
+    action: 'deploy.execute'
+  });
+}
+
+async function guardDeploymentRollbackBeforeExecution(input) {
+  return consumeCodePermission({
+    ...input,
+    action: 'deploy.rollback'
+  });
+}
+
 module.exports = {
   actionForRuntimeOperation,
   guardCodeActionBeforeExecution,
   guardPreviewBeforeExecution,
-  guardNetworkEgressBeforeExecution
+  guardNetworkEgressBeforeExecution,
+  guardDeploymentBeforeExecution,
+  guardDeploymentRollbackBeforeExecution
 };
