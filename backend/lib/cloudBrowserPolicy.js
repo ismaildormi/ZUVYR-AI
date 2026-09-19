@@ -17,6 +17,7 @@ function envTrue(value) {
 
 function availability(env = process.env) {
   const blockers = [];
+  if (!envTrue(env.LIVE_BILLING_ALLOWED)) blockers.push('pack081_live_billing_disabled');
   if (config.gates.canCreateLiveSession !== true) blockers.push('pack081_source_live_gate_closed');
   if (!envTrue(env.ZUVYR_M17_VERIFIED)) blockers.push('pack081_m17_unverified');
   if (!envTrue(env.ZUVYR_BROWSER_PRICING_VERIFIED)) blockers.push('pack081_pricing_operator_gate_closed');
