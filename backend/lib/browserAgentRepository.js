@@ -225,6 +225,121 @@ function createBrowserAgentRepository(db) {
     return getAction({ ownerId: input.ownerId, actionId: input.actionId });
   }
 
+  async function getReasoning({ ownerId, requestId } = {}) {
+    const result = await db
+      .from('browser_agent_reasoning_turns')
+      .select('*')
+      .eq('owner_id', ownerId)
+      .eq('request_id', requestId)
+      .maybeSingle();
+    if (result.error) throw repoError('browser_agent_reasoning_lookup_failed', result.error);
+    return result.data || null;
+  }
+
+  async function beginReasoning({
+    ownerId,
+    runId,
+    requestId,
+    observationSha256
+  } = {}) {
+    const existing = await getReasoning({ ownerId, requestId });
+    if (existing) {
+      if (
+        existing.run_id !== runId ||
+        existing.observation_sha256 !== observationSha256
+      ) {
+        throw repoError('pack082_reasoning_idempotency_scope_mismatch');
+      }
+      return Object.freeze({ replayed: true, row: existing });
+    }
+
+    const result = await db
+      .from('browser_agent_reasoning_turns')
+      .insert({
+        owner_id: ownerId,
+        run_id: runId,
+        request_id: requestId,
+        observation_sha256: observationSha256,
+        status: 'processing',
+        decision_summary: {}
+      })
+      .select('*')
+      .single();
+
+    if (result.error) {
+      if (String(result.error.code || '') === '23505') {
+        const raced = await getReasoning({ ownerId, requestId });
+        if (
+          raced &&
+          raced.run_id === runId &&
+          raced.observation_sha256 === observationSha256
+        ) {
+          return Object.freeze({ replayed: true, row: raced });
+        }
+        throw repoError('pack082_reasoning_idempotency_scope_mismatch', result.error);
+      }
+      throw repoError('browser_agent_reasoning_create_failed', result.error);
+    }
+
+    return Object.freeze({ replayed: false, row: result.data });
+  }
+
+  async function completeReasoning({
+    ownerId,
+    requestId,
+    actionId = null,
+    decisionSummary = {},
+    model,
+    providerCostMicroUsd,
+    creditsCharged
+  } = {}) {
+    const result = await db
+      .from('browser_agent_reasoning_turns')
+      .update({
+        status: 'succeeded',
+        action_id: actionId,
+        decision_summary: decisionSummary,
+        model: String(model || '').slice(0, 200) || null,
+        provider_cost_micro_usd: Number(providerCostMicroUsd || 0),
+        credits_charged: Number(creditsCharged || 0),
+        failure_code: null,
+        completed_at: new Date().toISOString()
+      })
+      .eq('owner_id', ownerId)
+      .eq('request_id', requestId)
+      .eq('status', 'processing')
+      .select('*')
+      .maybeSingle();
+    if (result.error) throw repoError('browser_agent_reasoning_complete_failed', result.error);
+    if (!result.data) {
+      const existing = await getReasoning({ ownerId, requestId });
+      if (existing?.status === 'succeeded') return existing;
+      throw repoError('browser_agent_reasoning_state_conflict');
+    }
+    return result.data;
+  }
+
+  async function failReasoning({
+    ownerId,
+    requestId,
+    failureCode
+  } = {}) {
+    const result = await db
+      .from('browser_agent_reasoning_turns')
+      .update({
+        status: 'failed',
+        failure_code: String(failureCode || 'browser_agent_reasoning_failed').slice(0, 200),
+        completed_at: new Date().toISOString()
+      })
+      .eq('owner_id', ownerId)
+      .eq('request_id', requestId)
+      .eq('status', 'processing')
+      .select('*')
+      .maybeSingle();
+    if (result.error) throw repoError('browser_agent_reasoning_fail_failed', result.error);
+    return result.data || getReasoning({ ownerId, requestId });
+  }
+
   return Object.freeze({
     reserveRun,
     getRun,
@@ -236,7 +351,11 @@ function createBrowserAgentRepository(db) {
     getAction,
     getActionInternal,
     listActions,
-    transitionAction
+    transitionAction,
+    getReasoning,
+    beginReasoning,
+    completeReasoning,
+    failReasoning
   });
 }
 
