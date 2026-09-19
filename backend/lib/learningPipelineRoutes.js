@@ -76,6 +76,9 @@ function createLearningPipelineRouter({ db } = {}) {
       globalTrainingOptInDefault: false,
       memoryPermissionSeparateFromTrainingPermission: true,
       automaticConversationContentTraining: false,
+      currentConsentAuthority: 'zuvyr_user_preferences.training_consent',
+      optOutExcludesExistingCandidates: true,
+      dataDeleteRequestExcludesExistingCandidates: true,
       trainingCandidateRequirements: [
         'explicit_global_training_opt_in',
         'active_training_rights',
@@ -97,6 +100,19 @@ function createLearningPipelineRouter({ db } = {}) {
       });
     } catch (error) {
       return respondError(res, error, 'pack094_consent_lookup_failed');
+    }
+  });
+
+  router.get('/consent/history', async (req, res) => {
+    try {
+      return res.json({
+        status: 'success',
+        events: await learning.listConsentHistory(req.userId, {
+          limit: req.query?.limit
+        })
+      });
+    } catch (error) {
+      return respondError(res, error, 'pack094_consent_history_lookup_failed');
     }
   });
 
@@ -213,6 +229,35 @@ function createLearningPipelineRouter({ db } = {}) {
       });
     } catch (error) {
       return respondError(res, error, 'pack094_candidate_list_failed');
+    }
+  });
+
+  router.get('/exclusions', async (req, res) => {
+    try {
+      return res.json({
+        status: 'success',
+        exclusions: await learning.listExclusions(req.userId, {
+          limit: req.query?.limit
+        })
+      });
+    } catch (error) {
+      return respondError(res, error, 'pack094_exclusion_list_failed');
+    }
+  });
+
+  router.post('/candidates/:candidateId/exclude', async (req, res) => {
+    try {
+      const candidate = await learning.excludeCandidate({
+        ownerId: req.userId,
+        candidateId: uuid(
+          req.params.candidateId,
+          'pack094_candidate_id_invalid'
+        ),
+        reason: 'user_excluded'
+      });
+      return res.json({ status: 'success', candidate });
+    } catch (error) {
+      return respondError(res, error, 'pack094_candidate_exclude_failed');
     }
   });
 
