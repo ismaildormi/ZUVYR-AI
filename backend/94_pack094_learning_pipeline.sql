@@ -213,7 +213,7 @@ revoke all on public.zuvyr_training_exclusions from public,anon,authenticated;
 
 grant select,insert,update,delete on public.zuvyr_learning_events to service_role;
 grant select,insert,update,delete on public.zuvyr_failure_bank to service_role;
-grant select,insert,update,delete on public.zuvyr_training_consent_events to service_role;
+grant select,insert on public.zuvyr_training_consent_events to service_role;
 grant select,insert,update,delete on public.zuvyr_training_rights to service_role;
 grant select,insert,update,delete on public.zuvyr_training_candidates to service_role;
 grant select,insert,update,delete on public.zuvyr_training_candidate_payloads to service_role;
@@ -339,8 +339,17 @@ begin
     policy_version,source,created_at
   ) values (
     new.owner_id,v_version,new.training_consent,v_previous,
-    'pack094-v1',
-    case when pg_trigger_depth()>1 then 'learning_api' else 'preference' end,
+    coalesce(
+      nullif(current_setting('zuvyr.pack094_consent_policy',true),''),
+      'pack094-v1'
+    ),
+    case
+      when current_setting('zuvyr.pack094_consent_source',true)='enterprise_policy'
+        then 'enterprise_policy'
+      when current_setting('zuvyr.pack094_consent_source',true)='learning_api'
+        then 'learning_api'
+      else 'preference'
+    end,
     now()
   );
 
@@ -400,6 +409,17 @@ begin
     raise exception 'pack094_consent_source_invalid';
   end if;
 
+  perform set_config(
+    'zuvyr.pack094_consent_source',
+    case when p_source='enterprise_policy' then 'enterprise_policy' else 'learning_api' end,
+    true
+  );
+  perform set_config(
+    'zuvyr.pack094_consent_policy',
+    coalesce(nullif(btrim(p_policy_version),''),'pack094-v1'),
+    true
+  );
+
   insert into public.zuvyr_user_preferences(
     owner_id,training_consent,updated_at
   ) values (
@@ -412,18 +432,6 @@ begin
   select training_consent into v_current
   from public.zuvyr_user_preferences
   where owner_id=p_owner_id;
-
-  update public.zuvyr_training_consent_events e
-  set
-    policy_version=coalesce(nullif(btrim(p_policy_version),''),'pack094-v1'),
-    source=case when p_source='enterprise_policy' then 'enterprise_policy' else 'learning_api' end
-  where e.id=(
-    select e2.id
-    from public.zuvyr_training_consent_events e2
-    where e2.owner_id=p_owner_id
-    order by e2.consent_version desc
-    limit 1
-  );
 
   select * into v_event
   from public.zuvyr_training_consent_events
