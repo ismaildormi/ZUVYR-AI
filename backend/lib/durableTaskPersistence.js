@@ -154,6 +154,47 @@ function createDurableTaskPersistence({ client } = {}) {
       });
     },
 
+    async deferStep({
+      stepId,
+      workerOwner,
+      leaseToken,
+      checkpoint
+    } = {}) {
+      if (!Number.isSafeInteger(stepId) || stepId < 1) {
+        throw persistenceError('DURABLE_TASK_STEP_ID_INVALID');
+      }
+      if (!checkpoint || typeof checkpoint !== 'object' || Array.isArray(checkpoint)) {
+        throw persistenceError('DURABLE_TASK_CHECKPOINT_INVALID');
+      }
+      return rpc('defer_zuvyr_task_step_pack082', {
+        p_step_id: stepId,
+        p_worker_owner: required(workerOwner, 'DURABLE_TASK_WORKER_OWNER_INVALID', 200),
+        p_lease_token: uuid(leaseToken, 'DURABLE_TASK_LEASE_TOKEN_INVALID'),
+        p_checkpoint: checkpoint
+      });
+    },
+
+    async resumeStep({
+      userId,
+      taskRunId,
+      stepId,
+      resumeReceipt
+    } = {}) {
+      if (!Number.isSafeInteger(stepId) || stepId < 1) {
+        throw persistenceError('DURABLE_TASK_STEP_ID_INVALID');
+      }
+      if (!resumeReceipt || typeof resumeReceipt !== 'object' || Array.isArray(resumeReceipt)) {
+        throw persistenceError('DURABLE_TASK_RESUME_RECEIPT_INVALID');
+      }
+      return rpc('resume_zuvyr_task_step_pack082', {
+        p_task_run_id: uuid(taskRunId, 'DURABLE_TASK_RUN_ID_INVALID'),
+        p_user_id: uuid(userId, 'DURABLE_TASK_USER_ID_INVALID'),
+        p_step_id: stepId,
+        p_resume_receipt: resumeReceipt
+      });
+    },
+
+
     async failStep({
       stepId,
       workerOwner,

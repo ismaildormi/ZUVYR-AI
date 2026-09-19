@@ -59,7 +59,12 @@ function createBrainKernelUsage({ client } = {}) {
       quote,
       modelTool,
       pricingVersion,
-      allowTopup = false
+      allowTopup = false,
+      capability = 'brain.checkpoint_d',
+      provider = 'groq',
+      usageKind = 'brain_checkpoint_d',
+      stepId = 'root',
+      projectId = null
     } = {}) {
       const reservedCredits = integer(
         quote && quote.aggregate && quote.aggregate.estimatedCredits,
@@ -76,18 +81,18 @@ function createBrainKernelUsage({ client } = {}) {
           p_user_id: userId,
           p_request_id: requestId,
           p_idempotency_key: requestId,
-          p_capability: 'brain.checkpoint_d',
-          p_provider: 'groq',
+          p_capability: String(capability || 'brain.checkpoint_d'),
+          p_provider: String(provider || 'groq'),
           p_model_tool: modelTool,
           p_pricing_version: pricingVersion,
           p_reserved_credits: reservedCredits,
           p_estimated_provider_cost_microusd: estimatedCost,
           p_allow_topup: allowTopup === true,
           p_enforcement_enabled: true,
-          p_project_id: null,
+          p_project_id: projectId,
           p_task_id: taskIdentity,
-          p_step_id: 'root',
-          p_usage_kind: 'brain_checkpoint_d'
+          p_step_id: String(stepId || 'root'),
+          p_usage_kind: String(usageKind || 'brain_checkpoint_d')
         })
       );
 

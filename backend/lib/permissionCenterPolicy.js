@@ -83,6 +83,42 @@ const ACTIONS = Object.freeze({
     modes: Object.freeze(['allow_once']),
     scopes: Object.freeze(['project_session']),
     namespaces: Object.freeze(['code_project'])
+  }),
+  'browser.interact': Object.freeze({
+    risk: 'medium',
+    consequenceId: 'permission.browser.interact.v1',
+    consequence: 'Allow ZUVYR Browser Agent to perform the approved interactive action in this owned browser session.',
+    maxGrantSeconds: 1800,
+    modes: Object.freeze(['allow_once', 'session']),
+    scopes: Object.freeze(['project_session']),
+    namespaces: Object.freeze(['browser_session'])
+  }),
+  'browser.input': Object.freeze({
+    risk: 'high',
+    consequenceId: 'permission.browser.input.v1',
+    consequence: 'Allow ZUVYR Browser Agent to type non-sensitive text into the approved site/session scope.',
+    maxGrantSeconds: 1800,
+    modes: Object.freeze(['allow_once', 'session']),
+    scopes: Object.freeze(['project_session']),
+    namespaces: Object.freeze(['browser_session'])
+  }),
+  'browser.submit': Object.freeze({
+    risk: 'critical',
+    consequenceId: 'permission.browser.submit.v1',
+    consequence: 'Allow exactly one external form submission or consequence-bearing browser action.',
+    maxGrantSeconds: 600,
+    modes: Object.freeze(['allow_once']),
+    scopes: Object.freeze(['project_session']),
+    namespaces: Object.freeze(['browser_session'])
+  }),
+  'browser.upload': Object.freeze({
+    risk: 'high',
+    consequenceId: 'permission.browser.upload.v1',
+    consequence: 'Allow exactly one upload of an owned ZUVYR asset into this browser session.',
+    maxGrantSeconds: 600,
+    modes: Object.freeze(['allow_once']),
+    scopes: Object.freeze(['project_session']),
+    namespaces: Object.freeze(['browser_session'])
   })
 });
 
@@ -191,6 +227,29 @@ function normalizeConstraints(action, value) {
     return Object.freeze({ deployRequestId });
   }
 
+  if (action.startsWith('browser.')) {
+    const host = constraints.host == null || constraints.host === ''
+      ? null
+      : normalizeHost(constraints.host);
+    const actionFingerprint =
+      constraints.actionFingerprint == null || constraints.actionFingerprint === ''
+        ? null
+        : String(constraints.actionFingerprint).trim().toLowerCase();
+    if (actionFingerprint && !/^[0-9a-f]{64}$/.test(actionFingerprint)) {
+      throw permissionError('permission_browser_action_fingerprint_invalid');
+    }
+    if (
+      ['browser.submit','browser.upload'].includes(action) &&
+      !actionFingerprint
+    ) {
+      throw permissionError('permission_browser_action_fingerprint_required');
+    }
+    return Object.freeze({
+      ...(host ? { host } : {}),
+      ...(actionFingerprint ? { actionFingerprint } : {})
+    });
+  }
+
   return Object.freeze({});
 }
 
@@ -219,6 +278,12 @@ function normalizePermissionRequest(value, { ownerId, now = Date.now() } = {}) {
   if (!UUID_RE.test(resourceId)) throw permissionError('invalid_permission_resource_id');
   if (scopeType === 'project_session' && !sessionId) throw permissionError('permission_session_required');
   if (scopeType === 'project' && sessionId) throw permissionError('permission_session_not_allowed');
+  if (
+    resourceNamespace === 'browser_session' &&
+    String(sessionId || '').toLowerCase() !== resourceId.toLowerCase()
+  ) {
+    throw permissionError('permission_browser_session_scope_mismatch');
+  }
 
   const expiresAtMs = Date.parse(value.expiresAt || '');
   if (!Number.isFinite(expiresAtMs) || expiresAtMs <= now) throw permissionError('permission_expiry_invalid');

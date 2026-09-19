@@ -14,7 +14,7 @@
 //   {
 //     call(model, messages, opts) -> Promise<{ text: string, usage: object }>
 //     // usage is returned in whatever shape the provider gives it back
-//     // (lib/modelCosts.js already normalizes both the Anthropic shape
+//     // Canonical modelPricingAuthority/costRegistry normalizes both the Anthropic shape
 //     // {input_tokens, output_tokens} and the OpenAI-style shape
 //     // {prompt_tokens, completion_tokens} â€” a new provider should use
 //     // whichever of those two shapes its API natively returns, not

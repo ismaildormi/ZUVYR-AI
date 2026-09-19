@@ -1,5 +1,5 @@
 {
-  "version": "pack-035.capability-graph.v1",
+  "version": "pack-082.capability-graph.v1",
   "plannerId": "zuvyr.brain.planner.v1",
   "singleSharedPlanner": true,
   "intentContract": "pack-033.intent-lock.v1",
@@ -69,6 +69,11 @@
     "project.collect": {
       "domain": "project",
       "registryHint": "lib/finalProductRegistry.js",
+      "shared": true
+    },
+    "browser.agent.run": {
+      "domain": "browser_agent",
+      "registryHint": "lib/browserAgentController.js",
       "shared": true
     }
   },
@@ -152,6 +157,10 @@
     [
       "code.preview.verify",
       "project.collect"
+    ],
+    [
+      "browser.agent.run",
+      "project.collect"
     ]
   ],
   "outputAliases": {
@@ -163,7 +172,9 @@
     "videos": "video.generate",
     "audio": "audio.generate",
     "code": "code",
-    "project": "project.collect"
+    "project": "project.collect",
+    "browser": "browser.agent.run",
+    "web_agent": "browser.agent.run"
   },
   "code": {
     "newRuntimePath": [

@@ -13,7 +13,11 @@
 
 const { canRoute, reportOutcome } = require('./lib/modelHealth');
 const { recordFallback, recordModelLatency, recordModelOutcome } = require('./lib/metrics');
-const { estimateCostUsd, costTier } = require('./lib/modelCosts');
+const {
+  quoteModelCost,
+  modelCostTier,
+  providerReportedCostTelemetry
+} = require('./lib/modelPricingAuthority');
 const intelligenceRegistry = require('./lib/intelligenceRegistry');
 /* ZUVYR_PACK026_ROUTER_HARD_FILTERS */
 const { routerHardFilters } = require('./lib/routerHardFilters');
@@ -24,7 +28,6 @@ const {
   createDecisionContext,
   marginGuard,
   estimatePreCallCostUsd,
-  actualCostUsd,
   buildDecisionReceipt,
   routerDecisionLogger
 } = require('./lib/routerDecisionLog');
@@ -86,7 +89,26 @@ const MULTIMODAL_ROUTE = {
 function getEffectiveChain(feature, loadLevel, isPro = true) {
   const chain = ROUTES[feature] || ROUTES.chat;
   if (feature !== 'chat' || loadLevel !== 'high') return chain;
-  return [...chain].filter(route => Number.isFinite(costTier(route.model, { provider: route.provider }))).sort((a, b) => costTier(a.model, { provider: a.provider }) - costTier(b.model, { provider: b.provider }));
+  return [...chain]
+    .filter(route =>
+      Number.isFinite(modelCostTier({
+        provider: route.provider,
+        model: route.model,
+        capability: feature
+      }))
+    )
+    .sort((a, b) =>
+      modelCostTier({
+        provider: a.provider,
+        model: a.model,
+        capability: feature
+      }) -
+      modelCostTier({
+        provider: b.provider,
+        model: b.model,
+        capability: feature
+      })
+    );
 }
 
 async function withTimeout(promise, ms) {
@@ -257,6 +279,7 @@ async function routeRequest(feature, messages, opts = {}) {
     const estimatedCost = estimatePreCallCostUsd({
       provider: route.provider,
       model: route.model,
+      capability,
       messages
     });
 
@@ -290,6 +313,7 @@ async function routeRequest(feature, messages, opts = {}) {
     const routeReason = providerAttemptCount === 1 ? 'RANKED_PRIMARY' : 'FALLBACK_AFTER_PREVIOUS_ATTEMPT';
     const billingAttempt = fallbackScope.beginAttempt(route);
     const startedAt = Date.now();
+    let providerSuccessAccepted = false;
     try {
       const maxOutputTokens =
         feature === 'code'
@@ -302,6 +326,7 @@ async function routeRequest(feature, messages, opts = {}) {
       );
       const latencyMs = Date.now() - startedAt;
       const logicalSuccess = fallbackScope.completeAttempt(billingAttempt.attemptId, 'SUCCESS');
+      providerSuccessAccepted = logicalSuccess.accepted === true;
       if (!logicalSuccess.accepted) {
         attempts.push({
           model: route.model,
@@ -311,11 +336,16 @@ async function routeRequest(feature, messages, opts = {}) {
         });
         continue;
       }
-      const actualRouteCost = actualCostUsd({
+      const actualQuote = quoteModelCost({
         provider: route.provider,
         model: route.model,
-        usage: result.usage
+        capability,
+        usage: result.usage,
+        requireMeasuredUsage: true
       });
+      const actualRouteCost = actualQuote.providerCostUsd;
+      const providerReportedCostUsd =
+        providerReportedCostTelemetry(result.usage);
       const successReceipt = buildDecisionReceipt({
         context: decisionContext,
         provider: route.provider,
@@ -361,21 +391,69 @@ async function routeRequest(feature, messages, opts = {}) {
         ranking_changed: rankingResult.rankingChanged,
         load_level: loadLevel,
         usage: result.usage,
-        cost_usd:
-          Number.isFinite(Number(result.usage?.cost))
-            ? Number(result.usage.cost)
-            : estimateCostUsd(route.model, result.usage, { provider: route.provider }),
+        cost_usd: actualRouteCost,
+        pricing: {
+          version: actualQuote.registryVersion,
+          cost_entry_id: actualQuote.costEntryId,
+          provider_cost_micro_usd: actualQuote.providerCostMicroUsd,
+          verification_status: actualQuote.verificationStatus,
+          effective_date: actualQuote.effectiveDate,
+          review_before: actualQuote.reviewBefore
+        },
+        provider_reported_cost_usd: providerReportedCostUsd,
         attempts,
         decision_receipt: successReceipt,
         decision_log: decisionLog,
         billing_scope: fallbackScope.snapshot()
       };
     } catch (err) {
+      const failureLatencyMs = Date.now() - startedAt;
+
+      if (providerSuccessAccepted) {
+        const postSuccessReceipt = buildDecisionReceipt({
+          context: decisionContext,
+          provider: route.provider,
+          model: route.model,
+          reason: routeReason,
+          outcome: 'ERROR',
+          guard,
+          estimatedCostUsd: estimatedCost,
+          actualCostUsd: null,
+          latencyMs: failureLatencyMs,
+          retries: providerAttemptCount - 1,
+          rankingMode: rankingResult.mode,
+          errorCategory: 'POST_SUCCESS_ACCOUNTING_FAILURE'
+        });
+        routerDecisionLogger.record(postSuccessReceipt);
+        decisionLog.push(postSuccessReceipt);
+        attempts.push({
+          model: route.model,
+          provider: route.provider,
+          status: 'post_success_accounting_failure',
+          message: err?.code || err?.message || 'post_success_accounting_failure',
+          decision_id: postSuccessReceipt.decisionId,
+          billing_attempt_id: billingAttempt.attemptId
+        });
+
+        await reportOutcome(route.model, true);
+        recordModelLatency(route.model, failureLatencyMs);
+        recordModelOutcome(route.model, 'success');
+
+        const terminal = new Error(
+          'model_post_success_accounting_failed'
+        );
+        terminal.code = 'model_post_success_accounting_failed';
+        terminal.cause = err;
+        terminal.attempts = attempts;
+        terminal.decision_log = decisionLog;
+        terminal.billing_scope = fallbackScope.snapshot();
+        throw terminal;
+      }
+
       fallbackScope.completeAttempt(
         billingAttempt.attemptId,
         err && err.name === 'AbortError' ? 'CANCELLED' : 'ERROR'
       );
-      const failureLatencyMs = Date.now() - startedAt;
       let failureCategory = null;
       try {
         failureCategory = normalizeProviderFailure(err, {
@@ -440,7 +518,14 @@ async function routeRequest(feature, messages, opts = {}) {
   throw error;
 }
 
-module.exports = { routeRequest, ROUTES, MULTIMODAL_ROUTE, getEffectiveChain, rankEligibleRoutes: routerRanking.rankEligibleRoutes };
+module.exports = {
+  routeRequest,
+  ROUTES,
+  MULTIMODAL_ROUTE,
+  getEffectiveChain,
+  estimatePreCallCostUsd,
+  rankEligibleRoutes: routerRanking.rankEligibleRoutes
+};
 
 
 

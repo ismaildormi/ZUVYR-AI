@@ -2,7 +2,7 @@
 
 const crypto = require('crypto');
 const CONFIG = require('../config/router-margin-guard.v1.json');
-const { estimateCostUsd } = require('./modelCosts');
+const { modelCostUsd } = require('./modelPricingAuthority');
 
 const MARGIN_STATES = Object.freeze({ GREEN:'GREEN', YELLOW:'YELLOW', RED:'RED' });
 
@@ -49,19 +49,32 @@ function estimateInputTokens(messages){
   return chars>0?Math.max(1,Math.ceil(chars/4)):0;
 }
 
-function estimatePreCallCostUsd({provider,model,messages}={}){
-  if(!text(provider)||!text(model))return null;
+function estimatePreCallCostUsd({provider,model,capability='chat',messages}={}){
+  if(!text(provider)||!text(model)||!text(capability))return null;
   try{
-    const value=Number(estimateCostUsd(model,{input_tokens:estimateInputTokens(messages),output_tokens:0},{provider}));
+    const value=Number(modelCostUsd({
+      provider,
+      model,
+      capability,
+      usage:{
+        input_tokens:estimateInputTokens(messages),
+        output_tokens:0
+      },
+      requireMeasuredUsage:false
+    }));
     return Number.isFinite(value)&&value>=0?value:null;
   }catch(_){ return null; }
 }
 
-function actualCostUsd({provider,model,usage}={}){
-  const reported=finite(usage&&usage.cost);
-  if(reported!=null&&reported>=0)return reported;
+function actualCostUsd({provider,model,capability='chat',usage}={}){
   try{
-    const value=Number(estimateCostUsd(model,usage||{},{provider}));
+    const value=Number(modelCostUsd({
+      provider,
+      model,
+      capability,
+      usage:usage||{},
+      requireMeasuredUsage:true
+    }));
     return Number.isFinite(value)&&value>=0?value:null;
   }catch(_){ return null; }
 }
