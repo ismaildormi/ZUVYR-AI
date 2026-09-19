@@ -1,0 +1,160 @@
+{
+  "version": "pack-080.code-voice-checkpoint-h.v1",
+  "packId": "080",
+  "title": "Code + Voice Checkpoint H",
+  "dependencies": [
+    "013",
+    "015",
+    "035",
+    "047",
+    "049",
+    "061",
+    "062",
+    "063",
+    "064",
+    "065",
+    "071",
+    "072",
+    "073",
+    "074",
+    "075",
+    "076",
+    "077",
+    "078",
+    "079"
+  ],
+  "rule": "Checkpoint truth follows current source, immutable CI/migration/deployment evidence and dated receipts. Engineering-complete capabilities with unresolved external/live gates must remain explicitly non-live.",
+  "canonicalSystems": {
+    "usageLedger": "public.zuvyr_usage_records",
+    "projects": "public.code_projects + public.code_project_files + public.code_project_versions",
+    "editorState": "public.code_project_editor_state",
+    "assetBindings": "public.zuvyr_code_asset_bindings",
+    "sandboxSessions": "public.code_sandbox_sessions",
+    "runtimeJobs": "public.code_runtime_jobs",
+    "voiceSessions": "public.voice_sessions + public.voice_session_turns",
+    "releases": "public.code_release_validations + public.code_release_artifacts",
+    "deployments": "public.code_deploy_requests + public.code_deployment_rollbacks"
+  },
+  "voice": {
+    "browserDictation": {
+      "engineering": "implemented",
+      "provider": "browser",
+      "providerCostAuthority": false,
+      "rawAudioStored": false
+    },
+    "browserSpeech": {
+      "engineering": "implemented",
+      "provider": "browser",
+      "providerCostAuthority": false
+    },
+    "realtimeVoice": {
+      "engineering": "implemented_pack073",
+      "frontendSourcePublishedByLaterMain": true,
+      "authenticatedPhysicalMicAcceptance": "deferred",
+      "bargeIn": true,
+      "globalStop": true,
+      "rawAudioStored": false,
+      "canonicalLiveClaim": false
+    },
+    "transcription": {
+      "engineering": "implemented_pack071",
+      "liveClaim": "deferred_paid_gate"
+    },
+    "textToSpeech": {
+      "engineering": "implemented_pack072",
+      "liveClaim": "deferred_paid_gate"
+    },
+    "creativeAudio": {
+      "engineering": "implemented_pack074",
+      "music": "deferred_paid_gate",
+      "sfx": "deferred_paid_gate",
+      "remix": "deferred_paid_gate",
+      "stems": "deferred_paid_gate",
+      "dubbing": "blocked_provider_output_contract_unverified"
+    }
+  },
+  "code": {
+    "projectsEditor": {
+      "engineering": "implemented_pack075",
+      "durableProjects": true,
+      "immutableVersions": true,
+      "branches": true,
+      "editorStatePersistence": true,
+      "aiEditMetered": true
+    },
+    "sandbox": {
+      "engineering": "implemented_pack076",
+      "liveClaim": "deferred_m15_pricing_credentials",
+      "externalGate": "M15",
+      "networkDefault": "deny-all",
+      "rawProviderRouteReturned": false
+    },
+    "terminalDependenciesRun": {
+      "engineering": "implemented_pack077",
+      "liveClaim": "deferred_m15_runtime_pricing"
+    },
+    "buildTestPreviewRepair": {
+      "engineering": "implemented_pack078",
+      "liveClaim": "deferred_m15_runtime_pricing_and_preview_protection",
+      "repairMaxAttempts": 2,
+      "previewThroughAuthenticatedProxy": true
+    },
+    "zipRelease": {
+      "engineering": "implemented_pack079",
+      "deterministicZip": true,
+      "versionBound": true,
+      "previewSecretsExcluded": true
+    },
+    "deployRollback": {
+      "engineering": "implemented_pack079",
+      "liveClaim": "deferred_m16_deploy_pricing_and_real_target",
+      "externalGate": "M16",
+      "explicitPermissionRequired": true,
+      "pricingVerificationStatus": "unverified"
+    }
+  },
+  "imageToCode": {
+    "canonicalHandoff": "pack049_universal_send_to",
+    "bindingTable": "public.zuvyr_code_asset_bindings",
+    "providerGenerationLiveClaim": "do_not_elevate_without_current_image_receipt",
+    "checkpointUsesProviderCalls": false
+  },
+  "persistence": {
+    "closeReopenProject": true,
+    "restoreEditorState": true,
+    "restoreAssetBindings": true,
+    "restoreBranchAndRevision": true,
+    "runtimeSessionNeverTreatedAsDurableProjectState": true
+  },
+  "unifiedAccounting": {
+    "ledger": "public.zuvyr_usage_records",
+    "usageKinds": [
+      "ai_code_edit",
+      "build_job",
+      "sandbox_runtime",
+      "preview_runtime",
+      "generation"
+    ],
+    "exactMeasuredCostRequiredForPaidExecution": true,
+    "unknownCostBlocksPaidExecution": true,
+    "liveBillingAllowed": false
+  },
+  "checkpoint": {
+    "paidProviderCallsRequired": false,
+    "productionMutationRequired": false,
+    "regressionSuites": [
+      "test:audio-checkpoint",
+      "test:code-checkpoint",
+      "test:media-checkpoint",
+      "test-pack080-code-voice-checkpoint-h.js"
+    ],
+    "deferredGates": [
+      "PACK073_AUTHENTICATED_PHYSICAL_MIC_ACCEPTANCE",
+      "M15_SANDBOX_RUNTIME",
+      "M16_DEPLOY_ROLLBACK",
+      "PACK074_DUB_OUTPUT_CONTRACT"
+    ],
+    "progressionWhenDeferred": "LOCKED_ENGINEERING_VERIFIED",
+    "canonicalLockedVerifiedRequiresLiveEvidence": true
+  }
+}

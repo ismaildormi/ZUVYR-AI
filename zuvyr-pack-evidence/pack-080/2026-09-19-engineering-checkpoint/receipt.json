@@ -1,0 +1,131 @@
+{
+  "pack": "080",
+  "title": "Code + Voice Checkpoint H",
+  "date": "2026-09-19",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonicalLockedVerified": false,
+  "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+  "baseline": {
+    "mainCommit": "3b4275b733d33b6db802499d45c6dc3db388668c",
+    "pullRequest": 25,
+    "checkpointCiHead": "ecd2aaf536fa6580909e9894c2292444850f9479",
+    "checkpointCiRun": 35456000794,
+    "backendQuality": "PASS",
+    "releaseQuality": "PASS"
+  },
+  "dependencies": {
+    "pack074": {
+      "pr": 17,
+      "merge": "7b70f39feb845d938386e2a1cd7122bc7def3f6e",
+      "ci": 35424881253
+    },
+    "pack075": {
+      "pr": 18,
+      "merge": "47c8528f8d0e584215d25ef4e1def00f4dd05245",
+      "ci": 35426355797,
+      "migration": "20260919062151 pack075_code_projects_editor"
+    },
+    "pack076": {
+      "pr": 19,
+      "merge": "6871bf2067b04f3656c7b2265721195ab84d683e",
+      "ci": 35427852128,
+      "migration": "20260919065435 pack076_secure_code_sandbox"
+    },
+    "pack077": {
+      "pr": 20,
+      "merge": "3ba1102d2e1e207a4c46bf1b1970b6adca67ef17",
+      "ci": 35451749450,
+      "migration": "20260919152552 pack077_terminal_dependencies_run"
+    },
+    "pack078": {
+      "pr": 22,
+      "merge": "dd94f1f3caf0ea73440f58828d3e913f56180ccd",
+      "ci": 35453637157,
+      "fixPr": 23,
+      "fixMerge": "ac644e6dd6fe88ff836257c7b7baab6e86f41cc5",
+      "fixCi": 35454377032
+    },
+    "pack079": {
+      "pr": 24,
+      "merge": "3b4275b733d33b6db802499d45c6dc3db388668c",
+      "ci": 35455530560,
+      "migration": "20260919163822 pack079_real_zip_deploy_rollback"
+    }
+  },
+  "productionEvidence": {
+    "railwayPack079": {
+      "backend": {
+        "deployment": "5652279f-fe45-447e-8c8c-c4ff992bfeb7",
+        "status": "SUCCESS"
+      },
+      "worker": {
+        "deployment": "703c2b54-a0ad-48ef-b867-80f15fe92f17",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deployment": "9afc884d-8692-47b3-8061-9f815ec4bf18",
+        "status": "SUCCESS"
+      },
+      "exactCommit": "3b4275b733d33b6db802499d45c6dc3db388668c"
+    },
+    "vercelProduction": {
+      "deployment": "dpl_3VLpyDnEWwNP2y9ck6ZnpNfbnR3h",
+      "commit": "ac644e6dd6fe88ff836257c7b7baab6e86f41cc5",
+      "status": "READY",
+      "note": "Production frontend is at Pack078 lineage-fix main. Pack079 changed backend/release logic only; latest Pack079 preview is READY but production promotion is not proven."
+    },
+    "frontendMarkers": {
+      "pack073VoiceController": true,
+      "retryStop": true,
+      "bargeIn": true,
+      "pack075CodeStudio": true,
+      "pack078PreviewFrame": true,
+      "postSaveValidation": true,
+      "boundedRepairUi": true
+    }
+  },
+  "checkpointProof": {
+    "audioCheckpoint": "PASS under CI",
+    "mediaCheckpoint": "PASS under CI",
+    "codeCheckpoint": "PASS under CI",
+    "checkpointH": "PASS under CI",
+    "unifiedLedger": true,
+    "durableProjectReopen": true,
+    "imageToCodeCanonicalBinding": true,
+    "boundedRepair": true,
+    "deterministicVersionBoundZip": true
+  },
+  "deferredGates": [
+    {
+      "id": "PACK073_AUTHENTICATED_PHYSICAL_MIC_ACCEPTANCE",
+      "reason": "Browser source and production markers are present, but no authenticated physical microphone start→dictation→speech→barge-in→STOP acceptance has been executed."
+    },
+    {
+      "id": "M15",
+      "reason": "Live Vercel Sandbox/runtime pricing, credentials and protected preview transport are not verified for paid production execution."
+    },
+    {
+      "id": "M16",
+      "reason": "Real approved deployment and rollback proof remain blocked by unverified deployment pricing/target gate."
+    },
+    {
+      "id": "PACK074_DUB_OUTPUT_CONTRACT",
+      "reason": "Audio-only dubbing provider output contract remains unverified; execution stays blocked."
+    }
+  ],
+  "noCostVerification": {
+    "paidProviderCalls": 0,
+    "paymentCalls": 0,
+    "liveSandboxCalls": 0,
+    "liveDeploymentCalls": 0,
+    "liveBillingAllowed": false
+  },
+  "omissions": [
+    "No physical microphone acceptance was performed.",
+    "No paid sandbox/runtime execution was performed.",
+    "No real production deploy/rollback target was mutated.",
+    "No paid audio creative provider call was performed."
+  ],
+  "nextPack": "081",
+  "nextPackTitle": "Cloud Browser Runtime"
+}

@@ -2,10 +2,7 @@
   "schema_version": "1.0",
   "source_fix": "005-FIX6",
   "selected_strategy": "railway_internal_route",
-  "previous_pack": {
-    "pack_id": "049",
-    "status": "LOCKED_VERIFIED"
-  },
+  "previous_pack": "080",
   "tests": {
     "maintenance": "PASS",
     "runtime_safety": "PASS",
@@ -586,13 +583,13 @@
     "live_billing_allowed": false,
     "next_pack": "042"
   },
-  "generated_at": "2026-09-14T16:21:33.815Z",
+  "generated_at": "2026-09-19T17:39:00+01:00",
   "pack_id": "050",
   "pack_title": "Knowledge / Context Graph",
-  "status": "LOCKED_VERIFIED",
+  "status": "PACK080_LOCKED_ENGINEERING_VERIFIED",
   "next_pack_allowed": true,
-  "next_external_gate": null,
-  "next_pack": "051 - Chat Core Normalization",
+  "next_external_gate": "M17",
+  "next_pack": "081 - Cloud Browser Runtime",
   "pack042": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "258ce1f4df2e3a4630cfc87069668f073c0dee79",
@@ -837,7 +834,7 @@
     "final_release_pack": "150",
     "previous_plan_preserved": true
   },
-  "active_pack": "073",
+  "active_pack": "081",
   "pack061": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
@@ -1373,9 +1370,9 @@
     "next_pack": "073"
   },
   "pack073": {
-    "status": "PRODUCTION_BACKEND_VERIFIED_FRONTEND_QUOTA_BLOCKED",
+    "status": "LOCKED_ENGINEERING_VERIFIED",
     "title": "Realtime Voice",
-    "external_gate": "VERCEL_BUILD_RATE_LIMIT_FRONTEND_PRODUCTION",
+    "external_gate": "PACK073_AUTHENTICATED_PHYSICAL_MIC_ACCEPTANCE",
     "dependencies": [
       "047",
       "071",
@@ -1384,7 +1381,7 @@
     "objective": "Implement low-latency realtime voice sessions with interruption/barge-in, microphone permission indicator, STOP, transcript, usage aggregation and retention policy.",
     "acceptance": "Realtime session starts/stops cleanly and cannot leave microphone/provider stream running silently.",
     "paid_execution_allowed": false,
-    "next_pack_allowed": false,
+    "next_pack_allowed": true,
     "hard_rules": [
       "Microphone access requires explicit visible permission and active capture indication.",
       "Global STOP must terminate microphone capture, provider/session streaming and pending speech output promptly.",
@@ -1470,11 +1467,11 @@
       "project_id": "prj_P6VddfynJKniiK29clC6Epr9byPk",
       "team_id": "team_3PYlTi0Euf7SDg7T2NRzGx3q",
       "production_host": "rox-ai-sepia.vercel.app",
-      "current_production_deployment": "dpl_FR1Wq7T4u1rsStzoqVhJkUwAS9TK",
-      "current_production_commit": "d309b822757096dd9d57879c4247084bc6d5c3f8",
+      "current_production_deployment": "dpl_3VLpyDnEWwNP2y9ck6ZnpNfbnR3h",
+      "current_production_commit": "ac644e6dd6fe88ff836257c7b7baab6e86f41cc5",
       "latest_known_pack073_preview": "dpl_2xnWy5EGFFeXzVEuHkt49X8nCakk",
       "latest_known_preview_commit": "8f5a6262e15b26fdd17453bc1438d769cecdce0d",
-      "blocker": "build-rate-limit",
+      "blocker": "PHYSICAL_MIC_ACCEPTANCE_ONLY",
       "rolling_24h_count_at_measurement": 109,
       "slots_needed_to_expire": 10,
       "first_calculated_safe_retry_utc": "2026-09-20T00:19:59.447Z",
@@ -1486,7 +1483,7 @@
       ]
     },
     "canonical_locked_verified": false,
-    "blocking_reason": "PACK073 changed frontend code. The final frontend source has not reached production because Vercel deployment creation is rate-limited. Live microphone/barge-in/STOP acceptance cannot be truthfully completed on the production host yet.",
+    "blocking_reason": "Pack073 frontend source is now present on the production frontend through later main deployments. The remaining canonical gate is authenticated physical microphone start→dictation→final speech→barge-in→STOP acceptance and confirmation that capture is fully released.",
     "receipt_path": "zuvyr-pack-evidence/pack-073/2026-09-19-frontend-blocked/receipt.json",
     "exactly_one_next_step": "At or after the calculated Vercel rolling-window slot, deploy/retrigger current main exactly once, verify the published Pack073 frontend markers, then complete authenticated start→dictation→send/processing→speech→barge-in→STOP live acceptance. Only then lock Pack073 and open Pack074.",
     "runtime_source_commit": "78a001f74a05ea1d5f68d3096b53b34cf45abcaa",
@@ -1521,6 +1518,175 @@
       }
     ],
     "next_pack": "074",
-    "next_pack_title": "Music / SFX / Remix / Stems / Dubbing"
+    "next_pack_title": "Music / SFX / Remix / Stems / Dubbing",
+    "reconciliation_20260919": {
+      "production_frontend_markers": {
+        "realtime_voice_controller": true,
+        "retry_stop": true,
+        "barge_in": true,
+        "timeout_stop": true
+      },
+      "prior_vercel_rate_limit_blocker_resolved": true,
+      "authenticated_physical_mic_acceptance": false
+    }
+  },
+  "pack074": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "Music / SFX / Remix / Stems / Dubbing",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "Music/SFX/remix/stems runtime, pricing, rights metadata and worker persistence are engineering-verified. Paid creative audio live calls remain disabled; audio-only dubbing output contract is still unverified.",
+    "pull_request": 17,
+    "merge_commit": "7b70f39feb845d938386e2a1cd7122bc7def3f6e",
+    "github_ci_run": 35424881253,
+    "migration": null,
+    "paid_execution_default": false,
+    "deferred": [
+      "PAID_AUDIO_CREATIVE_LIVE_E2E",
+      "PACK074_DUB_OUTPUT_CONTRACT"
+    ],
+    "runtime_inherited_by_current_production_main": true,
+    "next_pack": "075"
+  },
+  "pack075": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "Code Projects + Editor",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "Durable projects, versions, branches, editor state, asset bindings and metered/idempotent AI edits are implemented and production backend/DB verified. Authenticated full browser project E2E was not independently executed at Pack075 completion.",
+    "pull_request": 18,
+    "merge_commit": "47c8528f8d0e584215d25ef4e1def00f4dd05245",
+    "github_ci_run": 35426355797,
+    "migration": {
+      "version": "20260919062151",
+      "name": "pack075_code_projects_editor",
+      "status": "APPLIED_VERIFIED"
+    },
+    "production_frontend_inherited_by_later_main": true,
+    "next_pack": "076"
+  },
+  "pack076": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "Secure Code Sandbox",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "Server-authoritative sandbox lifecycle, deny-all network policy, preview credential transport and cleanup are engineering-verified. Live sandbox creation is fail-closed until M15, credentials and exact pricing are verified.",
+    "pull_request": 19,
+    "merge_commit": "6871bf2067b04f3656c7b2265721195ab84d683e",
+    "github_ci_run": 35427852128,
+    "migration": {
+      "version": "20260919065435",
+      "name": "pack076_secure_code_sandbox",
+      "status": "APPLIED_VERIFIED"
+    },
+    "external_gate": "M15",
+    "live_execution_default": false,
+    "next_pack": "077"
+  },
+  "pack077": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "Terminal / Dependencies / Run",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "Runtime job authority, terminal/dependency/run command contracts, metering, cancellation/logging and reconciliation are engineering-verified. Live runtime stays fail-closed behind M15 and verified runtime pricing.",
+    "pull_request": 20,
+    "merge_commit": "3ba1102d2e1e207a4c46bf1b1970b6adca67ef17",
+    "github_ci_run": 35451749450,
+    "migration": {
+      "version": "20260919152552",
+      "name": "pack077_terminal_dependencies_run",
+      "status": "APPLIED_VERIFIED"
+    },
+    "external_gate": "M15",
+    "live_execution_default": false,
+    "next_pack": "078"
+  },
+  "pack078": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "Build / Test / Browser Preview / Repair",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "Build/test runtime contracts, structured diagnostics, preview state machine, bounded repair and runtime lineage are engineering-verified. Real sandbox-backed Preview remains deferred behind M15/runtime pricing/provider protection.",
+    "pull_request": 22,
+    "merge_commit": "dd94f1f3caf0ea73440f58828d3e913f56180ccd",
+    "github_ci_run": 35453637157,
+    "hardening_pr": 23,
+    "hardening_merge_commit": "ac644e6dd6fe88ff836257c7b7baab6e86f41cc5",
+    "hardening_ci_run": 35454377032,
+    "migrations": [
+      "20260919155743 pack078_build_test_preview_repair",
+      "20260919160159 pack078_build_test_preview_repair",
+      "20260919160242 pack078_security_fix1",
+      "20260919161704 pack078a_runtime_lineage_cleanup",
+      "20260919161757 pack078_runtime_lineage_cleanup"
+    ],
+    "external_gate": "M15",
+    "production_frontend": {
+      "deployment": "dpl_3VLpyDnEWwNP2y9ck6ZnpNfbnR3h",
+      "commit": "ac644e6dd6fe88ff836257c7b7baab6e86f41cc5",
+      "status": "READY"
+    },
+    "next_pack": "079"
+  },
+  "pack079": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "Real ZIP + Deploy + Rollback",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "Deterministic version-bound ZIP/reopen validation, release artifacts, explicit deploy/rollback permissions, provider adapter and rollback lineage are engineering/DB/backend production verified. Real approved production deployment and rollback proof remain deferred by M16 and unverified deployment pricing.",
+    "pull_request": 24,
+    "merge_commit": "3b4275b733d33b6db802499d45c6dc3db388668c",
+    "github_ci_run": 35455530560,
+    "migration": {
+      "version": "20260919163822",
+      "name": "pack079_real_zip_deploy_rollback",
+      "status": "APPLIED_VERIFIED"
+    },
+    "railway": {
+      "exact_commit": "3b4275b733d33b6db802499d45c6dc3db388668c",
+      "backend": {
+        "deployment": "5652279f-fe45-447e-8c8c-c4ff992bfeb7",
+        "status": "SUCCESS"
+      },
+      "worker": {
+        "deployment": "703c2b54-a0ad-48ef-b867-80f15fe92f17",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deployment": "9afc884d-8692-47b3-8061-9f815ec4bf18",
+        "status": "SUCCESS"
+      }
+    },
+    "vercel": {
+      "latest_pack079_preview": "dpl_6waukk5AsPvomc3QK7nVsvGnDyVa",
+      "preview_status": "READY",
+      "production_deployment": "dpl_3VLpyDnEWwNP2y9ck6ZnpNfbnR3h",
+      "production_commit": "ac644e6dd6fe88ff836257c7b7baab6e86f41cc5",
+      "production_promotion_proven": false
+    },
+    "external_gate": "M16",
+    "deploy_live_default": false,
+    "next_pack": "080"
+  },
+  "pack080": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "Code + Voice Checkpoint H",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "Cross-feature Voice/Code/Image→Code/reopen/repair/release regression checkpoint passes without paid/live mutations. Canonical live E2E remains blocked by physical mic acceptance, M15 sandbox/runtime, M16 deploy/rollback and Pack074 dubbing output-contract proof.",
+    "pull_request": 25,
+    "baseline_commit": "3b4275b733d33b6db802499d45c6dc3db388668c",
+    "checkpoint_ci_head": "ecd2aaf536fa6580909e9894c2292444850f9479",
+    "github_ci_run": 35456000794,
+    "backend_quality": "PASS",
+    "release_quality": "PASS",
+    "migration": null,
+    "receipt_path": "zuvyr-pack-evidence/pack-080/2026-09-19-engineering-checkpoint/receipt.json",
+    "deferred_gates": [
+      "PACK073_AUTHENTICATED_PHYSICAL_MIC_ACCEPTANCE",
+      "M15",
+      "M16",
+      "PACK074_DUB_OUTPUT_CONTRACT"
+    ],
+    "paid_provider_calls_during_checkpoint": 0,
+    "payment_calls_during_checkpoint": 0,
+    "live_sandbox_calls_during_checkpoint": 0,
+    "live_deployment_calls_during_checkpoint": 0,
+    "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+    "next_pack": "081",
+    "next_pack_title": "Cloud Browser Runtime"
   }
 }
