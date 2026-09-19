@@ -377,7 +377,7 @@ begin
     raise exception 'pack077_job_not_found';
   end if;
 
-  if p_sequence_no < 0 then
+  if p_sequence_no < 0 or p_sequence_no >= 256 then
     raise exception 'pack077_log_sequence_invalid';
   end if;
 
@@ -444,25 +444,13 @@ begin
     );
   end if;
 
-  if v_job.status = 'queued' then
-    update public.code_runtime_jobs
-    set
-      cancel_requested = true,
-      status = 'cancelled',
-      stage = 'terminal',
-      completed_at = v_now,
-      updated_at = v_now
-    where id = p_job_id
-    returning * into v_job;
-  else
-    update public.code_runtime_jobs
-    set
-      cancel_requested = true,
-      stage = 'cancel_requested',
-      updated_at = v_now
-    where id = p_job_id
-    returning * into v_job;
-  end if;
+  update public.code_runtime_jobs
+  set
+    cancel_requested = true,
+    stage = 'cancel_requested',
+    updated_at = v_now
+  where id = p_job_id
+  returning * into v_job;
 
   return jsonb_build_object(
     'replayed', false,
