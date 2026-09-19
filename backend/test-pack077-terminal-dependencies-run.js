@@ -199,7 +199,7 @@ const chunks = commandLogChunks(
 assert.equal(chunks[0].stream, 'stderr');
 assert.equal(chunks[0].message, 'bad');
 assert.equal(chunks[1].stream, 'stdout');
-assert.match(providerTimestamp('2026-09-19T00:00:00Z'), /^2026-09-19T00:00:00\\.000Z$/);
+assert.match(providerTimestamp('2026-09-19T00:00:00Z'), /^2026-09-19T00:00:00\.000Z$/);
 
 (async () => {
   let calls = [];
