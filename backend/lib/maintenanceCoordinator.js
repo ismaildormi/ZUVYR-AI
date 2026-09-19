@@ -54,6 +54,7 @@ async function runMaintenanceOnce({
   supabaseAdmin,
   codeSandboxCleanup = null,
   codeRuntimeReconcile = null,
+  cloudBrowserCleanup = null,
   nowMs = Date.now(),
   logger = console,
 }) {
@@ -103,6 +104,7 @@ async function runMaintenanceOnce({
     accountsReset: null,
     codeSandboxes: null,
     codeRuntime: null,
+    cloudBrowser: null,
     errors: [],
   };
 
@@ -199,6 +201,38 @@ async function runMaintenanceOnce({
       }
     }
 
+    if (typeof cloudBrowserCleanup === 'function') {
+      try {
+        receipt.cloudBrowser = await cloudBrowserCleanup({
+          db: supabaseAdmin,
+          storage: supabaseAdmin.storage,
+          nowMs,
+          logger
+        });
+        if (
+          Array.isArray(receipt.cloudBrowser?.failures) &&
+          receipt.cloudBrowser.failures.length > 0
+        ) {
+          receipt.errors.push({
+            step: 'cloud_browser_cleanup',
+            message:
+              'Cloud browser cleanup deferred for ' +
+              receipt.cloudBrowser.failures.length +
+              ' session(s).'
+          });
+        }
+      } catch (error) {
+        receipt.errors.push({
+          step: 'cloud_browser_cleanup',
+          message: safeError(error)
+        });
+        logger.error(
+          '[maintenance] cloud browser cleanup failed:',
+          safeError(error)
+        );
+      }
+    }
+
     receipt.finishedAt = new Date().toISOString();
 
     if (receipt.errors.length === 0) {
@@ -211,6 +245,7 @@ async function runMaintenanceOnce({
         accountsReset: receipt.accountsReset,
         codeSandboxes: receipt.codeSandboxes,
         codeRuntime: receipt.codeRuntime,
+        cloudBrowser: receipt.cloudBrowser,
       }));
       return { status: 'success', duplicate: false, receipt };
     }
@@ -220,6 +255,7 @@ async function runMaintenanceOnce({
       receipt.accountsReset !== null,
       codeSandboxCleanup === null || receipt.codeSandboxes !== null,
       codeRuntimeReconcile === null || receipt.codeRuntime !== null,
+      cloudBrowserCleanup === null || receipt.cloudBrowser !== null,
     ].filter(Boolean).length;
     receipt.status = successfulSteps > 0 ? 'partial' : 'failed';
     await writeReceipt(redis, receipt);
