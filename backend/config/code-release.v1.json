@@ -1,0 +1,42 @@
+{
+  "version": "pack-079.code-release.v1",
+  "status": "engineering_implemented_live_deploy_deferred_m16",
+  "zip": {
+    "format": "zip",
+    "manifestPath": "zuvyr-release-manifest.json",
+    "fixedTimestamp": "1980-01-01T00:00:00.000Z",
+    "compression": "DEFLATE",
+    "compressionLevel": 6,
+    "maxCodeFiles": 1024,
+    "maxAssets": 1024,
+    "maxCodeBytes": 33554432,
+    "maxAssetBytes": 536870912,
+    "maxArchiveBytes": 1073741824,
+    "assetRoot": "assets"
+  },
+  "deploy": {
+    "provider": "vercel",
+    "externalGate": "M16",
+    "liveEnabledByDefault": false,
+    "requiredEnvironment": [
+      "VERCEL_TOKEN",
+      "VERCEL_TEAM_ID"
+    ],
+    "liveGateEnvironment": [
+      "ZUVYR_M16_VERIFIED"
+    ],
+    "previewAndProductionDistinct": true,
+    "productionRequiresPermission": "deploy.execute",
+    "rollbackRequiresPermission": "deploy.rollback",
+    "rawClientApprovalReceiptAccepted": false
+  },
+  "exclusions": {
+    "previewTokens": true,
+    "sandboxSessions": true,
+    "runtimeCaches": true,
+    "providerReceipts": true,
+    "secrets": true,
+    "environmentFiles": true,
+    "nodeModules": true
+  }
+}
