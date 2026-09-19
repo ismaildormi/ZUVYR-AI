@@ -1,0 +1,104 @@
+{
+  "version": "pack-082.browser-agent.v1",
+  "planner": {
+    "canonicalPlanner": "zuvyr.brain.planner.v1",
+    "capability": "browser.agent.run",
+    "outputAlias": "browser",
+    "duplicatePlannerForbidden": true
+  },
+  "run": {
+    "defaultMaxSteps": 20,
+    "maxSteps": 40,
+    "actionTimeoutMs": 30000,
+    "waitMaxMs": 10000,
+    "observationMaxElements": 200,
+    "typedTextMaxLength": 4000
+  },
+  "actionPolicy": {
+    "observe": {
+      "risk": "low",
+      "permissionAction": null,
+      "retry": "safe"
+    },
+    "navigate": {
+      "risk": "low",
+      "permissionAction": null,
+      "retry": "safe"
+    },
+    "scroll": {
+      "risk": "low",
+      "permissionAction": null,
+      "retry": "safe"
+    },
+    "wait": {
+      "risk": "low",
+      "permissionAction": null,
+      "retry": "safe"
+    },
+    "verify": {
+      "risk": "low",
+      "permissionAction": null,
+      "retry": "safe"
+    },
+    "click": {
+      "risk": "medium",
+      "permissionAction": "browser.interact",
+      "retry": "approval_or_reobserve"
+    },
+    "type": {
+      "risk": "high",
+      "permissionAction": "browser.input",
+      "retry": "approval_or_reobserve"
+    },
+    "submit": {
+      "risk": "critical",
+      "permissionAction": "browser.submit",
+      "retry": "never_blind"
+    },
+    "upload": {
+      "risk": "high",
+      "permissionAction": "browser.upload",
+      "retry": "never_blind"
+    }
+  },
+  "approvals": {
+    "ambiguousAction": "required",
+    "consequenceBearingAction": "required_allow_once",
+    "exactActionFingerprintForSubmitUpload": true,
+    "permissionResourceNamespace": "browser_session"
+  },
+  "authBoundaries": {
+    "loginPageObservationAllowed": true,
+    "passwordEntryByAgent": false,
+    "otpEntryByAgent": false,
+    "paymentCardEntryByAgent": false,
+    "captchaSolveByAgent": false,
+    "captchaEncounter": "pause_for_user",
+    "authChallengeEncounter": "pause_for_user",
+    "credentialValuesPersisted": false,
+    "credentialValuesModelVisible": false
+  },
+  "siteBoundaries": {
+    "allowedHostsFromPack081Session": true,
+    "privateNetworkBlocked": true,
+    "credentialBearingUrlsBlocked": true,
+    "robotsPolicy": "respect",
+    "robotsUnknown": "pause_or_observe_only"
+  },
+  "evidence": {
+    "beforeConsequenceAction": true,
+    "afterAction": true,
+    "canonicalScreenshotOrDom": true,
+    "rawSecretsInEvidence": false
+  },
+  "cancellation": {
+    "globalStop": true,
+    "noNextActionAfterStop": true,
+    "uncertainExternalOutcomeNeverBlindRetry": true
+  },
+  "liveGate": {
+    "inheritedFromPack081": "M17",
+    "providerCallsAllowedWhenPack081Live": false,
+    "note": "PACK082 engineering and mocked action-loop tests may pass while real browser execution remains deferred until PACK081 M17 is satisfied."
+  }
+}
