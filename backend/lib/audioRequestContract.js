@@ -50,6 +50,11 @@ function normalizeAudioRequest(value) {
   if (!allowedFormats.includes(outputFormat)) throw requestError('invalid_audio_output_format', 'outputFormat');
   const sampleRate = value.sampleRate === undefined ? null : value.sampleRate;
   if (sampleRate !== null && !config.requestLimits.allowedSampleRates.includes(sampleRate)) throw requestError('invalid_audio_sample_rate', 'sampleRate');
+
+  const cleanupStrength = String(value.cleanupStrength || 'balanced').toLowerCase();
+  if (!['light','balanced','strong'].includes(cleanupStrength)) {
+    throw requestError('invalid_audio_cleanup_strength', 'cleanupStrength');
+  }
   const visualAssetIds = value.visualAssetIds === undefined ? [] : value.visualAssetIds;
   if (!Array.isArray(visualAssetIds) || visualAssetIds.length > config.requestLimits.maxVisualAssets) throw requestError('invalid_visual_asset_ids', 'visualAssetIds');
   const normalizedVisuals = [...new Set(visualAssetIds.map(id => optionalUuid(id, 'visual_asset_id')))];
@@ -61,7 +66,20 @@ function normalizeAudioRequest(value) {
     durationSeconds, outputFormat, sampleRate,
     subtitles: value.subtitles === true,
     visualAssetIds: Object.freeze(normalizedVisuals),
-    microphoneConsent: value.microphoneConsent === true
+    microphoneConsent: value.microphoneConsent === true,
+    options: Object.freeze({
+      diarization: value.diarization !== false,
+      detectLanguage: value.detectLanguage !== false,
+      smartFormat: value.smartFormat !== false,
+      utterances: value.utterances !== false,
+      cleanupStrength,
+      cleanupFormat:
+        operation === 'audio_cleanup'
+          ? (['wav','mp3'].includes(String(value.outputFormat || 'wav').toLowerCase())
+              ? String(value.outputFormat || 'wav').toLowerCase()
+              : 'wav')
+          : null
+    })
   });
 }
 
