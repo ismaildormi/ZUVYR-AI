@@ -426,6 +426,14 @@ async function invokeOpenAiCompatible({
         total_tokens: Number(parsed.usage.total_tokens || 0)
       }
     : {};
+  const reportedCustomerCost = Number(
+    parsed?.usage?.customer_compute_cost_microusd ??
+    parsed?.zuvyr?.customer_compute_cost_microusd
+  );
+  const customerComputeCostMicrousd =
+    Number.isFinite(reportedCustomerCost) && reportedCustomerCost >= 0
+      ? Math.round(reportedCustomerCost)
+      : null;
 
   return Object.freeze({
     text,
@@ -436,7 +444,8 @@ async function invokeOpenAiCompatible({
     providerCostUsd: 0,
     zuvyrOwnedModelUsageFeeUsd: 0,
     zuvyrApiSoftwareFeeUsd: 0,
-    inferenceMarkupUsd: 0
+    inferenceMarkupUsd: 0,
+    customerComputeCostMicrousd
   });
 }
 
