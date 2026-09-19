@@ -595,7 +595,7 @@ function createConversationStore(db) {
       .select(
         'id, conversation_id, message_id, asset_type, url, ' +
         'storage_path, storage_bucket, mime_type, original_name, ' +
-        'file_size_bytes, sha256, scan_status, extraction_status, ' +
+        'file_size_bytes, duration_seconds, sha256, scan_status, extraction_status, ' +
         'canonical_content_id, canonical_asset_id, ' +
         'metadata, created_at'
       )
@@ -875,6 +875,7 @@ function createConversationStore(db) {
     mimeType = null,
     originalName = null,
     fileSizeBytes = null,
+    durationSeconds = null,
     sha256 = null,
     scanStatus = 'clean',
     extractionStatus = 'not_required',
@@ -939,6 +940,18 @@ function createConversationStore(db) {
       throw new Error('invalid_conversation_asset_file_size');
     }
 
+    const normalizedDuration =
+      durationSeconds === null || durationSeconds === undefined
+        ? null
+        : Number(durationSeconds);
+
+    if (
+      normalizedDuration !== null &&
+      (!Number.isFinite(normalizedDuration) || normalizedDuration <= 0)
+    ) {
+      throw new Error('invalid_conversation_asset_duration');
+    }
+
     const normalizedSha256 =
       sha256 === null || sha256 === undefined || sha256 === ''
         ? null
@@ -962,6 +975,7 @@ function createConversationStore(db) {
       mime_type: mimeType,
       original_name: originalName,
       file_size_bytes: normalizedFileSize,
+      duration_seconds: normalizedDuration,
       sha256: normalizedSha256,
       scan_status: normalizedScanStatus,
       extraction_status: normalizedExtractionStatus,
@@ -998,7 +1012,7 @@ function createConversationStore(db) {
       .select(
         'id, conversation_id, message_id, asset_type, url, ' +
         'storage_path, storage_bucket, mime_type, original_name, ' +
-        'file_size_bytes, sha256, scan_status, extraction_status, ' +
+        'file_size_bytes, duration_seconds, sha256, scan_status, extraction_status, ' +
         'canonical_content_id, canonical_asset_id, ' +
         'metadata, created_at'
       )
@@ -1018,6 +1032,7 @@ function createConversationStore(db) {
     ownerId,
     scanStatus = undefined,
     extractionStatus = undefined,
+    durationSeconds = undefined,
     sha256 = undefined,
     metadata = undefined
   }) {
@@ -1079,6 +1094,24 @@ function createConversationStore(db) {
       patch.extraction_status = normalized;
     }
 
+    if (durationSeconds !== undefined) {
+      const normalized =
+        durationSeconds === null
+          ? null
+          : Number(durationSeconds);
+
+      if (
+        normalized !== null &&
+        (!Number.isFinite(normalized) || normalized <= 0)
+      ) {
+        throw new Error(
+          'invalid_conversation_asset_duration'
+        );
+      }
+
+      patch.duration_seconds = normalized;
+    }
+
     if (sha256 !== undefined) {
       const normalized =
         sha256 === null || sha256 === ''
@@ -1125,7 +1158,7 @@ function createConversationStore(db) {
       .select(
         'id, conversation_id, message_id, asset_type, url, ' +
         'storage_path, storage_bucket, mime_type, original_name, ' +
-        'file_size_bytes, sha256, scan_status, extraction_status, ' +
+        'file_size_bytes, duration_seconds, sha256, scan_status, extraction_status, ' +
         'canonical_content_id, canonical_asset_id, ' +
         'metadata, created_at'
       )
