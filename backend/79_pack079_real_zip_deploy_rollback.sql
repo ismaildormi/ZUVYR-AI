@@ -770,6 +770,184 @@ grant execute on function public.transition_zuvyr_code_deployment_rollback_pack0
   uuid,uuid,text,jsonb,text
 ) to service_role;
 
+-- PACK079 extends the canonical Permission Center with an explicit, critical,
+-- allow-once rollback permission. The consume RPC is action-generic and needs no change.
+create or replace function public.create_zuvyr_permission_grant(
+  p_owner_id uuid,
+  p_action_class text,
+  p_grant_mode text,
+  p_scope_type text,
+  p_resource_namespace text,
+  p_resource_id text,
+  p_session_id text,
+  p_consequence_id text,
+  p_confirmation_fingerprint text,
+  p_expires_at timestamptz,
+  p_explicit_consent boolean,
+  p_constraints jsonb default '{}'::jsonb
+) returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $
+declare
+  v_action text := lower(trim(coalesce(p_action_class,'')));
+  v_mode text := lower(trim(coalesce(p_grant_mode,'')));
+  v_scope text := lower(trim(coalesce(p_scope_type,'')));
+  v_ns text := lower(trim(coalesce(p_resource_namespace,'')));
+  v_resource text := trim(coalesce(p_resource_id,''));
+  v_session text := nullif(trim(coalesce(p_session_id,'')),'');
+  v_consequence text := trim(coalesce(p_consequence_id,''));
+  v_fp text := lower(trim(coalesce(p_confirmation_fingerprint,'')));
+  v_max_seconds integer;
+  v_expected_consequence text;
+  v_id uuid;
+  v_host text;
+begin
+  if p_explicit_consent is distinct from true then
+    return jsonb_build_object('success',false,'error','permission_explicit_consent_required');
+  end if;
+  if v_action not in ('project.read','project.write','dependency.install','runtime.execute','preview.view','preview.open','network.egress','deploy.execute','deploy.rollback') then
+    return jsonb_build_object('success',false,'error','invalid_permission_action');
+  end if;
+  if v_mode not in ('allow_once','session','scoped') then
+    return jsonb_build_object('success',false,'error','invalid_permission_grant_mode');
+  end if;
+  if v_scope not in ('project','project_session') then
+    return jsonb_build_object('success',false,'error','invalid_permission_scope');
+  end if;
+  if v_ns not in ('workspace_project','code_project') then
+    return jsonb_build_object('success',false,'error','invalid_permission_resource_namespace');
+  end if;
+  if not public.zuvyr_permission_resource_owned(p_owner_id,v_ns,v_resource) then
+    return jsonb_build_object('success',false,'error','permission_resource_not_owned');
+  end if;
+
+  if v_mode = 'allow_once' and v_scope <> 'project_session' then
+    return jsonb_build_object('success',false,'error','permission_mode_scope_mismatch');
+  end if;
+  if v_mode = 'session' and v_scope <> 'project_session' then
+    return jsonb_build_object('success',false,'error','permission_mode_scope_mismatch');
+  end if;
+  if v_mode = 'scoped' and v_scope <> 'project' then
+    return jsonb_build_object('success',false,'error','permission_mode_scope_mismatch');
+  end if;
+
+  if v_scope = 'project' and v_session is not null then
+    return jsonb_build_object('success',false,'error','permission_session_not_allowed');
+  end if;
+  if v_scope = 'project_session' and v_session is null then
+    return jsonb_build_object('success',false,'error','permission_session_required');
+  end if;
+
+  if v_action in ('project.read','project.write') then
+    if v_mode not in ('session','scoped') then
+      return jsonb_build_object('success',false,'error','permission_mode_action_mismatch');
+    end if;
+  else
+    if v_ns <> 'code_project' or v_scope <> 'project_session' or v_session is null then
+      return jsonb_build_object('success',false,'error','permission_scope_action_mismatch');
+    end if;
+    if v_action in ('deploy.execute','deploy.rollback') and v_mode <> 'allow_once' then
+      return jsonb_build_object('success',false,'error','permission_deploy_allow_once_required');
+    end if;
+    if v_action in ('dependency.install','runtime.execute','preview.view','preview.open','network.egress') and v_mode not in ('allow_once','session') then
+      return jsonb_build_object('success',false,'error','permission_mode_action_mismatch');
+    end if;
+  end if;
+
+  v_max_seconds := case v_action
+    when 'project.read' then 86400
+    when 'project.write' then 14400
+    when 'dependency.install' then 1800
+    when 'runtime.execute' then 3600
+    when 'preview.view' then 14400
+    when 'preview.open' then 3600
+    when 'network.egress' then 900
+    when 'deploy.execute' then 600
+    when 'deploy.rollback' then 600
+  end;
+  v_expected_consequence := 'permission.' || v_action || '.v1';
+  if v_consequence <> v_expected_consequence then
+    return jsonb_build_object('success',false,'error','permission_consequence_mismatch');
+  end if;
+  if v_fp !~ '^[0-9a-f]{64}
+  'PACK079 immutable proof that an exact saved Code Project version matched a verified build/test/preview runtime state.';
+comment on table public.code_release_artifacts is
+  'PACK079 deterministic ZIP receipts. ZIP bytes are rebuilt from immutable version+asset lineage and must reopen/hash-verify before receipt.';
+comment on table public.code_deployment_rollbacks is
+  'PACK079 explicit allow-once rollback receipts linked to a production deployment receipt.';
+ then
+    return jsonb_build_object('success',false,'error','invalid_permission_confirmation_fingerprint');
+  end if;
+  if p_expires_at is null or p_expires_at <= now() or p_expires_at > now() + make_interval(secs => v_max_seconds) then
+    return jsonb_build_object('success',false,'error','permission_expiry_invalid');
+  end if;
+  if coalesce(jsonb_typeof(p_constraints),'') <> 'object' then
+    return jsonb_build_object('success',false,'error','invalid_permission_constraints');
+  end if;
+
+  if v_action = 'network.egress' then
+    if jsonb_typeof(p_constraints->'allowedHosts') <> 'array'
+       or jsonb_array_length(p_constraints->'allowedHosts') < 1
+       or jsonb_array_length(p_constraints->'allowedHosts') > 32 then
+      return jsonb_build_object('success',false,'error','permission_network_hosts_required');
+    end if;
+    if exists (
+      select 1
+      from jsonb_array_elements(p_constraints->'allowedHosts') e(value)
+      where jsonb_typeof(e.value) <> 'string'
+    ) then
+      return jsonb_build_object('success',false,'error','invalid_permission_network_host');
+    end if;
+    for v_host in
+      select lower(trim(value)) from jsonb_array_elements_text(p_constraints->'allowedHosts') h(value)
+    loop
+      if v_host = '' or v_host = '*' or length(v_host) > 253
+         or position('.' in v_host) = 0
+         or v_host !~ '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*
+  'PACK079 immutable proof that an exact saved Code Project version matched a verified build/test/preview runtime state.';
+comment on table public.code_release_artifacts is
+  'PACK079 deterministic ZIP receipts. ZIP bytes are rebuilt from immutable version+asset lineage and must reopen/hash-verify before receipt.';
+comment on table public.code_deployment_rollbacks is
+  'PACK079 explicit allow-once rollback receipts linked to a production deployment receipt.';
+ then
+        return jsonb_build_object('success',false,'error','invalid_permission_network_host');
+      end if;
+      if v_host in ('localhost','0.0.0.0','127.0.0.1','host.docker.internal','metadata.google.internal')
+         or v_host like '%.local'
+         or v_host like '%.internal'
+         or v_host ~ '^10\.'
+         or v_host ~ '^192\.168\.'
+         or v_host ~ '^172\.(1[6-9]|2[0-9]|3[01])\.'
+         or v_host ~ '^169\.254\.' then
+        return jsonb_build_object('success',false,'error','blocked_permission_network_host');
+      end if;
+    end loop;
+  end if;
+
+  insert into public.zuvyr_permission_grants(
+    owner_id, action_class, grant_mode, scope_type, resource_namespace, resource_id,
+    session_id, consequence_id, confirmation_fingerprint, constraints, expires_at
+  ) values (
+    p_owner_id, v_action, v_mode, v_scope, v_ns, v_resource,
+    v_session, v_consequence, v_fp, coalesce(p_constraints,'{}'::jsonb), p_expires_at
+  ) returning id into v_id;
+
+  insert into public.zuvyr_permission_audit_events(
+    owner_id, grant_id, action_class, event_type, reason,
+    resource_namespace, resource_id, session_id,
+    metadata
+  ) values (
+    p_owner_id, v_id, v_action, 'grant_created', 'explicit_confirmation',
+    v_ns, v_resource, v_session,
+    jsonb_build_object('grantMode',v_mode,'scopeType',v_scope,'consequenceId',v_consequence)
+  );
+
+  return jsonb_build_object('success',true,'grant_id',v_id,'expires_at',p_expires_at,'action_class',v_action);
+end;
+$;
+
 comment on table public.code_release_validations is
   'PACK079 immutable proof that an exact saved Code Project version matched a verified build/test/preview runtime state.';
 comment on table public.code_release_artifacts is
