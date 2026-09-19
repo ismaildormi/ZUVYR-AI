@@ -269,6 +269,23 @@ assert(
     .test(migration)
 );
 
+assert(repository.includes('sourceJobId: row.source_job_id || null'));
+assert(repository.includes('p_source_job_id: sourceJobId'));
+assert(repository.includes('sourceJobId = null'));
+assert(routes.includes('sourceJobId: attempt.sourceJobId'));
+assert(!/body:\s*\{[\s\S]{0,220}sourceJobId/.test(routes));
+assert(executor.includes('sourceJobId = null'));
+assert(executor.includes('sourceJobId,\n      requestId: request.requestId'));
+assert(read('78a_pack078_runtime_lineage_cleanup.sql').includes(
+  'drop function if exists public.reserve_zuvyr_code_runtime_job_pack077'
+));
+assert(read('78a_pack078_runtime_lineage_cleanup.sql').includes(
+  'source_job_id uuid'
+));
+assert(read('78a_pack078_runtime_lineage_cleanup.sql').includes(
+  'v_existing.source_job_id is distinct from p_source_job_id'
+));
+
 for (const marker of [
   'previewState: row.preview_state',
   'previewCandidatePort:',
