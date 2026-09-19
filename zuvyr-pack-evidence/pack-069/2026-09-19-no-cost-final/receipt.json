@@ -1,0 +1,165 @@
+{
+  "pack": "069",
+  "title": "Subtitles / Dubbing / Enhance / Export + Cancel",
+  "date": "2026-09-19",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonicalLockedVerified": false,
+  "canonicalGateReason": "No paid provider subtitle/dubbing/enhance inference was executed. Paid-live production evidence remains intentionally deferred while all paid execution gates are OFF. Local export/cancel and all no-network engineering contracts are production-verified.",
+  "baselineCommit": "9533a00dcaed3317d8dfead15527bc6f9cdb7a63",
+  "candidate": {
+    "branch": "zuvyr-pack069-candidate",
+    "head": "ae0eadbd963bdeccfd5f1a970ccb3985ceec55a9",
+    "pullRequest": 6,
+    "workflowRun": 35414301830,
+    "backendQuality": "PASS",
+    "releaseQuality": "PASS"
+  },
+  "production": {
+    "runtimeCommit": "f40565d16085aa614e3b1407be5b553b1c9167b1",
+    "pushWorkflowRun": 35414379320,
+    "backendQuality": "PASS",
+    "releaseQuality": "PASS",
+    "railway": {
+      "backend": {
+        "deploymentId": "21150f3b-6496-4666-8d92-0ac3c0b6f6e2",
+        "status": "SUCCESS",
+        "startup": "ROX AI backend listening on port 8080"
+      },
+      "worker": {
+        "deploymentId": "d978cd22-e088-41e3-943c-6cc59869564b",
+        "status": "SUCCESS",
+        "startup": "ROX AI worker running (concurrency: image=2, video=1, attachment=1)",
+        "ffmpegVersion": "8.1.2",
+        "ffprobeVersion": "8.1.2",
+        "codecSmoke": {
+          "mp4": "generated_and_probed_during_production_image_build",
+          "webm": "generated_and_probed_during_production_image_build",
+          "mov": "generated_and_probed_during_production_image_build"
+        }
+      },
+      "maintenance": {
+        "deploymentId": "fea455bc-6a37-48a9-ba66-70c40bfd2393",
+        "status": "SUCCESS"
+      }
+    },
+    "vercel": {
+      "status": "UNCHANGED_RUNTIME_VERIFIED",
+      "deployedCommit": "9533a00dcaed3317d8dfead15527bc6f9cdb7a63",
+      "deploymentId": "dpl_J8r6smNKxM1SVCgJspg6bntrJdkV",
+      "deploymentState": "READY",
+      "reason": "PACK069 promotion changes only backend/* and evidence paths; no frontend file changed. Git-trigger for the backend-only commit hit Vercel build-rate-limit, so the already-ready production frontend is the intended unchanged runtime identity."
+    }
+  },
+  "database": {
+    "projectRef": "tqoqsgaymygmqrzddvtu",
+    "migration": {
+      "version": "20260919015713",
+      "name": "pack069_subtitles_dubbing_enhance_export_cancel",
+      "status": "APPLIED_VERIFIED"
+    },
+    "allowedOperations": [
+      "subtitles",
+      "dub",
+      "enhance",
+      "export"
+    ],
+    "cancellationRpcs": [
+      "begin_zuvyr_video_job",
+      "claim_zuvyr_video_execution",
+      "request_zuvyr_video_job_cancel"
+    ],
+    "productionPack069JobsAtFinalVerification": 0,
+    "newSecurityAdvisorFindings": 0,
+    "newPerformanceAdvisorFindings": 0
+  },
+  "implemented": {
+    "subtitles": {
+      "provider": "fal",
+      "model": "fal-ai/workflow-utilities/auto-subtitle",
+      "gate": "PACK069_SUBTITLES_PAID_EXECUTION_ENABLED",
+      "defaultPaidExecution": false,
+      "outputArtifacts": [
+        "canonical_video",
+        "srt",
+        "vtt"
+      ],
+      "exactPricing": "$0.03 per trusted input minute"
+    },
+    "dubbing": {
+      "provider": "fal",
+      "model": "fal-ai/elevenlabs/dubbing",
+      "gate": "PACK069_DUB_PAID_EXECUTION_ENABLED",
+      "defaultPaidExecution": false,
+      "exactPricing": "$0.60 per rounded-up trusted input minute"
+    },
+    "enhance": {
+      "provider": "fal",
+      "model": "bria/video/increase-resolution",
+      "gate": "PACK069_ENHANCE_PAID_EXECUTION_ENABLED",
+      "defaultPaidExecution": false,
+      "factors": [
+        2,
+        4
+      ],
+      "exactPricing": "$0.14 per trusted source second"
+    },
+    "export": {
+      "provider": "local-ffmpeg",
+      "externalProviderCostMicroUsd": "0",
+      "formats": [
+        "mp4",
+        "webm",
+        "mov"
+      ],
+      "productionCodecSmoke": true
+    },
+    "cancellation": {
+      "dbAuthoritative": true,
+      "rowLocking": true,
+      "cancelBeforeExecutionClaim": true,
+      "unsafeRefundAfterExecutionClaim": false,
+      "terminalStatePreserved": true,
+      "replaySafeRefund": true
+    },
+    "downloads": {
+      "canonicalPrivateAssets": true,
+      "renewableOwnerScopedSignedUrls": true,
+      "providerUrlCanonicalIdentity": false
+    }
+  },
+  "validation": {
+    "focusedNoNetworkTests": "PASS",
+    "srtVttGeneration": "PASS",
+    "exactPricing": "PASS",
+    "canonicalLineage": "PASS",
+    "localExportProductionImageSmoke": "PASS",
+    "cancellationAccountingContract": "PASS",
+    "paidProviderCalls": 0,
+    "paymentCalls": 0,
+    "productionPack069JobsCreatedByVerification": 0
+  },
+  "paidGateAudit": {
+    "pack066": false,
+    "pack067ImageToVideo": false,
+    "pack067ReferenceToVideo": false,
+    "pack068Edit": false,
+    "pack068Extend": false,
+    "pack068ObjectRemove": false,
+    "pack068Background": false,
+    "pack068Relight": false,
+    "pack068Recamera": false,
+    "pack068LipSync": false,
+    "pack069Subtitles": false,
+    "pack069Dub": false,
+    "pack069Enhance": false,
+    "secretValuesReadOrExposed": false
+  },
+  "rollback": {
+    "priorRuntimeCommit": "9533a00dcaed3317d8dfead15527bc6f9cdb7a63",
+    "migrationNature": "constraint widening plus service-role RPCs; no destructive row reset",
+    "paidGatesRemainOff": true
+  },
+  "progression": "USER_APPROVED_NO_COST_DEFERRED_GATE",
+  "nextPack": "070",
+  "nextPackTitle": "Media Checkpoint G"
+}

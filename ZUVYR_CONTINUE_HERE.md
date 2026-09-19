@@ -1072,3 +1072,53 @@ PACK069 must preserve:
 Exactly one next step:
 Audit the existing subtitle/dubbing/enhance/export/cancel implementation and current provider/local-tool contracts, then map only verified operations and exact costs into the existing video request/provider/canonical-storage/ledger architecture with all paid provider gates OFF.
 
+## PACK069 NO-COST FINAL RECONCILIATION — 2026-09-19
+
+- Status: LOCKED_ENGINEERING_VERIFIED
+- Canonical LOCKED_VERIFIED: NO
+- Reason: paid subtitle/dubbing/enhance provider inference was intentionally not executed; all paid gates remain OFF.
+- Runtime commit: `f40565d16085aa614e3b1407be5b553b1c9167b1`
+- Candidate CI 35414301830: Backend PASS / Release PASS
+- Production CI 35414379320: Backend PASS / Release PASS
+- Supabase migration: `20260919015713 pack069_subtitles_dubbing_enhance_export_cancel` — APPLIED_VERIFIED
+- Railway:
+  - backend `21150f3b-6496-4666-8d92-0ac3c0b6f6e2` — SUCCESS
+  - worker `d978cd22-e088-41e3-943c-6cc59869564b` — SUCCESS
+  - maintenance `fea455bc-6a37-48a9-ba66-70c40bfd2393` — SUCCESS
+- Production worker image:
+  - FFmpeg 8.1.2 / ffprobe 8.1.2
+  - generated and probed MP4, WebM and MOV during image build — PASS
+- Subtitles:
+  - bounded transcript/timing normalization
+  - SRT + VTT canonical owner-scoped artifacts
+  - renewable signed downloads
+- Dubbing:
+  - source-video canonical input and exact rounded-minute pricing
+- Enhance:
+  - 2x/4x, trusted-duration precharge, MP4/WebM/MOV
+- Export:
+  - local FFmpeg; external provider cost = 0
+- Cancel:
+  - DB row-lock authority before execution claim
+  - unsafe refund after provider/local execution claim is rejected
+  - terminal state cannot be overwritten by late result
+  - refund replay is idempotent
+- Paid provider calls: 0
+- Production PACK069 jobs created by verification: 0
+- All PACK066/067/068/069 paid execution gate variable names absent in production services.
+- Vercel: frontend runtime unchanged from READY deployment `dpl_J8r6smNKxM1SVCgJspg6bntrJdkV`; PACK069 changed no frontend file. Git-trigger for the backend-only promotion hit build-rate-limit, so unchanged-runtime identity is used.
+- Final receipt: `zuvyr-pack-evidence/pack-069/2026-09-19-no-cost-final/receipt.json`
+- Receipt Git blob: `d73aa4a6da0107ee4c76251f93dd7bf351ed1974`
+- Active pack after reconciliation: PACK070
+
+## PACK070 OPEN — Media Checkpoint G
+
+What this pack does:
+Freeze the complete media baseline by testing the integrated Image → Video → subtitle/dub → Library/Project flow, unified usage, owner-scoped lineage, failure/fallback, cancel/retry/reopen, and the exact production/runtime identities from Packs061–069.
+
+Acceptance:
+All currently advertised Image/Video V1 capabilities have production E2E evidence and use the one canonical usage/asset system. Provider-paid paths remain non-advertised and fail-closed while their paid gates are OFF.
+
+Exactly one next step:
+Audit Packs061–069 evidence, current feature flags, live production routes and usage/asset lineage, then build the checkpoint test matrix and execute every no-cost production-safe E2E path before freezing Media Checkpoint G.
+
