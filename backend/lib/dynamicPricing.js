@@ -173,6 +173,33 @@ function providerQuote(feature, {
       });
     }
 
+    if (audioRequest.operation === 'text_to_speech') {
+      if (String(env.PACK072_TTS_PAID_EXECUTION_ENABLED || '').toLowerCase() !== 'true') {
+        throw pricingError('pack072_tts_paid_execution_disabled');
+      }
+      if (!env.DEEPGRAM_API_KEY) {
+        throw pricingError('no_configured_pack072_tts_provider');
+      }
+      const characterCount = Array.from(String(audioRequest.text || '')).length;
+      if (!Number.isSafeInteger(characterCount) || characterCount < 1) {
+        throw pricingError('pack072_tts_character_count_invalid');
+      }
+      const entry = resolveCostEntry({
+        provider: 'deepgram',
+        modelToolId: 'aura-2',
+        capability: 'audio_text_to_speech',
+        operationType: 'text_to_speech'
+      }, { env, now });
+      return Object.freeze({
+        provider: 'deepgram',
+        providerCostMicroUsd: estimateProviderCostMicroUsd(entry, {
+          inputUnits: characterCount
+        }),
+        pricingVersion: entry.registryVersion,
+        costEntryId: entry.id
+      });
+    }
+
     if (audioRequest.operation === 'transcription') {
       if (String(env.PACK071_STT_PAID_EXECUTION_ENABLED || '').toLowerCase() !== 'true') {
         throw pricingError('pack071_stt_paid_execution_disabled');
