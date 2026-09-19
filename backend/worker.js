@@ -64,7 +64,14 @@ const { executeLocalVideoExport } = require('./lib/localVideoExport');
 const { buildSubtitleArtifacts } = require('./lib/videoSubtitleArtifacts');
 const { normalizeAudioRequest } = require('./lib/audioRequestContract');
 const { assertAudioOperationAvailable } = require('./lib/audioOperationRegistry');
-const { transcribeAudio, DEEPGRAM_MODEL } = require('./lib/audioProvider');
+const {
+  transcribeAudio,
+  synthesizeSpeech,
+  serializeTtsProviderResult,
+  restoreTtsProviderResult,
+  DEEPGRAM_MODEL,
+  TTS_DEFAULT_MODEL
+} = require('./lib/audioProvider');
 const { executeLocalAudioCleanup } = require('./lib/localAudioCleanup');
 const { getDefaultAudioResultRepository } = require('./lib/audioResultRepository');
 const { connection } = require('./lib/queue');
@@ -1197,11 +1204,13 @@ async function processAudioJob(job) {
     throw error;
   }
 
-  const resolved = await audioInputResolver.resolve({
-    ownerId: userId,
-    request,
-    requestId
-  });
+  const resolved = request.operation === 'text_to_speech'
+    ? { source: null, lineage: {} }
+    : await audioInputResolver.resolve({
+        ownerId: userId,
+        request,
+        requestId
+      });
   const source = resolved.source;
   const repository = getDefaultAudioResultRepository();
   const existing = await repository.getExisting({
@@ -1228,10 +1237,14 @@ async function processAudioJob(job) {
     }
     persisted = existing;
     provider = existing.provider || (
-      request.operation === 'transcription' ? 'deepgram' : 'local'
+      ['transcription','text_to_speech'].includes(request.operation) ? 'deepgram' : 'local'
     );
     model = existing.model || (
-      request.operation === 'transcription' ? DEEPGRAM_MODEL : 'ffmpeg-alpine'
+      request.operation === 'transcription'
+        ? DEEPGRAM_MODEL
+        : request.operation === 'text_to_speech'
+          ? TTS_DEFAULT_MODEL
+          : 'ffmpeg-alpine'
     );
   } else if (request.operation === 'transcription') {
     const claim = await audioJobRpc('claim_zuvyr_audio_execution', {
@@ -1271,6 +1284,52 @@ async function processAudioJob(job) {
     });
     provider = 'deepgram';
     model = DEEPGRAM_MODEL;
+  } else if (request.operation === 'text_to_speech') {
+    const claim = await audioJobRpc('claim_zuvyr_audio_execution', {
+      p_owner_id: userId,
+      p_job_id: jobRowId,
+      p_stage: 'provider'
+    });
+    if (claim.claimed !== true) {
+      if (claim.status === 'cancelled' || claim.cancelRequested === true) {
+        await refundAudio({ requestId, userId });
+        return { status: 'cancelled' };
+      }
+      throw new UnrecoverableError('audio_job_not_executable');
+    }
+
+    await markAudioJob(jobRowId, userId, {
+      progress_percent: 35,
+      stage: 'provider',
+      provider: 'deepgram',
+      model: request.voiceId || TTS_DEFAULT_MODEL
+    });
+
+    let result = restoreTtsProviderResult(existing?.providerResult);
+    if (!result) {
+      result = await synthesizeSpeech(request);
+      await markAudioJob(jobRowId, userId, {
+        provider_result: serializeTtsProviderResult(result),
+        progress_percent: 60,
+        provider: result.provider,
+        model: result.model
+      });
+    }
+
+    persisted = await repository.persistSynthesizedAudio({
+      ownerId: userId,
+      jobId: jobRowId,
+      text: request.text,
+      buffer: result.buffer,
+      mimeType: result.mimeType,
+      format: result.format,
+      provider: result.provider,
+      model: result.model,
+      characterCount: result.characterCount,
+      providerMetadata: result.metadata
+    });
+    provider = result.provider;
+    model = result.model;
   } else if (request.operation === 'audio_cleanup') {
     const claim = await audioJobRpc('claim_zuvyr_audio_execution', {
       p_owner_id: userId,
