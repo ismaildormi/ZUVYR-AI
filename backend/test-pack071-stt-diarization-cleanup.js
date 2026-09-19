@@ -235,6 +235,7 @@ async function run(){
   assert.equal(flags.audio_cleanup.enabled,true);
 
   const migration=fs.readFileSync(path.join(__dirname,'70_pack071_stt_diarization_cleanup.sql'),'utf8');
+  const fkIndexes=fs.readFileSync(path.join(__dirname,'71_pack071_audio_fk_indexes.sql'),'utf8');
   const routes=fs.readFileSync(path.join(__dirname,'lib/audioStudioRoutes.js'),'utf8');
   const worker=fs.readFileSync(path.join(__dirname,'worker.js'),'utf8');
   const repository=fs.readFileSync(path.join(__dirname,'lib/audioResultRepository.js'),'utf8');
@@ -249,6 +250,8 @@ async function run(){
     'request_zuvyr_audio_job_cancel',
     'for update'
   ]) assert(migration.includes(marker),marker);
+  assert(fkIndexes.includes('audio_jobs_conversation_idx'));
+  assert(fkIndexes.includes('audio_jobs_source_audio_asset_idx'));
 
   for(const marker of [
     "router.post('/jobs/request'",
