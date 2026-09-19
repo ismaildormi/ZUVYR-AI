@@ -8,6 +8,8 @@ const {
   resolveCostQuote
 } = require('./costRegistry');
 
+const MODEL_PRICING_REGISTRY_VERSION = registry.version;
+
 function pricingError(code, details = {}) {
   const error = new Error(code);
   error.code = code;
@@ -140,6 +142,7 @@ function providerReportedCostTelemetry(usage = {}) {
 }
 
 module.exports = {
+  MODEL_PRICING_REGISTRY_VERSION,
   operationForCapability,
   measuredUsage,
   quoteModelCost,
