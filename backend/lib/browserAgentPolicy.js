@@ -101,6 +101,10 @@ function classifyAction(action, { allowedHosts = [] } = {}) {
 
   if (type === 'navigate') {
     targetUrl = normalizePublicUrl(action.url, { allowedHosts });
+    const parsed = new URL(targetUrl.url);
+    if (parsed.search || parsed.hash) {
+      throw agentError('browser_agent_navigation_query_forbidden');
+    }
   }
 
   if (type === 'click' && target.submitLike) {
@@ -123,10 +127,21 @@ function classifyAction(action, { allowedHosts = [] } = {}) {
     }
   }
 
+  const deltaY =
+    type === 'scroll'
+      ? Math.max(-2000, Math.min(2000, Number(action.deltaY) || 600))
+      : null;
+  const waitMs =
+    type === 'wait'
+      ? Math.max(50, Math.min(config.run.waitMaxMs, Number(action.waitMs) || 500))
+      : null;
+
   const canonical = {
     type,
     target,
     url: targetUrl ? targetUrl.url : null,
+    deltaY,
+    waitMs,
     inputSha256:
       input == null
         ? null
@@ -151,9 +166,13 @@ function classifyAction(action, { allowedHosts = [] } = {}) {
       role: target.role,
       type: target.type,
       text: target.text,
-      host: target.host,
-      path: target.path,
-      submitLike: target.submitLike
+      protocol: targetUrl ? new URL(targetUrl.url).protocol : null,
+      host: targetUrl ? targetUrl.host : target.host,
+      path: targetUrl ? new URL(targetUrl.url).pathname : target.path,
+      submitLike: target.submitLike,
+      deltaY,
+      waitMs,
+      assetId: canonical.assetId
     }),
     inputSha256: canonical.inputSha256,
     inputLength: canonical.inputLength
