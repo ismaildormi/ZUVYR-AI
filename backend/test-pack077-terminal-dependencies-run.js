@@ -40,8 +40,12 @@ const maintenanceSource = read('lib/maintenanceCoordinator.js');
 const serverSource = read('server.js');
 const sandboxPolicySource = read('lib/codeSandboxPolicy.js');
 
-assert.equal(runtimeConfig.version, 'pack-077.code-runtime.v1');
-assert.deepEqual(runtimeConfig.operations, ['terminal','dependencies','run']);
+assert.equal(runtimeConfig.version, 'pack-078.code-runtime.v1');
+for (const operation of ['terminal','dependencies','run']) {
+  assert(runtimeConfig.operations.includes(operation), operation);
+}
+assert(runtimeConfig.operations.includes('build'));
+assert(runtimeConfig.operations.includes('test'));
 assert.equal(runtimeConfig.terminal.shell, false);
 assert.equal(runtimeConfig.terminal.sudo, false);
 assert.equal(runtimeConfig.dependencies.packageManager, 'npm');
