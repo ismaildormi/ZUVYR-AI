@@ -45,13 +45,13 @@ assert.deepEqual(runtimeConfig.operations, ['terminal','dependencies','run']);
 assert.equal(runtimeConfig.terminal.shell, false);
 assert.equal(runtimeConfig.terminal.sudo, false);
 assert.equal(runtimeConfig.dependencies.packageManager, 'npm');
-assert.equal(runtimeConfig.dependencies.installScripts, false);
+assert.equal(runtimeConfig.dependencies.allowInstallScripts, false);
 assert.deepEqual(
   runtimeConfig.dependencies.networkPolicy.allowedDomains,
   ['registry.npmjs.org']
 );
 assert.equal(runtimeConfig.dependencies.networkPolicy.mode, 'custom');
-assert.equal(runtimeConfig.dependencies.restoreNetworkPolicy.mode, 'deny-all');
+assert.equal(runtimeConfig.dependencies.restoreNetworkMode, 'deny-all');
 assert.equal(runtimeConfig.preview.rawProviderRouteReturned, false);
 
 for (const flag of [
