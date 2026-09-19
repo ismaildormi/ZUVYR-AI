@@ -3122,14 +3122,18 @@
     state.expiryTimer = 0;
     state.speechToken += 1;
 
+    // Global STOP is local-first: terminate browser capture/speech before
+    // any transcript persistence or server request can wait on the network.
     if (window.speechSynthesis) window.speechSynthesis.cancel();
-    await finishSpeakingTurn(button, true);
-
     if (button.classList.contains('is-listening')) {
       try { button.click(); } catch (_) {}
     }
 
+    await finishSpeakingTurn(button, true);
+
     const sessionId = state.sessionId;
+    let stopConfirmed = !sessionId;
+
     if (sessionId) {
       try {
         await api(
@@ -3140,12 +3144,12 @@
             body: JSON.stringify({ reason })
           }
         );
+        stopConfirmed = true;
       } catch (error) {
         console.warn('[zuvyr-pack073] session stop failed', error);
       }
     }
 
-    state.sessionId = null;
     state.listening = false;
     state.speaking = null;
     state.beforeText = '';
@@ -3155,16 +3159,36 @@
     state.stopping = false;
 
     const row = button.closest('.chat-input-row');
-    if (row) {
-      delete row.dataset.zuvyrVoiceSessionId;
-      row.dataset.zuvyrRealtimeVoice = 'stopped';
-      const cancel = row.querySelector('.zuvyr-voice-cancel');
+    const cancel = row?.querySelector('.zuvyr-voice-cancel');
+
+    if (stopConfirmed) {
+      state.sessionId = null;
+      state.expiresAt = null;
+
+      if (row) {
+        delete row.dataset.zuvyrVoiceSessionId;
+        row.dataset.zuvyrRealtimeVoice = 'stopped';
+      }
       if (cancel) {
         cancel.title = 'Cancel dictation';
         cancel.setAttribute('aria-label', 'Cancel dictation');
       }
+      setStatus(button, 'Voice stopped', 'stopped');
+      return;
     }
-    setStatus(button, 'Voice stopped', 'stopped');
+
+    // Browser capture is already stopped, but keep the authoritative
+    // session identity so the user can retry the server STOP safely.
+    state.sessionId = sessionId;
+    if (row) {
+      row.dataset.zuvyrVoiceSessionId = sessionId;
+      row.dataset.zuvyrRealtimeVoice = 'error';
+    }
+    if (cancel) {
+      cancel.title = 'Retry STOP';
+      cancel.setAttribute('aria-label', 'Retry STOP');
+    }
+    setStatus(button, 'Voice stopped locally — retry STOP', 'error');
   };
 
   const wire = () => {
