@@ -188,10 +188,13 @@ function createCloudBrowserRepository({db,storage}={}) {
     const uploaded=await storage.from(assetConfig.bucket).upload(
       storagePath,
       buffer,
-      {contentType:mimeType,upsert:false}
+      {contentType:mimeType,cacheControl:'3600',upsert:false}
     );
-    if (uploaded.error && String(uploaded.error.statusCode || uploaded.error.status || '') !== '409') {
-      throw repoError('cloud_browser_asset_upload_failed',uploaded.error);
+    if (uploaded.error) {
+      const status=Number(uploaded.error.statusCode || uploaded.error.status || 0);
+      const message=String(uploaded.error.message || '').toLowerCase();
+      const duplicate=status===409 || message.includes('already exists') || message.includes('duplicate');
+      if (!duplicate) throw repoError('cloud_browser_asset_upload_failed',uploaded.error);
     }
 
     const asset=await assets.register({
