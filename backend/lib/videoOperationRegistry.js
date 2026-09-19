@@ -53,7 +53,9 @@ function inventory() {
     operations: { ...config.operations },
     providers: { ...config.providers },
     jobs: { ...config.jobs },
-    pack066: config.pack066 ? { ...config.pack066 } : null
+    pack066: config.pack066 ? { ...config.pack066 } : null,
+    pack067: config.pack067 ? { ...config.pack067 } : null,
+    pack068: config.pack068 ? { ...config.pack068 } : null
   });
 }
 
