@@ -19,6 +19,10 @@ const {
 const {
   quoteAttachmentAnalysisReservation
 } = require('./attachmentAnalysisPricing');
+const {
+  isMp4,
+  readMp4DurationSeconds
+} = require('./videoGenerationRepository');
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -687,6 +691,17 @@ function createConversationRouter({
             mimeType: attachment.mimeType
           });
 
+        let trustedDurationSeconds = null;
+        if (inspection.assetType === 'video' && isMp4(buffer)) {
+          try {
+            trustedDurationSeconds =
+              readMp4DurationSeconds(buffer);
+          } catch (_) {
+            // Duration evidence is optional for ingestion.
+            // Pack068 per-second billing remains fail-closed when it is absent.
+          }
+        }
+
         const extractionResult =
           await extractAttachment({
             buffer,
@@ -771,6 +786,8 @@ function createConversationRouter({
               attachment.fileName,
             fileSizeBytes:
               buffer.length,
+            durationSeconds:
+              trustedDurationSeconds,
             sha256,
             scanStatus: 'clean',
             extractionStatus,
