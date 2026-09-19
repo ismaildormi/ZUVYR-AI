@@ -639,7 +639,6 @@ create or replace function public.reserve_zuvyr_code_deployment_rollback_pack079
   p_project_id uuid,
   p_deploy_request_id uuid,
   p_request_id text,
-  p_rollback_to_provider_deployment_id text,
   p_approval_receipt jsonb
 ) returns jsonb
 language plpgsql
@@ -654,10 +653,6 @@ declare
 begin
   if char_length(v_request) not between 1 and 200 then
     raise exception 'pack079_rollback_request_id_invalid';
-  end if;
-
-  if char_length(btrim(coalesce(p_rollback_to_provider_deployment_id,''))) not between 4 and 240 then
-    raise exception 'pack079_rollback_target_invalid';
   end if;
 
   if jsonb_typeof(coalesce(p_approval_receipt,'{}'::jsonb)) <> 'object'
@@ -679,13 +674,18 @@ begin
     raise exception 'pack079_deploy_not_in_production';
   end if;
 
+  if char_length(coalesce(v_deploy.previous_production_deployment_id,'')) < 4 then
+    raise exception 'pack079_previous_production_missing';
+  end if;
+
   select * into v_existing
   from public.code_deployment_rollbacks
   where owner_id=p_owner_id and request_id=v_request;
 
   if v_existing.id is not null then
     if v_existing.deploy_request_id<>p_deploy_request_id
-       or v_existing.rollback_to_provider_deployment_id<>btrim(p_rollback_to_provider_deployment_id) then
+       or v_existing.rollback_to_provider_deployment_id<>
+          v_deploy.previous_production_deployment_id then
       raise exception 'pack079_rollback_idempotency_scope_mismatch';
     end if;
     return jsonb_build_object(
@@ -699,7 +699,7 @@ begin
     rollback_to_provider_deployment_id,status,approval_receipt
   ) values (
     p_owner_id,p_project_id,p_deploy_request_id,v_request,
-    btrim(p_rollback_to_provider_deployment_id),'confirmed',p_approval_receipt
+    v_deploy.previous_production_deployment_id,'confirmed',p_approval_receipt
   ) returning id into v_id;
 
   return jsonb_build_object(
@@ -791,7 +791,7 @@ revoke all on function public.transition_zuvyr_code_deploy_request_pack079(
   uuid,uuid,text,text,text,text,jsonb,text
 ) from public,anon,authenticated;
 revoke all on function public.reserve_zuvyr_code_deployment_rollback_pack079(
-  uuid,uuid,uuid,text,text,jsonb
+  uuid,uuid,uuid,text,jsonb
 ) from public,anon,authenticated;
 revoke all on function public.transition_zuvyr_code_deployment_rollback_pack079(
   uuid,uuid,text,jsonb,text
@@ -809,7 +809,7 @@ grant execute on function public.transition_zuvyr_code_deploy_request_pack079(
   uuid,uuid,text,text,text,text,jsonb,text
 ) to service_role;
 grant execute on function public.reserve_zuvyr_code_deployment_rollback_pack079(
-  uuid,uuid,uuid,text,text,jsonb
+  uuid,uuid,uuid,text,jsonb
 ) to service_role;
 grant execute on function public.transition_zuvyr_code_deployment_rollback_pack079(
   uuid,uuid,text,jsonb,text
