@@ -60,6 +60,26 @@ function requireResolvedSource(resolvedInputs, type = 'video') {
   return source;
 }
 
+function durationMilliseconds(value, code = 'invalid_video_duration') {
+  const text = String(value === undefined || value === null ? '' : value).trim();
+  const match = /^(0|[1-9][0-9]*)(?:\.([0-9]{1,3}))?$/.exec(text);
+  if (!match) throw providerError(code);
+  const milliseconds =
+    BigInt(match[1]) * 1000n +
+    BigInt(((match[2] || '') + '000').slice(0, 3));
+  if (milliseconds <= 0n) throw providerError(code);
+  return milliseconds;
+}
+
+function lipSyncBillingIncrements(value) {
+  const milliseconds = durationMilliseconds(value);
+  const increments = (milliseconds + 4999n) / 5000n;
+  if (increments > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw providerError('video_lipsync_billing_units_invalid');
+  }
+  return Number(increments);
+}
+
 function requireTrustedDuration(item, code = 'video_source_duration_unavailable') {
   const duration = Number(item && item.durationSeconds);
   if (!Number.isFinite(duration) || duration <= 0) throw providerError(code);
@@ -438,7 +458,7 @@ async function generateVideo(request, {
     units = sourceDuration;
   } else if (request.operation === 'lip_sync') {
     unitType = 'processing_operations';
-    units = Math.ceil(sourceDuration / 5);
+    units = lipSyncBillingIncrements(sourceDuration);
   }
 
   return Object.freeze({
@@ -481,6 +501,7 @@ module.exports = {
   buildFalRelightInput,
   buildFalRecameraInput,
   buildFalLipSyncInput,
+  lipSyncBillingIncrements,
   defaultModelForOperation,
   providerForOperation,
   generateVideo
