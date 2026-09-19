@@ -45,7 +45,10 @@ function normalizeAudioRequest(value) {
   if (durationSeconds !== null && (!Number.isInteger(durationSeconds) || durationSeconds < 1 || durationSeconds > config.requestLimits.maxDurationSeconds)) {
     throw requestError('invalid_audio_duration', 'durationSeconds');
   }
-  const outputFormat = String(value.outputFormat || (operation === 'audio_to_video' ? 'mp4' : 'mp3')).toLowerCase();
+  const outputFormat = String(
+    value.outputFormat ||
+    (operation === 'audio_to_video' ? 'mp4' : operation === 'audio_cleanup' ? 'wav' : 'mp3')
+  ).toLowerCase();
   const allowedFormats = operation === 'audio_to_video' ? config.requestLimits.allowedVideoFormats : config.requestLimits.allowedOutputFormats;
   if (!allowedFormats.includes(outputFormat)) throw requestError('invalid_audio_output_format', 'outputFormat');
   if (operation === 'audio_cleanup' && !['wav','mp3'].includes(outputFormat)) {
