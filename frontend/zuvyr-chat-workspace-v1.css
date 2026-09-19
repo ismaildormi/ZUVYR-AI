@@ -1409,3 +1409,32 @@ body.zuvyr-ui #feature-chat .zuvyr-specialized-research-toggle:hover{color:#fff;
 body.zuvyr-ui #feature-chat .zuvyr-specialized-research-toggle[aria-pressed="true"]{color:#fff;border-color:rgba(255,113,56,.52);background:rgba(255,113,56,.14)}
 body.zuvyr-ui #feature-chat .chat-input-row.zuvyr-voice-listening .zuvyr-specialized-research-toggle{display:none!important}
 @media(max-width:980px){body.zuvyr-ui #feature-chat .zuvyr-specialized-research-toggle{width:38px;padding:0;justify-content:center}body.zuvyr-ui #feature-chat .zuvyr-specialized-research-label{display:none}}
+
+/* ZUVYR PACK073 REALTIME VOICE STATUS */
+body.zuvyr-ui #feature-chat .zuvyr-realtime-voice-status{
+  position:absolute;
+  left:50%;
+  bottom:-24px;
+  transform:translateX(-50%);
+  max-width:min(80vw,420px);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:11px;
+  line-height:18px;
+  opacity:.72;
+  pointer-events:none;
+}
+body.zuvyr-ui #feature-chat .zuvyr-realtime-voice-status[data-mode="listening"],
+body.zuvyr-ui #feature-chat .zuvyr-realtime-voice-status[data-mode="speaking"]{
+  opacity:1;
+  font-weight:600;
+}
+body.zuvyr-ui #feature-chat .chat-input-row[data-zuvyr-realtime-voice="listening"] .zuvyr-voice-waveform,
+body.zuvyr-ui #feature-chat .chat-input-row[data-zuvyr-realtime-voice="speaking"] .zuvyr-voice-waveform{
+  visibility:visible;
+}
+body.zuvyr-ui #feature-chat .zuvyr-realtime-voice-status[data-mode="error"]{
+  text-decoration:underline;
+  text-decoration-style:dotted;
+}
