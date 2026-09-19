@@ -585,7 +585,11 @@ begin
     );
   end if;
 
-  v_sequence := v_run.completed_steps + 1;
+  select coalesce(max(sequence_no),0) + 1
+    into v_sequence
+  from public.browser_agent_actions
+  where run_id=p_run_id;
+
   if v_sequence > v_run.max_steps then
     raise exception 'pack082_step_budget_exhausted';
   end if;
@@ -705,6 +709,71 @@ begin
 end;
 $pack082_transition_action$;
 
+create or replace function public.request_stop_zuvyr_browser_agent_run_pack082(
+  p_owner_id uuid,
+  p_run_id uuid,
+  p_reason text default 'user_requested'
+) returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $pack082_stop_run$
+declare
+  v_run public.browser_agent_runs%rowtype;
+  v_reason text := left(coalesce(nullif(trim(p_reason),''),'user_requested'),200);
+begin
+  select * into v_run
+  from public.browser_agent_runs
+  where id=p_run_id and owner_id=p_owner_id
+  for update;
+
+  if v_run.id is null then
+    raise exception 'pack082_run_not_found';
+  end if;
+
+  if v_run.status in ('succeeded','failed','cancelled','stopped') then
+    return jsonb_build_object(
+      'run_id',v_run.id,
+      'status',v_run.status,
+      'stop_requested',v_run.stop_requested,
+      'replayed',true
+    );
+  end if;
+
+  update public.browser_agent_runs
+  set stop_requested=true,
+      status=case
+        when status='planned' then 'cancelled'
+        when status in ('running','approval_required') then 'stopping'
+        else status
+      end,
+      failure_code=case
+        when status='planned' then coalesce(failure_code,'pack082_stop_' || v_reason)
+        else failure_code
+      end,
+      updated_at=now(),
+      finished_at=case when status='planned' then now() else finished_at end
+  where id=p_run_id
+  returning * into v_run;
+
+  update public.browser_agent_actions
+  set status='cancelled',
+      failure_code=coalesce(failure_code,'pack082_run_stop_requested'),
+      finished_at=now(),
+      updated_at=now()
+  where run_id=p_run_id
+    and owner_id=p_owner_id
+    and status in ('planned','approval_required','approved');
+
+  return jsonb_build_object(
+    'run_id',v_run.id,
+    'status',v_run.status,
+    'stop_requested',v_run.stop_requested,
+    'replayed',false
+  );
+end;
+$pack082_stop_run$;
+
 revoke all on function public.reserve_zuvyr_browser_agent_run_pack082(
   uuid,uuid,uuid,uuid,text,text,text,text,text,jsonb,integer
 ) from public,anon,authenticated;
@@ -717,6 +786,14 @@ revoke all on function public.reserve_zuvyr_browser_agent_action_pack082(
 revoke all on function public.transition_zuvyr_browser_agent_action_pack082(
   uuid,uuid,text,text,uuid,uuid,uuid,jsonb,text
 ) from public,anon,authenticated;
+
+revoke all on function public.request_stop_zuvyr_browser_agent_run_pack082(
+  uuid,uuid,text
+) from public,anon,authenticated;
+
+grant execute on function public.request_stop_zuvyr_browser_agent_run_pack082(
+  uuid,uuid,text
+) to service_role;
 
 grant execute on function public.reserve_zuvyr_browser_agent_run_pack082(
   uuid,uuid,uuid,uuid,text,text,text,text,text,jsonb,integer
