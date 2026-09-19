@@ -73,6 +73,12 @@ const {
   TTS_DEFAULT_MODEL
 } = require('./lib/audioProvider');
 const { executeLocalAudioCleanup } = require('./lib/localAudioCleanup');
+const {
+  MODELS: PACK074_AUDIO_MODELS,
+  generatePack074Audio,
+  serializeProviderResult: serializePack074ProviderResult,
+  restoreProviderResult: restorePack074ProviderResult
+} = require('./lib/audioFalProvider');
 const { getDefaultAudioResultRepository } = require('./lib/audioResultRepository');
 const { connection } = require('./lib/queue');
 const { startBrainKernelWorker } = require('./lib/brainKernelWorker');
@@ -1176,6 +1182,39 @@ async function refundAudio({ requestId, userId }) {
   }
 }
 
+async function audioJobState({ ownerId, jobId }) {
+  const result = await supabaseAdmin
+    .from('audio_jobs')
+    .select('status,stage,cancel_requested,provider_result,canonical_content_id,canonical_asset_id')
+    .eq('id', jobId)
+    .eq('owner_id', ownerId)
+    .maybeSingle();
+  if (result.error) {
+    const error = new Error('audio_job_state_lookup_failed');
+    error.code = 'audio_job_state_lookup_failed';
+    error.cause = result.error;
+    throw error;
+  }
+  return result.data || null;
+}
+
+async function assertAudioCommitAllowed({ ownerId, jobId }) {
+  const state = await audioJobState({ ownerId, jobId });
+  if (
+    !state ||
+    state.cancel_requested === true ||
+    state.status !== 'processing' ||
+    !['provider','processing'].includes(state.stage)
+  ) {
+    const error = new UnrecoverableError('audio_late_result_ignored');
+    error.code = 'audio_late_result_ignored';
+    error.preserveTerminalState = true;
+    error.terminalState = state?.status || null;
+    throw error;
+  }
+  return state;
+}
+
 async function processAudioJob(job) {
   const {
     jobRowId,
@@ -1204,14 +1243,27 @@ async function processAudioJob(job) {
     throw error;
   }
 
-  const resolved = request.operation === 'text_to_speech'
+  const noSourceOperation = ['text_to_speech','music_generation','sound_effects'].includes(request.operation);
+  const resolved = noSourceOperation
     ? { source: null, lineage: {} }
-    : await audioInputResolver.resolve({
-        ownerId: userId,
-        request,
-        requestId
-      });
-  const source = resolved.source;
+    : request.operation === 'audio_to_video'
+      ? await resolveVideoReferences({
+          ownerId:userId,
+          request:{
+            operation:'lip_sync',
+            sourceVideoAssetId:request.sourceVideoAssetId,
+            sourceAudioAssetId:request.sourceAudioAssetId
+          },
+          requestId
+        })
+      : await audioInputResolver.resolve({
+          ownerId: userId,
+          request,
+          requestId
+        });
+  const source = request.operation === 'audio_to_video'
+    ? resolved.audio
+    : resolved.source;
   const repository = getDefaultAudioResultRepository();
   const existing = await repository.getExisting({
     ownerId: userId,
@@ -1237,14 +1289,18 @@ async function processAudioJob(job) {
     }
     persisted = existing;
     provider = existing.provider || (
-      ['transcription','text_to_speech'].includes(request.operation) ? 'deepgram' : 'local'
+      ['transcription','text_to_speech'].includes(request.operation)
+        ? 'deepgram'
+        : ['music_generation','sound_effects','remix','stem_separation','translate_dub','audio_to_video'].includes(request.operation)
+          ? 'fal'
+          : 'local'
     );
     model = existing.model || (
       request.operation === 'transcription'
         ? DEEPGRAM_MODEL
         : request.operation === 'text_to_speech'
           ? TTS_DEFAULT_MODEL
-          : 'ffmpeg-alpine'
+          : PACK074_AUDIO_MODELS[request.operation] || 'ffmpeg-alpine'
     );
   } else if (request.operation === 'transcription') {
     const claim = await audioJobRpc('claim_zuvyr_audio_execution', {
@@ -1367,6 +1423,63 @@ async function processAudioJob(job) {
     });
     provider = 'local';
     model = 'ffmpeg-alpine';
+  } else if (['music_generation','sound_effects','remix','stem_separation','audio_to_video'].includes(request.operation)) {
+    const claim = await audioJobRpc('claim_zuvyr_audio_execution', {
+      p_owner_id:userId,
+      p_job_id:jobRowId,
+      p_stage:'provider'
+    });
+    if (claim.claimed !== true) {
+      if (claim.status === 'cancelled' || claim.cancelRequested === true) {
+        await refundAudio({ requestId, userId });
+        return { status:'cancelled' };
+      }
+      const error = new UnrecoverableError('audio_job_not_executable');
+      error.code = 'audio_job_not_executable';
+      throw error;
+    }
+
+    const expectedModel = PACK074_AUDIO_MODELS[request.operation];
+    await markAudioJob(jobRowId,userId,{
+      progress_percent:35,
+      stage:'provider',
+      provider:'fal',
+      model:expectedModel
+    });
+
+    let result = restorePack074ProviderResult(existing?.providerResult);
+    if (!result) {
+      result = await generatePack074Audio(request,{ resolvedInputs:resolved });
+      await assertAudioCommitAllowed({ ownerId:userId, jobId:jobRowId });
+      await markAudioJob(jobRowId,userId,{
+        provider_result:serializePack074ProviderResult(result),
+        progress_percent:60,
+        provider:result.provider,
+        model:result.model
+      });
+    } else {
+      await assertAudioCommitAllowed({ ownerId:userId, jobId:jobRowId });
+    }
+
+    const sources = request.operation === 'audio_to_video'
+      ? [resolved.source,resolved.audio].filter(Boolean)
+      : resolved.source
+        ? [resolved.source]
+        : [];
+
+    persisted = await repository.persistPack074Artifacts({
+      ownerId:userId,
+      jobId:jobRowId,
+      operation:request.operation,
+      request,
+      outputs:result.outputs,
+      provider:result.provider,
+      model:result.model,
+      providerMetadata:result.providerMetadata,
+      sources
+    });
+    provider=result.provider;
+    model=result.model;
   } else {
     const error = new UnrecoverableError('audio_operation_not_implemented');
     error.code = 'audio_operation_not_implemented';
@@ -1414,6 +1527,20 @@ async function handleAudioFailure(job, error) {
   if (!exhausted) return;
 
   const { jobRowId, requestId, userId } = job.data;
+
+  if (error.preserveTerminalState === true) {
+    const state = await audioJobState({ ownerId:userId, jobId:jobRowId }).catch(() => null);
+    if (state?.status === 'cancelled') {
+      await refundAudio({ requestId, userId });
+    }
+    console.warn(
+      '[audio-worker] ignored late/terminal provider result:',
+      job.id,
+      error.code || error.message,
+      state?.status || 'unknown'
+    );
+    return;
+  }
   await markAudioJob(jobRowId, userId, {
     status: 'failed',
     stage: 'failed',
