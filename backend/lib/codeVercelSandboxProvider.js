@@ -299,11 +299,13 @@ function createVercelSandboxProvider({
     });
   }
 
-  async function startCommand(value, command) {
+  async function startCommand(value, command, commandValue) {
     const id = providerSessionId(value);
     const spec = normalizedCommand(command);
+    const cmdId = providerCommandId(commandValue);
     const result = await request(
-      '/v2/sandboxes/sessions/' + encodeURIComponent(id) + '/cmd',
+      '/v2/sandboxes/sessions/' + encodeURIComponent(id) +
+        '/cmd?cmdId=' + encodeURIComponent(cmdId),
       {
         method: 'POST',
         body: JSON.stringify(spec)
@@ -311,7 +313,10 @@ function createVercelSandboxProvider({
       { timeoutMs: Math.min(30000, spec.timeout + 5000) }
     );
 
-    const cmdId = providerCommandId(result?.command?.id);
+    const returnedId = providerCommandId(result?.command?.id || cmdId);
+    if (returnedId !== cmdId) {
+      throw providerError('code_sandbox_provider_command_mismatch');
+    }
     return Object.freeze({
       providerSessionId: id,
       providerCommandId: cmdId,
