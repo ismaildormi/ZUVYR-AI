@@ -177,16 +177,20 @@ function normalizeVideoRequest(body = {}) {
     if (!limits.allowedShotTypes.includes(shotType)) throw requestError('invalid_video_shot_type');
     normalizedOptions = {durationSeconds,ratio,resolution,fps:null,audio,seed,subtitleLanguage:'auto',targetLanguage:'auto',exportFormat,negativePrompt,shotType};
   } else if (operation === 'edit') {
-    const allowed = new Set(['durationSeconds','retakeMode','exportFormat']);
+    const allowed = new Set(['durationSeconds','startTimeSeconds','retakeMode','exportFormat']);
     if (Object.keys(options).some(key => !allowed.has(key))) throw requestError('unsupported_video_option');
     const cfg = config.pack068.edit;
     const durationSeconds = options.durationSeconds === undefined ? 5 : Number(options.durationSeconds);
+    const startTimeSeconds = options.startTimeSeconds === undefined
+      ? 0
+      : finiteNumber(options.startTimeSeconds, 'invalid_video_start_time');
     const retakeMode = String(options.retakeMode || 'replace_video').toLowerCase();
     const exportFormat = String(options.exportFormat || 'mp4').toLowerCase();
     if (!cfg.allowedDurationSeconds.includes(durationSeconds)) throw requestError('invalid_video_duration');
+    if (startTimeSeconds < 0) throw requestError('invalid_video_start_time');
     if (!cfg.allowedRetakeModes.includes(retakeMode)) throw requestError('invalid_video_retake_mode');
     if (!cfg.allowedExportFormats.includes(exportFormat)) throw requestError('invalid_video_export_format');
-    normalizedOptions = {durationSeconds,retakeMode,exportFormat};
+    normalizedOptions = {durationSeconds,startTimeSeconds,retakeMode,exportFormat};
   } else if (operation === 'extend') {
     const allowed = new Set(['durationSeconds','extendMode','contextSeconds','exportFormat']);
     if (Object.keys(options).some(key => !allowed.has(key))) throw requestError('unsupported_video_option');
