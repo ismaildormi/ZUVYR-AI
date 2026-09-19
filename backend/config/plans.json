@@ -234,7 +234,8 @@
     "chat": 20,
     "image": 10,
     "video": 4,
-    "workspace": 20
+    "workspace": 20,
+    "3d": 4
   },
   "version": "pack-083.canonical-plans-entitlements.v3",
   "defaultPlan": "free",
