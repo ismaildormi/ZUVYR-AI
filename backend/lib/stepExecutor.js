@@ -388,6 +388,44 @@ function createStepExecutor({
         }
       }
 
+      if (
+        output &&
+        typeof output === 'object' &&
+        output.deferred === true
+      ) {
+        if (typeof persistence.deferStep !== 'function') {
+          throw executorError('STEP_EXECUTOR_DEFER_PERSISTENCE_REQUIRED');
+        }
+
+        const deferred = await persistence.deferStep({
+          stepId: claim.stepId,
+          workerOwner,
+          leaseToken: claim.leaseToken,
+          checkpoint: {
+            phase: 'deferred',
+            effectKey,
+            capability: claim.capability,
+            attempt: claim.attempt,
+            reason: String(output.reason || 'approval_required').slice(0, 200),
+            deferred: output.deferredContext && typeof output.deferredContext === 'object'
+              ? output.deferredContext
+              : {}
+          }
+        });
+
+        return Object.freeze({
+          claimed: true,
+          taskRunId,
+          stepId: claim.stepId,
+          stepKey: claim.stepKey,
+          capability: claim.capability,
+          state: deferred.state || 'deferred',
+          deferred: true,
+          effectKey,
+          output
+        });
+      }
+
       await persistence.checkpoint({
         stepId: claim.stepId,
         workerOwner,
