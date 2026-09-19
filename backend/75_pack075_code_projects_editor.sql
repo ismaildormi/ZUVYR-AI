@@ -110,65 +110,50 @@ grant select, insert, update, delete on public.code_project_ai_edits to service_
 create or replace function public.validate_zuvyr_code_files_pack075(
   p_files jsonb,
   p_entry_file text default null
-) returns void
-language plpgsql
-set search_path=public,pg_temp
-as $$
-declare
-  v_count integer;
-  v_total_bytes bigint;
-begin
-  if jsonb_typeof(p_files) <> 'array' then
-    raise exception 'pack075_files_invalid';
-  end if;
-
-  v_count := jsonb_array_length(p_files);
-  if v_count < 1 or v_count > 64 then
-    raise exception 'pack075_file_count_invalid';
-  end if;
-
-  if exists (
-    select 1
-    from jsonb_array_elements(p_files) e
-    where jsonb_typeof(e) <> 'object'
-       or jsonb_typeof(e->'path') <> 'string'
-       or jsonb_typeof(e->'content') <> 'string'
-       or jsonb_typeof(e->'sha256') <> 'string'
-       or char_length(e->>'path') not between 1 and 240
-       or octet_length(e->>'content') > 524288
-       or (e->>'sha256') !~ '^[0-9a-f]{64}$'
-  ) then
-    raise exception 'pack075_file_contract_invalid';
-  end if;
-
-  if exists (
-    select 1
-    from (
-      select lower(e->>'path') path_key,count(*) n
+) returns text
+language sql
+immutable
+set search_path = public, pg_temp
+as $function$
+  select case
+    when jsonb_typeof(p_files) is distinct from 'array'
+      then 'pack075_files_invalid'
+    when jsonb_array_length(p_files) < 1
+      or jsonb_array_length(p_files) > 64
+      then 'pack075_file_count_invalid'
+    when exists (
+      select 1
       from jsonb_array_elements(p_files) e
-      group by lower(e->>'path')
-    ) d
-    where d.n > 1
-  ) then
-    raise exception 'pack075_duplicate_file_path';
-  end if;
-
-  select coalesce(sum(octet_length(e->>'content')),0)
-    into v_total_bytes
-  from jsonb_array_elements(p_files) e;
-
-  if v_total_bytes > 4194304 then
-    raise exception 'pack075_project_too_large';
-  end if;
-
-  if p_entry_file is not null and not exists (
-    select 1 from jsonb_array_elements(p_files) e
-    where lower(e->>'path')=lower(p_entry_file)
-  ) then
-    raise exception 'pack075_entry_file_missing';
-  end if;
-end;
-$$;
+      where jsonb_typeof(e) <> 'object'
+         or jsonb_typeof(e->'path') <> 'string'
+         or jsonb_typeof(e->'content') <> 'string'
+         or jsonb_typeof(e->'sha256') <> 'string'
+         or char_length(e->>'path') not between 1 and 240
+         or octet_length(e->>'content') > 524288
+         or (e->>'sha256') !~ '^[0-9a-f]{64}$'
+    ) then 'pack075_file_contract_invalid'
+    when exists (
+      select 1
+      from (
+        select lower(e->>'path') path_key, count(*) n
+        from jsonb_array_elements(p_files) e
+        group by lower(e->>'path')
+      ) d
+      where d.n > 1
+    ) then 'pack075_duplicate_file_path'
+    when (
+      select coalesce(sum(octet_length(e->>'content')),0)
+      from jsonb_array_elements(p_files) e
+    ) > 4194304
+      then 'pack075_project_too_large'
+    when p_entry_file is not null and not exists (
+      select 1
+      from jsonb_array_elements(p_files) e
+      where lower(e->>'path') = lower(p_entry_file)
+    ) then 'pack075_entry_file_missing'
+    else null
+  end;
+$function$;
 
 create or replace function public.create_zuvyr_code_project_pack075(
   p_owner_id uuid,
@@ -185,6 +170,7 @@ declare
   v_project_id uuid;
   v_version_id uuid;
   v_snapshot jsonb;
+  v_validation text;
   v_name text := btrim(coalesce(p_name,''));
 begin
   if char_length(v_name) not between 1 and 120 then
@@ -194,7 +180,10 @@ begin
     raise exception 'pack075_metadata_invalid';
   end if;
 
-  perform public.validate_zuvyr_code_files_pack075(p_files,p_entry_file);
+  v_validation := public.validate_zuvyr_code_files_pack075(p_files,p_entry_file);
+  if v_validation is not null then
+    raise exception '%', v_validation;
+  end if;
 
   insert into public.code_projects(
     owner_id,name,entry_file,status,metadata,current_branch,revision,updated_at
@@ -277,6 +266,7 @@ declare
   v_version_id uuid;
   v_snapshot jsonb;
   v_next_revision bigint;
+  v_validation text;
 begin
   select * into v_project
   from public.code_projects
@@ -304,7 +294,10 @@ begin
     raise exception 'pack075_project_name_invalid';
   end if;
 
-  perform public.validate_zuvyr_code_files_pack075(p_files,p_entry_file);
+  v_validation := public.validate_zuvyr_code_files_pack075(p_files,p_entry_file);
+  if v_validation is not null then
+    raise exception '%', v_validation;
+  end if;
 
   delete from public.code_project_files where project_id=p_project_id;
   insert into public.code_project_files(project_id,path,content,content_sha256,language)
@@ -429,6 +422,7 @@ declare
   v_name text;
   v_entry_file text;
   v_next_revision bigint;
+  v_validation text;
 begin
   select * into v_project
   from public.code_projects
@@ -461,7 +455,10 @@ begin
   v_files := v_version.snapshot->'files';
   v_name := coalesce(v_version.snapshot->>'name',v_project.name);
   v_entry_file := nullif(v_version.snapshot->>'entryFile','');
-  perform public.validate_zuvyr_code_files_pack075(v_files,v_entry_file);
+  v_validation := public.validate_zuvyr_code_files_pack075(v_files,v_entry_file);
+  if v_validation is not null then
+    raise exception '%', v_validation;
+  end if;
 
   delete from public.code_project_files where project_id=p_project_id;
   insert into public.code_project_files(project_id,path,content,content_sha256,language)
@@ -635,7 +632,10 @@ begin
     raise exception 'pack075_metadata_invalid';
   end if;
 
-  perform public.validate_zuvyr_code_files_pack075(p_files,p_entry_file);
+  v_validation := public.validate_zuvyr_code_files_pack075(p_files,p_entry_file);
+  if v_validation is not null then
+    raise exception '%', v_validation;
+  end if;
 
   insert into public.code_projects(
     owner_id,name,entry_file,status,metadata,current_branch,revision,updated_at
@@ -745,7 +745,10 @@ begin
     raise exception 'pack075_project_name_invalid';
   end if;
 
-  perform public.validate_zuvyr_code_files_pack075(p_files,p_entry_file);
+  v_validation := public.validate_zuvyr_code_files_pack075(p_files,p_entry_file);
+  if v_validation is not null then
+    raise exception '%', v_validation;
+  end if;
 
   delete from public.code_project_files where project_id=p_project_id;
   insert into public.code_project_files(project_id,path,content,content_sha256,language)
@@ -902,7 +905,10 @@ begin
   v_files := v_version.snapshot->'files';
   v_name := coalesce(v_version.snapshot->>'name',v_project.name);
   v_entry_file := nullif(v_version.snapshot->>'entryFile','');
-  perform public.validate_zuvyr_code_files_pack075(v_files,v_entry_file);
+  v_validation := public.validate_zuvyr_code_files_pack075(v_files,v_entry_file);
+  if v_validation is not null then
+    raise exception '%', v_validation;
+  end if;
 
   delete from public.code_project_files where project_id=p_project_id;
   insert into public.code_project_files(project_id,path,content,content_sha256,language)
