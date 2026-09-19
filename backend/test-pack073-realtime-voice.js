@@ -101,7 +101,7 @@ assert(frontend.includes("'barge_in'"));
 assert(frontend.includes("/api/audio-studio/voice/sessions/request"));
 assert(frontend.includes("/turns"));
 assert(frontend.includes("/stop"));
-assert(frontend.includes("rawAudioStoredByZuvyr: false"));
+assert(/rawAudioStoredByZuvyr\s*:\s*false/.test(frontend));
 assert(frontend.includes("source: 'browser_speech_recognition'"));
 assert(frontend.includes("source: 'browser_speech_synthesis'"));
 assert(frontend.includes("event.stopImmediatePropagation()"));
