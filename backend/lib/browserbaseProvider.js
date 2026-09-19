@@ -80,11 +80,13 @@ function createBrowserbaseProvider({
     return body;
   }
 
-  async function createSession({ localSessionId }={}) {
+  async function createSession({ localSessionId, ttlSeconds=config.session.defaultTtlSeconds }={}) {
     assertLiveAvailable(env);
+    const ttl=Math.max(30,Math.min(config.session.maxTtlSeconds,Number(ttlSeconds)||config.session.defaultTtlSeconds));
     const body={
       projectId:String(env.BROWSERBASE_PROJECT_ID || '').trim(),
       keepAlive:config.session.keepAlive === true,
+      timeout:ttl,
       proxies:config.session.proxies === true,
       browserSettings:{
         recordSession:config.session.recordSession === true
