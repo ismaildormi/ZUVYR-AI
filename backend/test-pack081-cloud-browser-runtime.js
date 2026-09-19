@@ -73,6 +73,7 @@ for(const marker of [
   'pack081_project_owner_mismatch',
   'pack081_idempotency_scope_mismatch',
   'pack081_terminal_session',
+  'browser_session_artifacts_provider_unique_idx',
   'set_zuvyr_browser_billing_state_pack081'
 ]){
   assert(migration.includes(marker),marker);
@@ -107,6 +108,7 @@ for(const code of [
 ]){
   assert(blocked.blockers.includes(code),code);
 }
+assert(blocked.blockers.includes('pack081_live_billing_disabled'));
 
 const env={
   BROWSERBASE_API_KEY:'test-key-never-log',
@@ -114,7 +116,8 @@ const env={
   BROWSERBASE_BROWSER_HOUR_PRICE_MICRO_USD:'120000',
   BROWSERBASE_PRICING_VERSION:'browserbase-developer-2026-09-19',
   ZUVYR_M17_VERIFIED:'true',
-  ZUVYR_BROWSER_PRICING_VERIFIED:'true'
+  ZUVYR_BROWSER_PRICING_VERIFIED:'true',
+  LIVE_BILLING_ALLOWED:'true'
 };
 
 assert.equal(availability(env).live,true);
@@ -140,6 +143,10 @@ assert.equal(
     allowedHosts:['example.com']
   }).host,
   'example.com'
+);
+assert.throws(
+  ()=>normalizePublicUrl('https://user:pass@example.com/path',{allowedHosts:['example.com']}),
+  error=>error.code==='cloud_browser_url_credentials_forbidden'
 );
 assert.throws(
   ()=>normalizePublicUrl('https://evil.example/path',{allowedHosts:['example.com']}),
@@ -253,6 +260,7 @@ assert.doesNotThrow(()=>rejectRawSecrets({
   assert.equal(calls[0].body.keepAlive,true);
   assert.equal(calls[0].body.timeout,900);
   assert.equal(calls[0].body.browserSettings.recordSession,false);
+  assert.equal(calls[0].body.browserSettings.logSession,false);
   assert.equal(JSON.stringify(calls[0].body).includes('test-key-never-log'),false);
   assert.equal(calls[0].headers['X-BB-API-Key'],'test-key-never-log');
 
@@ -329,9 +337,11 @@ assert.doesNotThrow(()=>rejectRawSecrets({
   assert(server.includes('cloudBrowserCleanup: options =>'));
 
   assert(providerSource.includes("body:JSON.stringify({status:'REQUEST_RELEASE'})"));
+  assert(providerSource.includes('logSession:config.session.logSession === true'));
   assert(providerSource.includes("'/uploads'"));
   assert(providerSource.includes('connect.browserbase.com'));
   assert(policySource.includes('targetGrossMarginBps'));
+  assert(policySource.includes('LIVE_BILLING_ALLOWED'));
 
   console.log('PASS: PACK081 durable owner/task/project/conversation browser authority is wired');
   console.log('PASS: PACK081 Browserbase create/resume/release contract is mock-verified with no live provider call');
@@ -339,6 +349,7 @@ assert.doesNotThrow(()=>rejectRawSecrets({
   console.log('PASS: PACK081 screenshot/DOM/upload/download artifacts use canonical private storage');
   console.log('PASS: PACK081 reserve/settle/refund uses canonical IP feature ledger and 50% margin policy');
   console.log('PASS: PACK081 maintenance cleanup defers uncertain provider cleanup instead of fabricating success');
+  console.log('PASS: PACK081 raw URL credentials, provider logs/recordings and duplicate provider artifacts are blocked');
   console.log('LIVE BROWSERBASE / PAYMENT CALLS: NONE');
 })().catch(error=>{
   console.error(error);
