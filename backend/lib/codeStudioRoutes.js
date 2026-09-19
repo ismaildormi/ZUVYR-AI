@@ -18,7 +18,6 @@ const {
 const {
   createCodeProjectRepository
 } = require('./codeProjectRepository');
-const { supabaseAdmin } = require('./supabaseAdmin');
 const {
   routeRequest: defaultRouteRequest
 } = require('../aiRouter');
@@ -271,12 +270,21 @@ function finalCodeCredits(providerCostUsd) {
 
 function createCodeStudioRouter({
   creditApi = null,
-  db = supabaseAdmin,
+  db = null,
   routeRequestImpl = defaultRouteRequest
 } = {}) {
   const router = express.Router();
   const usageBridge = createCodeStudioUsageBridge(creditApi || {});
-  const projects = createCodeProjectRepository(db);
+  const projects = db ? createCodeProjectRepository(db) : null;
+
+  const projectRepository = () => {
+    if (!projects) {
+      const error = new Error('code_project_repository_unavailable');
+      error.code = 'code_project_repository_unavailable';
+      throw error;
+    }
+    return projects;
+  };
 
   router.get(
     '/capabilities',
@@ -316,7 +324,7 @@ function createCodeStudioRouter({
 
   router.get('/projects', async (req, res) => {
     try {
-      const items = await projects.list({
+      const items = await projectRepository().list({
         ownerId: req.userId,
         limit: req.query?.limit
       });
@@ -328,7 +336,7 @@ function createCodeStudioRouter({
 
   router.post('/projects', async (req, res) => {
     try {
-      const project = await projects.create({
+      const project = await projectRepository().create({
         ownerId: req.userId,
         project: req.body?.project,
         metadata: {
@@ -353,7 +361,7 @@ function createCodeStudioRouter({
         error.code = 'invalid_code_project_id';
         throw error;
       }
-      const project = await projects.get({
+      const project = await projectRepository().get({
         ownerId: req.userId,
         projectId: req.params.projectId
       });
@@ -370,7 +378,7 @@ function createCodeStudioRouter({
         error.code = 'invalid_code_project_id';
         throw error;
       }
-      const project = await projects.save({
+      const project = await projectRepository().save({
         ownerId: req.userId,
         projectId: req.params.projectId,
         project: req.body?.project,
@@ -391,7 +399,7 @@ function createCodeStudioRouter({
         error.code = 'invalid_code_project_id';
         throw error;
       }
-      const result = await projects.archive({
+      const result = await projectRepository().archive({
         ownerId: req.userId,
         projectId: req.params.projectId
       });
@@ -408,7 +416,7 @@ function createCodeStudioRouter({
         error.code = 'invalid_code_project_id';
         throw error;
       }
-      const project = await projects.get({
+      const project = await projectRepository().get({
         ownerId: req.userId,
         projectId: req.params.projectId
       });
@@ -432,7 +440,7 @@ function createCodeStudioRouter({
         error.code = 'invalid_code_project_id';
         throw error;
       }
-      const project = await projects.createBranch({
+      const project = await projectRepository().createBranch({
         ownerId: req.userId,
         projectId: req.params.projectId,
         name: req.body?.name
@@ -450,7 +458,7 @@ function createCodeStudioRouter({
         error.code = 'invalid_code_project_id';
         throw error;
       }
-      const project = await projects.switchBranch({
+      const project = await projectRepository().switchBranch({
         ownerId: req.userId,
         projectId: req.params.projectId,
         name: req.params.branch,
@@ -469,7 +477,7 @@ function createCodeStudioRouter({
         error.code = 'invalid_code_project_id';
         throw error;
       }
-      const editorState = await projects.saveEditorState({
+      const editorState = await projectRepository().saveEditorState({
         ownerId: req.userId,
         projectId: req.params.projectId,
         openFiles: req.body?.openFiles,
@@ -500,7 +508,7 @@ function createCodeStudioRouter({
       }
 
       const instruction = requiredInstruction(req.body?.instruction);
-      const project = await projects.get({
+      const project = await projectRepository().get({
         ownerId: req.userId,
         projectId: req.params.projectId
       });
@@ -538,7 +546,7 @@ function createCodeStudioRouter({
         throw error;
       }
 
-      const started = await projects.beginAiEdit({
+      const started = await projectRepository().beginAiEdit({
         ownerId: req.userId,
         projectId: project.id,
         requestId,
@@ -642,7 +650,7 @@ function createCodeStudioRouter({
 
       let savedProject = project;
       if (merged.changedPaths.length) {
-        savedProject = await projects.save({
+        savedProject = await projectRepository().save({
           ownerId: req.userId,
           projectId: project.id,
           project: merged.project,
@@ -652,7 +660,7 @@ function createCodeStudioRouter({
         });
       }
 
-      const receipt = await projects.completeAiEdit({
+      const receipt = await projectRepository().completeAiEdit({
         ownerId: req.userId,
         requestId,
         model: modelResult.model,
@@ -717,7 +725,7 @@ function createCodeStudioRouter({
       }
 
       if (receiptStarted && receiptOwned && requestId) {
-        await projects.failAiEdit({
+        await projectRepository().failAiEdit({
           ownerId: req.userId,
           requestId,
           errorCode: error.code || error.message,
