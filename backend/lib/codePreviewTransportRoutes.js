@@ -47,7 +47,8 @@ function previewCookie(token, sessionId, expiresAt) {
     'Max-Age=' + maxAge,
     'HttpOnly',
     'Secure',
-    'SameSite=Strict'
+    'SameSite=None',
+    'Partitioned'
   ].join('; ');
 }
 
