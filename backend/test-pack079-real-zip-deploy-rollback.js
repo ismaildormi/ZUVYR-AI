@@ -272,6 +272,16 @@ const fakeDb={
   };
   assert.equal(deploymentAvailability(gatedEnv).live,false);
   assert(deploymentAvailability(gatedEnv).blockers.includes('pack079_source_live_gate_closed'));
+  assert(
+    deploymentAvailability(gatedEnv).blockers.includes(
+      'pack079_deploy_pricing_unverified'
+    )
+  );
+  assert(
+    deploymentAvailability(gatedEnv).blockers.includes(
+      'pack079_deploy_pricing_operator_gate_closed'
+    )
+  );
 
   let networkCalls=0;
   const fetchImpl=async(url,options={})=>{
