@@ -1075,7 +1075,7 @@ function createCodeStudioRouter({
         session,
         preview: {
           expiresAt: credential.expiresAt,
-          transportUrl:
+          transportPath:
             '/api/code-preview/' + encodeURIComponent(internal.id) +
             '/?t=' + encodeURIComponent(credential.token)
         }
