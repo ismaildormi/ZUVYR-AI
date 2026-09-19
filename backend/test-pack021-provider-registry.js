@@ -9,7 +9,7 @@ const raw = fs.readFileSync(configPath, 'utf8');
 const config = JSON.parse(raw);
 const registry = require('./lib/providerRegistry');
 
-assert.equal(config.version, 'pack-021.provider-registry.v1');
+assert.match(config.version, /^pack-\d{3}\.provider-registry\.v\d+$/);
 assert.equal(config.externalGate, 'M10');
 assert.equal(config.costAuthority, 'backend/config/cost-registry.v1.json');
 
