@@ -7,23 +7,47 @@ const MAX_MESSAGE_CHARS = 4000;
 const MAX_STACK_LINES = 24;
 
 function redact(value) {
-  return String(value || '')
-    .replace(
-      /\bAuthorization\s*[:=]\s*Bearer\s+[A-Za-z0-9._~+\/-]{8,}/gi,
-      'Authorization: Bearer [redacted]'
-    )
-    .replace(
-      /\bBearer\s+[A-Za-z0-9._~+\/-]{12,}/gi,
-      'Bearer [redacted]'
-    )
-    .replace(
-      /\b(?:api[_-]?key|token|secret|password)\s*[:=]\s*['"]?[^\s'",;]+/gi,
-      match => match.replace(/([:=]\s*['"]?).*$/,'$1[redacted]')
-    )
-    .replace(
-      /\b(?:sk|pk|vcp|sbp)_[A-Za-z0-9_-]{12,}\b/g,
-      '[redacted]'
-    );
+  let text = String(value || '');
+  const separator =
+    '(^|\\\\[nr]|[^A-Za-z0-9_])';
+
+  text = text.replace(
+    new RegExp(
+      separator +
+      '(Authorization\\s*[:=]\\s*Bearer\\s+)' +
+      '[A-Za-z0-9._~+\\/-]{8,}',
+      'gi'
+    ),
+    (_match, prefix, label) =>
+      prefix + label + '[redacted]'
+  );
+
+  text = text.replace(
+    new RegExp(
+      separator +
+      '(Bearer\\s+)' +
+      '[A-Za-z0-9._~+\\/-]{12,}',
+      'gi'
+    ),
+    (_match, prefix, label) =>
+      prefix + label + '[redacted]'
+  );
+
+  text = text.replace(
+    new RegExp(
+      separator +
+      '((?:api[_-]?key|token|secret|password)\\s*[:=]\\s*[\'"]?)' +
+      '[^\\s\'",;]+',
+      'gi'
+    ),
+    (_match, prefix, label) =>
+      prefix + label + '[redacted]'
+  );
+
+  return text.replace(
+    /\\b(?:sk|pk|vcp|sbp)_[A-Za-z0-9_-]{12,}\\b/g,
+    '[redacted]'
+  );
 }
 
 function safePath(value) {
