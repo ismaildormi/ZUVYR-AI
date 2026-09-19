@@ -34,6 +34,16 @@ const {
   createCodeRuntimeExecutor
 } = require('./codeRuntimeExecutor');
 const {
+  createCodeRepairRepository
+} = require('./codeRepairRepository');
+const {
+  assertRepairableJob,
+  repairTargets,
+  repairInstruction,
+  retestOperation,
+  repairStatusFromJob
+} = require('./codeRepairPolicy');
+const {
   runtimePricingStatus
 } = require('./codeRuntimePricing');
 const runtimeConfig = require('../config/code-runtime.v1.json');
@@ -55,7 +65,10 @@ function failureStatus(error) {
   if (
     code === 'code_project_not_found' ||
     code === 'pack076_session_not_found' ||
-    code === 'pack077_job_not_found'
+    code === 'pack077_job_not_found' ||
+    code === 'pack078_repair_run_not_found' ||
+    code === 'pack078_repair_attempt_not_found' ||
+    code === 'pack078_repair_source_job_not_found'
   ) return 404;
   if (
     code === 'pack075_revision_conflict' ||
@@ -71,7 +84,13 @@ function failureStatus(error) {
     code === 'pack077_active_job_exists' ||
     code === 'pack077_idempotency_scope_mismatch' ||
     code === 'pack077_job_not_claimable' ||
-    code === 'pack077_terminal_job'
+    code === 'pack077_terminal_job' ||
+    code === 'pack078_revision_conflict' ||
+    code === 'pack078_repair_active_conflict' ||
+    code === 'pack078_repair_idempotency_scope_mismatch' ||
+    code === 'pack078_repair_terminal' ||
+    code === 'pack078_repair_exhausted' ||
+    code === 'pack078_repair_repeated_failure'
   ) return 409;
   if (
     code === 'code_requires_plan' ||
@@ -91,7 +110,8 @@ function failureStatus(error) {
     code === 'code_sandbox_live_gate_closed' ||
     code === 'code_sandbox_provider_credentials_unavailable' ||
     code === 'code_runtime_pricing_gate_closed' ||
-    code === 'code_runtime_pricing_snapshot_changed'
+    code === 'code_runtime_pricing_snapshot_changed' ||
+    code === 'pack078_repair_runtime_unavailable'
   ) return 503;
   if (
     code.includes('disabled') ||
@@ -321,6 +341,7 @@ function createCodeStudioRouter({
   const usageBridge = createCodeStudioUsageBridge(creditApi || {});
   const projects = db ? createCodeProjectRepository(db) : null;
   const sandboxes = db ? createCodeSandboxRepository(db) : null;
+  const repairs = db ? createCodeRepairRepository(db) : null;
   const sandbox =
     sandboxProvider ||
     createVercelSandboxProvider({ env: sandboxEnv });
@@ -364,6 +385,596 @@ function createCodeStudioRouter({
     }
     return runtimeExecutor;
   };
+
+  const repairRepository = () => {
+    if (!repairs) {
+      const error = new Error('code_repair_repository_unavailable');
+      error.code = 'code_repair_repository_unavailable';
+      throw error;
+    }
+    return repairs;
+  };
+
+  async function executeAiEdit({
+    ownerId,
+    projectId,
+    instruction: rawInstruction,
+    targetPaths,
+    expectedRevision,
+    requestId: suppliedRequestId = null,
+    reasonPrefix = 'ai_edit'
+  } = {}) {
+    let requestId = '';
+    let receiptStarted = false;
+    let receiptOwned = false;
+    let reservationStarted = false;
+    let settlementDone = false;
+
+    try {
+      if (!uuid(projectId)) {
+        const error = new Error('invalid_code_project_id');
+        error.code = 'invalid_code_project_id';
+        throw error;
+      }
+
+      const instruction = requiredInstruction(rawInstruction);
+      const project = await projectRepository().get({ ownerId, projectId });
+
+      const suppliedRevision = Number(expectedRevision);
+      if (
+        Number.isSafeInteger(suppliedRevision) &&
+        suppliedRevision !== project.revision
+      ) {
+        const error = new Error('pack075_revision_conflict');
+        error.code = 'pack075_revision_conflict';
+        throw error;
+      }
+
+      const planId = await ownerPlan(db, ownerId);
+      if (!planHasFeature(planId, 'code')) {
+        const error = new Error('code_requires_plan');
+        error.code = 'code_requires_plan';
+        throw error;
+      }
+
+      const targets = normalizeAiTargets(project, targetPaths);
+      const instructionSha256 = crypto
+        .createHash('sha256')
+        .update(instruction, 'utf8')
+        .digest('hex');
+
+      requestId =
+        String(suppliedRequestId || '').trim() ||
+        crypto.randomUUID();
+
+      if (!requestId || requestId.length > 200) {
+        const error = new Error('code_ai_edit_idempotency_key_invalid');
+        error.code = 'code_ai_edit_idempotency_key_invalid';
+        throw error;
+      }
+
+      const started = await projectRepository().beginAiEdit({
+        ownerId,
+        projectId: project.id,
+        requestId,
+        instructionSha256,
+        targetPaths: targets
+      });
+      receiptStarted = true;
+      receiptOwned = started.replayed !== true;
+
+      if (started.replayed) {
+        if (started.receipt.status === 'succeeded') {
+          return Object.freeze({
+            replayed: true,
+            project: await projectRepository().get({
+              ownerId,
+              projectId: project.id
+            }),
+            aiEdit: started.receipt,
+            newBalance: null
+          });
+        }
+        const error = new Error(
+          started.receipt.status === 'processing'
+            ? 'code_ai_edit_in_progress'
+            : 'code_ai_edit_previous_failed'
+        );
+        error.code = error.message;
+        throw error;
+      }
+
+      await usageBridge.reserveUsage({
+        userId: ownerId,
+        requestId,
+        projectId: project.id,
+        taskId: requestId,
+        stepId: 'ai-edit',
+        usageKind: 'ai_code_edit',
+        creditsConsumed: CODE_EDIT_RESERVATION_CREDITS,
+        modelUsed: 'code-router'
+      });
+      reservationStarted = true;
+
+      const byPath = new Map(project.files.map(file => [file.path, file]));
+      const messages = [
+        {
+          role: 'system',
+          content: [
+            'You are the ZUVYR Code Studio editing engine.',
+            'Return ONLY one JSON object with keys summary and files.',
+            'files must be an array of objects with path, content and optional language.',
+            'Edit only the exact target paths supplied by the user.',
+            'Do not add, delete or rename files.',
+            'Do not wrap the JSON in markdown.',
+            'Preserve unrelated code and make the smallest correct changes.'
+          ].join(' ')
+        },
+        {
+          role: 'user',
+          content: JSON.stringify({
+            instruction,
+            project: {
+              name: project.name,
+              branch: project.currentBranch,
+              revision: project.revision,
+              entryFile: project.entryFile,
+              manifest: project.files.map(file => ({
+                path: file.path,
+                language: file.language,
+                sha256: file.sha256
+              }))
+            },
+            targetPaths: targets,
+            targetFiles: targets.map(targetPath => ({
+              path: targetPath,
+              language: byPath.get(targetPath)?.language || null,
+              content: byPath.get(targetPath)?.content || ''
+            }))
+          })
+        }
+      ];
+
+      let modelResult;
+      try {
+        modelResult = await routeCodeRequest('code', messages, {
+          requestId,
+          isPro: isPaidPlan(planId),
+          loadLevel: 'normal'
+        });
+      } catch (cause) {
+        const error = new Error('code_ai_edit_provider_failed');
+        error.code = 'code_ai_edit_provider_failed';
+        error.cause = cause;
+        throw error;
+      }
+
+      const parsed = parseAiEditOutput(modelResult.text);
+      const merged = mergeAiEdits(project, targets, parsed);
+      const creditsCharged = finalCodeCredits(modelResult.cost_usd);
+
+      const settlement = await usageBridge.settleUsage(
+        requestId,
+        creditsCharged
+      );
+      settlementDone = true;
+
+      let savedProject = project;
+      if (merged.changedPaths.length) {
+        savedProject = await projectRepository().save({
+          ownerId,
+          projectId: project.id,
+          project: merged.project,
+          expectedRevision: project.revision,
+          branchName: project.currentBranch,
+          reason: String(reasonPrefix || 'ai_edit').slice(0, 80) + ':' + requestId
+        });
+      }
+
+      const receipt = await projectRepository().completeAiEdit({
+        ownerId,
+        requestId,
+        model: modelResult.model,
+        creditsCharged,
+        result: {
+          summary: parsed.summary,
+          changedPaths: merged.changedPaths,
+          versionId: savedProject.versions?.[0]?.id || null,
+          revision: savedProject.revision,
+          branch: savedProject.currentBranch,
+          providerCostUsd: Number(modelResult.cost_usd || 0)
+        }
+      });
+
+      if (typeof creditApi?.logCreditEvent === 'function') {
+        await creditApi.logCreditEvent({
+          userId: ownerId,
+          feature: 'code',
+          modelUsed: modelResult.model,
+          fallbackTriggered: modelResult.fallback_triggered === true,
+          status: 'success',
+          requestId: requestId + ':detail',
+          metadata: {
+            project_id: project.id,
+            task_id: requestId,
+            step_id: 'ai-edit',
+            usage_kind: 'ai_code_edit',
+            usage: modelResult.usage,
+            attempts: modelResult.attempts,
+            billing_scope: modelResult.billing_scope,
+            cost_usd: Number(modelResult.cost_usd || 0),
+            changed_paths: merged.changedPaths
+          }
+        });
+      }
+
+      return Object.freeze({
+        replayed: false,
+        project: savedProject,
+        aiEdit: receipt,
+        newBalance:
+          settlement?.new_balance ??
+          settlement?.newBalance ??
+          null
+      });
+    } catch (error) {
+      if (reservationStarted) {
+        try {
+          await usageBridge.refundUsage(requestId);
+        } catch (refundError) {
+          if (typeof creditApi?.reportRefundFailure === 'function') {
+            await creditApi.reportRefundFailure({
+              requestId,
+              userId: ownerId,
+              feature: 'code',
+              error: refundError
+            }).catch(() => null);
+          }
+        }
+      }
+
+      if (receiptStarted && receiptOwned && requestId) {
+        await projectRepository().failAiEdit({
+          ownerId,
+          requestId,
+          errorCode: error.code || error.message,
+          result: { reservationStarted, settlementDone }
+        }).catch(() => null);
+      }
+      throw error;
+    }
+  }
+
+  function assertRepairRuntimeAvailable() {
+    const pricing = runtimePricingStatus({ env: sandboxEnv });
+    const sandboxStatus = sandboxAvailability(sandboxEnv);
+    if (!pricing.live || !sandboxStatus.live) {
+      const error = new Error('pack078_repair_runtime_unavailable');
+      error.code = 'pack078_repair_runtime_unavailable';
+      error.blockers = [
+        ...new Set([
+          ...(pricing.blockers || []),
+          ...(sandboxStatus.blockers || [])
+        ])
+      ];
+      throw error;
+    }
+  }
+
+  function repairPhaseRequestId(repairRunId, attemptNo, phase) {
+    const normalizedPhase = String(phase || '').replace(/[^a-z0-9_-]/gi, '').slice(0, 24);
+    if (!uuid(repairRunId) || !Number.isInteger(Number(attemptNo))) {
+      const error = new Error('pack078_repair_request_id_invalid');
+      error.code = 'pack078_repair_request_id_invalid';
+      throw error;
+    }
+    return [
+      'pack078',
+      repairRunId,
+      String(attemptNo),
+      normalizedPhase || 'phase'
+    ].join(':');
+  }
+
+  async function startRepairRetest({
+    ownerId,
+    run,
+    attempt,
+    project
+  }) {
+    const sourceJob = await runtimeExecution().refresh({
+      ownerId,
+      jobId: attempt.sourceJobId
+    });
+    const operation = retestOperation(project, sourceJob.operation);
+    const requestId = repairPhaseRequestId(
+      run.id,
+      attempt.attemptNo,
+      'retest'
+    );
+
+    const started = await runtimeExecution().start({
+      ownerId,
+      idempotencyKey: requestId,
+      body: {
+        operation,
+        projectId: project.id,
+        sandboxSessionId: run.sandboxSessionId
+      }
+    });
+
+    await repairRepository().completeAttempt({
+      ownerId,
+      attemptId: attempt.id,
+      status: 'retesting',
+      aiEditRequestId: attempt.aiEditRequestId,
+      repairedVersionId: attempt.repairedVersionId,
+      retestJobId: started.job.id,
+      result: {
+        retestOperation: operation,
+        retestRequestId: requestId
+      }
+    });
+
+    return Object.freeze({
+      job: started.job,
+      replayed: started.replayed === true
+    });
+  }
+
+  async function applyRepairAttempt({
+    ownerId,
+    run,
+    attempt
+  }) {
+    const project = await projectRepository().get({
+      ownerId,
+      projectId: run.projectId
+    });
+    const targets = repairTargets(project, attempt.diagnosis);
+    const aiRequestId = repairPhaseRequestId(
+      run.id,
+      attempt.attemptNo,
+      'ai'
+    );
+    const ai = await executeAiEdit({
+      ownerId,
+      projectId: project.id,
+      instruction: repairInstruction(
+        attempt.diagnosis,
+        attempt.attemptNo
+      ),
+      targetPaths: targets,
+      expectedRevision: project.revision,
+      requestId: aiRequestId,
+      reasonPrefix: 'repair'
+    });
+
+    await repairRepository().completeAttempt({
+      ownerId,
+      attemptId: attempt.id,
+      status: 'applied',
+      aiEditRequestId: aiRequestId,
+      repairedVersionId: ai.aiEdit?.result?.versionId || null,
+      result: {
+        changedPaths: ai.aiEdit?.result?.changedPaths || [],
+        aiEditReceiptId: ai.aiEdit?.id || null
+      }
+    });
+
+    const updatedAttempt = await repairRepository().getLatestAttempt({
+      ownerId,
+      repairRunId: run.id
+    });
+    const updatedProject = await projectRepository().get({
+      ownerId,
+      projectId: run.projectId
+    });
+    return startRepairRetest({
+      ownerId,
+      run,
+      attempt: updatedAttempt,
+      project: updatedProject
+    });
+  }
+
+  async function claimRepairAttemptFromJob({
+    ownerId,
+    run,
+    sourceJob
+  }) {
+    const diagnostic = assertRepairableJob(sourceJob);
+    return repairRepository().claimAttempt({
+      ownerId,
+      repairRunId: run.id,
+      failureFingerprint: diagnostic.fingerprint,
+      diagnosis: {
+        ...diagnostic,
+        sourceOperation: sourceJob.operation
+      },
+      sourceJobId: sourceJob.id
+    });
+  }
+
+  async function progressRepair({
+    ownerId,
+    repairRunId
+  }) {
+    assertRepairRuntimeAvailable();
+
+    let bundle = await repairRepository().publicBundle({
+      ownerId,
+      repairRunId
+    });
+    let run = bundle.run;
+
+    if (['succeeded','failed','exhausted','cancelled'].includes(run.status)) {
+      return Object.freeze({ ...bundle, retestJob: null });
+    }
+
+    let attempt = bundle.attempts[bundle.attempts.length - 1] || null;
+
+    if (!attempt) {
+      const sourceJob = await runtimeExecution().refresh({
+        ownerId,
+        jobId: run.sourceJobId
+      });
+      attempt = await claimRepairAttemptFromJob({
+        ownerId,
+        run,
+        sourceJob
+      });
+      await applyRepairAttempt({ ownerId, run, attempt });
+      bundle = await repairRepository().publicBundle({
+        ownerId,
+        repairRunId
+      });
+      attempt = bundle.attempts[bundle.attempts.length - 1];
+      const retestJob = attempt?.retestJobId
+        ? await runtimeExecution().refresh({
+            ownerId,
+            jobId: attempt.retestJobId
+          })
+        : null;
+      return Object.freeze({ ...bundle, retestJob });
+    }
+
+    if (attempt.status === 'claimed') {
+      await applyRepairAttempt({ ownerId, run, attempt });
+      bundle = await repairRepository().publicBundle({
+        ownerId,
+        repairRunId
+      });
+      attempt = bundle.attempts[bundle.attempts.length - 1];
+      const retestJob = attempt?.retestJobId
+        ? await runtimeExecution().refresh({
+            ownerId,
+            jobId: attempt.retestJobId
+          })
+        : null;
+      return Object.freeze({ ...bundle, retestJob });
+    }
+
+    if (attempt.status === 'applied' && !attempt.retestJobId) {
+      const project = await projectRepository().get({
+        ownerId,
+        projectId: run.projectId
+      });
+      await startRepairRetest({
+        ownerId,
+        run,
+        attempt,
+        project
+      });
+      bundle = await repairRepository().publicBundle({
+        ownerId,
+        repairRunId
+      });
+      attempt = bundle.attempts[bundle.attempts.length - 1];
+    }
+
+    if (attempt.status === 'retesting' && attempt.retestJobId) {
+      const retestJob = await runtimeExecution().refresh({
+        ownerId,
+        jobId: attempt.retestJobId
+      });
+      const state = repairStatusFromJob(retestJob);
+
+      if (state === 'retesting') {
+        return Object.freeze({ ...bundle, retestJob });
+      }
+
+      if (state === 'succeeded') {
+        const project = await projectRepository().get({
+          ownerId,
+          projectId: run.projectId
+        });
+        await repairRepository().completeAttempt({
+          ownerId,
+          attemptId: attempt.id,
+          status: 'succeeded',
+          aiEditRequestId: attempt.aiEditRequestId,
+          repairedVersionId: attempt.repairedVersionId,
+          retestJobId: attempt.retestJobId,
+          finalRevision: project.revision,
+          result: {
+            retestStatus: 'succeeded',
+            retestJobId: retestJob.id
+          }
+        });
+        return Object.freeze({
+          ...(await repairRepository().publicBundle({
+            ownerId,
+            repairRunId
+          })),
+          retestJob
+        });
+      }
+
+      await repairRepository().completeAttempt({
+        ownerId,
+        attemptId: attempt.id,
+        status: 'failed',
+        aiEditRequestId: attempt.aiEditRequestId,
+        repairedVersionId: attempt.repairedVersionId,
+        retestJobId: attempt.retestJobId,
+        result: {
+          retestStatus: retestJob.status,
+          diagnostic: retestJob.result?.diagnostic || null
+        }
+      });
+
+      run = await repairRepository().get({ ownerId, repairRunId });
+      if (run.status === 'exhausted') {
+        return Object.freeze({
+          ...(await repairRepository().publicBundle({
+            ownerId,
+            repairRunId
+          })),
+          retestJob
+        });
+      }
+
+      try {
+        const nextAttempt = await claimRepairAttemptFromJob({
+          ownerId,
+          run,
+          sourceJob: retestJob
+        });
+        await applyRepairAttempt({
+          ownerId,
+          run,
+          attempt: nextAttempt
+        });
+      } catch (error) {
+        if (error?.code === 'pack078_repair_repeated_failure') {
+          return Object.freeze({
+            ...(await repairRepository().publicBundle({
+              ownerId,
+              repairRunId
+            })),
+            retestJob
+          });
+        }
+        throw error;
+      }
+
+      bundle = await repairRepository().publicBundle({
+        ownerId,
+        repairRunId
+      });
+      attempt = bundle.attempts[bundle.attempts.length - 1];
+      const nextRetest = attempt?.retestJobId
+        ? await runtimeExecution().refresh({
+            ownerId,
+            jobId: attempt.retestJobId
+          })
+        : null;
+      return Object.freeze({ ...bundle, retestJob: nextRetest });
+    }
+
+    return Object.freeze({ ...bundle, retestJob: null });
+  }
 
   router.get(
     '/capabilities',
@@ -411,6 +1022,19 @@ function createCodeStudioRouter({
           previewActivation: false,
           previewStatus:
             'deferred_until_private_or_provider-protected_port_route_is_verified'
+        },
+        pack078: {
+          buildTestRepairFoundation: true,
+          operations: ['build','test'],
+          structuredDiagnostics: true,
+          maxRepairAttempts: runtimeConfig.repair?.maxAttempts || 2,
+          repairAutoApply: runtimeConfig.repair?.autoApply === true,
+          previewStates: runtimeConfig.preview?.states || [],
+          previewTransportVerified: false,
+          livePreview: false,
+          previewStatus:
+            'deferred_raw_provider_port_protection_unverified',
+          fakePreviewFallback: false
         }
       })
   );
@@ -422,8 +1046,8 @@ function createCodeStudioRouter({
       const preview = req.body?.includePreview === true
         ? {
             available: false,
-            status: 'preview_unavailable_until_pack078',
-            message: 'Preview unavailable until a verified isolated runtime is connected.'
+            status: 'pack078_live_preview_deferred',
+            message: 'Preview unavailable until the sandbox port route is verified private or provider-protected.'
           }
         : undefined;
       return res.json({ status: 'success', manifest, preview });
@@ -604,249 +1228,156 @@ function createCodeStudioRouter({
   });
 
   router.post('/projects/:projectId/ai-edit', async (req, res) => {
-    let requestId = '';
-    let receiptStarted = false;
-    let receiptOwned = false;
-    let reservationStarted = false;
-    let settlementDone = false;
-
     try {
-      if (!uuid(req.params.projectId)) {
-        const error = new Error('invalid_code_project_id');
-        error.code = 'invalid_code_project_id';
+      const result = await executeAiEdit({
+        ownerId: req.userId,
+        projectId: req.params.projectId,
+        instruction: req.body?.instruction,
+        targetPaths: req.body?.targetPaths,
+        expectedRevision: req.body?.expectedRevision,
+        requestId: req.headers['idempotency-key']
+      });
+      return res.json({ status: 'success', ...result });
+    } catch (error) {
+      return errorResponse(res, error, 'code_ai_edit_failed');
+    }
+  });
+
+  router.get('/projects/:projectId/preview/state', async (req, res) => {
+    try {
+      if (!uuid(req.params.projectId) || !uuid(req.query?.sandboxSessionId)) {
+        const error = new Error('pack078_preview_scope_invalid');
+        error.code = 'pack078_preview_scope_invalid';
         throw error;
       }
-
-      const instruction = requiredInstruction(req.body?.instruction);
       const project = await projectRepository().get({
         ownerId: req.userId,
         projectId: req.params.projectId
       });
-
-      const suppliedRevision = Number(req.body?.expectedRevision);
-      if (
-        Number.isSafeInteger(suppliedRevision) &&
-        suppliedRevision !== project.revision
-      ) {
-        const error = new Error('pack075_revision_conflict');
-        error.code = 'pack075_revision_conflict';
-        throw error;
-      }
-
-      const planId = await ownerPlan(db, req.userId);
-      if (!planHasFeature(planId, 'code')) {
-        const error = new Error('code_requires_plan');
-        error.code = 'code_requires_plan';
-        throw error;
-      }
-
-      const targets = normalizeAiTargets(project, req.body?.targetPaths);
-      const instructionSha256 = crypto
-        .createHash('sha256')
-        .update(instruction, 'utf8')
-        .digest('hex');
-
-      requestId =
-        String(req.headers['idempotency-key'] || '').trim() ||
-        crypto.randomUUID();
-
-      if (requestId.length > 200) {
-        const error = new Error('code_ai_edit_idempotency_key_invalid');
-        error.code = 'code_ai_edit_idempotency_key_invalid';
-        throw error;
-      }
-
-      const started = await projectRepository().beginAiEdit({
+      const state = await runtimeExecution().runtimeState({
         ownerId: req.userId,
-        projectId: project.id,
-        requestId,
-        instructionSha256,
-        targetPaths: targets
+        sandboxSessionId: req.query.sandboxSessionId
       });
-      receiptStarted = true;
-      receiptOwned = started.replayed !== true;
-
-      if (started.replayed) {
-        if (started.receipt.status === 'succeeded') {
-          return res.json({
-            status: 'success',
-            replayed: true,
-            aiEdit: started.receipt
-          });
-        }
-        const error = new Error(
-          started.receipt.status === 'processing'
-            ? 'code_ai_edit_in_progress'
-            : 'code_ai_edit_previous_failed'
-        );
-        error.code = error.message;
+      if (state && state.projectId !== project.id) {
+        const error = new Error('pack078_preview_scope_invalid');
+        error.code = 'pack078_preview_scope_invalid';
         throw error;
       }
-
-      await usageBridge.reserveUsage({
-        userId: req.userId,
-        requestId,
-        projectId: project.id,
-        taskId: requestId,
-        stepId: 'ai-edit',
-        usageKind: 'ai_code_edit',
-        creditsConsumed: CODE_EDIT_RESERVATION_CREDITS,
-        modelUsed: 'code-router'
-      });
-      reservationStarted = true;
-
-      const byPath = new Map(project.files.map(file => [file.path, file]));
-      const messages = [
-        {
-          role: 'system',
-          content: [
-            'You are the ZUVYR Code Studio editing engine.',
-            'Return ONLY one JSON object with keys summary and files.',
-            'files must be an array of objects with path, content and optional language.',
-            'Edit only the exact target paths supplied by the user.',
-            'Do not add, delete or rename files.',
-            'Do not wrap the JSON in markdown.',
-            'Preserve unrelated code and make the smallest correct changes.'
-          ].join(' ')
-        },
-        {
-          role: 'user',
-          content: JSON.stringify({
-            instruction,
-            project: {
-              name: project.name,
-              branch: project.currentBranch,
-              revision: project.revision,
-              entryFile: project.entryFile,
-              manifest: project.files.map(file => ({
-                path: file.path,
-                language: file.language,
-                sha256: file.sha256
-              }))
-            },
-            targetPaths: targets,
-            targetFiles: targets.map(path => ({
-              path,
-              language: byPath.get(path)?.language || null,
-              content: byPath.get(path)?.content || ''
-            }))
-          })
-        }
-      ];
-
-      let modelResult;
-      try {
-        modelResult = await routeCodeRequest('code', messages, {
-          requestId,
-          isPro: isPaidPlan(planId),
-          loadLevel: 'normal'
-        });
-      } catch (cause) {
-        const error = new Error('code_ai_edit_provider_failed');
-        error.code = 'code_ai_edit_provider_failed';
-        error.cause = cause;
-        throw error;
-      }
-
-      const parsed = parseAiEditOutput(modelResult.text);
-      const merged = mergeAiEdits(project, targets, parsed);
-      const creditsCharged = finalCodeCredits(modelResult.cost_usd);
-
-      const settlement = await usageBridge.settleUsage(
-        requestId,
-        creditsCharged
-      );
-      settlementDone = true;
-
-      let savedProject = project;
-      if (merged.changedPaths.length) {
-        savedProject = await projectRepository().save({
-          ownerId: req.userId,
-          projectId: project.id,
-          project: merged.project,
-          expectedRevision: project.revision,
-          branchName: project.currentBranch,
-          reason: 'ai_edit:' + requestId
-        });
-      }
-
-      const receipt = await projectRepository().completeAiEdit({
-        ownerId: req.userId,
-        requestId,
-        model: modelResult.model,
-        creditsCharged,
-        result: {
-          summary: parsed.summary,
-          changedPaths: merged.changedPaths,
-          versionId:
-            savedProject.versions?.[0]?.id || null,
-          revision: savedProject.revision,
-          branch: savedProject.currentBranch,
-          providerCostUsd: Number(modelResult.cost_usd || 0)
-        }
-      });
-
-      if (typeof creditApi?.logCreditEvent === 'function') {
-        await creditApi.logCreditEvent({
-          userId: req.userId,
-          feature: 'code',
-          modelUsed: modelResult.model,
-          fallbackTriggered: modelResult.fallback_triggered === true,
-          status: 'success',
-          requestId: requestId + ':detail',
-          metadata: {
-            project_id: project.id,
-            task_id: requestId,
-            step_id: 'ai-edit',
-            usage_kind: 'ai_code_edit',
-            usage: modelResult.usage,
-            attempts: modelResult.attempts,
-            billing_scope: modelResult.billing_scope,
-            cost_usd: Number(modelResult.cost_usd || 0),
-            changed_paths: merged.changedPaths
-          }
-        });
-      }
-
       return res.json({
         status: 'success',
-        replayed: false,
-        project: savedProject,
-        aiEdit: receipt,
-        newBalance:
-          settlement?.new_balance ??
-          settlement?.newBalance ??
-          null
+        preview: {
+          state: state?.previewState || 'unavailable',
+          candidatePort: state?.previewCandidatePort || null,
+          transportStatus: state?.previewTransportStatus || 'blocked',
+          diagnostic: state?.lastDiagnostic || {},
+          lastBuildJobId: state?.lastBuildJobId || null,
+          lastTestJobId: state?.lastTestJobId || null,
+          updatedAt: state?.previewUpdatedAt || state?.updatedAt || null,
+          ticketAvailable:
+            state?.previewState === 'ready' &&
+            state?.previewTransportStatus === 'verified'
+        }
       });
     } catch (error) {
-      if (reservationStarted) {
-        try {
-          await usageBridge.refundUsage(requestId);
-        } catch (refundError) {
-          if (typeof creditApi?.reportRefundFailure === 'function') {
-            await creditApi.reportRefundFailure({
-              requestId,
-              userId: req.userId,
-              feature: 'code',
-              error: refundError
-            }).catch(() => null);
-          }
-        }
+      return errorResponse(res, error, 'code_preview_state_failed');
+    }
+  });
+
+  router.post('/projects/:projectId/repair', async (req, res) => {
+    try {
+      assertRepairRuntimeAvailable();
+      if (
+        !uuid(req.params.projectId) ||
+        !uuid(req.body?.sandboxSessionId) ||
+        !uuid(req.body?.sourceJobId)
+      ) {
+        const error = new Error('pack078_repair_scope_invalid');
+        error.code = 'pack078_repair_scope_invalid';
+        throw error;
       }
 
-      if (receiptStarted && receiptOwned && requestId) {
-        await projectRepository().failAiEdit({
-          ownerId: req.userId,
-          requestId,
-          errorCode: error.code || error.message,
-          result: {
-            reservationStarted,
-            settlementDone
-          }
-        }).catch(() => null);
+      const project = await projectRepository().get({
+        ownerId: req.userId,
+        projectId: req.params.projectId
+      });
+      const sourceJob = await runtimeExecution().refresh({
+        ownerId: req.userId,
+        jobId: req.body.sourceJobId
+      });
+      const diagnostic = assertRepairableJob(sourceJob);
+
+      if (
+        sourceJob.projectId !== project.id ||
+        sourceJob.sandboxSessionId !== req.body.sandboxSessionId
+      ) {
+        const error = new Error('pack078_repair_scope_invalid');
+        error.code = 'pack078_repair_scope_invalid';
+        throw error;
       }
 
-      return errorResponse(res, error, 'code_ai_edit_failed');
+      const requestId =
+        String(req.headers['idempotency-key'] || '').trim() ||
+        crypto.randomUUID();
+      if (!requestId || requestId.length > 200) {
+        const error = new Error('pack078_repair_request_id_invalid');
+        error.code = 'pack078_repair_request_id_invalid';
+        throw error;
+      }
+
+      const run = await repairRepository().reserve({
+        ownerId: req.userId,
+        projectId: project.id,
+        sandboxSessionId: req.body.sandboxSessionId,
+        sourceJobId: sourceJob.id,
+        requestId,
+        baseRevision: project.revision,
+        failureFingerprint: diagnostic.fingerprint
+      });
+
+      const progress = await progressRepair({
+        ownerId: req.userId,
+        repairRunId: run.id
+      });
+      return res.status(202).json({
+        status: 'success',
+        repair: progress
+      });
+    } catch (error) {
+      return errorResponse(res, error, 'code_repair_start_failed');
+    }
+  });
+
+  router.get('/repair/:repairRunId', async (req, res) => {
+    try {
+      if (!uuid(req.params.repairRunId)) {
+        const error = new Error('pack078_repair_run_id_invalid');
+        error.code = 'pack078_repair_run_id_invalid';
+        throw error;
+      }
+      const repair = await repairRepository().publicBundle({
+        ownerId: req.userId,
+        repairRunId: req.params.repairRunId
+      });
+      return res.json({ status: 'success', repair });
+    } catch (error) {
+      return errorResponse(res, error, 'code_repair_lookup_failed');
+    }
+  });
+
+  router.post('/repair/:repairRunId/continue', async (req, res) => {
+    try {
+      if (!uuid(req.params.repairRunId)) {
+        const error = new Error('pack078_repair_run_id_invalid');
+        error.code = 'pack078_repair_run_id_invalid';
+        throw error;
+      }
+      const repair = await progressRepair({
+        ownerId: req.userId,
+        repairRunId: req.params.repairRunId
+      });
+      return res.json({ status: 'success', repair });
+    } catch (error) {
+      return errorResponse(res, error, 'code_repair_continue_failed');
     }
   });
 

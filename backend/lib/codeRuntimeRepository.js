@@ -83,6 +83,21 @@ function publicRuntimeState(row) {
       Number.isInteger(row.preview_port)
         ? row.preview_port
         : null,
+    previewState: row.preview_state || 'unavailable',
+    previewCandidatePort:
+      Number.isInteger(row.preview_candidate_port)
+        ? row.preview_candidate_port
+        : null,
+    previewTransportStatus: row.preview_transport_status || 'blocked',
+    lastDiagnostic:
+      row.last_diagnostic &&
+      typeof row.last_diagnostic === 'object' &&
+      !Array.isArray(row.last_diagnostic)
+        ? row.last_diagnostic
+        : {},
+    lastBuildJobId: row.last_build_job_id || null,
+    lastTestJobId: row.last_test_job_id || null,
+    previewUpdatedAt: row.preview_updated_at || null,
     startedAt: row.started_at || null,
     updatedAt: row.updated_at
   });
@@ -351,6 +366,13 @@ function createCodeRuntimeRepository(db) {
     providerCommandId = null,
     processStatus = 'idle',
     previewPort = null,
+    previewState = undefined,
+    previewCandidatePort = undefined,
+    previewTransportStatus = undefined,
+    lastDiagnostic = undefined,
+    lastBuildJobId = undefined,
+    lastTestJobId = undefined,
+    previewUpdatedAt = undefined,
     startedAt = null
   } = {}) {
     const session = await db
@@ -365,23 +387,32 @@ function createCodeRuntimeRepository(db) {
     }
     if (!session.data) throw runtimeRepoError('pack077_sandbox_not_found');
 
+    const row = {
+      sandbox_session_id: sandboxSessionId,
+      owner_id: ownerId,
+      project_id: projectId,
+      synced_revision: syncedRevision,
+      files_digest: filesDigest,
+      dependency_digest: dependencyDigest,
+      package_manager: packageManager,
+      runtime_script: runtimeScript,
+      provider_command_id: providerCommandId,
+      process_status: processStatus,
+      preview_port: previewPort,
+      started_at: startedAt,
+      updated_at: new Date().toISOString()
+    };
+    if (previewState !== undefined) row.preview_state = previewState;
+    if (previewCandidatePort !== undefined) row.preview_candidate_port = previewCandidatePort;
+    if (previewTransportStatus !== undefined) row.preview_transport_status = previewTransportStatus;
+    if (lastDiagnostic !== undefined) row.last_diagnostic = lastDiagnostic;
+    if (lastBuildJobId !== undefined) row.last_build_job_id = lastBuildJobId;
+    if (lastTestJobId !== undefined) row.last_test_job_id = lastTestJobId;
+    if (previewUpdatedAt !== undefined) row.preview_updated_at = previewUpdatedAt;
+
     const result = await db
       .from('code_sandbox_runtime_state')
-      .upsert({
-        sandbox_session_id: sandboxSessionId,
-        owner_id: ownerId,
-        project_id: projectId,
-        synced_revision: syncedRevision,
-        files_digest: filesDigest,
-        dependency_digest: dependencyDigest,
-        package_manager: packageManager,
-        runtime_script: runtimeScript,
-        provider_command_id: providerCommandId,
-        process_status: processStatus,
-        preview_port: previewPort,
-        started_at: startedAt,
-        updated_at: new Date().toISOString()
-      }, {
+      .upsert(row, {
         onConflict: 'sandbox_session_id'
       })
       .select('*')

@@ -307,6 +307,8 @@ assert.equal(publicRow.provider_session_id, undefined);
   assert(previewSource.includes("'Set-Cookie'"));
   assert(previewSource.includes('HttpOnly'));
   assert(previewSource.includes('Secure'));
+  assert(previewSource.includes('SameSite=None'));
+  assert(previewSource.includes('Partitioned'));
   assert(previewSource.includes("connect-src 'none'"));
   assert(previewSource.includes("redirect: 'manual'"));
   assert(previewSource.includes('code_preview_upstream_redirect_blocked'));

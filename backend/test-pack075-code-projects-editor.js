@@ -44,13 +44,13 @@ assert(migration.includes('pack075_revision_conflict'));
 assert(/unique\s*\(\s*owner_id\s*,\s*request_id\s*\)/i.test(migration));
 assert(!/grant\s+(?:select|insert|update|delete)[^;]*\s+to\s+(?:anon|authenticated)/i.test(migration));
 
-assert.equal(config.version, 'pack-075.code-studio.v1');
+assert.equal(config.version, 'pack-078.code-studio.v1');
 for (const capability of ['assistant','files','editor','history']) {
   assert.equal(config.capabilities[capability].enabledByDefault, true);
   assert.equal(config.capabilities[capability].status, 'implemented_pack075');
 }
-assert.equal(config.capabilities.preview.enabledByDefault, false);
-assert.equal(config.capabilities.preview.status, 'preview_unavailable_until_pack078');
+assert.equal(config.capabilities.preview.enabledByDefault, true);
+assert.equal(config.capabilities.preview.status, 'pack078_product_layer_live_deferred');
 assert.equal(config.capabilities.export_zip.enabledByDefault, false);
 assert.equal(config.capabilities.export_zip.status, 'blocked_until_pack079');
 
@@ -69,7 +69,7 @@ for (const marker of [
   "routeCodeRequest('code'",
   'receiptOwned',
   'code_ai_edit_scope_violation',
-  'preview_unavailable_until_pack078'
+  'pack078_live_preview_deferred'
 ]) {
   assert(routes.includes(marker), marker);
 }
@@ -103,13 +103,15 @@ for (const marker of [
   '/ai-edit',
   'data-zs-code-divider',
   'data-zs-code-mobile-pane',
-  'Runtime logs unavailable until PACK077'
+  'No runtime logs yet'
 ]) {
   assert(suite.includes(marker), marker);
 }
 
 const pack075Segment = suite.slice(suite.indexOf('ZUVYR PACK075 CODE STUDIO'));
-assert(!/<iframe\b/i.test(pack075Segment));
+assert(!/srcdoc\s*=/i.test(pack075Segment));
+assert(pack075Segment.includes("state.previewState === 'ready' && !!state.previewUrl"));
+assert(pack075Segment.includes('data-zs-code-preview-frame'));
 assert(css.includes('ZUVYR PACK075 CODE STUDIO'));
 assert(css.includes('.zs-code-divider'));
 assert(css.includes('@media (max-width:820px)'));

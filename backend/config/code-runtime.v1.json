@@ -1,10 +1,12 @@
 {
-  "version": "pack-077.code-runtime.v1",
-  "status": "engineering_implemented_live_deferred",
+  "version": "pack-078.code-runtime.v1",
+  "status": "engineering_implemented_live_preview_deferred",
   "operations": [
     "terminal",
     "dependencies",
-    "run"
+    "run",
+    "build",
+    "test"
   ],
   "provider": "vercel_sandbox",
   "live": {
@@ -94,12 +96,64 @@
     "reserveSecondsByOperation": {
       "terminal": 120,
       "dependencies": 300,
-      "run": 900
+      "run": 900,
+      "build": 300,
+      "test": 300
     }
   },
   "preview": {
     "detectFromLogs": true,
     "rawProviderRouteReturned": false,
-    "transport": "pack076_authenticated_proxy"
+    "transport": "pack076_authenticated_proxy",
+    "productLayer": true,
+    "states": [
+      "unavailable",
+      "starting",
+      "building",
+      "ready",
+      "updating",
+      "build_failed",
+      "runtime_error"
+    ],
+    "rawProviderRouteAllowed": false,
+    "providerPortProtectionStatus": "unverified",
+    "authenticatedProxyRequired": true,
+    "viewports": {
+      "desktop": {
+        "width": 1440,
+        "height": 900
+      },
+      "tablet": {
+        "width": 834,
+        "height": 1112
+      },
+      "mobile": {
+        "width": 390,
+        "height": 844
+      },
+      "fit": null
+    }
+  },
+  "build": {
+    "script": "build",
+    "timeoutMs": 300000,
+    "wait": true,
+    "logs": true
+  },
+  "test": {
+    "script": "test",
+    "timeoutMs": 300000,
+    "wait": true,
+    "logs": true
+  },
+  "repair": {
+    "enabled": true,
+    "maxAttempts": 2,
+    "requiresFailedBuildOrTest": true,
+    "requiresFreshProjectRevision": true,
+    "autoApply": false,
+    "everyAttemptMetered": true,
+    "stopOnReady": true,
+    "stopOnRepeatedFingerprint": true
   }
 }

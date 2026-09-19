@@ -23,7 +23,7 @@
   "code_preview": {
     "enabled": true,
     "tier": "pro",
-    "status": "foundation"
+    "status": "pack078_product_layer_live_deferred"
   },
   "code_export_zip": {
     "enabled": true,
@@ -53,12 +53,12 @@
   "code_build": {
     "enabled": false,
     "tier": "pro",
-    "status": "blocked_no_sandbox"
+    "status": "pack078_implemented_live_deferred"
   },
   "code_test": {
     "enabled": false,
     "tier": "pro",
-    "status": "blocked_no_sandbox"
+    "status": "pack078_implemented_live_deferred"
   },
   "code_deploy": {
     "enabled": false,

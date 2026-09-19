@@ -2,10 +2,11 @@
 const assert = require('node:assert/strict');
 const { config, normalizeCapability, assertCodeCapabilityAvailable, publicInventory } = require('./lib/codeStudioRegistry');
 
-assert.equal(config.version, 'pack-075.code-studio.v1');
+assert.equal(config.version, 'pack-078.code-studio.v1');
 assert.equal(normalizeCapability(' Preview '), 'preview');
 assert.equal(assertCodeCapabilityAvailable('files').capability, 'files');
-assert.throws(() => assertCodeCapabilityAvailable('preview'), error => error.code === 'preview_unavailable_until_pack078');
+assert.equal(assertCodeCapabilityAvailable('preview').capability, 'preview');
+assert.equal(config.capabilities.preview.status, 'pack078_product_layer_live_deferred');
 assert.throws(() => assertCodeCapabilityAvailable('export_zip'), error => error.code === 'blocked_until_pack079');
 for (const capability of ['terminal', 'run', 'dependencies', 'build', 'test', 'deploy']) {
   assert.equal(config.capabilities[capability].enabledByDefault, false);

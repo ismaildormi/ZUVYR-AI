@@ -9,8 +9,12 @@ const { createCodeStudioUsageBridge } = require('./codeStudioUsageBridge');
 const pricingDefault = require('./codeRuntimePricing');
 const {
   normalizeRuntimeRequest,
-  commandSpecForOperation
+  commandSpecForOperation,
+  detectPreviewPort
 } = require('./codeRuntimeRequestContract');
+const {
+  structuredDiagnostic
+} = require('./codeRuntimeDiagnostics');
 const { buildProjectTarball } = require('./codeProjectSandboxArchive');
 const { createVercelSandboxProvider } = require('./codeVercelSandboxProvider');
 
@@ -575,7 +579,37 @@ function createCodeRuntimeExecutor({
             : priorState?.runtimeScript || null,
         providerCommandId: commandId,
         processStatus: 'running',
-        previewPort: null,
+        previewPort: priorState?.previewPort || null,
+        previewState:
+          request.operation === 'build'
+            ? 'building'
+            : request.operation === 'run'
+              ? 'starting'
+              : priorState?.previewState,
+        previewCandidatePort:
+          request.operation === 'run'
+            ? null
+            : priorState?.previewCandidatePort,
+        previewTransportStatus:
+          request.operation === 'run'
+            ? 'blocked'
+            : priorState?.previewTransportStatus,
+        lastDiagnostic:
+          ['build','test','run'].includes(request.operation)
+            ? {}
+            : priorState?.lastDiagnostic,
+        lastBuildJobId:
+          request.operation === 'build'
+            ? job.id
+            : priorState?.lastBuildJobId,
+        lastTestJobId:
+          request.operation === 'test'
+            ? job.id
+            : priorState?.lastTestJobId,
+        previewUpdatedAt:
+          ['build','run'].includes(request.operation)
+            ? new Date(now()).toISOString()
+            : priorState?.previewUpdatedAt,
         startedAt: providerTimestamp(started.startedAt, now())
       });
 
@@ -633,12 +667,12 @@ function createCodeRuntimeExecutor({
       sessionId: job.sandbox_session_id
     });
 
-    await persistProviderLogs({
+    const persistedChunks = await persistProviderLogs({
       ownerId,
       jobId: job.id,
       providerSessionId: session.provider_session_id,
       providerCommandId: job.provider_command_id
-    }).catch(() => null);
+    }).catch(() => []);
 
     let command;
     try {
@@ -654,6 +688,40 @@ function createCodeRuntimeExecutor({
     }
 
     if (!command.finished) {
+      if (job.operation === 'run') {
+        const priorState = await runtime.getRuntimeState({
+          ownerId,
+          sandboxSessionId: job.sandbox_session_id
+        });
+        const logText = persistedChunks
+          .map(chunk => String(chunk?.message || ''))
+          .join('\n');
+        const candidatePort = detectPreviewPort(
+          logText,
+          job.command_spec?.previewPort
+        );
+        await runtime.upsertRuntimeState({
+          ownerId,
+          projectId: job.project_id,
+          sandboxSessionId: job.sandbox_session_id,
+          syncedRevision: priorState?.syncedRevision || null,
+          filesDigest: priorState?.filesDigest || null,
+          dependencyDigest: priorState?.dependencyDigest || null,
+          packageManager: priorState?.packageManager || null,
+          runtimeScript: priorState?.runtimeScript || job.command_spec?.script || null,
+          providerCommandId: job.provider_command_id,
+          processStatus: 'running',
+          previewPort: priorState?.previewPort || null,
+          previewState: 'unavailable',
+          previewCandidatePort: candidatePort,
+          previewTransportStatus: 'blocked',
+          lastDiagnostic: priorState?.lastDiagnostic || {},
+          lastBuildJobId: priorState?.lastBuildJobId,
+          lastTestJobId: priorState?.lastTestJobId,
+          previewUpdatedAt: new Date(now()).toISOString(),
+          startedAt: priorState?.startedAt || job.started_at || null
+        });
+      }
       await touchSandbox(ownerId, session);
       return runtime.get({ ownerId, jobId });
     }
@@ -665,13 +733,29 @@ function createCodeRuntimeExecutor({
       );
     }
 
+    const diagnostic =
+      command.exitCode === 0
+        ? null
+        : structuredDiagnostic({
+            operation: job.operation,
+            exitCode: command.exitCode,
+            chunks: persistedChunks,
+            fallbackCode:
+              job.operation === 'build'
+                ? 'pack078_build_failed'
+                : job.operation === 'test'
+                  ? 'pack078_test_failed'
+                  : 'pack078_runtime_failed'
+          });
+
     const finalized = await settleAndFinalize({
       ownerId,
       job,
       command,
       finalStatus: command.exitCode === 0 ? 'succeeded' : 'failed',
       result: {
-        providerFinished: true
+        providerFinished: true,
+        diagnostic
       }
     });
 
@@ -679,6 +763,13 @@ function createCodeRuntimeExecutor({
       ownerId,
       sandboxSessionId: job.sandbox_session_id
     });
+    const nextPreviewState =
+      job.operation === 'build' && command.exitCode !== 0
+        ? 'build_failed'
+        : job.operation === 'run' && command.exitCode !== 0
+          ? 'runtime_error'
+          : priorState?.previewState || 'unavailable';
+
     await runtime.upsertRuntimeState({
       ownerId,
       projectId: job.project_id,
@@ -695,7 +786,23 @@ function createCodeRuntimeExecutor({
       providerCommandId:
         job.operation === 'run' ? job.provider_command_id : null,
       processStatus: command.exitCode === 0 ? 'stopped' : 'failed',
-      previewPort: null,
+      previewPort: priorState?.previewPort || null,
+      previewState: nextPreviewState,
+      previewCandidatePort: priorState?.previewCandidatePort,
+      previewTransportStatus: priorState?.previewTransportStatus || 'blocked',
+      lastDiagnostic: diagnostic || {},
+      lastBuildJobId:
+        job.operation === 'build'
+          ? job.id
+          : priorState?.lastBuildJobId,
+      lastTestJobId:
+        job.operation === 'test'
+          ? job.id
+          : priorState?.lastTestJobId,
+      previewUpdatedAt:
+        ['build','run'].includes(job.operation)
+          ? new Date(now()).toISOString()
+          : priorState?.previewUpdatedAt,
       startedAt: priorState?.startedAt || null
     });
 
@@ -850,6 +957,13 @@ function createCodeRuntimeExecutor({
     return Object.freeze(receipt);
   }
 
+  async function runtimeState({
+    ownerId,
+    sandboxSessionId
+  } = {}) {
+    return runtime.getRuntimeState({ ownerId, sandboxSessionId });
+  }
+
   async function logs({
     ownerId,
     jobId,
@@ -869,6 +983,7 @@ function createCodeRuntimeExecutor({
     cancel,
     listJobs,
     reconcileActive,
+    runtimeState,
     logs,
     deterministicCommandId,
     commandLogChunks
