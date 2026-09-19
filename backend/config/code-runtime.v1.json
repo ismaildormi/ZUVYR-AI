@@ -1,0 +1,105 @@
+{
+  "version": "pack-077.code-runtime.v1",
+  "status": "engineering_implemented_live_deferred",
+  "operations": [
+    "terminal",
+    "dependencies",
+    "run"
+  ],
+  "provider": "vercel_sandbox",
+  "live": {
+    "enabledByDefault": false,
+    "environmentGate": "PACK077_RUNTIME_PAID_EXECUTION_ENABLED",
+    "requiresSandboxGate": "M15",
+    "requiresVerifiedRuntimePricing": true
+  },
+  "workspace": {
+    "cwd": "/vercel/sandbox",
+    "maxFiles": 128,
+    "maxUncompressedBytes": 8388608,
+    "maxArchiveBytes": 6291456,
+    "forbiddenPathSegments": [
+      ".git",
+      "node_modules",
+      ".vercel"
+    ],
+    "forbiddenBasenames": [
+      ".env",
+      ".env.local",
+      ".env.production",
+      "credentials.json",
+      "service-account.json"
+    ]
+  },
+  "terminal": {
+    "maxArgs": 64,
+    "maxArgChars": 2048,
+    "maxCommandChars": 128,
+    "timeoutMs": 120000,
+    "sudo": false,
+    "shell": false
+  },
+  "dependencies": {
+    "packageManager": "npm",
+    "allowInstallScripts": false,
+    "networkPolicy": {
+      "mode": "custom",
+      "allowedDomains": [
+        "registry.npmjs.org"
+      ],
+      "allowedCIDRs": [],
+      "deniedCIDRs": []
+    },
+    "restoreNetworkMode": "deny-all",
+    "timeoutMs": 300000,
+    "argsWithLock": [
+      "ci",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund"
+    ],
+    "argsWithoutLock": [
+      "install",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund"
+    ]
+  },
+  "run": {
+    "timeoutMs": 900000,
+    "candidateScripts": [
+      "dev",
+      "start"
+    ],
+    "host": "0.0.0.0",
+    "candidatePorts": [
+      3000,
+      5173,
+      4321,
+      8080
+    ],
+    "environment": {
+      "HOST": "0.0.0.0"
+    }
+  },
+  "logs": {
+    "maxChunkBytes": 16384,
+    "maxPersistedChunksPerJob": 256,
+    "maxReturnedChunks": 200
+  },
+  "metering": {
+    "usageKind": "sandbox_runtime",
+    "registryOperationType": "sandbox_runtime",
+    "registryUnitType": "runtime_seconds",
+    "reserveSecondsByOperation": {
+      "terminal": 120,
+      "dependencies": 300,
+      "run": 900
+    }
+  },
+  "preview": {
+    "detectFromLogs": true,
+    "rawProviderRouteReturned": false,
+    "transport": "pack076_authenticated_proxy"
+  }
+}
