@@ -9,7 +9,7 @@ function repoError(code,cause=null){const e=new Error(code);e.code=code;e.cause=
 function duplicate(error){const s=Number(error&&(error.statusCode||error.status||error.code));const m=String(error?.message||'').toLowerCase();return s===409||m.includes('already exists')||m.includes('duplicate');}
 function digest(buffer){return crypto.createHash('sha256').update(buffer).digest('hex');}
 
-function createAudioResultRepository({db,storage,contentRepository=null,assetKernel=null}={}){
+function createAudioResultRepository({db,storage,contentRepository=null,assetKernel=null,fetchImpl=globalThis.fetch}={}){
   if(!db||typeof db.from!=='function'||typeof db.rpc!=='function') throw new TypeError('Audio result repository requires database client.');
   if(!storage||typeof storage.from!=='function') throw new TypeError('Audio result repository requires storage client.');
   const content=contentRepository||createContentRepository({client:db});
@@ -58,6 +58,7 @@ function createAudioResultRepository({db,storage,contentRepository=null,assetKer
         language:job.detected_language||null,
         provider:job.provider||null,
         model:job.model||null,
+        outputs:Array.isArray(job.usage?.outputs)?job.usage.outputs:[],
         canonical:true
       });
     }
@@ -77,6 +78,14 @@ function createAudioResultRepository({db,storage,contentRepository=null,assetKer
         providerResult,
         provider:job.provider||'deepgram',
         model:job.model||'aura-2-thalia-en',
+        canonical:false
+      });
+    }
+    if(providerResult.kind==='pack074_fal_result'&&Array.isArray(providerResult.outputs)&&providerResult.outputs.length){
+      return Object.freeze({
+        providerResult,
+        provider:job.provider||'fal',
+        model:job.model||providerResult.model||null,
         canonical:false
       });
     }
@@ -249,7 +258,141 @@ function createAudioResultRepository({db,storage,contentRepository=null,assetKer
     return Object.freeze({contentId:record.contentId,versionId:record.versionId,assetId:audioAsset.assetId,mimeType,format});
   }
 
-  return Object.freeze({getExisting,persistTranscript,persistSynthesizedAudio,persistCleanedAudio});
+
+  async function fetchProviderAsset(item){
+    if(typeof fetchImpl!=='function') throw repoError('pack074_fetch_unavailable');
+    const url=String(item?.url||'');
+    if(!/^https:\/\//i.test(url)) throw repoError('pack074_provider_url_invalid');
+    const response=await fetchImpl(url,{redirect:'follow'});
+    if(!response||!response.ok) throw repoError('pack074_provider_download_failed');
+    const declared=Number(response.headers?.get?.('content-length')||0);
+    const max=100*1024*1024;
+    if(Number.isFinite(declared)&&declared>max) throw repoError('pack074_provider_asset_too_large');
+    const buffer=Buffer.from(await response.arrayBuffer());
+    if(buffer.length<1||buffer.length>max) throw repoError('pack074_provider_asset_too_large');
+    const mimeType=String(
+      item.mimeType||response.headers?.get?.('content-type')||
+      (item.assetType==='video'?'video/mp4':'audio/wav')
+    ).split(';')[0].trim().toLowerCase();
+    const audioMime=new Set([
+      'audio/wav','audio/x-wav','audio/mpeg','audio/mp3','audio/ogg',
+      'audio/mp4','audio/x-m4a','audio/aac','audio/x-aac','audio/flac','audio/webm'
+    ]);
+    const videoMime=new Set(['video/mp4','video/quicktime','video/webm']);
+    if(item.assetType==='video'?!videoMime.has(mimeType):!audioMime.has(mimeType)){
+      throw repoError('pack074_provider_mime_unsupported');
+    }
+    return Object.freeze({buffer,mimeType});
+  }
+
+  async function persistPack074Artifacts({
+    ownerId,jobId,operation,request,outputs,provider='fal',model,
+    providerMetadata={},sources=[]
+  }){
+    if(!Array.isArray(outputs)||outputs.length<1||outputs.length>2){
+      throw repoError('pack074_output_manifest_invalid');
+    }
+    const persisted=[];
+    for(const output of outputs){
+      const downloaded=await fetchProviderAsset(output);
+      const sha256=digest(downloaded.buffer);
+      const role=String(output.role||'primary');
+      const kind=output.assetType==='video'?'video':'audio';
+      const assetType=output.assetType==='music'?'music':kind;
+      const title={
+        music_generation:'Generated music',
+        sound_effects:'Generated sound effect',
+        remix:'Remixed audio',
+        stem_separation:role==='target'?'Separated target':'Separated residual',
+        translate_dub:'Dubbed audio',
+        audio_to_video:'Audio-driven video'
+      }[operation]||'Audio result';
+      const rights={
+        sourceRightsConfirmed:request?.options?.sourceRightsConfirmed===true,
+        rightsBasis:request?.options?.rightsBasis||null,
+        providerCommercialUseVerified:true,
+        trainingRightsIndependent:true
+      };
+      const record=await content.ensure({
+        ownerId,projectId:null,kind,title,
+        sourceKind:operation,
+        sourceSystem:'zuvyr_audio_pack074',
+        sourceId:['pack074',operation,jobId,role,provider,model].join(':'),
+        sourceVersionKey:sha256,
+        metadata:{pack:74,jobId,operation,role,provider,model,rights},
+        version:{
+          mimeType:downloaded.mimeType,uri:null,text:null,sha256,
+          payload:{operation,role,provider,model,rights,providerMetadata},
+          provenance:{pack:74,jobId,operation,role,provider,model,rights,sources}
+        }
+      });
+      const canonical=await upload({
+        ownerId,contentId:record.contentId,versionId:record.versionId,
+        buffer:downloaded.buffer,mimeType:downloaded.mimeType,
+        metadata:{pack:74,jobId,artifact:role,operation,provider,model,rights,providerMetadata}
+      });
+      const relationType=operation==='audio_to_video'?'rendered_from':'derived_from';
+      for(const source of sources){
+        if(source?.assetId&&source?.versionId){
+          await lineage({
+            ownerId,
+            derivedAssetId:canonical.assetId,
+            source,
+            relationType,
+            metadata:{pack:74,jobId,operation,role}
+          });
+        }
+      }
+      const durationSeconds =
+        operation==='music_generation'||operation==='sound_effects'
+          ? request.durationSeconds
+          : sources.find(item=>item?.durationSeconds)?.durationSeconds||null;
+      const artifact=await db.from('audio_artifacts').insert({
+        owner_id:ownerId,job_id:jobId,asset_type:assetType,url:null,
+        mime_type:downloaded.mimeType,duration_seconds:durationSeconds,
+        metadata:{pack:74,role,operation,provider,model,rights,providerMetadata},
+        canonical_content_id:record.contentId,canonical_asset_id:canonical.assetId
+      });
+      if(artifact.error&&!duplicate(artifact.error)) throw repoError('audio_artifact_persist_failed',artifact.error);
+      persisted.push(Object.freeze({
+        role,assetType,contentId:record.contentId,versionId:record.versionId,
+        assetId:canonical.assetId,mimeType:downloaded.mimeType,
+        fileSizeBytes:downloaded.buffer.length,sha256
+      }));
+    }
+    const primary=persisted.find(item=>item.role==='primary')||persisted[0];
+    const current=await db.from('audio_jobs').select('usage')
+      .eq('id',jobId).eq('owner_id',ownerId).maybeSingle();
+    if(current.error) throw repoError('audio_job_usage_lookup_failed',current.error);
+    const usage=current.data?.usage&&typeof current.data.usage==='object'?current.data.usage:{};
+    const manifest=persisted.map(item=>({
+      role:item.role,assetType:item.assetType,contentId:item.contentId,
+      assetId:item.assetId,mimeType:item.mimeType,fileSizeBytes:item.fileSizeBytes,
+      sha256:item.sha256
+    }));
+    const update=await db.from('audio_jobs').update({
+      canonical_content_id:primary.contentId,
+      canonical_asset_id:primary.assetId,
+      usage:{
+        ...usage,pack:74,provider,model,operation,
+        sourceRightsConfirmed:request?.options?.sourceRightsConfirmed===true,
+        rightsBasis:request?.options?.rightsBasis||null,
+        outputs:manifest,
+        providerMetadata
+      },
+      updated_at:new Date().toISOString()
+    }).eq('id',jobId).eq('owner_id',ownerId);
+    if(update.error) throw repoError('audio_job_result_link_failed',update.error);
+    return Object.freeze({
+      contentId:primary.contentId,versionId:primary.versionId,assetId:primary.assetId,
+      outputs:Object.freeze(persisted)
+    });
+  }
+
+  return Object.freeze({
+    getExisting,persistTranscript,persistSynthesizedAudio,persistCleanedAudio,
+    persistPack074Artifacts
+  });
 }
 
 function getDefaultAudioResultRepository(){

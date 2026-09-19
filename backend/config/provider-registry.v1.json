@@ -253,7 +253,7 @@
         "provider_managed"
       ],
       "quotaType": "provider_managed",
-      "termsLicenseNotes": "Pack061 ordinary FLUX Schnell may route through HF_TOKEN or direct FAL_KEY. Pack062 FLUX Kontext multi requires direct FAL_KEY because Hugging Face Inference Providers returned model-not-supported for provider fal-ai on 2026-09-18. Pack063 adds direct-Fal source edit, Qwen inpaint and directional outpaint adapters. Paid Pack063 execution remains disabled by default; inpaint/outpaint variable-MP billing activation is fail-closed. Pack064 Phase01 adds repository adapters for BiRefNet v2 background removal, Flux Vision Upscaler and Image Apps v2 relighting. No operation is exposed or externally executed until Phase02 completes pricing/persistence/runtime wiring. Pack068 adds direct-fal video edit/VFX adapters. LTX 2.3 retake/extend, Bria erase/background removal and Kling LipSync have verified pre-charge pricing. LightX relight/recamera adapters are repository-verified but paid execution remains blocked because fal prices output seconds and source-to-output duration equivalence is not documented. Pack069 adds auto-subtitle, ElevenLabs dubbing and Bria increase-resolution video adapters with official fal pricing. Paid execution remains environment-gated.",
+      "termsLicenseNotes": "Pack061 ordinary FLUX Schnell may route through HF_TOKEN or direct FAL_KEY. Pack062 FLUX Kontext multi requires direct FAL_KEY because Hugging Face Inference Providers returned model-not-supported for provider fal-ai on 2026-09-18. Pack063 adds direct-Fal source edit, Qwen inpaint and directional outpaint adapters. Paid Pack063 execution remains disabled by default; inpaint/outpaint variable-MP billing activation is fail-closed. Pack064 Phase01 adds repository adapters for BiRefNet v2 background removal, Flux Vision Upscaler and Image Apps v2 relighting. No operation is exposed or externally executed until Phase02 completes pricing/persistence/runtime wiring. Pack068 adds direct-fal video edit/VFX adapters. LTX 2.3 retake/extend, Bria erase/background removal and Kling LipSync have verified pre-charge pricing. LightX relight/recamera adapters are repository-verified but paid execution remains blocked because fal prices output seconds and source-to-output duration equivalence is not documented. Pack069 adds auto-subtitle, ElevenLabs dubbing and Bria increase-resolution video adapters with official fal pricing. Paid execution remains environment-gated. Pack074 adds verified fal music/SFX/remix/stems/audio-to-video adapters; audio-only ElevenLabs dubbing input/pricing is verified but execution stays blocked until the provider output contract is explicit.",
       "adapter": "image.providers",
       "capabilities": [
         {
@@ -624,6 +624,144 @@
             ],
             "requiredEnvironment": {
               "name": "PACK069_ENHANCE_PAID_EXECUTION_ENABLED",
+              "value": "true"
+            }
+          }
+        },
+        {
+          "id": "audio.music_generation",
+          "verification": "verified_provider_docs",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "model": "cassetteai/music-generator",
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/cassetteai/music-generator/api"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "fal-cassetteai-music-output-minute"
+            ],
+            "requiredEnvironment": {
+              "name": "PACK074_MUSIC_PAID_EXECUTION_ENABLED",
+              "value": "true"
+            }
+          }
+        },
+        {
+          "id": "audio.sound_effects",
+          "verification": "verified_provider_docs",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "model": "cassetteai/sound-effects-generator",
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/cassetteai/sound-effects-generator/api"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "fal-cassetteai-sfx-generation"
+            ],
+            "requiredEnvironment": {
+              "name": "PACK074_SFX_PAID_EXECUTION_ENABLED",
+              "value": "true"
+            }
+          }
+        },
+        {
+          "id": "audio.remix",
+          "verification": "verified_provider_docs",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "model": "fal-ai/ace-step/audio-to-audio",
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/fal-ai/ace-step/audio-to-audio/api"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "fal-ace-step-remix-generated-second"
+            ],
+            "requiredEnvironment": {
+              "name": "PACK074_REMIX_PAID_EXECUTION_ENABLED",
+              "value": "true"
+            }
+          }
+        },
+        {
+          "id": "audio.stem_separation",
+          "verification": "verified_provider_docs",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "model": "fal-ai/sam-audio/separate",
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/fal-ai/sam-audio/separate/api"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "fal-sam-audio-separate-30s"
+            ],
+            "requiredEnvironment": {
+              "name": "PACK074_STEMS_PAID_EXECUTION_ENABLED",
+              "value": "true"
+            }
+          }
+        },
+        {
+          "id": "audio.translate_dub",
+          "verification": "verified_input_contract_output_pending",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "model": "fal-ai/elevenlabs/dubbing",
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/fal-ai/elevenlabs/dubbing/api"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "fal-elevenlabs-audio-dubbing-rounded-minute"
+            ],
+            "requiredEnvironment": {
+              "name": "PACK074_DUB_PAID_EXECUTION_ENABLED",
+              "value": "true"
+            }
+          }
+        },
+        {
+          "id": "audio.audio_to_video",
+          "verification": "verified_provider_docs",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "model": "fal-ai/kling-video/lipsync/audio-to-video",
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/fal-ai/kling-video/lipsync/audio-to-video/api"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "fal-kling-audio-to-video-lipsync-5s"
+            ],
+            "requiredEnvironment": {
+              "name": "PACK074_AUDIO_TO_VIDEO_PAID_EXECUTION_ENABLED",
               "value": "true"
             }
           }

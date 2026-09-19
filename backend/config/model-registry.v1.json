@@ -1109,6 +1109,273 @@
         "state": "active",
         "replacedBy": null
       }
+    },
+    {
+      "id": "fal:audio.music:cassetteai",
+      "providerId": "fal",
+      "modelId": "cassetteai/music-generator",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "audio.music_generation"
+      ],
+      "modalities": {
+        "input": [
+          "text"
+        ],
+        "output": [
+          "audio"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "provider_default",
+      "latencyClass": "async_provider",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Official fal model/API page revalidated 2026-09-19; paid execution remains independently environment-gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "fal-cassetteai-music-output-minute"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK074_MUSIC_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "fal:audio.sfx:cassetteai",
+      "providerId": "fal",
+      "modelId": "cassetteai/sound-effects-generator",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "audio.sound_effects"
+      ],
+      "modalities": {
+        "input": [
+          "text"
+        ],
+        "output": [
+          "audio"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "provider_default",
+      "latencyClass": "async_provider",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Official fal model/API page revalidated 2026-09-19; paid execution remains independently environment-gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "fal-cassetteai-sfx-generation"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK074_SFX_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "fal:audio.remix:ace-step",
+      "providerId": "fal",
+      "modelId": "fal-ai/ace-step/audio-to-audio",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "audio.remix"
+      ],
+      "modalities": {
+        "input": [
+          "audio",
+          "text"
+        ],
+        "output": [
+          "audio"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "provider_default",
+      "latencyClass": "async_provider",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Official fal model/API page revalidated 2026-09-19; paid execution remains independently environment-gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "fal-ace-step-remix-generated-second"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK074_REMIX_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "fal:audio.stems:sam-audio",
+      "providerId": "fal",
+      "modelId": "fal-ai/sam-audio/separate",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "audio.stem_separation"
+      ],
+      "modalities": {
+        "input": [
+          "audio",
+          "text"
+        ],
+        "output": [
+          "audio"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "provider_default",
+      "latencyClass": "async_provider",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Official fal model/API page revalidated 2026-09-19; paid execution remains independently environment-gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "fal-sam-audio-separate-30s"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK074_STEMS_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "fal:audio.dub:elevenlabs",
+      "providerId": "fal",
+      "modelId": "fal-ai/elevenlabs/dubbing",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "audio.translate_dub"
+      ],
+      "modalities": {
+        "input": [
+          "audio"
+        ],
+        "output": [
+          "audio"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "provider_default",
+      "latencyClass": "async_provider",
+      "commercialEligibility": {
+        "state": "blocked_output_contract_unverified",
+        "evidence": "fal documents commercial-use dubbing and audio input, but Pack074 has not verified a stable audio-only output field."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "fal-elevenlabs-audio-dubbing-rounded-minute"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK074_DUB_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "fal:audio.to-video:kling-lipsync",
+      "providerId": "fal",
+      "modelId": "fal-ai/kling-video/lipsync/audio-to-video",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "audio.audio_to_video"
+      ],
+      "modalities": {
+        "input": [
+          "audio",
+          "video"
+        ],
+        "output": [
+          "video"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "provider_default",
+      "latencyClass": "async_provider",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Official fal model/API page revalidated 2026-09-19; paid execution remains independently environment-gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "fal-kling-audio-to-video-lipsync-5s"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK074_AUDIO_TO_VIDEO_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
     }
   ]
 }

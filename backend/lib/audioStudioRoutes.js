@@ -29,6 +29,7 @@ function createAudioStudioRouter({
   queue = null,
   creditApi = null,
   audioInputResolver = null,
+  videoInputResolver = null,
   assetKernel = null,
   env = process.env
 } = {}) {
@@ -128,7 +129,45 @@ function createAudioStudioRouter({
       },
       lineage: {}
     };
-    if (operationAvailability.requiresSourceAudio === true) {
+    if (request.operation === 'audio_to_video') {
+      if (!videoInputResolver || typeof videoInputResolver.inspect !== 'function') {
+        return res.status(503).json({
+          status:'error',
+          code:'audio_to_video_runtime_dependencies_unavailable',
+          message:'Audio-to-video execution is not available.'
+        });
+      }
+      try {
+        const media = await videoInputResolver.inspect({
+          ownerId:req.userId,
+          request:{
+            operation:'lip_sync',
+            sourceVideoAssetId:request.sourceVideoAssetId,
+            sourceAudioAssetId:request.sourceAudioAssetId
+          }
+        });
+        inspected = {
+          source: {
+            durationSeconds:media.audio?.durationSeconds || null,
+            fileSizeBytes:media.audio?.fileSizeBytes || null,
+            mimeType:media.audio?.mimeType || null
+          },
+          videoSource: {
+            durationSeconds:media.source?.durationSeconds || null,
+            fileSizeBytes:media.source?.fileSizeBytes || null,
+            mimeType:media.source?.mimeType || null
+          },
+          lineage:media.lineage || {}
+        };
+      } catch (error) {
+        const code=String(error.code||error.message||'');
+        return res.status(code.includes('duration')||code.includes('not_ready')?409:400).json({
+          status:'error',
+          code:code||'audio_to_video_source_preflight_failed',
+          message:'The selected audio/video source is not ready.'
+        });
+      }
+    } else if (operationAvailability.requiresSourceAudio === true) {
       try {
         inspected = await audioInputResolver.inspect({
           ownerId: req.userId,
@@ -153,7 +192,10 @@ function createAudioStudioRouter({
           sourceFileSizeBytes: inspected.source.fileSizeBytes,
           sourceMimeType: inspected.source.mimeType,
           speechCharacters: Array.from(String(request.text || '')).length,
-          canonicalLineage: inspected.lineage
+          canonicalLineage: inspected.lineage,
+          sourceVideoDurationSeconds: inspected.videoSource?.durationSeconds || null,
+          sourceVideoFileSizeBytes: inspected.videoSource?.fileSizeBytes || null,
+          sourceVideoMimeType: inspected.videoSource?.mimeType || null
         },
         env
       });
@@ -173,12 +215,17 @@ function createAudioStudioRouter({
         feature: 'audio',
         modelUsed: pricing.provider,
         creditsConsumed: pricing.credits,
-        usageKind:
-          request.operation === 'transcription'
-            ? 'audio_transcription'
-            : request.operation === 'text_to_speech'
-              ? 'audio_text_to_speech'
-              : 'audio_cleanup',
+        usageKind: ({
+          transcription:'audio_transcription',
+          text_to_speech:'audio_text_to_speech',
+          audio_cleanup:'audio_cleanup',
+          music_generation:'audio_music_generation',
+          sound_effects:'audio_sound_effects',
+          remix:'audio_remix',
+          stem_separation:'audio_stem_separation',
+          translate_dub:'audio_translate_dub',
+          audio_to_video:'audio_to_video'
+        })[request.operation] || 'audio_unknown',
         pricingVersion: pricing.pricingVersion
       });
     } catch (error) {
@@ -218,6 +265,11 @@ function createAudioStudioRouter({
         sourceDurationSeconds: inspected.source.durationSeconds,
         sourceMimeType: inspected.source.mimeType,
         sourceFileSizeBytes: inspected.source.fileSizeBytes,
+        sourceVideoDurationSeconds: inspected.videoSource?.durationSeconds || null,
+        sourceVideoMimeType: inspected.videoSource?.mimeType || null,
+        sourceVideoFileSizeBytes: inspected.videoSource?.fileSizeBytes || null,
+        sourceRightsConfirmed: request.options?.sourceRightsConfirmed === true,
+        rightsBasis: request.options?.rightsBasis || null,
         speechCharacters: Array.from(String(request.text || '')).length
       }
     };
@@ -323,6 +375,44 @@ function createAudioStudioRouter({
           .order('segment_index', { ascending: true })
       : { data: [], error: null };
 
+    let artifacts = [];
+    if (completed) {
+      const rows = await db.from('audio_artifacts')
+        .select('id,asset_type,mime_type,duration_seconds,metadata,canonical_content_id,canonical_asset_id')
+        .eq('owner_id', req.userId)
+        .eq('job_id', jobId)
+        .order('created_at', { ascending: true });
+      if (!rows.error) {
+        artifacts = await Promise.all((rows.data || []).map(async item => {
+          let artifactDownloadUrl = null;
+          if (item.canonical_asset_id && assetKernel) {
+            try {
+              const signed = await assetKernel.createSignedDownload({
+                ownerId:req.userId,
+                assetId:item.canonical_asset_id,
+                requestId:'audio-job:' + jobId + ':artifact:' + item.id,
+                expiresIn:3600
+              });
+              artifactDownloadUrl = signed.signedUrl;
+            } catch (_) {
+              artifactDownloadUrl = null;
+            }
+          }
+          return {
+            id:item.id,
+            role:item.metadata?.role || 'primary',
+            assetType:item.asset_type,
+            mimeType:item.mime_type,
+            durationSeconds:item.duration_seconds,
+            canonicalContentId:item.canonical_content_id,
+            canonicalAssetId:item.canonical_asset_id,
+            downloadUrl:artifactDownloadUrl,
+            rights:item.metadata?.rights || null
+          };
+        }));
+      }
+    }
+
     return res.json({
       status: 'success',
       job: {
@@ -341,6 +431,7 @@ function createAudioStudioRouter({
         canonicalAssetId: completed ? result.data.canonical_asset_id : null,
         downloadUrl,
         segments: segments.error ? [] : (segments.data || []),
+        artifacts,
         usage: result.data.usage || {},
         createdAt: result.data.created_at,
         updatedAt: result.data.updated_at,

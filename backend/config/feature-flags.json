@@ -303,12 +303,12 @@
   "audio_music_generation": {
     "enabled": false,
     "tier": "pro",
-    "status": "blocked_unpriced"
+    "status": "implemented_pack074_paid_live_deferred"
   },
   "audio_sound_effects": {
     "enabled": false,
     "tier": "pro",
-    "status": "blocked_unpriced"
+    "status": "implemented_pack074_paid_live_deferred"
   },
   "audio_cleanup": {
     "enabled": true,
@@ -318,22 +318,22 @@
   "audio_remix": {
     "enabled": false,
     "tier": "pro",
-    "status": "blocked_unpriced"
+    "status": "implemented_pack074_paid_live_deferred"
   },
   "audio_stem_separation": {
     "enabled": false,
     "tier": "pro",
-    "status": "blocked_unpriced"
+    "status": "implemented_pack074_paid_live_deferred"
   },
   "audio_translate_dub": {
     "enabled": false,
     "tier": "pro",
-    "status": "blocked_unpriced"
+    "status": "blocked_pack074_provider_output_contract_unverified"
   },
   "audio_to_video": {
     "enabled": false,
     "tier": "pro",
-    "status": "blocked_unpriced"
+    "status": "implemented_pack074_paid_live_deferred"
   },
   "zuvyr_ip_planning": {
     "enabled": true,
