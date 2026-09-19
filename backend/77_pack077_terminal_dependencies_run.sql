@@ -52,6 +52,12 @@ create index if not exists code_runtime_jobs_session_created_idx
   on public.code_runtime_jobs(sandbox_session_id, created_at desc)
   where sandbox_session_id is not null;
 
+create unique index if not exists code_runtime_jobs_one_active_session_idx
+  on public.code_runtime_jobs(sandbox_session_id)
+  where sandbox_session_id is not null
+    and status in ('queued','running');
+
+
 create table if not exists public.code_sandbox_runtime_state (
   sandbox_session_id uuid primary key
     references public.code_sandbox_sessions(id) on delete cascade,
