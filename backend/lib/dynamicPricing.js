@@ -158,6 +158,101 @@ function providerQuote(feature, {
   if (
     feature === 'video' &&
     videoRequest &&
+    ['subtitles','dub','enhance','export'].includes(videoRequest.operation)
+  ) {
+    const operation = videoRequest.operation;
+
+    if (operation === 'export') {
+      const entry = resolveCostEntry({
+        provider: 'local',
+        modelToolId: 'ffmpeg-alpine',
+        capability: 'video_export',
+        operationType: 'video_export_processing'
+      }, { env, now });
+
+      return Object.freeze({
+        provider: 'local-ffmpeg',
+        providerCostMicroUsd:
+          estimateProviderCostMicroUsd(entry),
+        pricingVersion: entry.registryVersion,
+        costEntryId: entry.id
+      });
+    }
+
+    const gate = {
+      subtitles: 'PACK069_SUBTITLES_PAID_EXECUTION_ENABLED',
+      dub: 'PACK069_DUB_PAID_EXECUTION_ENABLED',
+      enhance: 'PACK069_ENHANCE_PAID_EXECUTION_ENABLED'
+    }[operation];
+
+    if (String(env[gate] || '').toLowerCase() !== 'true') {
+      throw pricingError('pack069_' + operation + '_paid_execution_disabled');
+    }
+    if (!env.FAL_KEY) {
+      throw pricingError('no_configured_pack069_video_provider');
+    }
+
+    const sourceDurationMs = durationMilliseconds(
+      videoPricingContext?.sourceDurationSeconds,
+      'pack069_source_duration'
+    );
+
+    if (operation === 'enhance' && sourceDurationMs >= 30000n) {
+      throw pricingError('pack069_enhance_source_too_long');
+    }
+
+    const spec = {
+      subtitles: {
+        modelToolId: 'fal-ai/workflow-utilities/auto-subtitle',
+        capability: 'video_subtitles',
+        operationType: 'video_subtitles_input_duration',
+        usage: {
+          inputUnits:
+            safeUsageInteger(sourceDurationMs, 'pack069_source_duration')
+        }
+      },
+      dub: {
+        modelToolId: 'fal-ai/elevenlabs/dubbing',
+        capability: 'video_dub',
+        operationType: 'video_dub_rounded_input_minutes',
+        usage: {
+          outputUnits:
+            safeUsageInteger(
+              ceilDiv(sourceDurationMs, 60000n),
+              'pack069_dub_rounded_minutes'
+            )
+        }
+      },
+      enhance: {
+        modelToolId: 'bria/video/increase-resolution',
+        capability: 'video_enhance',
+        operationType: 'video_enhance_source_seconds',
+        usage: {
+          inputUnits:
+            safeUsageInteger(sourceDurationMs, 'pack069_source_duration')
+        }
+      }
+    }[operation];
+
+    const entry = resolveCostEntry({
+      provider: 'fal',
+      modelToolId: spec.modelToolId,
+      capability: spec.capability,
+      operationType: spec.operationType
+    }, { env, now });
+
+    return Object.freeze({
+      provider: 'fal',
+      providerCostMicroUsd:
+        estimateProviderCostMicroUsd(entry, spec.usage),
+      pricingVersion: entry.registryVersion,
+      costEntryId: entry.id
+    });
+  }
+
+  if (
+    feature === 'video' &&
+    videoRequest &&
     ['edit','extend','object_remove','background_remove','lip_sync'].includes(
       videoRequest.operation
     )

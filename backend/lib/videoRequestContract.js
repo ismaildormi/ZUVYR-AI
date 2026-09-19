@@ -55,6 +55,40 @@ function finiteArray(value, length, code) {
   if (out.some(item => !Number.isFinite(item))) throw requestError(code);
   return out;
 }
+function boundedInteger(value, fallback, min, max, code) {
+  const number = value === undefined ? fallback : Number(value);
+  if (!Number.isInteger(number) || number < min || number > max) {
+    throw requestError(code);
+  }
+  return number;
+}
+function boundedNumber(value, fallback, min, max, code) {
+  const number = value === undefined ? fallback : Number(value);
+  if (!Number.isFinite(number) || number < min || number > max) {
+    throw requestError(code);
+  }
+  return number;
+}
+function boundedText(value, fallback, max, code) {
+  const text = String(value === undefined ? fallback : value).trim();
+  if (!text || text.length > max) throw requestError(code);
+  return text;
+}
+function iso6391(value, code, { allowAuto = false } = {}) {
+  const text = String(value || '').trim().toLowerCase();
+  if (allowAuto && text === 'auto') return text;
+  if (!/^[a-z]{2}$/.test(text)) throw requestError(code);
+  return text;
+}
+function stringList(value, fallback, allowed, maxItems, code) {
+  const raw = value === undefined ? fallback : value;
+  if (!Array.isArray(raw) || raw.length < 1 || raw.length > maxItems) {
+    throw requestError(code);
+  }
+  const out = [...new Set(raw.map(item => String(item || '').trim().toLowerCase()))];
+  if (!out.length || out.some(item => !allowed.includes(item))) throw requestError(code);
+  return out;
+}
 
 function normalizeVideoRequest(body = {}) {
   const operation = normalizeVideoOperation(body.videoOperation);
@@ -93,6 +127,9 @@ function normalizeVideoRequest(body = {}) {
     'edit','extend','object_remove','background_remove',
     'relight','recamera','lip_sync'
   ].includes(operation);
+  const isPack069 = [
+    'subtitles','dub','enhance','export'
+  ].includes(operation);
 
   if (
     isI2v &&
@@ -115,7 +152,7 @@ function normalizeVideoRequest(body = {}) {
     throw requestError('video_reference_images_not_supported');
   }
 
-  if (isPack068 && (sourceImageAssetId || startFrameAssetId || endFrameAssetId)) {
+  if ((isPack068 || isPack069) && (sourceImageAssetId || startFrameAssetId || endFrameAssetId)) {
     throw requestError('video_image_source_not_supported_for_operation');
   }
   if (operation !== 'lip_sync' && sourceAudioAssetId) {
@@ -277,6 +314,86 @@ function normalizeVideoRequest(body = {}) {
     if (Object.keys(options).some(key => !allowed.has(key))) throw requestError('unsupported_video_option');
     const exportFormat = String(options.exportFormat || 'mp4').toLowerCase();
     if (exportFormat !== 'mp4') throw requestError('invalid_video_export_format');
+    normalizedOptions = {exportFormat};
+  } else if (operation === 'subtitles') {
+    const allowed = new Set([
+      'subtitleLanguage','subtitleFormats','fontName','fontSize','fontWeight',
+      'fontColor','highlightColor','strokeWidth','strokeColor',
+      'backgroundColor','backgroundOpacity','position','yOffset',
+      'wordsPerSubtitle','enableAnimation','exportFormat'
+    ]);
+    if (Object.keys(options).some(key => !allowed.has(key))) throw requestError('unsupported_video_option');
+    const cfg = config.pack069.subtitles;
+    const subtitleLanguage = normalizeLanguage(options.subtitleLanguage, 'auto');
+    const subtitleFormats = stringList(
+      options.subtitleFormats,
+      cfg.subtitleArtifactFormats,
+      cfg.subtitleArtifactFormats,
+      cfg.subtitleArtifactFormats.length,
+      'invalid_video_subtitle_formats'
+    );
+    const fontName = boundedText(options.fontName, 'Montserrat', 80, 'invalid_video_subtitle_font');
+    const fontSize = boundedInteger(options.fontSize, 100, 8, 300, 'invalid_video_subtitle_font_size');
+    const fontWeight = String(options.fontWeight || 'bold').toLowerCase();
+    const fontColor = String(options.fontColor || 'white').toLowerCase();
+    const highlightColor = String(options.highlightColor || 'purple').toLowerCase();
+    const strokeWidth = boundedInteger(options.strokeWidth, 3, 0, 20, 'invalid_video_subtitle_stroke');
+    const strokeColor = String(options.strokeColor || 'black').toLowerCase();
+    const backgroundColor = String(options.backgroundColor || 'none').toLowerCase();
+    const backgroundOpacity = boundedNumber(options.backgroundOpacity, 0, 0, 1, 'invalid_video_subtitle_background_opacity');
+    const position = String(options.position || 'bottom').toLowerCase();
+    const yOffset = boundedInteger(options.yOffset, 75, -2000, 2000, 'invalid_video_subtitle_y_offset');
+    const wordsPerSubtitle = boundedInteger(
+      options.wordsPerSubtitle,
+      3,
+      1,
+      cfg.maxWordsPerSubtitle,
+      'invalid_video_words_per_subtitle'
+    );
+    const enableAnimation = booleanOption(options.enableAnimation, true, 'invalid_video_subtitle_animation');
+    const exportFormat = String(options.exportFormat || 'mp4').toLowerCase();
+    const colors = [
+      'white','black','red','green','blue','yellow','orange','purple',
+      'pink','brown','gray','cyan','magenta'
+    ];
+    if (!['normal','bold','black'].includes(fontWeight)) throw requestError('invalid_video_subtitle_font_weight');
+    if (!colors.includes(fontColor) || !colors.includes(highlightColor) || !colors.includes(strokeColor)) {
+      throw requestError('invalid_video_subtitle_color');
+    }
+    if (![...colors,'none','transparent'].includes(backgroundColor)) throw requestError('invalid_video_subtitle_background_color');
+    if (!['top','center','bottom'].includes(position)) throw requestError('invalid_video_subtitle_position');
+    if (!cfg.allowedExportFormats.includes(exportFormat)) throw requestError('invalid_video_export_format');
+    normalizedOptions = {
+      subtitleLanguage,subtitleFormats,fontName,fontSize,fontWeight,fontColor,
+      highlightColor,strokeWidth,strokeColor,backgroundColor,backgroundOpacity,
+      position,yOffset,wordsPerSubtitle,enableAnimation,exportFormat
+    };
+  } else if (operation === 'dub') {
+    const allowed = new Set(['sourceLanguage','targetLanguage','highestResolution','exportFormat']);
+    if (Object.keys(options).some(key => !allowed.has(key))) throw requestError('unsupported_video_option');
+    const cfg = config.pack069.dubbing;
+    const sourceLanguage = iso6391(options.sourceLanguage || 'auto', 'invalid_video_source_language', { allowAuto: true });
+    const targetLanguage = iso6391(options.targetLanguage, 'invalid_video_target_language');
+    const highestResolution = booleanOption(options.highestResolution, true, 'invalid_video_highest_resolution');
+    const exportFormat = String(options.exportFormat || 'mp4').toLowerCase();
+    if (!cfg.allowedExportFormats.includes(exportFormat)) throw requestError('invalid_video_export_format');
+    normalizedOptions = {sourceLanguage,targetLanguage,highestResolution,exportFormat};
+  } else if (operation === 'enhance') {
+    const allowed = new Set(['increaseFactor','preserveAudio','exportFormat']);
+    if (Object.keys(options).some(key => !allowed.has(key))) throw requestError('unsupported_video_option');
+    const cfg = config.pack069.enhance;
+    const increaseFactor = options.increaseFactor === undefined ? 2 : Number(options.increaseFactor);
+    const preserveAudio = booleanOption(options.preserveAudio, cfg.preserveAudioDefault, 'invalid_video_preserve_audio');
+    const exportFormat = String(options.exportFormat || 'mp4').toLowerCase();
+    if (!cfg.allowedIncreaseFactors.includes(increaseFactor)) throw requestError('invalid_video_increase_factor');
+    if (!cfg.allowedExportFormats.includes(exportFormat)) throw requestError('invalid_video_export_format');
+    normalizedOptions = {increaseFactor,preserveAudio,exportFormat};
+  } else if (operation === 'export') {
+    const allowed = new Set(['exportFormat']);
+    if (Object.keys(options).some(key => !allowed.has(key))) throw requestError('unsupported_video_option');
+    const cfg = config.pack069.export;
+    const exportFormat = String(options.exportFormat || 'mp4').toLowerCase();
+    if (!cfg.allowedExportFormats.includes(exportFormat)) throw requestError('invalid_video_export_format');
     normalizedOptions = {exportFormat};
   } else {
     const allowed = new Set(['durationSeconds','ratio','resolution','fps','audio','seed','subtitleLanguage','targetLanguage','exportFormat']);

@@ -1,0 +1,100 @@
+{
+  "pack": "069",
+  "title": "Subtitles / Dubbing / Enhance / Export + Cancel",
+  "date": "2026-09-19",
+  "phase": "PRE_PROMOTION_CI_AND_SCHEMA_VERIFIED",
+  "baselineCommit": "9533a00dcaed3317d8dfead15527bc6f9cdb7a63",
+  "candidateCommit": "ae0eadbd963bdeccfd5f1a970ccb3985ceec55a9",
+  "candidatePullRequest": 6,
+  "candidateWorkflowRun": 35414301830,
+  "validation": {
+    "backendQuality": "PASS",
+    "releaseQuality": "PASS",
+    "liveProviderCalls": 0,
+    "paymentCalls": 0,
+    "productionNetworkCallsFromTests": 0,
+    "focusedContracts": [
+      "Provider-gated subtitles, dubbing and enhance adapters map canonical source video into verified fal schemas.",
+      "Local FFmpeg export supports MP4/WebM/MOV and worker image build smoke-tests all three containers.",
+      "SRT/VTT files are generated from bounded provider timing evidence and persisted as canonical owner-scoped assets.",
+      "DB-authoritative cancellation is atomic before execution claim and terminal/late results cannot overwrite terminal state.",
+      "Job-status download URLs renew from canonical private assets rather than provider URLs."
+    ]
+  },
+  "database": {
+    "projectRef": "tqoqsgaymygmqrzddvtu",
+    "migration": {
+      "version": "20260919015713",
+      "name": "pack069_subtitles_dubbing_enhance_export_cancel",
+      "status": "APPLIED_VERIFIED"
+    },
+    "operations": [
+      "subtitles",
+      "dub",
+      "enhance",
+      "export"
+    ],
+    "rpcFunctions": [
+      "begin_zuvyr_video_job(uuid,uuid)",
+      "claim_zuvyr_video_execution(uuid,uuid,text)",
+      "request_zuvyr_video_job_cancel(uuid,uuid)"
+    ],
+    "productionPack069Jobs": 0,
+    "newSecurityAdvisorFindings": 0,
+    "newPerformanceAdvisorFindings": 0
+  },
+  "providers": {
+    "subtitles": {
+      "provider": "fal",
+      "model": "fal-ai/workflow-utilities/auto-subtitle",
+      "gate": "PACK069_SUBTITLES_PAID_EXECUTION_ENABLED",
+      "pricing": "$0.03 per input minute using trusted duration milliseconds",
+      "defaultPaidExecution": false
+    },
+    "dubbing": {
+      "provider": "fal",
+      "model": "fal-ai/elevenlabs/dubbing",
+      "gate": "PACK069_DUB_PAID_EXECUTION_ENABLED",
+      "pricing": "$0.60 per rounded-up input minute",
+      "defaultPaidExecution": false
+    },
+    "enhance": {
+      "provider": "fal",
+      "model": "bria/video/increase-resolution",
+      "gate": "PACK069_ENHANCE_PAID_EXECUTION_ENABLED",
+      "pricing": "$0.14 per trusted source second",
+      "defaultPaidExecution": false
+    },
+    "export": {
+      "provider": "local",
+      "model": "ffmpeg-alpine",
+      "externalProviderCostMicroUsd": "0",
+      "formats": [
+        "mp4",
+        "webm",
+        "mov"
+      ]
+    }
+  },
+  "artifacts": {
+    "subtitleFormats": [
+      "srt",
+      "vtt"
+    ],
+    "canonicalPrivateStorage": true,
+    "ownerScoped": true,
+    "renewableSignedDownloads": true,
+    "sourceLineage": true
+  },
+  "cancellation": {
+    "authority": "generation_jobs row locked by service-role RPC",
+    "cancelBeforeExecutionClaim": true,
+    "executionClaimBlocksUnsafeRefund": true,
+    "terminalStatePreserved": true,
+    "refundReplayIdempotent": true
+  },
+  "paidExecution": {
+    "gatesActivated": false,
+    "paidLiveE2EExecuted": false
+  }
+}

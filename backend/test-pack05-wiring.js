@@ -22,7 +22,7 @@ assert(generation.indexOf('assertVideoRequestAvailable(videoRequest)') < generat
 for (const marker of [
   "require('./lib/videoProvider')", 'assertVideoRequestAvailable(videoRequest)',
   'providerResult = await generateVideo', 'buildVideoArtifact({',
-  "job_stage: 'preview'", "job_stage: 'done'", 'preview_url: artifact.previewUrl'
+  "job_stage: 'preview'", "job_stage: 'done'", 'preview_url: pack069 ? null : artifact.previewUrl'
 ]) assert(worker.includes(marker), `Missing worker marker: ${marker}`);
 assert(worker.indexOf('assertVideoRequestAvailable(videoRequest)') < worker.indexOf('providerResult = await generateVideo'));
 
@@ -31,8 +31,14 @@ assert.equal(flags.video_jobs.enabled, true);
 assert.equal(flags.video_preview.enabled, true);
 assert.equal(flags.video_history.enabled, true);
 for (const key of [
-  'video_image_to_video', 'video_editing', 'video_extend', 'video_subtitles',
-  'video_enhance', 'video_export', 'video_cancel'
-]) assert.equal(flags[key].enabled, false, `${key} must stay disabled`);
+  'video_image_to_video', 'video_editing', 'video_extend',
+  'video_subtitles', 'video_dubbing', 'video_enhance'
+]) assert.equal(flags[key].enabled, false, `${key} paid/live feature must stay disabled`);
+for (const key of ['video_export','video_cancel']) {
+  assert.equal(flags[key].enabled, true, `${key} local/control feature must be enabled`);
+}
+assert(server.includes("app.post('/api/video-jobs/:jobId/cancel'"));
+assert(worker.includes('executeLocalVideoExport({'));
+assert(worker.includes('buildSubtitleArtifacts('));
 
-console.log('PASS: Pack 05 pre-charge/worker guards, jobs, progress, preview and flags wiring');
+console.log('PASS: Pack05 video wiring preserves prior guards and adds Pack069 local export/cancel plus gated media execution');

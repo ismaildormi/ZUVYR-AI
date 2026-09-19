@@ -148,22 +148,22 @@
   "video_subtitles": {
     "enabled": false,
     "tier": "pro",
-    "status": "foundation"
+    "status": "implemented_pack069_paid_live_deferred"
   },
   "video_enhance": {
     "enabled": false,
     "tier": "pro",
-    "status": "foundation"
+    "status": "implemented_pack069_paid_live_deferred"
   },
   "video_export": {
-    "enabled": false,
+    "enabled": true,
     "tier": "pro",
-    "status": "foundation"
+    "status": "implemented_pack069_local_runtime"
   },
   "video_cancel": {
-    "enabled": false,
+    "enabled": true,
     "tier": "pro",
-    "status": "foundation"
+    "status": "implemented_pack069"
   },
   "teams": {
     "enabled": false,
@@ -663,5 +663,10 @@
     "tier": "free",
     "status": "implemented_pending_visual_e2e",
     "note": "Converts an already-cited research result into canonical Document/XLSX/CSV/PPTX artifacts without a second provider/model charge."
+  },
+  "video_dubbing": {
+    "enabled": false,
+    "tier": "pro",
+    "status": "implemented_pack069_paid_live_deferred"
   }
 }

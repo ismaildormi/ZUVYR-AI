@@ -13,6 +13,10 @@ const DEFAULT_VIDEO_BACKGROUND_REMOVE_MODEL = 'bria/video/background-removal/v3'
 const DEFAULT_VIDEO_RELIGHT_MODEL = 'fal-ai/lightx/relight';
 const DEFAULT_VIDEO_RECAMERA_MODEL = 'fal-ai/lightx/recamera';
 const DEFAULT_VIDEO_LIPSYNC_MODEL = 'fal-ai/kling-video/lipsync/audio-to-video';
+const DEFAULT_VIDEO_SUBTITLES_MODEL = 'fal-ai/workflow-utilities/auto-subtitle';
+const DEFAULT_VIDEO_DUB_MODEL = 'fal-ai/elevenlabs/dubbing';
+const DEFAULT_VIDEO_ENHANCE_MODEL = 'bria/video/increase-resolution';
+const DEFAULT_VIDEO_EXPORT_MODEL = 'ffmpeg-alpine';
 const PACK066_FPS = 16;
 const PACK067_I2V_FPS = 16;
 
@@ -78,6 +82,15 @@ function lipSyncBillingIncrements(value) {
     throw providerError('video_lipsync_billing_units_invalid');
   }
   return Number(increments);
+}
+
+function roundedMinuteBillingUnits(value) {
+  const milliseconds = durationMilliseconds(value);
+  const units = (milliseconds + 59999n) / 60000n;
+  if (units > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw providerError('video_dub_billing_units_invalid');
+  }
+  return Number(units);
 }
 
 function requireTrustedDuration(item, code = 'video_source_duration_unavailable') {
@@ -336,6 +349,107 @@ function buildFalLipSyncInput(request, resolvedInputs = {}) {
   });
 }
 
+function providerPayload(output) {
+  return output && output.data && typeof output.data === 'object'
+    ? output.data
+    : output;
+}
+
+function buildFalSubtitlesInput(request, resolvedInputs = {}) {
+  if (!request || request.operation !== 'subtitles') {
+    throw providerError('video_operation_not_supported_by_provider');
+  }
+  const source = requireResolvedSource(resolvedInputs);
+  requireTrustedDuration(source);
+  const options = request.options || {};
+  const input = {
+    video_url: source.url,
+    font_name: options.fontName,
+    font_size: options.fontSize,
+    font_weight: options.fontWeight,
+    font_color: options.fontColor,
+    highlight_color: options.highlightColor,
+    stroke_width: options.strokeWidth,
+    stroke_color: options.strokeColor,
+    background_color: options.backgroundColor,
+    background_opacity: options.backgroundOpacity,
+    position: options.position,
+    y_offset: options.yOffset,
+    words_per_subtitle: options.wordsPerSubtitle,
+    enable_animation: options.enableAnimation
+  };
+  if (options.subtitleLanguage && options.subtitleLanguage !== 'auto') {
+    input.language = options.subtitleLanguage;
+  }
+  return Object.freeze(input);
+}
+
+function buildFalDubInput(request, resolvedInputs = {}) {
+  if (!request || request.operation !== 'dub') {
+    throw providerError('video_operation_not_supported_by_provider');
+  }
+  const source = requireResolvedSource(resolvedInputs);
+  requireTrustedDuration(source);
+  const input = {
+    video_url: source.url,
+    target_lang: request.options.targetLanguage,
+    highest_resolution: request.options.highestResolution
+  };
+  if (request.options.sourceLanguage !== 'auto') {
+    input.source_lang = request.options.sourceLanguage;
+  }
+  return Object.freeze(input);
+}
+
+function buildFalEnhanceInput(request, resolvedInputs = {}) {
+  if (!request || request.operation !== 'enhance') {
+    throw providerError('video_operation_not_supported_by_provider');
+  }
+  const source = requireResolvedSource(resolvedInputs);
+  const duration = requireTrustedDuration(source);
+  if (duration >= 30) throw providerError('video_enhance_source_too_long');
+  const codec = {
+    mp4: 'mp4_h264',
+    webm: 'webm_vp9',
+    mov: 'mov_h265'
+  }[request.options.exportFormat];
+  if (!codec) throw providerError('video_export_not_supported_by_provider');
+  return Object.freeze({
+    output_container_and_codec: codec,
+    preserve_audio: request.options.preserveAudio,
+    video_url: source.url,
+    desired_increase: String(request.options.increaseFactor)
+  });
+}
+
+function normalizePack069Metadata(operation, output) {
+  const root = providerPayload(output);
+  if (!root || typeof root !== 'object') return Object.freeze({});
+  if (operation === 'subtitles') {
+    return Object.freeze({
+      transcription:
+        typeof root.transcription === 'string' ? root.transcription : '',
+      subtitleCount:
+        Number.isSafeInteger(Number(root.subtitle_count))
+          ? Number(root.subtitle_count)
+          : null,
+      words: Array.isArray(root.words) ? root.words : [],
+      transcriptionMetadata:
+        root.transcription_metadata &&
+        typeof root.transcription_metadata === 'object'
+          ? root.transcription_metadata
+          : null
+    });
+  }
+  if (operation === 'dub') {
+    return Object.freeze({
+      targetLanguage:
+        typeof root.target_lang === 'string' ? root.target_lang : null
+    });
+  }
+  return Object.freeze({});
+}
+
 function defaultModelForOperation(operation) {
   return ({
     text_to_video: DEFAULT_VIDEO_MODEL,
@@ -347,16 +461,22 @@ function defaultModelForOperation(operation) {
     background_remove: DEFAULT_VIDEO_BACKGROUND_REMOVE_MODEL,
     relight: DEFAULT_VIDEO_RELIGHT_MODEL,
     recamera: DEFAULT_VIDEO_RECAMERA_MODEL,
-    lip_sync: DEFAULT_VIDEO_LIPSYNC_MODEL
+    lip_sync: DEFAULT_VIDEO_LIPSYNC_MODEL,
+    subtitles: DEFAULT_VIDEO_SUBTITLES_MODEL,
+    dub: DEFAULT_VIDEO_DUB_MODEL,
+    enhance: DEFAULT_VIDEO_ENHANCE_MODEL,
+    export: DEFAULT_VIDEO_EXPORT_MODEL
   })[operation] || (() => { throw providerError('video_operation_not_supported_by_provider'); })();
 }
 
 function providerForOperation(operation) {
   return ['text_to_video','image_to_video','reference_to_video'].includes(operation)
     ? 'replicate'
-    : ['edit','extend','object_remove','background_remove','relight','recamera','lip_sync'].includes(operation)
+    : ['edit','extend','object_remove','background_remove','relight','recamera','lip_sync','subtitles','dub','enhance'].includes(operation)
       ? 'fal'
-      : (() => { throw providerError('video_operation_not_supported_by_provider'); })();
+      : operation === 'export'
+        ? 'local'
+        : (() => { throw providerError('video_operation_not_supported_by_provider'); })();
 }
 
 function executionGateForOperation(operation) {
@@ -370,7 +490,10 @@ function executionGateForOperation(operation) {
     background_remove: 'PACK068_BACKGROUND_PAID_EXECUTION_ENABLED',
     relight: 'PACK068_RELIGHT_PAID_EXECUTION_ENABLED',
     recamera: 'PACK068_RECAMERA_PAID_EXECUTION_ENABLED',
-    lip_sync: 'PACK068_LIPSYNC_PAID_EXECUTION_ENABLED'
+    lip_sync: 'PACK068_LIPSYNC_PAID_EXECUTION_ENABLED',
+    subtitles: 'PACK069_SUBTITLES_PAID_EXECUTION_ENABLED',
+    dub: 'PACK069_DUB_PAID_EXECUTION_ENABLED',
+    enhance: 'PACK069_ENHANCE_PAID_EXECUTION_ENABLED'
   };
   if (!map[operation]) throw providerError('video_operation_not_supported_by_provider');
   return map[operation];
@@ -380,6 +503,9 @@ function gateErrorForOperation(operation) {
   if (operation === 'text_to_video') return 'pack066_paid_execution_disabled';
   if (operation === 'image_to_video') return 'pack067_i2v_paid_execution_disabled';
   if (operation === 'reference_to_video') return 'pack067_r2v_paid_execution_disabled';
+  if (['subtitles','dub','enhance'].includes(operation)) {
+    return 'pack069_' + operation + '_paid_execution_disabled';
+  }
   return 'pack068_' + operation + '_paid_execution_disabled';
 }
 
@@ -391,7 +517,10 @@ function buildFalInput(request, resolvedInputs) {
     background_remove: buildFalBackgroundRemoveInput,
     relight: buildFalRelightInput,
     recamera: buildFalRecameraInput,
-    lip_sync: buildFalLipSyncInput
+    lip_sync: buildFalLipSyncInput,
+    subtitles: buildFalSubtitlesInput,
+    dub: buildFalDubInput,
+    enhance: buildFalEnhanceInput
   })[request.operation]?.(request, resolvedInputs) ||
     (() => { throw providerError('video_operation_not_supported_by_provider'); })();
 }
@@ -407,6 +536,9 @@ async function generateVideo(request, {
   }
 } = {}) {
   const provider = providerForOperation(request.operation);
+  if (provider === 'local') {
+    throw providerError('video_local_operation_requires_local_executor');
+  }
   if (!providerSupports(provider, request.operation)) {
     throw providerError('video_operation_not_supported_by_provider');
   }
@@ -443,6 +575,7 @@ async function generateVideo(request, {
   }
 
   const url = normalizeProviderOutput(output);
+  const metadata = normalizePack069Metadata(request.operation, output);
   const sourceDuration = Number(resolvedInputs?.source?.durationSeconds || 0);
   let unitType = 'videos';
   let units = 1;
@@ -459,6 +592,15 @@ async function generateVideo(request, {
   } else if (request.operation === 'lip_sync') {
     unitType = 'processing_operations';
     units = lipSyncBillingIncrements(sourceDuration);
+  } else if (request.operation === 'subtitles') {
+    unitType = 'video_seconds';
+    units = sourceDuration;
+  } else if (request.operation === 'dub') {
+    unitType = 'processing_operations';
+    units = roundedMinuteBillingUnits(sourceDuration);
+  } else if (request.operation === 'enhance') {
+    unitType = 'video_seconds';
+    units = sourceDuration;
   }
 
   return Object.freeze({
@@ -469,6 +611,7 @@ async function generateVideo(request, {
     sourceDurationSeconds: sourceDuration || null,
     numFrames: input.num_frames || null,
     fps: input.frames_per_second || null,
+    providerMetadata: metadata,
     billableUnits: Object.freeze({
       unitType,
       units,
@@ -488,6 +631,10 @@ module.exports = {
   DEFAULT_VIDEO_RELIGHT_MODEL,
   DEFAULT_VIDEO_RECAMERA_MODEL,
   DEFAULT_VIDEO_LIPSYNC_MODEL,
+  DEFAULT_VIDEO_SUBTITLES_MODEL,
+  DEFAULT_VIDEO_DUB_MODEL,
+  DEFAULT_VIDEO_ENHANCE_MODEL,
+  DEFAULT_VIDEO_EXPORT_MODEL,
   PACK066_FPS,
   PACK067_I2V_FPS,
   normalizeProviderOutput,
@@ -501,7 +648,12 @@ module.exports = {
   buildFalRelightInput,
   buildFalRecameraInput,
   buildFalLipSyncInput,
+  buildFalSubtitlesInput,
+  buildFalDubInput,
+  buildFalEnhanceInput,
+  normalizePack069Metadata,
   lipSyncBillingIncrements,
+  roundedMinuteBillingUnits,
   defaultModelForOperation,
   providerForOperation,
   generateVideo

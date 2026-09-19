@@ -162,7 +162,7 @@ function createVideoInputResolver({ db, storage }) {
         references.push(await inspectConversationAsset(ownerId, id, 'image'));
       }
     } else if (
-      ['edit','extend','object_remove','background_remove','relight','recamera','lip_sync']
+      ['edit','extend','object_remove','background_remove','relight','recamera','lip_sync','subtitles','dub','enhance','export']
         .includes(operation)
     ) {
       source = await inspectConversationAsset(ownerId, request.sourceVideoAssetId, 'video');
@@ -172,7 +172,7 @@ function createVideoInputResolver({ db, storage }) {
     }
 
     if (
-      ['edit','object_remove','background_remove','relight','recamera','lip_sync']
+      ['edit','object_remove','background_remove','relight','recamera','lip_sync','subtitles','dub','enhance','export']
         .includes(operation) &&
       !source?.durationSeconds
     ) {

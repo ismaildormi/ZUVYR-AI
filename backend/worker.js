@@ -51,12 +51,16 @@ const {
   DEFAULT_VIDEO_MODEL,
   defaultModelForOperation,
   providerForOperation,
-  lipSyncBillingIncrements
+  lipSyncBillingIncrements,
+  roundedMinuteBillingUnits
 } = require('./lib/videoProvider');
 const { normalizeVideoRequest } = require('./lib/videoRequestContract');
 const { assertVideoRequestAvailable } = require('./lib/videoOperationRegistry');
 const { buildVideoArtifact } = require('./lib/videoArtifactContract');
 const { getDefaultVideoGenerationRepository } = require('./lib/videoGenerationRepository');
+const { getDefaultVideoDerivedRepository } = require('./lib/videoDerivedRepository');
+const { executeLocalVideoExport } = require('./lib/localVideoExport');
+const { buildSubtitleArtifacts } = require('./lib/videoSubtitleArtifacts');
 const { connection } = require('./lib/queue');
 const { startBrainKernelWorker } = require('./lib/brainKernelWorker');
 const { supabaseAdmin } = require('./lib/supabaseAdmin');
@@ -90,6 +94,82 @@ const ATTACHMENT_WORKER_CONCURRENCY = Math.max(
 
 async function markJob(jobId, patch) {
   await supabaseAdmin.from('generation_jobs').update(patch).eq('id', jobId);
+}
+
+async function videoJobRpc(name, args) {
+  const result = await supabaseAdmin.rpc(name, args);
+  if (result.error) {
+    const error = new Error(name + '_failed');
+    error.code = name + '_failed';
+    error.cause = result.error;
+    throw error;
+  }
+  return result.data && typeof result.data === 'object'
+    ? result.data
+    : {};
+}
+
+async function beginVideoJob({ ownerId, jobId }) {
+  return videoJobRpc('begin_zuvyr_video_job', {
+    p_owner_id: ownerId,
+    p_job_id: jobId
+  });
+}
+
+async function claimVideoExecution({ ownerId, jobId, stage }) {
+  return videoJobRpc('claim_zuvyr_video_execution', {
+    p_owner_id: ownerId,
+    p_job_id: jobId,
+    p_stage: stage
+  });
+}
+
+async function videoJobState({ ownerId, jobId }) {
+  const result = await supabaseAdmin
+    .from('generation_jobs')
+    .select('status,job_stage,cancel_requested,result_url,video_options,canonical_content_id')
+    .eq('id', jobId)
+    .eq('user_id', ownerId)
+    .eq('feature', 'video')
+    .maybeSingle();
+  if (result.error) {
+    const error = new Error('video_job_state_lookup_failed');
+    error.code = 'video_job_state_lookup_failed';
+    error.cause = result.error;
+    throw error;
+  }
+  return result.data || null;
+}
+
+async function refundCancelledVideo({ requestId, userId }) {
+  try {
+    await refundCredits(requestId);
+    recordRefund('video');
+  } catch (refundErr) {
+    await reportRefundFailure({
+      requestId,
+      userId,
+      feature: 'video',
+      error: refundErr
+    });
+  }
+}
+
+async function assertVideoCommitAllowed({ ownerId, jobId }) {
+  const state = await videoJobState({ ownerId, jobId });
+  if (
+    !state ||
+    state.cancel_requested === true ||
+    state.status !== 'processing' ||
+    !['provider','processing','preview','export'].includes(state.job_stage)
+  ) {
+    const error = new UnrecoverableError('video_late_result_ignored');
+    error.code = 'video_late_result_ignored';
+    error.preserveTerminalState = true;
+    error.terminalState = state?.status || null;
+    throw error;
+  }
+  return state;
 }
 
 const baseAttachmentJobProcessor =
@@ -637,20 +717,37 @@ async function processVideoJob(job) {
 
   assertVideoRequestAvailable(videoRequest);
 
-  await markJob(jobRowId, {
-    status: 'processing',
-    progress_percent: 5,
-    job_stage: 'validating',
-    started_at: new Date().toISOString()
-  });
-
-  const repository = getDefaultVideoGenerationRepository();
-  let persisted = await repository.getExisting({
+  const begin = await beginVideoJob({
     ownerId: userId,
     jobId: jobRowId
   });
+  if (begin.claimed !== true) {
+    if (begin.status === 'cancelled' || begin.cancelRequested === true) {
+      await refundCancelledVideo({ requestId, userId });
+      return { status: 'cancelled' };
+    }
+    if (begin.status === 'done') return { status: 'done', replayed: true };
+    const error = new UnrecoverableError('video_job_not_executable');
+    error.code = 'video_job_not_executable';
+    error.preserveTerminalState = true;
+    throw error;
+  }
+
+  const pack069 = ['subtitles','dub','enhance','export'].includes(
+    videoRequest.operation
+  );
+  const repository = pack069
+    ? getDefaultVideoDerivedRepository()
+    : getDefaultVideoGenerationRepository();
+
+  let persisted = await repository.getExisting({
+    ownerId: userId,
+    jobId: jobRowId,
+    requestId
+  });
   let providerResult = null;
   let resolvedInputs = null;
+  let subtitleAssets = persisted?.subtitleAssets || [];
 
   if (!persisted) {
     if (videoRequest.operation !== 'text_to_video') {
@@ -661,79 +758,252 @@ async function processVideoJob(job) {
       });
     }
 
-    await markJob(jobRowId, {
-      progress_percent: 15,
-      job_stage: 'provider'
-    });
-    await markJob(jobRowId, {
-      progress_percent: 35,
-      job_stage: 'processing'
-    });
-
-    providerResult = await generateVideo(videoRequest, {
-      env: { ...process.env, REPLICATE_VIDEO_MODEL: VIDEO_MODEL },
-      resolvedInputs: resolvedInputs || {}
-    });
-
-    const sourceDuration =
-      Number(resolvedInputs?.source?.durationSeconds || 0);
-    const expectedBilling = (() => {
-      if (['text_to_video','image_to_video'].includes(videoRequest.operation)) {
-        return { unitType: 'videos', units: 1 };
+    if (videoRequest.operation === 'export') {
+      const claim = await claimVideoExecution({
+        ownerId: userId,
+        jobId: jobRowId,
+        stage: 'processing'
+      });
+      if (claim.claimed !== true) {
+        if (claim.status === 'cancelled' || claim.cancelRequested === true) {
+          await refundCancelledVideo({ requestId, userId });
+          return { status: 'cancelled' };
+        }
+        const error = new UnrecoverableError('video_job_not_executable');
+        error.code = 'video_job_not_executable';
+        error.preserveTerminalState = true;
+        throw error;
       }
-      if (
-        ['reference_to_video','edit','extend'].includes(videoRequest.operation)
-      ) {
-        return {
-          unitType: 'video_seconds',
-          units: Number(videoRequest.options.durationSeconds)
+
+      const localResult = await executeLocalVideoExport({
+        sourceUrl: resolvedInputs.source.url,
+        sourceMimeType: resolvedInputs.source.mimeType,
+        format: videoRequest.options.exportFormat
+      });
+
+      await assertVideoCommitAllowed({ ownerId: userId, jobId: jobRowId });
+      await markJob(jobRowId, {
+        progress_percent: 80,
+        job_stage: 'preview'
+      });
+
+      persisted = await repository.persistBuffer({
+        ownerId: userId,
+        jobId: jobRowId,
+        operation: 'export',
+        format: videoRequest.options.exportFormat,
+        buffer: localResult.buffer,
+        provider: localResult.provider,
+        model: localResult.model,
+        providerUrl: null,
+        options: {
+          ...videoRequest.options,
+          actualDurationSeconds: localResult.actualDurationSeconds,
+          billing: {
+            pricingVersion,
+            quotedProviderCostMicroUsd,
+            unitType: 'processing_operations',
+            units: 1
+          }
+        },
+        providerMetadata: { providerCalls: 0 },
+        sourceLineage: resolvedInputs.lineage || {}
+      });
+    } else {
+      const claim = await claimVideoExecution({
+        ownerId: userId,
+        jobId: jobRowId,
+        stage: 'provider'
+      });
+      if (claim.claimed !== true) {
+        if (claim.status === 'cancelled' || claim.cancelRequested === true) {
+          await refundCancelledVideo({ requestId, userId });
+          return { status: 'cancelled' };
+        }
+        const error = new UnrecoverableError('video_job_not_executable');
+        error.code = 'video_job_not_executable';
+        error.preserveTerminalState = true;
+        throw error;
+      }
+
+      const recovery = pack069
+        ? await videoJobState({ ownerId: userId, jobId: jobRowId })
+        : null;
+      const recoveryOptions =
+        recovery?.video_options && typeof recovery.video_options === 'object'
+          ? recovery.video_options
+          : {};
+      const recoverableProviderUrl =
+        pack069 &&
+        recovery?.result_url &&
+        recoveryOptions.pack069ProviderOutputReady === true
+          ? recovery.result_url
+          : null;
+
+      if (recoverableProviderUrl) {
+        providerResult = {
+          url: recoverableProviderUrl,
+          provider:
+            recoveryOptions.outputProvider ||
+            providerForOperation(videoRequest.operation),
+          model:
+            recoveryOptions.outputModel ||
+            defaultModelForOperation(videoRequest.operation),
+          providerMetadata:
+            recoveryOptions.pack069ProviderMetadata || {},
+          billableUnits:
+            recoveryOptions.pack069BillableUnits || null,
+          numFrames: null,
+          fps: null,
+          recovered: true
         };
-      }
-      if (
-        ['object_remove','background_remove','relight','recamera']
-          .includes(videoRequest.operation)
-      ) {
-        return { unitType: 'video_seconds', units: sourceDuration };
-      }
-      if (videoRequest.operation === 'lip_sync') {
-        return {
-          unitType: 'processing_operations',
-          units: lipSyncBillingIncrements(sourceDuration)
-        };
-      }
-      return null;
-    })();
+      } else {
+        await markJob(jobRowId, {
+          progress_percent: 35,
+          job_stage: 'provider'
+        });
 
-    if (
-      !expectedBilling ||
-      providerResult.billableUnits?.unitType !== expectedBilling.unitType ||
-      providerResult.billableUnits?.units !== expectedBilling.units
-    ) {
-      const error = new Error('video_billable_units_mismatch');
-      error.code = 'video_billable_units_mismatch';
-      throw error;
+        providerResult = await generateVideo(videoRequest, {
+          env: { ...process.env, REPLICATE_VIDEO_MODEL: VIDEO_MODEL },
+          resolvedInputs: resolvedInputs || {}
+        });
+      }
+
+      const sourceDuration =
+        Number(resolvedInputs?.source?.durationSeconds || 0);
+      const expectedBilling = (() => {
+        if (['text_to_video','image_to_video'].includes(videoRequest.operation)) {
+          return { unitType: 'videos', units: 1 };
+        }
+        if (
+          ['reference_to_video','edit','extend'].includes(videoRequest.operation)
+        ) {
+          return {
+            unitType: 'video_seconds',
+            units: Number(videoRequest.options.durationSeconds)
+          };
+        }
+        if (
+          ['object_remove','background_remove','relight','recamera','subtitles','enhance']
+            .includes(videoRequest.operation)
+        ) {
+          return { unitType: 'video_seconds', units: sourceDuration };
+        }
+        if (videoRequest.operation === 'lip_sync') {
+          return {
+            unitType: 'processing_operations',
+            units: lipSyncBillingIncrements(sourceDuration)
+          };
+        }
+        if (videoRequest.operation === 'dub') {
+          return {
+            unitType: 'processing_operations',
+            units: roundedMinuteBillingUnits(sourceDuration)
+          };
+        }
+        return null;
+      })();
+
+      if (
+        !expectedBilling ||
+        providerResult.billableUnits?.unitType !== expectedBilling.unitType ||
+        providerResult.billableUnits?.units !== expectedBilling.units
+      ) {
+        const error = new Error('video_billable_units_mismatch');
+        error.code = 'video_billable_units_mismatch';
+        throw error;
+      }
+
+      if (pack069 && !recoverableProviderUrl) {
+        await markJob(jobRowId, {
+          result_url: providerResult.url,
+          progress_percent: 70,
+          job_stage: 'preview',
+          video_options: {
+            ...videoRequest.options,
+            outputProvider: providerResult.provider,
+            outputModel: providerResult.model,
+            pack069ProviderOutputReady: true,
+            pack069ProviderMetadata: providerResult.providerMetadata || {},
+            pack069BillableUnits: providerResult.billableUnits || null
+          }
+        });
+      }
+
+      await assertVideoCommitAllowed({ ownerId: userId, jobId: jobRowId });
+
+      if (pack069) {
+        persisted = await repository.persistRemote({
+          ownerId: userId,
+          jobId: jobRowId,
+          operation: videoRequest.operation,
+          format: videoRequest.options.exportFormat,
+          providerUrl: providerResult.url,
+          provider: providerResult.provider,
+          model: providerResult.model,
+          options: {
+            ...videoRequest.options,
+            billing: {
+              pricingVersion,
+              quotedProviderCostMicroUsd,
+              unitType: providerResult.billableUnits.unitType,
+              units: providerResult.billableUnits.units
+            }
+          },
+          providerMetadata: providerResult.providerMetadata || {},
+          sourceLineage: resolvedInputs?.lineage || {}
+        });
+
+        if (videoRequest.operation === 'subtitles') {
+          const built = buildSubtitleArtifacts(
+            {
+              ...(providerResult.providerMetadata || {}),
+              wordsPerSubtitle: videoRequest.options.wordsPerSubtitle
+            },
+            videoRequest.options.subtitleFormats
+          );
+          subtitleAssets = await repository.persistSubtitleArtifacts({
+            ownerId: userId,
+            jobId: jobRowId,
+            video: persisted,
+            artifacts: built.artifacts
+          });
+          await markJob(jobRowId, {
+            video_options: {
+              ...persisted.options,
+              transcript: built.evidence.transcription,
+              subtitleArtifacts: subtitleAssets.map(item => ({
+                assetId: item.assetId,
+                format: item.format,
+                mimeType: item.mimeType,
+                fileSizeBytes: item.fileSizeBytes
+              }))
+            }
+          });
+        }
+      } else {
+        persisted = await repository.persistGenerated({
+          ownerId: userId,
+          jobId: jobRowId,
+          prompt,
+          providerUrl: providerResult.url,
+          provider: providerResult.provider,
+          model: providerResult.model,
+          operation: videoRequest.operation,
+          options: videoRequest.options,
+          billing: {
+            pricingVersion,
+            quotedProviderCostMicroUsd,
+            unitType: providerResult.billableUnits.unitType,
+            units: providerResult.billableUnits.units,
+            resolution: providerResult.billableUnits.resolution,
+            providerFrames: providerResult.numFrames,
+            providerFps: providerResult.fps
+          },
+          lineage: resolvedInputs?.lineage || {}
+        });
+      }
     }
-
-    persisted = await repository.persistGenerated({
-      ownerId: userId,
-      jobId: jobRowId,
-      prompt,
-      providerUrl: providerResult.url,
-      provider: providerResult.provider,
-      model: providerResult.model,
-      operation: videoRequest.operation,
-      options: videoRequest.options,
-      billing: {
-        pricingVersion,
-        quotedProviderCostMicroUsd,
-        unitType: providerResult.billableUnits.unitType,
-        units: providerResult.billableUnits.units,
-        resolution: providerResult.billableUnits.resolution,
-        providerFrames: providerResult.numFrames,
-        providerFps: providerResult.fps
-      },
-      lineage: resolvedInputs?.lineage || {}
-    });
   }
 
   const provider =
@@ -755,11 +1025,24 @@ async function processVideoJob(job) {
     outputProvider: provider,
     outputModel: model,
     billing: persisted.options?.billing || null,
-    canonicalLineage: persisted.options?.canonicalLineage || null
+    canonicalLineage: persisted.options?.canonicalLineage || null,
+    ...(subtitleAssets.length ? {
+      subtitleArtifacts: subtitleAssets.map(item => ({
+        assetId: item.assetId,
+        format: item.format,
+        mimeType: item.mimeType,
+        fileSizeBytes: item.fileSizeBytes
+      }))
+    } : {})
   };
 
   const artifact = buildVideoArtifact({
-    url: persisted.providerUrl,
+    url: persisted.downloadUrl || persisted.providerUrl,
+    previewUrl: persisted.downloadUrl || persisted.providerUrl,
+    exportUrl:
+      videoRequest.operation === 'export'
+        ? (persisted.downloadUrl || persisted.providerUrl)
+        : null,
     operation: videoRequest.operation,
     provider,
     model,
@@ -818,16 +1101,23 @@ async function processVideoJob(job) {
 
   await markJob(jobRowId, {
     status: 'done',
-    result_url: artifact.url,
+    ...(pack069 ? {} : { result_url: artifact.url }),
     canonical_content_id: persisted.contentId,
-    preview_url: artifact.previewUrl,
-    export_url: artifact.exportUrl,
+    preview_url: pack069 ? null : artifact.previewUrl,
+    export_url: pack069 ? null : artifact.exportUrl,
     progress_percent: 100,
     job_stage: 'done',
     response_message_id:
       memoryResult?.assistantMessage?.id || null,
     completed_at: new Date().toISOString()
   });
+
+  return {
+    status: 'done',
+    operation: videoRequest.operation,
+    canonicalAssetId: persisted.assetId,
+    subtitleAssetCount: subtitleAssets.length
+  };
 }
 
 const imageWorker = new Worker('rox-image-generation', processImageJob, {
@@ -943,6 +1233,23 @@ async function handleJobFailure(job, err, feature) {
 
   if (!exhausted) {
     // BullMQ will retry automatically. Do not save failure or refund yet.
+    return;
+  }
+
+  if (feature === 'video' && err.preserveTerminalState === true) {
+    const state = await videoJobState({
+      ownerId: userId,
+      jobId: jobRowId
+    }).catch(() => null);
+    if (state?.status === 'cancelled') {
+      await refundCancelledVideo({ requestId, userId });
+    }
+    console.warn(
+      '[worker] ignored late/terminal video result:',
+      job.id,
+      err.code || err.message,
+      state?.status || 'unknown'
+    );
     return;
   }
 
