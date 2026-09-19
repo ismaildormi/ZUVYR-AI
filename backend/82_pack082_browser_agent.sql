@@ -395,13 +395,35 @@ begin
   end if;
 
   if v_action like 'browser.%' then
-    if p_constraints ? 'host' then
-      v_host := lower(trim(coalesce(p_constraints->>'host','')));
-      if v_host = ''
-         or v_host = '*'
-         or length(v_host) > 253
-         or position('.' in v_host) = 0
-         or v_host !~ '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*
+    if not (p_constraints ? 'host') then
+      return jsonb_build_object('success',false,'error','permission_browser_host_required');
+    end if;
+
+    v_host := lower(trim(coalesce(p_constraints->>'host','')));
+    if v_host = ''
+       or v_host = '*'
+       or length(v_host) > 253
+       or position('.' in v_host) = 0
+       or v_host !~ '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$'
+       or v_host in (
+         'localhost','0.0.0.0','127.0.0.1',
+         'host.docker.internal','metadata.google.internal'
+       )
+       or v_host like '%.localhost'
+       or v_host like '%.local'
+       or v_host like '%.internal'
+       or v_host ~ '^10\.'
+       or v_host ~ '^192\.168\.'
+       or v_host ~ '^172\.(1[6-9]|2[0-9]|3[01])\.'
+       or v_host ~ '^169\.254\.' then
+      return jsonb_build_object('success',false,'error','permission_browser_host_invalid');
+    end if;
+
+    if not (p_constraints ? 'actionFingerprint')
+       or coalesce(p_constraints->>'actionFingerprint','') !~ '^[0-9a-f]{64}$' then
+      return jsonb_build_object('success',false,'error','permission_browser_action_fingerprint_required');
+    end if;
+  end if;
 
   insert into public.zuvyr_permission_grants(
     owner_id, action_class, grant_mode, scope_type,
