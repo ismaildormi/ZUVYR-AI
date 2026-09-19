@@ -174,8 +174,12 @@ assert.throws(
 assert.doesNotThrow(() => assertPublicResolvedAddress('8.8.8.8'));
 
 assert.equal(
-  normalizeEndpointUrl('https://gpu.example.com/path?secret=no#x'),
+  normalizeEndpointUrl('https://gpu.example.com/path'),
   'https://gpu.example.com/path'
+);
+assert.throws(
+  () => normalizeEndpointUrl('https://gpu.example.com/path?secret=no#x'),
+  error => error.code === 'model_lab_connector_endpoint_credentials_forbidden'
 );
 assert.throws(
   () => normalizeEndpointUrl('http://gpu.example.com'),
