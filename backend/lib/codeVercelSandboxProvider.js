@@ -1,5 +1,7 @@
 'use strict';
 
+const net = require('node:net');
+
 const {
   config,
   sandboxError,
@@ -150,18 +152,38 @@ function createVercelSandboxProvider({
     if (url.protocol !== 'https:') {
       throw providerError('code_preview_provider_route_invalid');
     }
-    const host = url.hostname.toLowerCase();
+    const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+    const ipKind = net.isIP(host);
+    const privateIpv4 =
+      ipKind === 4 &&
+      (
+        /^0\./.test(host) ||
+        /^10\./.test(host) ||
+        /^127\./.test(host) ||
+        /^169\.254\./.test(host) ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
+        /^192\.168\./.test(host) ||
+        /^224\./.test(host) ||
+        /^2(?:2[5-9]|3\d|4[0-9]|5[0-5])\./.test(host)
+      );
+    const privateIpv6 =
+      ipKind === 6 &&
+      (
+        host === '::' ||
+        host === '::1' ||
+        /^fc/i.test(host) ||
+        /^fd/i.test(host) ||
+        /^fe[89ab]/i.test(host) ||
+        /^ff/i.test(host) ||
+        /^::ffff:(?:0\.|10\.|127\.|169\.254\.|172\.(?:1[6-9]|2\d|3[01])\.|192\.168\.)/i.test(host)
+      );
     if (
       host === 'localhost' ||
       host.endsWith('.localhost') ||
       host.endsWith('.local') ||
-      host === '0.0.0.0' ||
-      host === '127.0.0.1' ||
-      host === '::1' ||
-      /^10\./.test(host) ||
-      /^192\.168\./.test(host) ||
-      /^169\.254\./.test(host) ||
-      /^172\.(1[6-9]|2\d|3[01])\./.test(host)
+      host.endsWith('.internal') ||
+      privateIpv4 ||
+      privateIpv6
     ) {
       throw providerError('code_preview_provider_route_private');
     }
