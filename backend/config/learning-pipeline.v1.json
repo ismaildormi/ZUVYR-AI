@@ -80,5 +80,57 @@
     "userOrOrganizationComputePaidDirectly": true,
     "externalTeacherAndFallbackCostsRemainExplicit": true
   },
-  "externalGate": null
+  "externalGate": null,
+  "sharedLearningPlane": {
+    "version": "pack094-shared-learning-plane-v1",
+    "objective": "All routed models use the same governed, owner-scoped knowledge envelope and learning lineage instead of isolated model-specific knowledge silos.",
+    "runtimeKnowledge": {
+      "appliesTo": [
+        "zuvyr_owned_model",
+        "external_provider_model"
+      ],
+      "ownerAndResourceScoped": true,
+      "permissionGoverned": true,
+      "sources": [
+        "authorized_memory_context",
+        "active_project_context",
+        "canonical_library_content",
+        "verified_non_content_learning_signals",
+        "failure_bank",
+        "rights_approved_dataset_retrieval"
+      ],
+      "memoryPermissionIndependentFromTrainingConsent": true,
+      "trainingOptOutDoesNotDisableAuthorizedRuntimeMemory": true,
+      "rawTrainingCandidatePayloadNotAutomaticallyInjected": true
+    },
+    "ownedModelLearning": {
+      "enabledByDesign": true,
+      "admissionOwner": "PACK095",
+      "productionOwnedCheckpointOwner": "PACK096",
+      "eligibleInputs": [
+        "rights_approved_privacy_processed_training_candidates",
+        "privacy_safe_non_content_learning_events",
+        "failure_bank",
+        "independent_eval_results"
+      ],
+      "requiresDatasetAndCheckpointLineage": true,
+      "requiresIndependentEvaluation": true,
+      "requiresRollbackAndFallback": true
+    },
+    "externalModelPolicy": {
+      "receivesAuthorizedRuntimeKnowledge": true,
+      "directWeightTrainingByZuvyr": false,
+      "teacherUseRequiresContractOrLicensePermission": true,
+      "prohibitProviderSystemPromptCollection": true,
+      "prohibitProviderWeightCopying": true,
+      "prohibitCustomerPrivateTrainingWithoutRights": true
+    },
+    "consistency": {
+      "contextEnvelopeVersion": "pack094-v1",
+      "registryPolicyRequired": true,
+      "provenanceRequired": true,
+      "modelAndProviderOutcomeSharedWithEvaluationPlane": true,
+      "goal": "A model switch must not silently lose the authorized ZUVYR knowledge/context available to the task."
+    }
+  }
 }
