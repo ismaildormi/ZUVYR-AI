@@ -1,0 +1,104 @@
+{
+  "pack": "083",
+  "title": "3D Generation",
+  "recorded_at": "2026-09-19T19:32:10Z",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonical_locked_verified": false,
+  "canonical_gate_reason": "Engineering, database, CI and exact Railway production runtime are verified. Live paid 3D provider acceptance remains deferred behind M18 and explicit paid-execution/live-billing gates.",
+  "source": {
+    "implementation_merge_commit": "f88e297895cf4fedb9a1ffa706bf1a6526c428c8",
+    "production_hotfix_commit": "60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4",
+    "pull_request": 30,
+    "hotfix_reason": "Initial Railway worker/backend rollout exposed a missing module import in model3dInputResolver; canonical assetStorageContract import restored and regression-tested."
+  },
+  "ci": {
+    "implementation_branch_run": 35464298584,
+    "implementation_main_run": 35464342204,
+    "hotfix_main_run": 35464563066,
+    "backend_quality": "PASS",
+    "release_quality": "PASS"
+  },
+  "database": {
+    "project": "tqoqsgaymygmqrzddvtu",
+    "migration_version": "20260919192342",
+    "migration_name": "pack083_3d_generation",
+    "migration_status": "APPLIED_VERIFIED",
+    "generation_jobs_rls": true,
+    "conversation_assets_rls": true,
+    "model3d_columns": 8,
+    "security_definer_rpcs": 5,
+    "model3d_job_rows_at_verification": 0
+  },
+  "production": {
+    "railway": {
+      "exact_commit": "60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4",
+      "backend": {
+        "deployment": "76a8bf1e-3927-4c13-8c7f-dc26820acc73",
+        "status": "SUCCESS"
+      },
+      "worker": {
+        "deployment": "1cbe7b84-0e72-437a-acfa-ac69ee7dc7cd",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deployment": "d40ee2ef-6e91-4622-bac6-01e7e1804192",
+        "status": "SUCCESS"
+      },
+      "initial_failed_rollout": {
+        "implementation_commit": "f88e297895cf4fedb9a1ffa706bf1a6526c428c8",
+        "backend_deployment": "002a91b5-53c1-4d9a-a5d2-16da69403821",
+        "worker_deployment": "27b26e23-59f9-4b11-892d-3db95cb7b43c",
+        "failure": "Cannot find module './assetStoragePolicy'",
+        "repaired_by": "60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4"
+      }
+    },
+    "vercel": {
+      "frontend_changed": false,
+      "production_redeploy_required": false
+    }
+  },
+  "runtime": {
+    "operations": [
+      "text_to_3d",
+      "image_to_3d",
+      "multiview_to_3d"
+    ],
+    "provider": "fal",
+    "base_model_family": "Hunyuan 3D v3.1 Pro",
+    "feature_flag_enabled": false,
+    "external_gate": "M18",
+    "live_billing_allowed": false,
+    "paid_execution_default": false,
+    "paid_provider_calls_during_verification": 0,
+    "payment_calls_during_verification": 0
+  },
+  "deferred_gates": [
+    "M18"
+  ],
+  "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+  "next_pack": "094",
+  "next_pack_title": "Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
+  "v1_coverage": {
+    "canonical_total_packs": 150,
+    "coverage_guard": "backend/test-model-first-byo-compute-policy.js",
+    "deferred_not_cancelled": [
+      "084",
+      "085",
+      "086",
+      "087",
+      "088",
+      "089",
+      "090",
+      "091",
+      "092",
+      "093"
+    ],
+    "priority_after_083": [
+      "094",
+      "095",
+      "096"
+    ],
+    "resume_original_sequence_at": "084",
+    "final_release_pack": "150"
+  }
+}
