@@ -1,0 +1,145 @@
+{
+  "pack": "071",
+  "title": "Speech-to-Text / Diarization / Cleanup",
+  "date": "2026-09-19",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonicalLockedVerified": false,
+  "canonicalGateReason": "M14 paid live STT inference remains intentionally deferred; no paid provider call was executed. Engineering, schema, local cleanup and production runtime are verified.",
+  "commits": {
+    "pack070Base": "d309b822757096dd9d57879c4247084bc6d5c3f8",
+    "baselineImplementation": "682861ede3ca2971b9bf915e1136a76ba585e993",
+    "pricingPrivacyHardening": "45515f54ca582fbc424c036ca0de481f278baba8",
+    "finalRuntime": "cc3c31b6116c4cf88e0d9e8de1d7d310478aa584"
+  },
+  "validation": {
+    "hardeningPr": 9,
+    "hardeningCandidate": "fd1a131f4fd401f37f441102a90f8a0e9073382e",
+    "hardeningCiRun": 35418280497,
+    "workerFixPr": 10,
+    "workerFixCandidate": "daac04d3f1cfffb20fc031de219e588b87c2300c",
+    "workerFixCiRun": 35418545215,
+    "productionCiRun": 35418586139,
+    "backendQuality": "PASS",
+    "releaseQuality": "PASS",
+    "paidProviderCalls": 0,
+    "paymentCalls": 0,
+    "productionAudioJobs": 0
+  },
+  "database": {
+    "projectRef": "tqoqsgaymygmqrzddvtu",
+    "migrations": [
+      {
+        "version": "20260919025838",
+        "name": "pack071_stt_diarization_cleanup",
+        "status": "APPLIED_VERIFIED"
+      },
+      {
+        "version": "20260919030653",
+        "name": "pack071_audio_fk_indexes",
+        "status": "APPLIED_VERIFIED"
+      }
+    ],
+    "rpcs": [
+      "begin_zuvyr_audio_job(uuid,uuid)",
+      "claim_zuvyr_audio_execution(uuid,uuid,text)",
+      "request_zuvyr_audio_job_cancel(uuid,uuid)"
+    ],
+    "transcriptSegments": {
+      "rls": true,
+      "ownerSelectPolicy": true
+    },
+    "audioJobsDirectAuthenticatedAccess": "RLS enabled with no authenticated policy; service-role API only",
+    "audioArtifactsDirectAuthenticatedAccess": "RLS enabled with no authenticated policy; service-role API only",
+    "pack071ForeignKeyIndexes": "APPLIED_VERIFIED",
+    "unusedNewIndexesReason": "expected while production Pack071 job count is zero"
+  },
+  "transcription": {
+    "provider": "deepgram",
+    "model": "nova-3",
+    "endpoint": "pre-recorded /v1/listen",
+    "paidGate": "PACK071_STT_PAID_EXECUTION_ENABLED",
+    "paidGatePresentInProduction": false,
+    "credentialNamePresentInProduction": false,
+    "monolingualPriceUsdPerMinute": "0.0043",
+    "multilingualPriceUsdPerMinute": "0.0052",
+    "pricingBasis": "trusted server-measured milliseconds; client duration never billing authority",
+    "diarization": "included; diarize_model=latest",
+    "smartFormattingIncluded": true,
+    "explicitLanguageMode": "monolingual",
+    "noExplicitLanguageMode": "multilingual",
+    "providerModelImprovementOptOut": true,
+    "providerRequestParameter": "mip_opt_out=true",
+    "providerRetentionContract": "zero-data-retention request mode",
+    "transcriptCanonicalPersistence": true,
+    "timestampedSegments": true,
+    "speakerSegments": true,
+    "retryProviderResultReuse": true
+  },
+  "cleanup": {
+    "provider": "local",
+    "model": "ffmpeg-alpine",
+    "externalProviderCostMicroUsd": "0",
+    "defaultFormat": "wav",
+    "supportedFormats": [
+      "wav",
+      "mp3"
+    ],
+    "filters": [
+      "highpass",
+      "afftdn",
+      "loudnorm"
+    ],
+    "shellExecution": false,
+    "productionImageSmoke": {
+      "ffmpegVersion": "8.1.2",
+      "wavGeneratedAndProbed": true,
+      "mp3GeneratedAndProbed": true
+    }
+  },
+  "production": {
+    "githubCi": {
+      "run": 35418586139,
+      "backend": "PASS",
+      "release": "PASS"
+    },
+    "railway": {
+      "backend": {
+        "deploymentId": "71f4ef09-69c3-4bc9-9b5a-48953d49e67d",
+        "status": "SUCCESS",
+        "startup": "ROX AI backend listening on port 8080"
+      },
+      "worker": {
+        "deploymentId": "a93a7944-24c7-4b22-9355-3b070c2bec88",
+        "status": "SUCCESS",
+        "startup": "ROX AI worker running (concurrency: image=2, video=1, audio=1, attachment=1)"
+      },
+      "maintenance": {
+        "deploymentId": "58290e41-5c41-4e8d-a737-95630638532e",
+        "status": "SUCCESS"
+      }
+    },
+    "vercel": {
+      "status": "UNCHANGED_RUNTIME_VERIFIED",
+      "deploymentId": "dpl_J8r6smNKxM1SVCgJspg6bntrJdkV",
+      "state": "READY",
+      "deployedCommit": "9533a00dcaed3317d8dfead15527bc6f9cdb7a63",
+      "reason": "Pack071 changed no frontend file; Vercel Git trigger is build-rate-limited, so the existing READY frontend is the intended unchanged runtime identity."
+    }
+  },
+  "incidentAndRepair": {
+    "issue": "Pack071 baseline worker Dockerfile was corrupted by duplicated runtime blocks and a truncated ffprobe grep expression.",
+    "detection": "Railway worker deployments failed before usable build output; direct source audit exposed malformed Dockerfile.",
+    "repair": "Rebased worker Dockerfile on last valid Pack070 image contract, added one Pack071 WAV/MP3 smoke chain, and added static CI assertions for one runtime/ENV/ENTRYPOINT/CMD block.",
+    "recovered": true
+  },
+  "rollback": {
+    "priorStablePack070Commit": "d309b822757096dd9d57879c4247084bc6d5c3f8",
+    "paidGateRemainsOff": true,
+    "schemaChangesAdditive": true,
+    "customerRowsReset": false
+  },
+  "externalGate": "M14_DEFERRED",
+  "progression": "USER_APPROVED_NO_COST_DEFERRED_GATE",
+  "nextPack": "072",
+  "nextPackTitle": "Text-to-Speech / Voice Design"
+}

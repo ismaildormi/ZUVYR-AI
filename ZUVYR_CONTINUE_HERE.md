@@ -1161,3 +1161,66 @@ Hard rules:
 Exactly one next step:
 Audit current audio routes, audio storage/duration metadata, provider/model registries, usage ledger, voice/audio feature flags and any existing STT/diarization code, then bind only verified provider capabilities and exact costs into the current architecture.
 
+## PACK071 FINAL — Speech-to-Text / Diarization / Cleanup — 2026-09-19
+
+- Status: LOCKED_ENGINEERING_VERIFIED
+- Canonical LOCKED_VERIFIED: NO
+- External gate: M14_DEFERRED
+- Runtime commit: `cc3c31b6116c4cf88e0d9e8de1d7d310478aa584`
+- GitHub production CI 35418586139: Backend PASS / Release PASS
+- Supabase migrations:
+  - `20260919025838 pack071_stt_diarization_cleanup` — APPLIED_VERIFIED
+  - `20260919030653 pack071_audio_fk_indexes` — APPLIED_VERIFIED
+- Production Pack071 jobs at final verification: 0
+- STT:
+  - Deepgram Nova-3 pre-recorded
+  - monolingual $0.0043/min
+  - multilingual $0.0052/min
+  - trusted server-measured millisecond precharge
+  - diarization included; `diarize_model=latest`
+  - `mip_opt_out=true`
+  - paid gate OFF; credential name absent; provider calls during verification = 0
+- Local cleanup:
+  - FFmpeg 8.1.2
+  - WAV + MP3 generated and ffprobe-validated in the production worker image
+  - external provider cost = 0
+- Canonical persistence:
+  - owner-scoped source audio
+  - transcript content/assets + timestamped speaker segments
+  - cleaned-audio derived asset lineage
+  - provider result replay prevents duplicate paid STT on retry
+- Cancellation/accounting:
+  - DB row-lock authority
+  - reserve/settle/refund uses canonical ledger
+  - unsafe post-execution cancellation cannot create a duplicate refund
+- Security:
+  - transcript segments RLS + owner-select policy
+  - audio_jobs/audio_artifacts stay service-role API only; RLS with no authenticated policy is intentional deny-by-default
+  - execution RPCs granted to service_role, not authenticated/anon
+- Railway:
+  - backend `71f4ef09-69c3-4bc9-9b5a-48953d49e67d` — SUCCESS
+  - worker `a93a7944-24c7-4b22-9355-3b070c2bec88` — SUCCESS
+  - maintenance `58290e41-5c41-4e8d-a737-95630638532e` — SUCCESS
+- Vercel: unchanged READY frontend `dpl_J8r6smNKxM1SVCgJspg6bntrJdkV`; no frontend file changed.
+- Worker Docker incident: malformed duplicated runtime blocks were found, repaired, regression-gated and production-build verified.
+- Final receipt: `zuvyr-pack-evidence/pack-071/2026-09-19-no-cost-final/receipt.json`
+- Receipt SHA256: `7ae880ac8b7659265dda59750b32407b3b5da02129f45b7af626b4b55c08f5c2`
+- Progression: USER_APPROVED_NO_COST_DEFERRED_GATE
+- Active pack after reconciliation: PACK072
+
+## PACK072 OPEN — Text-to-Speech / Voice Design
+
+What this pack does:
+Bind verified text-to-speech voices/languages, streaming/file output, canonical audio persistence/export, exact cost accounting, and voice design/cloning only when explicit voice rights/consent are present.
+
+Hard rules:
+- Plain TTS and voice cloning are separate capabilities and permissions.
+- No cloned/designed voice may execute without explicit rights/consent evidence bound to the exact voice identity.
+- Unknown or ambiguous character/time pricing blocks paid execution.
+- Output audio must be canonical, owner-scoped and reopenable/downloadable.
+- Paid provider execution stays OFF until exact provider/cost/settlement contracts pass verification.
+- Model-training permission remains separate from voice-use consent.
+
+Exactly one next step:
+Audit the existing text_to_speech request/DB/audio job foundation, permission-center voice rights primitives, provider/model/cost registries and worker audio queue; then select only provider TTS capabilities with exact current prices and a consent-safe path for optional voice design/cloning.
+

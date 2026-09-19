@@ -1218,8 +1218,70 @@
     "next_pack": "071"
   },
   "pack071": {
-    "status": "OPEN",
+    "status": "LOCKED_ENGINEERING_VERIFIED",
     "title": "Speech-to-Text / Diarization / Cleanup",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "No paid live Deepgram STT inference was executed because M14 and PACK071_STT_PAID_EXECUTION_ENABLED remain deferred. Owner-scoped input, trusted-duration pricing, diarization/transcript persistence, zero-retention provider request contract, local cleanup, accounting and production runtime are verified.",
+    "external_gate": "M14_DEFERRED",
+    "baseline_commit": "d309b822757096dd9d57879c4247084bc6d5c3f8",
+    "implementation_commit": "682861ede3ca2971b9bf915e1136a76ba585e993",
+    "hardening_commit": "45515f54ca582fbc424c036ca0de481f278baba8",
+    "runtime_commit": "cc3c31b6116c4cf88e0d9e8de1d7d310478aa584",
+    "migrations": [
+      {
+        "version": "20260919025838",
+        "name": "pack071_stt_diarization_cleanup",
+        "status": "APPLIED_VERIFIED"
+      },
+      {
+        "version": "20260919030653",
+        "name": "pack071_audio_fk_indexes",
+        "status": "APPLIED_VERIFIED"
+      }
+    ],
+    "providers": {
+      "transcription": {
+        "provider": "deepgram",
+        "model": "nova-3",
+        "paid_gate": "PACK071_STT_PAID_EXECUTION_ENABLED",
+        "monolingual_usd_per_minute": "0.0043",
+        "multilingual_usd_per_minute": "0.0052",
+        "pricing_basis": "trusted_server_measured_milliseconds",
+        "diarization_included": true,
+        "mip_opt_out": true
+      },
+      "cleanup": {
+        "provider": "local",
+        "model": "ffmpeg-alpine",
+        "external_provider_cost_micro_usd": "0"
+      }
+    },
+    "production": {
+      "github_ci_run": 35418586139,
+      "backend_deployment": "71f4ef09-69c3-4bc9-9b5a-48953d49e67d",
+      "worker_deployment": "a93a7944-24c7-4b22-9355-3b070c2bec88",
+      "maintenance_deployment": "58290e41-5c41-4e8d-a737-95630638532e",
+      "railway_status": "SUCCESS",
+      "vercel_unchanged_ready_deployment": "dpl_J8r6smNKxM1SVCgJspg6bntrJdkV"
+    },
+    "security": {
+      "source_owner_scoped": true,
+      "transcript_segments_rls": true,
+      "transcript_segments_owner_policy": true,
+      "audio_jobs_direct_authenticated_access": "deny_by_default_rls_no_policy",
+      "audio_artifacts_direct_authenticated_access": "deny_by_default_rls_no_policy",
+      "execution_rpcs": "service_role_only"
+    },
+    "paid_execution_default": false,
+    "production_pack071_jobs_at_verification": 0,
+    "paid_provider_calls_during_verification": 0,
+    "progression": "USER_APPROVED_NO_COST_DEFERRED_GATE",
+    "next_pack": "072"
+  },
+  "pack072": {
+    "status": "OPEN",
+    "title": "Text-to-Speech / Voice Design",
+    "external_gate": "NONE",
     "dependencies": [
       "020",
       "023",
@@ -1232,11 +1294,10 @@
       "047",
       "048",
       "050",
-      "070"
+      "071"
     ],
-    "external_gate": "M14",
-    "objective": "Bind verified STT/audio processing provider(s), upload/chunk/format/diarization/noise-cleanup, language detection, storage and minute-based costing.",
-    "acceptance": "Audio→text/segments live test passes with correct duration/cost and privacy controls.",
+    "objective": "Bind verified TTS voices/languages, streaming/file output, voice design/cloning only with explicit rights/consent, character/time costing and export.",
+    "acceptance": "Text-to-audio is playable and metered; consent checks block unauthorized cloning.",
     "paid_execution_allowed": false,
     "next_pack_allowed": false
   }
