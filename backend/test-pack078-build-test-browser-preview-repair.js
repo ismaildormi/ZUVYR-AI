@@ -130,6 +130,16 @@ const redacted = redact(
 assert(!redacted.includes('abcdefghijklmnopqrstuvwxyz'));
 assert(!redacted.includes('verysecretvalue'));
 assert(redacted.includes('[redacted]'));
+
+const escapedSeparatorRedacted = redact(
+  'Error\\\\ntoken=super-secret-token-value'
+);
+assert(!escapedSeparatorRedacted.includes('super-secret-token-value'));
+
+const providerSecretRedacted = redact(
+  'provider failed sk_abcdefghijklmnopqrstuvwxyz'
+);
+assert(!providerSecretRedacted.includes('sk_abcdefghijklmnopqrstuvwxyz'));
 assert.equal(
   safePath('/vercel/sandbox/src/index.js'),
   'src/index.js'
