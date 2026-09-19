@@ -46,6 +46,7 @@ const { supabaseAdmin } = require('./lib/supabaseAdmin');
 const { register, setQueueDepth, recordCost, recordMargin, recordLoadLevel, recordRefund } = require('./lib/metrics');
 const { createHeaderSecretGuard } = require('./lib/operatorAuth');
 const { runMaintenanceOnce, requireMaintenanceStrategy } = require('./lib/maintenanceCoordinator');
+const { cleanupExpiredCodeSandboxes } = require('./lib/codeSandboxCleanup');
 const loadGuard = require('./lib/loadGuard');
 const { CREDIT_PRICE_USD, marginUsd } = require('./lib/creditEconomics');
 const { quoteGeneration } = require('./lib/dynamicPricing');
@@ -65,6 +66,12 @@ const {
 const {
   createCodeStudioRouter
 } = require('./lib/codeStudioRoutes');
+const {
+  createCodePreviewTransportRouter
+} = require('./lib/codePreviewTransportRoutes');
+const {
+  createVercelSandboxProvider
+} = require('./lib/codeVercelSandboxProvider');
 const { createPermissionCenterRouter } = require('./lib/permissionCenterRoutes');
 const {
   createAudioStudioRouter
@@ -151,6 +158,10 @@ const audioInputResolver = createAudioInputResolver({
 const assetStorageKernel = createAssetStorageKernel({
   client: supabaseAdmin,
   storage: supabaseAdmin.storage
+});
+
+const codeSandboxProvider = createVercelSandboxProvider({
+  env: process.env
 });
 
 const app = express();
@@ -315,6 +326,17 @@ app.use(
   rateLimit('roxip'),
   createRoxIpRouter()
 );
+// PACK076 preview transport is authenticated by a short-lived, owner-issued
+// preview credential rather than a Supabase bearer token so browser preview
+// subresources can load without exposing the user's API session to sandbox code.
+// Global IP protection still runs before this mount.
+app.use(
+  '/api/code-preview',
+  createCodePreviewTransportRouter({
+    db: supabaseAdmin,
+    sandboxProvider: codeSandboxProvider
+  })
+);
 app.use(
   '/api/code-studio',
   requireAuth,
@@ -322,6 +344,8 @@ app.use(
   createCodeStudioRouter({
     db: supabaseAdmin,
     routeRequestImpl: routeRequest,
+    sandboxProvider: codeSandboxProvider,
+    sandboxEnv: process.env,
     creditApi: {
       reserveCredits,
       settleCredits,
@@ -394,6 +418,7 @@ app.post(
       const result = await runMaintenanceOnce({
         redis: queueConnection,
         supabaseAdmin,
+        codeSandboxCleanup: cleanupExpiredCodeSandboxes,
       });
 
       if (result.status === 'success' || result.duplicate) {

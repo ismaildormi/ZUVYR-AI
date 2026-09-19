@@ -1,0 +1,88 @@
+{
+  "version": "pack-076.code-sandbox.v1",
+  "status": "engineering_verified_awaiting_m15",
+  "provider": {
+    "id": "vercel_sandbox",
+    "apiBaseUrl": "https://api.vercel.com",
+    "createEndpointVersion": "v3",
+    "requiredEnvironment": [
+      "VERCEL_TOKEN",
+      "VERCEL_PROJECT_ID",
+      "VERCEL_TEAM_ID"
+    ],
+    "liveGateEnvironment": [
+      "ZUVYR_M15_VERIFIED",
+      "ZUVYR_SANDBOX_PRICING_VERIFIED"
+    ],
+    "liveEnabledByDefault": false,
+    "externalGate": "M15",
+    "pricingVerificationStatus": "unverified"
+  },
+  "runtime": {
+    "runtime": "node24",
+    "vcpus": 2,
+    "memoryMb": 4096,
+    "defaultTimeoutMs": 900000,
+    "maxTimeoutMs": 3600000,
+    "idleTimeoutMs": 300000,
+    "providerRequestTimeoutMs": 10000,
+    "persistent": false
+  },
+  "network": {
+    "defaultMode": "deny-all",
+    "allowedDomains": [],
+    "allowedCidrs": [],
+    "deniedCidrs": [],
+    "dependencyInstallRequiresPolicyOverride": true,
+    "allowAllForbidden": true
+  },
+  "secrets": {
+    "injectZuvyrBackendSecrets": false,
+    "injectProviderSecrets": false,
+    "injectStripeSecrets": false,
+    "injectSupabaseServiceRole": false,
+    "allowedEnvironmentKeys": [
+      "ZUVYR_SANDBOX_SESSION_ID"
+    ],
+    "forbiddenNamePatterns": [
+      "SUPABASE",
+      "SERVICE_ROLE",
+      "STRIPE",
+      "OPENAI",
+      "ANTHROPIC",
+      "GROQ",
+      "FAL",
+      "REPLICATE",
+      "VERCEL_TOKEN",
+      "DATABASE_URL",
+      "REDIS_URL",
+      "CRON_SECRET",
+      "METRICS_TOKEN"
+    ]
+  },
+  "preview": {
+    "rawProviderRoutesReturnedToClient": false,
+    "rawPublicPortEnabledByDefault": false,
+    "authenticatedTransportRequired": true,
+    "tokenBytes": 32,
+    "tokenHash": "sha256",
+    "defaultTokenTtlSeconds": 300,
+    "maxTokenTtlSeconds": 900
+  },
+  "cleanup": {
+    "stopOnFailure": true,
+    "stopOnCancel": true,
+    "stopOnExpiry": true,
+    "stopOnIdle": true,
+    "terminalStates": [
+      "stopped",
+      "failed",
+      "expired"
+    ]
+  },
+  "gates": {
+    "canProvisionLive": false,
+    "reason": "M15, provider credential and exact sandbox pricing are not all verified.",
+    "noPaidProviderCallsInPack076Verification": true
+  }
+}
