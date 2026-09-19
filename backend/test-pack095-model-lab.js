@@ -128,7 +128,8 @@ for (const marker of [
   'r.revoked_at is not null',
   "r.privacy_status <> 'processed'",
   "r.provenance_status <> 'verified'",
-  'training_consent is not true'
+  'coalesce(v_training_consent,false) is not true',
+  'coalesce(p.training_consent,false) is not true'
 ]) {
   assert(
     migration.toLowerCase().includes(marker.toLowerCase()),
