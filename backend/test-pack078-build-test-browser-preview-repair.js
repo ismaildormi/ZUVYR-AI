@@ -130,6 +130,45 @@ const redacted = redact(
 assert(!redacted.includes('abcdefghijklmnopqrstuvwxyz'));
 assert(!redacted.includes('verysecretvalue'));
 assert(redacted.includes('[redacted]'));
+
+const redactionCases = [
+  'Error\nAuthorization: Bearer actualnewlineauthorizationsecret',
+  'Error\\nAuthorization: Bearer escapednewlineauthorizationsecret',
+  'Error\\rBearer escapedcarriagebearersecretvalue',
+  'Error\\ntoken=escaped-token-secret-value',
+  'Error\\napi_key=escaped-api-key-secret-value',
+  'Error\\napi-key=escaped-api-dash-key-secret-value',
+  'Error\\nsecret=escaped-secret-value',
+  'Error\\npassword=escaped-password-value',
+  'prefixAuthorization: Bearer conservativeboundarysecret',
+  'prefixtoken=conservative-token-value',
+  'provider failed sk_abcdefghijklmnopqrstuvwxyz',
+  'provider failed pk_abcdefghijklmnopqrstuvwxyz',
+  'provider failed vcp_abcdefghijklmnopqrstuvwxyz',
+  'provider failed sbp_abcdefghijklmnopqrstuvwxyz'
+];
+
+for (const sample of redactionCases) {
+  const safe = redact(sample);
+  assert(
+    !/actualnewlineauthorizationsecret|escapednewlineauthorizationsecret|escapedcarriagebearersecretvalue|escaped-token-secret-value|escaped-api-key-secret-value|escaped-api-dash-key-secret-value|escaped-secret-value|escaped-password-value|conservativeboundarysecret|conservative-token-value|(?:sk|pk|vcp|sbp)_abcdefghijklmnopqrstuvwxyz/i.test(safe),
+    'redaction leaked a secret for sample: ' + sample
+  );
+  assert(
+    safe.includes('[redacted]'),
+    'redaction marker missing for sample: ' + sample
+  );
+}
+
+const chained = redact(
+  'x\\nAuthorization: Bearer chainedauthorizationsecret\\n' +
+  'token=chained-token-secret\\n' +
+  'password=chained-password-secret'
+);
+assert(!chained.includes('chainedauthorizationsecret'));
+assert(!chained.includes('chained-token-secret'));
+assert(!chained.includes('chained-password-secret'));
+
 assert.equal(
   safePath('/vercel/sandbox/src/index.js'),
   'src/index.js'
