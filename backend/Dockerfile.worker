@@ -59,7 +59,71 @@ RUN apk add --no-cache \
        /tmp/zuvyr-pack069-check.webm | grep -q '"duration"' \
   && ffprobe -v error -show_entries format=format_name,duration -of json \
        /tmp/zuvyr-pack069-check.mov | grep -q '"duration"' \
-  && rm -f /tmp/zuvyr-pack069-source.mp4 \
+  && ffmpeg -y -hide_banner -loglevel error \
+       -f lavfi -i sine=frequency=440:sample_rate=48000 \
+       -t 0.4 -c:a pcm_s16le /tmp/zuvyr-pack071-source.wav \
+  && ffmpeg -y -hide_banner -loglevel error \
+       -i /tmp/zuvyr-pack071-source.wav -vn \
+       -af "highpass=f=70,lowpass=f=12000,afftdn=nr=12:nf=-50:tn=1,loudnorm=I=-16:LRA=11:TP=-1.5" \
+       -c:a pcm_s16le /tmp/zuvyr-pack071-clean.wav \
+  && ffmpeg -y -hide_banner -loglevel error \
+       -i /tmp/zuvyr-pack071-source.wav -vn \
+       -af "highpass=f=70,lowpass=f=12000,afftdn=nr=12:nf=-50:tn=1,loudnorm=I=-16:LRA=11:TP=-1.5" \
+       -c:a libmp3lame -b:a 192k /tmp/zuvyr-pack071-clean.mp3 \
+  && ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \
+       /tmp/zuvyr-pack071-clean.wav | grep -Eq '^[0-9]+([.][0-9]+)?
+       /tmp/zuvyr-pack069-check.mp4 \
+       /tmp/zuvyr-pack069-check.webm \
+       /tmp/zuvyr-pack069-check.mov
+
+ENV NODE_ENV=production \
+    HOME=/tmp/zuvyr-worker-home \
+    ATTACHMENT_DOCUMENT_TOOLS_ENABLED=1 \
+    ATTACHMENT_OCR_LANGUAGES=eng+ara+fra
+
+COPY --from=deps --chown=node:node /app/node_modules ./node_modules
+COPY --chown=node:node . .
+
+RUN mkdir -p \
+      /tmp/zuvyr-worker-home \
+      /tmp/zuvyr-attachments \
+  && chown -R node:node \
+      /tmp/zuvyr-worker-home \
+      /tmp/zuvyr-attachments
+
+USER node
+
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["node", "worker.js"] \
+  && ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \
+       /tmp/zuvyr-pack071-clean.mp3 | grep -Eq '^[0-9]+([.][0-9]+)?
+       /tmp/zuvyr-pack069-check.mp4 \
+       /tmp/zuvyr-pack069-check.webm \
+       /tmp/zuvyr-pack069-check.mov
+
+ENV NODE_ENV=production \
+    HOME=/tmp/zuvyr-worker-home \
+    ATTACHMENT_DOCUMENT_TOOLS_ENABLED=1 \
+    ATTACHMENT_OCR_LANGUAGES=eng+ara+fra
+
+COPY --from=deps --chown=node:node /app/node_modules ./node_modules
+COPY --chown=node:node . .
+
+RUN mkdir -p \
+      /tmp/zuvyr-worker-home \
+      /tmp/zuvyr-attachments \
+  && chown -R node:node \
+      /tmp/zuvyr-worker-home \
+      /tmp/zuvyr-attachments
+
+USER node
+
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["node", "worker.js"] \
+  && rm -f /tmp/zuvyr-pack071-source.wav \
+       /tmp/zuvyr-pack071-clean.wav \
+       /tmp/zuvyr-pack071-clean.mp3 \
+       /tmp/zuvyr-pack069-source.mp4 \
        /tmp/zuvyr-pack069-check.mp4 \
        /tmp/zuvyr-pack069-check.webm \
        /tmp/zuvyr-pack069-check.mov
