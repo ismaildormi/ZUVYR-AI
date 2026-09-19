@@ -313,6 +313,7 @@ async function routeRequest(feature, messages, opts = {}) {
     const routeReason = providerAttemptCount === 1 ? 'RANKED_PRIMARY' : 'FALLBACK_AFTER_PREVIOUS_ATTEMPT';
     const billingAttempt = fallbackScope.beginAttempt(route);
     const startedAt = Date.now();
+    let providerSuccessAccepted = false;
     try {
       const maxOutputTokens =
         feature === 'code'
@@ -325,6 +326,7 @@ async function routeRequest(feature, messages, opts = {}) {
       );
       const latencyMs = Date.now() - startedAt;
       const logicalSuccess = fallbackScope.completeAttempt(billingAttempt.attemptId, 'SUCCESS');
+      providerSuccessAccepted = logicalSuccess.accepted === true;
       if (!logicalSuccess.accepted) {
         attempts.push({
           model: route.model,
@@ -405,11 +407,53 @@ async function routeRequest(feature, messages, opts = {}) {
         billing_scope: fallbackScope.snapshot()
       };
     } catch (err) {
+      const failureLatencyMs = Date.now() - startedAt;
+
+      if (providerSuccessAccepted) {
+        const postSuccessReceipt = buildDecisionReceipt({
+          context: decisionContext,
+          provider: route.provider,
+          model: route.model,
+          reason: routeReason,
+          outcome: 'ERROR',
+          guard,
+          estimatedCostUsd: estimatedCost,
+          actualCostUsd: null,
+          latencyMs: failureLatencyMs,
+          retries: providerAttemptCount - 1,
+          rankingMode: rankingResult.mode,
+          errorCategory: 'POST_SUCCESS_ACCOUNTING_FAILURE'
+        });
+        routerDecisionLogger.record(postSuccessReceipt);
+        decisionLog.push(postSuccessReceipt);
+        attempts.push({
+          model: route.model,
+          provider: route.provider,
+          status: 'post_success_accounting_failure',
+          message: err?.code || err?.message || 'post_success_accounting_failure',
+          decision_id: postSuccessReceipt.decisionId,
+          billing_attempt_id: billingAttempt.attemptId
+        });
+
+        await reportOutcome(route.model, true);
+        recordModelLatency(route.model, failureLatencyMs);
+        recordModelOutcome(route.model, 'success');
+
+        const terminal = new Error(
+          'model_post_success_accounting_failed'
+        );
+        terminal.code = 'model_post_success_accounting_failed';
+        terminal.cause = err;
+        terminal.attempts = attempts;
+        terminal.decision_log = decisionLog;
+        terminal.billing_scope = fallbackScope.snapshot();
+        throw terminal;
+      }
+
       fallbackScope.completeAttempt(
         billingAttempt.attemptId,
         err && err.name === 'AbortError' ? 'CANCELLED' : 'ERROR'
       );
-      const failureLatencyMs = Date.now() - startedAt;
       let failureCategory = null;
       try {
         failureCategory = normalizeProviderFailure(err, {
