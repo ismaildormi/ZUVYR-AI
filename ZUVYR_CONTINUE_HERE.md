@@ -1479,3 +1479,37 @@ After Vercel rolling capacity opens, trigger one production deploy of current ma
 - BYOC compute cost and ZUVYR control-plane/storage/egress/observability cost must remain separate.
 - No browser-visible compute credentials. No live paid training/compute calls while `LIVE_BILLING_ALLOWED=false`.
 - PACK096 remains next after PACK095; PACK084–PACK093 remain deferred, not cancelled. Do not renumber packs.
+
+
+### PACK095 ENGINEERING FINALIZED — 2026-09-19
+
+- **PACK095 — ZUVYR Model Lab** is `LOCKED_ENGINEERING_VERIFIED`; canonical `LOCKED_VERIFIED` remains NO because Vercel production is stale and authenticated production owner/admin Model Lab acceptance is deferred.
+- Implementation PR: `#39`; final implementation merge commit: `008b3cfff6393da41f24ab4008d054737019add5`.
+- Final candidate CI: run `35469559689` — Backend Quality PASS, Release Quality PASS.
+- Supabase migration: `20260919211025 pack095_model_lab` — APPLIED_VERIFIED.
+- Production authority: 15/15 Model Lab/Compute Connector control-plane tables present; RLS ON for all; direct browser policies = 0; 12/12 SECURITY DEFINER control functions present.
+- Railway exact merge commit `008b3cfff6393da41f24ab4008d054737019add5`:
+  - backend `9a21a95f-b6ec-402e-bf1f-a0821091aa1b` — SUCCESS
+  - worker `8843133a-3e76-4860-a6ac-d85162f07ff5` — SUCCESS
+  - maintenance `d1a94290-b5b1-4995-9813-6b593002dd38` — SUCCESS
+- Model Lab includes datasets/versions/items/licenses, skills/curricula, synthetic jobs, training runs, benchmarks/evals, checkpoints, rollout stages `LAB→EVAL→SHADOW→CANARY→SECONDARY→PRIMARY`, and BYOC Compute Connector registration/attestation with server-side credential references.
+- PACK094 consent/rights/privacy/provenance authority is reused; Memory and model-training permission remain separate.
+- ZUVYR-owned model API/software fee = $0; owned-model usage fee = $0; inference markup = $0. Customer BYOC compute and ZUVYR control-plane costs remain separate.
+- Paid training/provider calls during verification: 0. `LIVE_BILLING_ALLOWED=false`.
+- Vercel production remains stale at `60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4`; newest PACK095 preview `dpl_3zTu9WqZSdCS4CvaeXVZnfqm9gjg` is READY but protected by Vercel SSO/tooling.
+- Deferred gates:
+  - `DEFERRED_PRODUCTION_FRONTEND_GATE`
+  - `PACK095_AUTHENTICATED_PRODUCTION_ADMIN_UI_ACCEPTANCE`
+- Receipt: `zuvyr-pack-evidence/pack-095/2026-09-19-engineering-checkpoint/receipt.json`
+- Receipt Git blob: `3ac15fbf56938bd77ced04d992a5abd2ec197e87`
+- Progression: `USER_APPROVED_DEFERRED_GATE_CONTINUATION`.
+
+### PACK096 OPEN — ZUVYR 7 Manager / Operator — V1 Production Model + V2 Bridge
+
+- **PACK096 — ZUVYR 7 Manager / Operator — V1 Production Model + V2 Bridge is the active model-first Pack.**
+- Reuse PACK094 Learning Pipeline and PACK095 Model Lab/Compute Connector; do not create a parallel learning, registry, credential or usage system.
+- Build the owned-model runtime/Router bridge, exact checkpoint registry identity, independent evaluation authority, shadow/canary routing, automatic rollback/fallback and Teacher Gateway rights enforcement.
+- Default serving contract is user/org-funded BYOC. ZUVYR API/self-hosting software fee = $0, owned-model usage fee = $0, inference markup = $0.
+- PACK096 canonical acceptance still requires M21: at least one real ZUVYR-owned checkpoint serving a bounded production workload on registered BYOC plus one complete rights-approved learning loop.
+- No fabricated live training or owned-model production proof. If M21 cannot be truthfully executed in this tool/account context, complete the engineering plane, preserve the external gate, and continue only under the user's explicit deferred-gate progression rule.
+- After PACK096 is truthfully gated, resume the deferred original sequence at PACK084; PACK084–PACK093 were deferred, not cancelled.
