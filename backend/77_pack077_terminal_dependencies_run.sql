@@ -274,20 +274,31 @@ exception
     where owner_id = p_owner_id
       and request_id = p_request_id;
 
-    if v_existing.id is not null
-       and v_existing.project_id = p_project_id
-       and v_existing.sandbox_session_id = p_sandbox_session_id
-       and v_existing.operation = v_operation
-       and v_existing.command_spec = p_command_spec then
-      return jsonb_build_object(
-        'replayed', true,
-        'job_id', v_existing.id,
-        'status', v_existing.status,
-        'stage', v_existing.stage
-      );
+    if v_existing.id is not null then
+      if v_existing.project_id = p_project_id
+         and v_existing.sandbox_session_id = p_sandbox_session_id
+         and v_existing.operation = v_operation
+         and v_existing.command_spec = p_command_spec then
+        return jsonb_build_object(
+          'replayed', true,
+          'job_id', v_existing.id,
+          'status', v_existing.status,
+          'stage', v_existing.stage
+        );
+      end if;
+      raise exception 'pack077_idempotency_scope_mismatch';
     end if;
 
-    raise exception 'pack077_idempotency_scope_mismatch';
+    if exists (
+      select 1
+      from public.code_runtime_jobs
+      where sandbox_session_id = p_sandbox_session_id
+        and status in ('queued','running')
+    ) then
+      raise exception 'pack077_active_job_exists';
+    end if;
+
+    raise;
 end;
 $pack077_reserve$;
 
