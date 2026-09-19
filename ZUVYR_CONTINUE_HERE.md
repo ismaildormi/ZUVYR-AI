@@ -989,3 +989,86 @@ Pack068 must preserve:
 Exactly one next step:
 Re-verify current official video edit/extend/VFX provider schemas, source-media semantics, supported operations and exact current prices; then select only the capabilities that can be represented truthfully in the existing video operation/provider/cost/canonical-lineage contracts with paid execution OFF.
 
+## PACK068 NO-COST FINAL RECONCILIATION — 2026-09-19
+
+- Status: LOCKED_ENGINEERING_VERIFIED
+- Canonical LOCKED_VERIFIED: NO
+- Canonical reason: no paid live edited/VFX output or actual provider billing was executed; the roadmap's real playable-output acceptance therefore remains intentionally unclaimed.
+- Baseline: `1cdaa7166f887a3afd96ef7ac493fade4092276f`
+- Candidate: `46c5db5c3144946fb37995e4213f0809d683d20f`
+- Production runtime commit: `eab3210a4060362d2277e9ef45f724a437e9105f`
+- Candidate PR: #5
+- Candidate CI run 35412167855: Backend PASS / Release PASS
+- Production CI run 35412247600: Backend PASS / Release PASS
+- Supabase:
+  - 20260919011619 pack068_video_edit_vfx_foundation — APPLIED_VERIFIED
+  - 20260919011745 pack068_source_audio_fk_index — APPLIED_VERIFIED
+  - production PACK068 jobs at final verification: 0
+- Production deployments:
+  - Vercel: SUCCESS
+  - Railway backend 9f2b87f7-5919-4542-b289-3e662d59110a: SUCCESS; /readyz configured
+  - Railway worker eb4a7919-d08b-477a-83d0-e5c77c663043: SUCCESS
+  - Railway maintenance 7f18fc74-f615-441e-83f4-256c7d708b86: SUCCESS
+- Trusted media duration:
+  - conversation_assets.duration_seconds is server-trusted
+  - generated MP4 duration is measured
+  - supported upload duration is measured during ingestion
+  - old uploads with unknown duration remain fail-closed
+- Exact pricing:
+  - Pack068 second-based usage uses integer milliseconds with unitScale=1000
+  - LipSync uses exact integer 5-second increment ceiling
+  - no floating pricing decision is used
+- Pre-charge-safe engineering paths:
+  - LTX 2.3 Retake (edit)
+  - LTX 2.3 Extend
+  - Bria prompt erase
+  - Bria background removal v3
+  - Kling audio-to-video LipSync
+- Implemented but intentionally hidden/blocked:
+  - LightX Relight
+  - LightX Recamera
+  - reason: provider pricing is per output second and exact output duration is not proven before reserve
+- Source lineage:
+  - owner scoped
+  - canonical asset/content/version verified
+  - signed provider URLs ephemeral
+  - source video/audio lineage persisted
+  - derived output never mutates source
+- Advisor correction:
+  - new source_audio FK initially surfaced as unindexed
+  - idempotent covering index applied
+  - unindexed-FK count decreased 73 → 72
+  - fresh index may appear as unused while PACK068 job count remains 0
+- Paid execution:
+  - all PACK066 / PACK067 / PACK068 paid gate variable names absent on production services
+  - provider credential names exist where needed; secret values were never read or exposed
+  - paid provider calls during verification: 0
+- Receipt: `zuvyr-pack-evidence/pack-068/2026-09-19-no-cost-final/receipt.json`
+- Receipt Git blob: `5ffdea96dd0ffe5bf89891e2a42f27c3fa036fc3`
+- External gate: M13_DEFERRED
+- Progression: USER_APPROVED_NO_COST_DEFERRED_GATE
+- Active pack after reconciliation: PACK069
+
+## PACK069 OPEN — Subtitles / Dubbing / Enhance / Export
+
+Canonical scope:
+Implement transcript timing, SRT/VTT, translation/dubbing handoff, upscale/enhance, MP4/WebM/MOV export, cancel/late result and download.
+
+Canonical acceptance:
+Exported video/subtitle files open; cancel/failure accounting is stable.
+
+PACK069 must preserve:
+- PACK066 / PACK067 / PACK068 paid provider gates remain OFF unless explicitly activated.
+- Unknown or ambiguous provider/local-tool cost blocks paid execution.
+- Source video/audio/subtitle assets remain owner-scoped and canonical.
+- Subtitle timing and language metadata must round-trip without mutating source video.
+- Dubbing must keep transcript/audio/video lineage and use one logical billing scope.
+- Export must advertise only formats actually produced and validated.
+- Cancel/late-result races must reconcile to one stable accounting outcome.
+- Download links remain owner-scoped and renewable; no public provider URL becomes canonical storage identity.
+- Existing media version/history and universal Send-To/Undo behavior must remain intact.
+- No paid provider inference is required for engineering verification.
+
+Exactly one next step:
+Audit the existing subtitle/dubbing/enhance/export/cancel implementation and current provider/local-tool contracts, then map only verified operations and exact costs into the existing video request/provider/canonical-storage/ledger architecture with all paid provider gates OFF.
+
