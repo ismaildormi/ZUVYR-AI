@@ -77,6 +77,12 @@ function createAudioResultRepository({db,storage,contentRepository=null,assetKer
 
   async function persistTranscript({ownerId,jobId,result,source,provider='deepgram',model='nova-3'}){
     const payload={
+      schemaVersion:'pack071.transcript.v1',
+      zuvyr:{
+        pack:71,
+        jobId,
+        sourceAudioAssetId:source.assetId
+      },
       transcript:result.transcript,
       language:result.language,
       languages:result.languages || [],
@@ -86,12 +92,13 @@ function createAudioResultRepository({db,storage,contentRepository=null,assetKer
       providerMetadata:result.metadata
     };
     const jsonBuffer=Buffer.from(JSON.stringify(payload,null,2)+'\n','utf8');
-    const textBuffer=Buffer.from(result.transcript+'\n','utf8');
     const sha256=digest(jsonBuffer);
     const record=await content.ensure({
       ownerId,projectId:null,kind:'text',title:'Audio transcript',
       sourceKind:'audio_transcription',sourceSystem:'zuvyr_audio_pack071',
-      sourceId:'audio-job:'+jobId,sourceVersionKey:sha256,
+      sourceId:[
+        'transcription',source.assetId,provider,model,'multi','diarize'
+      ].join(':'),sourceVersionKey:sha256,
       metadata:{pack:71,jobId,provider,model,sourceAudioAssetId:source.conversationAssetId},
       version:{
         mimeType:'application/json',uri:null,text:result.transcript,sha256,
@@ -104,13 +111,7 @@ function createAudioResultRepository({db,storage,contentRepository=null,assetKer
       buffer:jsonBuffer,mimeType:'application/json',
       metadata:{pack:71,jobId,artifact:'transcript_json',provider,model}
     });
-    const textAsset=await upload({
-      ownerId,contentId:record.contentId,versionId:record.versionId,
-      buffer:textBuffer,mimeType:'text/plain; charset=utf-8',
-      metadata:{pack:71,jobId,artifact:'transcript_text',provider,model}
-    });
     await lineage({ownerId,derivedAssetId:jsonAsset.assetId,source,relationType:'extracted_from',metadata:{pack:71,jobId,artifact:'transcript_json'}});
-    await lineage({ownerId,derivedAssetId:textAsset.assetId,source,relationType:'extracted_from',metadata:{pack:71,jobId,artifact:'transcript_text'}});
 
     const segments=(result.utterances?.length?result.utterances:result.words).map((s,index)=>({
       owner_id:ownerId,job_id:jobId,segment_index:index,
@@ -126,7 +127,7 @@ function createAudioResultRepository({db,storage,contentRepository=null,assetKer
     const artifact=await db.from('audio_artifacts').insert({
       owner_id:ownerId,job_id:jobId,asset_type:'transcript',url:null,
       mime_type:'application/json',duration_seconds:source.durationSeconds,
-      metadata:{pack:71,language:result.language,provider,model,textAssetId:textAsset.assetId},
+      metadata:{pack:71,language:result.language,provider,model},
       canonical_content_id:record.contentId,canonical_asset_id:jsonAsset.assetId
     });
     if(artifact.error&&!duplicate(artifact.error)) throw repoError('audio_artifact_persist_failed',artifact.error);
@@ -139,7 +140,6 @@ function createAudioResultRepository({db,storage,contentRepository=null,assetKer
         languageConfidence:result.languageConfidence,
         languages:result.languages || [],
         transcriptJsonAssetId:jsonAsset.assetId,
-        transcriptTextAssetId:textAsset.assetId,
         diarized:result.words.some(w=>Number.isInteger(w.speaker))
       },
       updated_at:new Date().toISOString()
@@ -148,41 +148,42 @@ function createAudioResultRepository({db,storage,contentRepository=null,assetKer
 
     return Object.freeze({
       contentId:record.contentId,versionId:record.versionId,
-      assetId:jsonAsset.assetId,textAssetId:textAsset.assetId,
+      assetId:jsonAsset.assetId,
       transcript:result.transcript,language:result.language,
       segmentCount:segments.length
     });
   }
 
-  async function persistCleanedAudio({ownerId,jobId,buffer,mimeType,format,source}){
+  async function persistCleanedAudio({ownerId,jobId,buffer,mimeType,format,strength='balanced',source}){
     const sha256=digest(buffer);
     const record=await content.ensure({
       ownerId,projectId:null,kind:'audio',title:'Cleaned audio',
       sourceKind:'audio_cleanup',sourceSystem:'zuvyr_audio_pack071',
-      sourceId:'audio-job:'+jobId,sourceVersionKey:sha256,
+      sourceId:['cleanup',source.assetId,format,strength].join(':'),
+      sourceVersionKey:sha256,
       metadata:{pack:71,jobId,operation:'audio_cleanup',sourceAudioAssetId:source.conversationAssetId},
       version:{
         mimeType,uri:null,text:null,sha256,
-        payload:{operation:'audio_cleanup',format,durationSeconds:source.durationSeconds},
+        payload:{operation:'audio_cleanup',format,strength,durationSeconds:source.durationSeconds},
         provenance:{pack:71,jobId,provider:'local',model:'ffmpeg-alpine',sourceAudio:source}
       }
     });
     const audioAsset=await upload({
       ownerId,contentId:record.contentId,versionId:record.versionId,
       buffer,mimeType,
-      metadata:{pack:71,jobId,artifact:'cleaned_audio',provider:'local',model:'ffmpeg-alpine',format}
+      metadata:{pack:71,jobId,artifact:'cleaned_audio',provider:'local',model:'ffmpeg-alpine',format,strength}
     });
     await lineage({ownerId,derivedAssetId:audioAsset.assetId,source,relationType:'edited_from',metadata:{pack:71,jobId,operation:'audio_cleanup'}});
     const artifact=await db.from('audio_artifacts').insert({
       owner_id:ownerId,job_id:jobId,asset_type:'audio',url:null,mime_type:mimeType,
       duration_seconds:source.durationSeconds,
-      metadata:{pack:71,provider:'local',model:'ffmpeg-alpine',format},
+      metadata:{pack:71,provider:'local',model:'ffmpeg-alpine',format,strength},
       canonical_content_id:record.contentId,canonical_asset_id:audioAsset.assetId
     });
     if(artifact.error&&!duplicate(artifact.error)) throw repoError('audio_artifact_persist_failed',artifact.error);
     const update=await db.from('audio_jobs').update({
       canonical_content_id:record.contentId,canonical_asset_id:audioAsset.assetId,
-      usage:{provider:'local',model:'ffmpeg-alpine',durationSeconds:source.durationSeconds,format},
+      usage:{provider:'local',model:'ffmpeg-alpine',durationSeconds:source.durationSeconds,format,strength},
       updated_at:new Date().toISOString()
     }).eq('id',jobId).eq('owner_id',ownerId);
     if(update.error) throw repoError('audio_job_result_link_failed',update.error);
