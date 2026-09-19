@@ -37,13 +37,15 @@ This section overrides older active-pack / next-pack text later in this file.
 
 Current production/source truth at the time of this override:
 
-- `main`: PACK082 finalized; **PACK083 — 3D Generation is the current in-flight Pack**.
-- Open implementation work for PACK083 must be reconciled/finished; do not discard or duplicate it.
-- **Do not start PACK084 after PACK083.**
-- Canonical priority after the current in-flight Pack is:
+- **PACK083 — 3D Generation is engineering-finalized**. Source/CI/Supabase/Railway are verified; live paid 3D acceptance remains deferred behind M18.
+- Production hotfix source for PACK083: `60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4`.
+- **PACK094 — Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank is the active Pack.**
+- **Do not start PACK084 now.**
+- Canonical priority sequence is:
   `PACK094 → PACK095 → PACK096`
 - After PACK096 is truthfully gated, resume the original sequence at PACK084. PACK084–PACK093 are deferred, not cancelled.
-- Existing Pack numbers remain unchanged. Do not renumber historical work.
+- Existing Pack numbers remain unchanged. Do not renumber, cancel, or silently omit any PACK001–PACK150.
+- PACK100 remains an intermediate hardening checkpoint; PACK150 is the final V1 release/recovery gate.
 
 ### Canonical owned-model economics
 
