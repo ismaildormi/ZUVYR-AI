@@ -931,6 +931,37 @@
           }
         }
       ]
+    },
+    "browserbase": {
+      "credentialEnvironment": [
+        "BROWSERBASE_API_KEY",
+        "BROWSERBASE_PROJECT_ID"
+      ],
+      "regions": [
+        "provider_managed"
+      ],
+      "quotaType": "account_plan_managed",
+      "termsLicenseNotes": "Pack081 registers Browserbase as the Cloud Browser Runtime provider. Official Browserbase docs/pricing were reviewed on 2026-09-19, but the connected ZUVYR account plan, credentials, effective included-hours/overage basis and production authorization are not verified. Live execution remains fail-closed behind M17 and pricing verification.",
+      "adapter": "lib/browserbaseProvider.js",
+      "capabilities": [
+        {
+          "id": "browser.runtime",
+          "verification": "registered_unverified_account",
+          "routing": {
+            "mode": "managed_cloud_browser_cdp",
+            "authority": "https://docs.browserbase.com/"
+          },
+          "cost": {
+            "mode": "registry_blocked_unverified",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryId": "browserbase-cloud-browser-runtime-unverified",
+            "requiredEnvironment": [
+              "ZUVYR_M17_VERIFIED",
+              "ZUVYR_BROWSER_PRICING_VERIFIED"
+            ]
+          }
+        }
+      ]
     }
   }
 }
