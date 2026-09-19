@@ -257,11 +257,37 @@ function providerQuote(feature, {
     if (operation === 'object_remove' && sourceDurationMs >= 5000n) {
       throw pricingError('pack068_object_remove_source_too_long');
     }
-    if (
-      operation === 'lip_sync' &&
-      (sourceDurationMs < 2000n || sourceDurationMs > 10000n)
-    ) {
-      throw pricingError('pack068_lipsync_video_duration_unsupported');
+    if (operation === 'lip_sync') {
+      if (sourceDurationMs < 2000n || sourceDurationMs > 10000n) {
+        throw pricingError('pack068_lipsync_video_duration_unsupported');
+      }
+      const audioDurationMs =
+        durationMilliseconds(
+          videoPricingContext?.audioDurationSeconds,
+          'pack068_audio_duration'
+        );
+      if (audioDurationMs < 2000n || audioDurationMs > 60000n) {
+        throw pricingError('pack068_lipsync_audio_duration_unsupported');
+      }
+      if (
+        Number(videoPricingContext?.sourceFileSizeBytes) > 100 * 1024 * 1024 ||
+        !['video/mp4','video/quicktime'].includes(
+          String(videoPricingContext?.sourceMimeType || '').toLowerCase()
+        )
+      ) {
+        throw pricingError('pack068_lipsync_video_format_unsupported');
+      }
+      if (
+        Number(videoPricingContext?.audioFileSizeBytes) > 5 * 1024 * 1024 ||
+        ![
+          'audio/mpeg','audio/mp3','audio/ogg','audio/wav','audio/x-wav',
+          'audio/mp4','audio/x-m4a','audio/aac','audio/x-aac'
+        ].includes(
+          String(videoPricingContext?.audioMimeType || '').toLowerCase()
+        )
+      ) {
+        throw pricingError('pack068_lipsync_audio_format_unsupported');
+      }
     }
 
     const entry = resolveCostEntry({
