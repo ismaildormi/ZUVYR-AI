@@ -32,6 +32,16 @@ function finiteNumber(value, code) {
   if (!Number.isFinite(number)) throw requestError(code);
   return number;
 }
+function millisecondNumber(value, code) {
+  const text = String(value === undefined || value === null ? '' : value).trim();
+  if (!/^(0|[1-9][0-9]*)(?:\.[0-9]{1,3})?$/.test(text)) {
+    throw requestError(code);
+  }
+  const number = Number(text);
+  if (!Number.isFinite(number)) throw requestError(code);
+  return number;
+}
+
 function booleanOption(value, fallback, code) {
   if (value === undefined) return fallback;
   if (typeof value !== 'boolean') throw requestError(code);
@@ -183,7 +193,7 @@ function normalizeVideoRequest(body = {}) {
     const durationSeconds = options.durationSeconds === undefined ? 5 : Number(options.durationSeconds);
     const startTimeSeconds = options.startTimeSeconds === undefined
       ? 0
-      : finiteNumber(options.startTimeSeconds, 'invalid_video_start_time');
+      : millisecondNumber(options.startTimeSeconds, 'invalid_video_start_time');
     const retakeMode = String(options.retakeMode || 'replace_video').toLowerCase();
     const exportFormat = String(options.exportFormat || 'mp4').toLowerCase();
     if (!cfg.allowedDurationSeconds.includes(durationSeconds)) throw requestError('invalid_video_duration');
@@ -195,9 +205,9 @@ function normalizeVideoRequest(body = {}) {
     const allowed = new Set(['durationSeconds','extendMode','contextSeconds','exportFormat']);
     if (Object.keys(options).some(key => !allowed.has(key))) throw requestError('unsupported_video_option');
     const cfg = config.pack068.extend;
-    const durationSeconds = options.durationSeconds === undefined ? 5 : finiteNumber(options.durationSeconds,'invalid_video_duration');
+    const durationSeconds = options.durationSeconds === undefined ? 5 : millisecondNumber(options.durationSeconds,'invalid_video_duration');
     const extendMode = String(options.extendMode || 'end').toLowerCase();
-    const contextSeconds = options.contextSeconds === undefined ? null : finiteNumber(options.contextSeconds,'invalid_video_context');
+    const contextSeconds = options.contextSeconds === undefined ? null : millisecondNumber(options.contextSeconds,'invalid_video_context');
     const exportFormat = String(options.exportFormat || 'mp4').toLowerCase();
     if (durationSeconds < cfg.minDurationSeconds || durationSeconds > cfg.maxDurationSeconds) throw requestError('invalid_video_duration');
     if (!cfg.allowedModes.includes(extendMode)) throw requestError('invalid_video_extend_mode');
