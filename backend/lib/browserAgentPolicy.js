@@ -186,10 +186,10 @@ function assertObservationBoundary(observation = {}) {
   if (observation.authChallengeDetected === true) {
     throw agentError('browser_agent_auth_user_required');
   }
-  if (observation.robots === 'disallowed') {
+  if (observation.page?.host && observation.robots === 'disallowed') {
     throw agentError('browser_agent_robots_disallowed');
   }
-  if (observation.robots === 'unknown') {
+  if (observation.page?.host && observation.robots === 'unknown') {
     throw agentError('browser_agent_robots_unknown');
   }
   return true;
