@@ -38,6 +38,7 @@ create table if not exists public.code_repair_runs (
   owner_id uuid not null references public.profiles(id) on delete cascade,
   project_id uuid not null references public.code_projects(id) on delete cascade,
   sandbox_session_id uuid not null references public.code_sandbox_sessions(id) on delete cascade,
+  source_job_id uuid not null references public.code_runtime_jobs(id) on delete restrict,
   request_id text not null check (char_length(request_id) between 1 and 200),
   base_revision bigint not null check (base_revision >= 0),
   status text not null default 'analyzing'
@@ -94,6 +95,7 @@ create or replace function public.reserve_zuvyr_code_runtime_job_pack077(
   p_owner_id uuid,
   p_project_id uuid,
   p_sandbox_session_id uuid,
+  p_source_job_id uuid,
   p_request_id text,
   p_operation text,
   p_command_spec jsonb,
@@ -284,6 +286,7 @@ as $pack078_repair_reserve$
 declare
   v_project public.code_projects%rowtype;
   v_session public.code_sandbox_sessions%rowtype;
+  v_source public.code_runtime_jobs%rowtype;
   v_existing public.code_repair_runs%rowtype;
   v_run public.code_repair_runs%rowtype;
 begin
@@ -314,6 +317,21 @@ begin
     raise exception 'pack078_sandbox_not_found';
   end if;
 
+  select * into v_source
+  from public.code_runtime_jobs
+  where id=p_source_job_id
+    and owner_id=p_owner_id
+    and project_id=p_project_id
+    and sandbox_session_id=p_sandbox_session_id;
+
+  if v_source.id is null then
+    raise exception 'pack078_repair_source_job_not_found';
+  end if;
+  if v_source.status <> 'failed'
+     or v_source.operation not in ('build','test','run') then
+    raise exception 'pack078_repair_source_job_invalid';
+  end if;
+
   select * into v_existing
   from public.code_repair_runs
   where owner_id=p_owner_id and request_id=p_request_id;
@@ -321,6 +339,7 @@ begin
   if v_existing.id is not null then
     if v_existing.project_id<>p_project_id
        or v_existing.sandbox_session_id<>p_sandbox_session_id
+       or v_existing.source_job_id<>p_source_job_id
        or v_existing.base_revision<>p_base_revision then
       raise exception 'pack078_repair_idempotency_scope_mismatch';
     end if;
@@ -334,10 +353,10 @@ begin
   end if;
 
   insert into public.code_repair_runs(
-    owner_id,project_id,sandbox_session_id,request_id,
+    owner_id,project_id,sandbox_session_id,source_job_id,request_id,
     base_revision,status,max_attempts,attempts_used,last_failure_fingerprint
   ) values (
-    p_owner_id,p_project_id,p_sandbox_session_id,p_request_id,
+    p_owner_id,p_project_id,p_sandbox_session_id,p_source_job_id,p_request_id,
     p_base_revision,'analyzing',2,0,p_failure_fingerprint
   )
   returning * into v_run;
@@ -506,14 +525,14 @@ begin
 end;
 $pack078_repair_complete$;
 
-revoke all on function public.reserve_zuvyr_code_repair_run_pack078(uuid,uuid,uuid,text,bigint,text)
+revoke all on function public.reserve_zuvyr_code_repair_run_pack078(uuid,uuid,uuid,uuid,text,bigint,text)
   from public,anon,authenticated;
 revoke all on function public.claim_zuvyr_code_repair_attempt_pack078(uuid,uuid,text,jsonb,uuid)
   from public,anon,authenticated;
 revoke all on function public.complete_zuvyr_code_repair_attempt_pack078(uuid,uuid,text,text,uuid,uuid,bigint,jsonb)
   from public,anon,authenticated;
 
-grant execute on function public.reserve_zuvyr_code_repair_run_pack078(uuid,uuid,uuid,text,bigint,text)
+grant execute on function public.reserve_zuvyr_code_repair_run_pack078(uuid,uuid,uuid,uuid,text,bigint,text)
   to service_role;
 grant execute on function public.claim_zuvyr_code_repair_attempt_pack078(uuid,uuid,text,jsonb,uuid)
   to service_role;
