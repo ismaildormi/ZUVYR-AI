@@ -566,6 +566,25 @@ function createModelLabRouter({
     }
   });
 
+  router.post('/checkpoints/:checkpointId/rollback', async (req,res) => {
+    try {
+      const checkpointId=requireUuid(
+        req.params.checkpointId,
+        'model_lab_checkpoint_id_invalid'
+      );
+      return res.json({
+        status:'success',
+        rollback:await lab.rollbackCheckpoint(
+          req.userId,
+          checkpointId,
+          req.body||{}
+        )
+      });
+    } catch(error) {
+      return respondError(res,error);
+    }
+  });
+
   router.get('/synthetic-jobs', async (req,res) => {
     try {
       return res.json({
