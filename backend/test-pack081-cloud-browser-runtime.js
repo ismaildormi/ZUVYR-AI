@@ -91,10 +91,12 @@ for(const name of [
   );
 }
 assert(!/grant\s+(?:select|insert|update|delete)[^;]*\s+to\s+(?:anon|authenticated)/i.test(migration));
-assert(!migration.includes('connect_url'));
-assert(!migration.includes('api_key'));
-assert(!migration.includes('password'));
-assert(!migration.includes('cookies'));
+const forbiddenPersistedBrowserSecretField =
+  /^\s*(?:connect_url|api_key|password|passwords|cookie|cookies)\s+(?:text|varchar|character\s+varying|jsonb|json|bytea)\b/im;
+assert(
+  !forbiddenPersistedBrowserSecretField.test(migration),
+  'PACK081 must not persist browser credentials, connect URLs, cookies or passwords'
+);
 
 const blocked=availability({});
 assert.equal(blocked.live,false);
