@@ -34,6 +34,9 @@ const {
 const {
   creditsForCostMicroUsd
 } = require('./cloudBrowserPolicy');
+const {
+  MODEL_PRICING_REGISTRY_VERSION
+} = require('./modelPricingAuthority');
 const config = require('../config/browser-agent.v1.json');
 
 const REASONING_RESERVATION_CREDITS = 10;
@@ -393,12 +396,14 @@ function createBrowserAgentController({
         taskId: run.taskRunId || run.id,
         stepId: 'browser-agent-reasoning',
         usageKind: 'browser_agent_reasoning',
-        pricingVersion: 'pack082.measured-model-cost.v1'
+        pricingVersion: MODEL_PRICING_REGISTRY_VERSION
       });
       reserved = true;
 
       let decision;
       let model = 'pack082-test-decision-engine';
+      let pricingVersion = 'pack082.test.no-provider';
+      let costEntryId = 'pack082-test-decision-engine';
       let providerCostMicroUsd = 0;
       let modelUsage = null;
 
@@ -423,11 +428,30 @@ function createBrowserAgentController({
         );
         decision = parseDecisionText(result.text);
         model = String(result.model || 'router').slice(0, 200);
-        const costUsd = Number(result.cost_usd);
-        if (!Number.isFinite(costUsd) || costUsd < 0) {
+
+        pricingVersion = String(result.pricing?.version || '').trim();
+        costEntryId = String(result.pricing?.cost_entry_id || '').trim();
+        if (
+          !pricingVersion ||
+          pricingVersion !== MODEL_PRICING_REGISTRY_VERSION ||
+          !costEntryId
+        ) {
+          throw controllerError(
+            'browser_agent_reasoning_pricing_lineage_missing'
+          );
+        }
+
+        const microText = String(
+          result.pricing?.provider_cost_micro_usd ?? ''
+        ).trim();
+        if (!/^(0|[1-9][0-9]*)$/.test(microText)) {
           throw controllerError('browser_agent_reasoning_cost_invalid');
         }
-        providerCostMicroUsd = Math.ceil(costUsd * 1_000_000);
+        const microBig = BigInt(microText);
+        if (microBig > BigInt(Number.MAX_SAFE_INTEGER)) {
+          throw controllerError('browser_agent_reasoning_cost_invalid');
+        }
+        providerCostMicroUsd = Number(microBig);
         modelUsage = result.usage || null;
       }
 
@@ -455,6 +479,8 @@ function createBrowserAgentController({
           metadata: {
             usage_kind: 'browser_agent_reasoning',
             run_id: run.id,
+            pricing_version: pricingVersion,
+            cost_entry_id: costEntryId,
             provider_cost_micro_usd: providerCostMicroUsd,
             credits_charged: finalCredits,
             usage: modelUsage
@@ -466,6 +492,8 @@ function createBrowserAgentController({
         replayed: false,
         decision,
         model,
+        pricingVersion,
+        costEntryId,
         providerCostMicroUsd,
         creditsCharged: finalCredits,
         reasoningRequestId: requestId
@@ -1030,6 +1058,8 @@ function createBrowserAgentController({
             expectedOutcome: decision.expectedOutcome
           },
           model: reasoned.model,
+          pricingVersion: reasoned.pricingVersion,
+          costEntryId: reasoned.costEntryId,
           providerCostMicroUsd: reasoned.providerCostMicroUsd,
           creditsCharged: reasoned.creditsCharged
         });
@@ -1070,6 +1100,8 @@ function createBrowserAgentController({
           expectedOutcome: decision.expectedOutcome
         },
         model: reasoned.model,
+          pricingVersion: reasoned.pricingVersion,
+          costEntryId: reasoned.costEntryId,
         providerCostMicroUsd: reasoned.providerCostMicroUsd,
         creditsCharged: reasoned.creditsCharged
       });
