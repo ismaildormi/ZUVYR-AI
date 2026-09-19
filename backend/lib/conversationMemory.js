@@ -888,7 +888,7 @@ function createConversationStore(db) {
       .toLowerCase();
 
     const allowedAssets =
-      new Set(['image', 'video', 'audio', 'file', 'code', 'reference']);
+      new Set(['image', 'video', 'audio', 'file', 'code', 'reference', 'model3d']);
 
     if (!allowedAssets.has(normalizedAssetType)) {
       throw new Error('invalid_conversation_asset_type');
