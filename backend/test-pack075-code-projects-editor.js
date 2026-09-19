@@ -66,7 +66,7 @@ for (const marker of [
   "router.patch('/projects/:projectId/editor-state'",
   "router.post('/projects/:projectId/ai-edit'",
   "usageKind: 'ai_code_edit'",
-  "routeRequestImpl('code'",
+  "routeCodeRequest('code'",
   'receiptOwned',
   'code_ai_edit_scope_violation',
   'preview_unavailable_until_pack078'
@@ -77,7 +77,7 @@ for (const marker of [
 assert(!routes.includes('buildSafePreview'));
 assert(routes.includes('started.replayed !== true'));
 assert(routes.includes('receiptStarted && receiptOwned && requestId'));
-assert(routes.indexOf('pack075_revision_conflict') < routes.indexOf("routeRequestImpl('code'"));
+assert(routes.indexOf('pack075_revision_conflict') < routes.indexOf("routeCodeRequest('code'"));
 
 for (const marker of [
   ".eq('owner_id', ownerId)",
