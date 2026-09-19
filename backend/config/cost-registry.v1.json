@@ -1417,7 +1417,7 @@
       "verificationEvidence": "Replicate official Wan 2.7 R2V page re-verified 2026-09-19: $0.10 per second of output video; supported duration is 2-10 seconds."
     },
     {
-      "unitScale": "1",
+      "unitScale": "1000",
       "currency": "USD",
       "cachedUnitPriceMicroUsd": null,
       "creditConversionResult": null,
@@ -1442,7 +1442,7 @@
       "minimumBillableMicroUsd": "100000",
       "pricingSourceUrl": "https://fal.ai/models/fal-ai/ltx-2.3/retake-video",
       "verificationStatus": "verified",
-      "verificationEvidence": "fal official page revalidated 2026-09-19: $0.10 per second of generated retake video.",
+      "verificationEvidence": "fal official page revalidated 2026-09-19: $0.10 per second of generated retake video. Runtime usage is represented as integer milliseconds with unitScale=1000 to preserve exact fractional-second pricing.",
       "requiredEnvironment": {
         "name": "PACK068_EDIT_PAID_EXECUTION_ENABLED",
         "value": "true"
@@ -1450,7 +1450,7 @@
       "enabledState": "conditional"
     },
     {
-      "unitScale": "1",
+      "unitScale": "1000",
       "currency": "USD",
       "cachedUnitPriceMicroUsd": null,
       "creditConversionResult": null,
@@ -1475,7 +1475,7 @@
       "minimumBillableMicroUsd": "200000",
       "pricingSourceUrl": "https://fal.ai/models/fal-ai/ltx-2.3/extend-video",
       "verificationStatus": "verified",
-      "verificationEvidence": "fal official page revalidated 2026-09-19: $0.10 per second of generated extension, 2-20 seconds.",
+      "verificationEvidence": "fal official page revalidated 2026-09-19: $0.10 per second of generated extension, 2-20 seconds. Runtime usage is represented as integer milliseconds with unitScale=1000 to preserve exact fractional-second pricing.",
       "requiredEnvironment": {
         "name": "PACK068_EXTEND_PAID_EXECUTION_ENABLED",
         "value": "true"
@@ -1483,7 +1483,7 @@
       "enabledState": "conditional"
     },
     {
-      "unitScale": "1",
+      "unitScale": "1000",
       "currency": "USD",
       "cachedUnitPriceMicroUsd": null,
       "creditConversionResult": null,
@@ -1508,7 +1508,7 @@
       "minimumBillableMicroUsd": "140000",
       "pricingSourceUrl": "https://fal.ai/models/bria/video/erase/prompt",
       "verificationStatus": "verified",
-      "verificationEvidence": "fal official page revalidated 2026-09-19: $0.14 per second; source duration must be less than 5 seconds.",
+      "verificationEvidence": "fal official page revalidated 2026-09-19: $0.14 per second; source duration must be less than 5 seconds. Runtime usage is represented as integer milliseconds with unitScale=1000 to preserve exact fractional-second pricing.",
       "requiredEnvironment": {
         "name": "PACK068_OBJECT_REMOVE_PAID_EXECUTION_ENABLED",
         "value": "true"
@@ -1516,7 +1516,7 @@
       "enabledState": "conditional"
     },
     {
-      "unitScale": "1",
+      "unitScale": "1000",
       "currency": "USD",
       "cachedUnitPriceMicroUsd": null,
       "creditConversionResult": null,
@@ -1541,7 +1541,7 @@
       "minimumBillableMicroUsd": "50000",
       "pricingSourceUrl": "https://fal.ai/models/bria/video/background-removal/v3",
       "verificationStatus": "verified",
-      "verificationEvidence": "fal official v3 page revalidated 2026-09-19: $0.05 per second.",
+      "verificationEvidence": "fal official v3 page revalidated 2026-09-19: $0.05 per second. Runtime usage is represented as integer milliseconds with unitScale=1000 to preserve exact fractional-second pricing.",
       "requiredEnvironment": {
         "name": "PACK068_BACKGROUND_PAID_EXECUTION_ENABLED",
         "value": "true"
@@ -1549,7 +1549,7 @@
       "enabledState": "conditional"
     },
     {
-      "unitScale": "1",
+      "unitScale": "1000",
       "currency": "USD",
       "cachedUnitPriceMicroUsd": null,
       "creditConversionResult": null,
@@ -1574,12 +1574,12 @@
       "minimumBillableMicroUsd": "100000",
       "pricingSourceUrl": "https://fal.ai/models/fal-ai/lightx/relight",
       "verificationStatus": "verified",
-      "verificationEvidence": "fal official page revalidated 2026-09-19: $0.10 per output video second. Pre-charge output duration equivalence to source is not documented, so runtime stays blocked.",
+      "verificationEvidence": "fal official page revalidated 2026-09-19: $0.10 per output video second. Pre-charge output duration equivalence to source is not documented, so runtime stays blocked. Runtime usage is represented as integer milliseconds with unitScale=1000 to preserve exact fractional-second pricing.",
       "requiredEnvironment": null,
       "enabledState": "blocked"
     },
     {
-      "unitScale": "1",
+      "unitScale": "1000",
       "currency": "USD",
       "cachedUnitPriceMicroUsd": null,
       "creditConversionResult": null,
@@ -1604,7 +1604,7 @@
       "minimumBillableMicroUsd": "100000",
       "pricingSourceUrl": "https://fal.ai/models/fal-ai/lightx/recamera",
       "verificationStatus": "verified",
-      "verificationEvidence": "fal official page revalidated 2026-09-19: $0.10 per output video second. Pre-charge output duration equivalence to source is not documented, so runtime stays blocked.",
+      "verificationEvidence": "fal official page revalidated 2026-09-19: $0.10 per output video second. Pre-charge output duration equivalence to source is not documented, so runtime stays blocked. Runtime usage is represented as integer milliseconds with unitScale=1000 to preserve exact fractional-second pricing.",
       "requiredEnvironment": null,
       "enabledState": "blocked"
     },
