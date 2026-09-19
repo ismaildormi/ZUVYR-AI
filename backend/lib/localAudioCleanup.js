@@ -15,11 +15,11 @@ function cleanupError(code,cause=null){const e=new Error(code);e.code=code;e.cau
 function argsFor({inputPath,outputPath,format='wav',strength='balanced'}={}){
   const spec=FORMATS[format];
   if(!spec) throw cleanupError('invalid_audio_cleanup_format');
-  const noise=strength==='light'?'6':strength==='strong'?'18':'12';
+  const reduction=strength==='light'?'6':strength==='strong'?'18':'12';
   return [
     '-y','-hide_banner','-loglevel','error','-i',inputPath,
     '-vn',
-    '-af',`highpass=f=70,lowpass=f=12000,afftdn=nf=-${noise},loudnorm=I=-16:LRA=11:TP=-1.5`,
+    '-af',`highpass=f=70,lowpass=f=12000,afftdn=nr=${reduction}:nf=-50:tn=1,loudnorm=I=-16:LRA=11:TP=-1.5`,
     ...spec.codec,outputPath
   ];
 }
