@@ -171,6 +171,7 @@ as $pack096_register$
 declare
   v_checkpoint public.zuvyr_model_lab_checkpoints%rowtype;
   v_eval public.zuvyr_model_lab_evaluations%rowtype;
+  v_run public.zuvyr_model_lab_training_runs%rowtype;
   v_connector public.zuvyr_compute_connectors%rowtype;
   v_stage text := upper(btrim(coalesce(p_rollout_stage,'')));
   v_alias text := lower(btrim(coalesce(p_model_alias,'')));
@@ -216,6 +217,16 @@ begin
     raise exception 'pack096_checkpoint_not_found';
   end if;
 
+  select * into v_run
+  from public.zuvyr_model_lab_training_runs
+  where id=v_checkpoint.training_run_id and owner_id=p_admin_id;
+
+  if v_run.id is null
+     or char_length(btrim(coalesce(v_run.base_model_license_reference,'')))<3
+     or coalesce(v_run.training_config->>'base_model_commercial_use_permitted','false')<>'true' then
+    raise exception 'pack096_base_model_commercial_permission_required';
+  end if;
+
   select * into v_eval
   from public.zuvyr_model_lab_evaluations
   where id=p_evaluation_id
@@ -227,6 +238,10 @@ begin
      or v_eval.status<>'passed'
      or v_eval.regression_status<>'pass' then
     raise exception 'pack096_independent_eval_not_passed';
+  end if;
+  if v_eval.baseline_checkpoint_id is null
+     or coalesce(v_eval.metrics->>'candidate_better_than_baseline','false')<>'true' then
+    raise exception 'pack096_candidate_not_better_than_baseline';
   end if;
 
   if not exists (
