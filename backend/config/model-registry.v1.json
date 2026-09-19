@@ -889,6 +889,94 @@
         "state": "active",
         "replacedBy": null
       }
+    },
+    {
+      "id": "deepgram:audio.transcription:nova-3",
+      "providerId": "deepgram",
+      "modelId": "nova-3",
+      "kind": "tool",
+      "capabilities": [
+        "audio.transcription",
+        "audio.diarization",
+        "audio.language_detection"
+      ],
+      "modalities": {
+        "input": [
+          "audio"
+        ],
+        "output": [
+          "text"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "provider_documented_multilingual",
+      "qualityTier": "provider_default",
+      "latencyClass": "pre_recorded",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Official Deepgram pre-recorded Nova-3 pricing/docs revalidated 2026-09-19; paid execution remains environment-gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "deepgram-nova-3-multilingual-prerecorded"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK071_STT_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "local:audio.cleanup:runtime",
+      "providerId": "local",
+      "modelId": "ffmpeg-alpine",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "audio.cleanup"
+      ],
+      "modalities": {
+        "input": [
+          "audio"
+        ],
+        "output": [
+          "audio"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "deterministic_local",
+      "latencyClass": "local_worker",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Local FFmpeg worker runtime; no external provider execution."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "local-ffmpeg-audio-cleanup"
+        ],
+        "verification": "verified"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
     }
   ]
 }
