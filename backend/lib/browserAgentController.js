@@ -24,6 +24,7 @@ const {
 } = require('./browserAgentPlanner');
 const {
   classifyAction,
+  normalizeText,
   assertObservationBoundary,
   permissionRequestForAction,
   assertConsumedGrantMatches,
@@ -192,11 +193,44 @@ function actionFromDecision(decision, observation) {
   return action;
 }
 
-function reconstructClassified(internal) {
+function verifiedTransientInput(internal, inputText, { required = false } = {}) {
+  if (internal.action_type !== 'type') return null;
+
+  if (inputText == null) {
+    if (required) {
+      throw controllerError('browser_agent_input_resubmission_required');
+    }
+    return null;
+  }
+
+  const text = normalizeText(inputText);
+  const sha256 = crypto
+    .createHash('sha256')
+    .update(text, 'utf8')
+    .digest('hex');
+  const expectedSha = internal.input_sha256 || null;
+  const expectedLength =
+    internal.input_length == null
+      ? null
+      : Number(internal.input_length);
+
+  if (
+    !expectedSha ||
+    expectedLength == null ||
+    sha256 !== expectedSha ||
+    text.length !== expectedLength
+  ) {
+    throw controllerError('browser_agent_input_integrity_mismatch');
+  }
+
+  return text;
+}
+
+function reconstructClassified(internal, { inputText = null } = {}) {
   return Object.freeze({
     type: internal.action_type,
     target: Object.freeze({ ...(internal.target || {}) }),
-    text: internal.input_text_redacted == null ? null : String(internal.input_text_redacted),
+    text: verifiedTransientInput(internal, inputText, { required: false }),
     assetId: internal.target?.assetId || null,
     risk: internal.risk,
     permissionAction: internal.permission_action || null,
@@ -205,7 +239,9 @@ function reconstructClassified(internal) {
     persistedTarget: Object.freeze({ ...(internal.target || {}) }),
     inputSha256: internal.input_sha256 || null,
     inputLength:
-      internal.input_length == null ? null : Number(internal.input_length)
+      internal.input_length == null
+        ? null
+        : Number(internal.input_length)
   });
 }
 
@@ -494,13 +530,19 @@ function createBrowserAgentController({
     ownerId,
     run,
     action,
-    cdp
+    cdp,
+    inputText = null
   }) {
     const internal = await agent.getActionInternal({
       ownerId,
       actionId: action.id
     });
-    const classified = reconstructClassified(internal);
+    const classified = reconstructClassified(internal, { inputText });
+    const transientText = verifiedTransientInput(
+      internal,
+      inputText,
+      { required: internal.action_type === 'type' }
+    );
 
     if (!['planned','approved'].includes(internal.status)) {
       if (internal.status === 'executing') {
@@ -599,7 +641,7 @@ function createBrowserAgentController({
           sideEffectStarted = true;
           outcome = await cdp.typeHandle(
             internal.target?.handle,
-            internal.input_text_redacted || ''
+            transientText
           );
           break;
 
@@ -811,7 +853,14 @@ function createBrowserAgentController({
       state: 'approval_required',
       run,
       action,
-      approval: approvalFor({ ownerId, run, classified })
+      approval: approvalFor({ ownerId, run, classified }),
+      transientInput:
+        internal.action_type === 'type'
+          ? Object.freeze({
+              requiredOnApprove: true,
+              available: false
+            })
+          : null
     });
   }
 
@@ -1035,7 +1084,15 @@ function createBrowserAgentController({
             ownerId,
             run,
             classified
-          })
+          }),
+          transientInput:
+            classified.type === 'type'
+              ? Object.freeze({
+                  requiredOnApprove: true,
+                  available: true,
+                  text: classified.text
+                })
+              : null
         });
       }
 
@@ -1051,70 +1108,120 @@ function createBrowserAgentController({
   async function approveAction({
     ownerId,
     runId,
-    actionId
+    actionId,
+    inputText = null
   } = {}) {
     let run = await agent.getRun({ ownerId, runId });
-    const internal = await agent.getActionInternal({ ownerId, actionId });
+    let internal = await agent.getActionInternal({ ownerId, actionId });
+
     if (internal.run_id !== run.id) {
       throw controllerError('browser_agent_action_run_mismatch');
     }
-    if (internal.status === 'approved') {
+
+    if (['succeeded','failed','uncertain','cancelled'].includes(internal.status)) {
       return Object.freeze({
+        state: internal.status,
         run,
         action: await agent.getAction({ ownerId, actionId }),
         replayed: true
       });
     }
-    if (internal.status !== 'approval_required' || !internal.permission_action) {
+
+    if (!['approval_required','approved'].includes(internal.status)) {
       throw controllerError('browser_agent_action_not_awaiting_approval');
     }
+    if (!internal.permission_action) {
+      throw controllerError('browser_agent_action_permission_missing');
+    }
 
-    const classified = reconstructClassified(internal);
-    const consumeRequestId = ('browser-agent-permission:' + internal.id).slice(0, 200);
-    let consumed = await permissions.consume({
-      ownerId,
-      action: internal.permission_action,
-      resourceNamespace: 'browser_session',
-      resourceId: run.browserSessionId,
-      sessionId: run.browserSessionId,
-      requestId: consumeRequestId
+    // Validate transient type payload before consuming an allow-once grant.
+    const transientText = verifiedTransientInput(
+      internal,
+      inputText,
+      { required: internal.action_type === 'type' }
+    );
+    const classified = reconstructClassified(internal, {
+      inputText: transientText
     });
 
-    if (consumed.allowed !== true && consumed.replayed === true && consumed.grant_id) {
-      const grants = await permissions.listGrants(ownerId, { limit: 100 });
-      const grant = grants.find(item => item.id === consumed.grant_id);
-      if (grant) {
-        consumed = {
-          ...consumed,
-          allowed: true,
-          constraints: grant.constraints || {}
-        };
+    let replayedGrant = internal.status === 'approved';
+
+    if (internal.status === 'approval_required') {
+      const consumeRequestId =
+        ('browser-agent-permission:' + internal.id).slice(0, 200);
+      let consumed = await permissions.consume({
+        ownerId,
+        action: internal.permission_action,
+        resourceNamespace: 'browser_session',
+        resourceId: run.browserSessionId,
+        sessionId: run.browserSessionId,
+        requestId: consumeRequestId
+      });
+
+      if (
+        consumed.allowed !== true &&
+        consumed.replayed === true &&
+        consumed.grant_id
+      ) {
+        const grants = await permissions.listGrants(ownerId, { limit: 100 });
+        const grant = grants.find(item => item.id === consumed.grant_id);
+        if (grant) {
+          consumed = {
+            ...consumed,
+            allowed: true,
+            constraints: grant.constraints || {}
+          };
+        }
+      }
+
+      assertConsumedGrantMatches(classified, consumed);
+
+      await agent.transitionAction({
+        ownerId,
+        actionId: internal.id,
+        expectedStatus: 'approval_required',
+        status: 'approved',
+        permissionGrantId: consumed.grant_id,
+        outcome: {}
+      });
+      replayedGrant = consumed.replayed === true;
+
+      if (run.status === 'approval_required') {
+        run = await agent.transitionRun({
+          ownerId,
+          runId: run.id,
+          status: 'running'
+        });
+      }
+
+      internal = await agent.getActionInternal({ ownerId, actionId });
+    } else {
+      // A previous approve request may have committed the grant transition
+      // before its browser execution response was delivered. Continue safely
+      // from the durable approved state without consuming another grant.
+      if (!internal.permission_grant_id) {
+        throw controllerError('browser_agent_permission_grant_required');
       }
     }
 
-    assertConsumedGrantMatches(classified, consumed);
-
-    const action = await agent.transitionAction({
+    const internalSession = await browser.internal({
       ownerId,
-      actionId: internal.id,
-      expectedStatus: 'approval_required',
-      status: 'approved',
-      permissionGrantId: consumed.grant_id,
-      outcome: {}
+      sessionId: run.browserSessionId
     });
 
-    if (run.status === 'approval_required') {
-      run = await agent.transitionRun({
+    const executed = await withCdp(internalSession, cdp =>
+      executeAction({
         ownerId,
-        runId: run.id,
-        status: 'running'
-      });
-    }
+        run,
+        action: await agent.getAction({ ownerId, actionId }),
+        cdp,
+        inputText: transientText
+      })
+    );
 
     return Object.freeze({
-      run,
-      action,
-      replayed: consumed.replayed === true
+      ...executed,
+      replayed: replayedGrant
     });
   }
 
