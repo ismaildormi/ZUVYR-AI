@@ -28,7 +28,7 @@ jobs:
           const API_BASE = 'https://rox-ai-production.up.railway.app';
           const FRONTEND = 'https://rox-ai-sepia.vercel.app';
           const runId = String(process.env.GITHUB_RUN_ID || 'manual');
-          const email = `zuvyr-pack073-smoke-${runId}@example.invalid`;
+          const email = `zuvyr-pack073-smoke-${runId}@example.com`;
           const password = `Zuvyr-P73-${runId}-A9!xQ`;
 
           async function request(url, options = {}) {
@@ -64,7 +64,7 @@ jobs:
             });
 
             if (!signup.response.ok && !/already|registered|exists/i.test(JSON.stringify(signup.data))) {
-              console.error('PACK073_SMOKE_SIGNUP_FAILED', signup.response.status, signup.data?.code || signup.data?.error_code || 'unknown');
+              console.error('PACK073_SMOKE_SIGNUP_FAILED', signup.response.status, signup.data?.code || signup.data?.error_code || 'unknown', signup.data?.msg || signup.data?.message || signup.data?.error_description || '');
               process.exit(41);
             }
 
