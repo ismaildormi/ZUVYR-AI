@@ -205,9 +205,66 @@ function createCodeReleaseRepository(db) {
     return Object.freeze((result.data||[]).map(publicArtifact));
   }
 
+  async function getDeploymentTarget({ownerId,projectId,targetId}) {
+    const result=await db.from('code_deployment_targets')
+      .select('id,owner_id,project_id,provider,provider_project_id,display_name,allowed_targets,status,metadata,created_at,updated_at')
+      .eq('id',targetId)
+      .eq('owner_id',ownerId)
+      .eq('project_id',projectId)
+      .eq('status','active')
+      .maybeSingle();
+    if(result.error) throw releaseRepositoryError('pack079_deployment_target_lookup_failed',result.error);
+    if(!result.data) throw releaseRepositoryError('pack079_deployment_target_not_found');
+    return Object.freeze({
+      id:result.data.id,
+      projectId:result.data.project_id,
+      provider:result.data.provider,
+      displayName:result.data.display_name,
+      allowedTargets:Array.isArray(result.data.allowed_targets)
+        ? Object.freeze([...result.data.allowed_targets])
+        : Object.freeze([]),
+      status:result.data.status,
+      metadata:result.data.metadata||{}
+    });
+  }
+
+  async function getDeploymentTargetInternal({ownerId,projectId,targetId}) {
+    const result=await db.from('code_deployment_targets')
+      .select('*')
+      .eq('id',targetId)
+      .eq('owner_id',ownerId)
+      .eq('project_id',projectId)
+      .eq('status','active')
+      .maybeSingle();
+    if(result.error) throw releaseRepositoryError('pack079_deployment_target_lookup_failed',result.error);
+    if(!result.data) throw releaseRepositoryError('pack079_deployment_target_not_found');
+    return result.data;
+  }
+
+  async function listDeploymentTargets({ownerId,projectId}) {
+    const result=await db.from('code_deployment_targets')
+      .select('id,owner_id,project_id,provider,display_name,allowed_targets,status,metadata,created_at,updated_at')
+      .eq('owner_id',ownerId)
+      .eq('project_id',projectId)
+      .eq('status','active')
+      .order('created_at',{ascending:true});
+    if(result.error) throw releaseRepositoryError('pack079_deployment_target_list_failed',result.error);
+    return Object.freeze((result.data||[]).map(row=>Object.freeze({
+      id:row.id,
+      projectId:row.project_id,
+      provider:row.provider,
+      displayName:row.display_name,
+      allowedTargets:Array.isArray(row.allowed_targets)
+        ? Object.freeze([...row.allowed_targets])
+        : Object.freeze([]),
+      status:row.status,
+      metadata:row.metadata||{}
+    })));
+  }
+
   async function reserveDeploy({
     ownerId,projectId,versionId,validationId,artifactId,
-    requestId,target,providerProjectId,approvalReceipt
+    requestId,target,deploymentTargetId,approvalReceipt
   }) {
     const result=await db.rpc('reserve_zuvyr_code_deploy_request_pack079',{
       p_owner_id:ownerId,
@@ -217,7 +274,7 @@ function createCodeReleaseRepository(db) {
       p_release_artifact_id:artifactId,
       p_request_id:requestId,
       p_target:target,
-      p_provider_project_id:providerProjectId,
+      p_deployment_target_id:deploymentTargetId,
       p_approval_receipt:approvalReceipt
     });
     if(result.error) throw releaseRepositoryError(
@@ -276,15 +333,13 @@ function createCodeReleaseRepository(db) {
   }
 
   async function reserveRollback({
-    ownerId,projectId,deployRequestId,requestId,
-    rollbackToProviderDeploymentId,approvalReceipt
+    ownerId,projectId,deployRequestId,requestId,approvalReceipt
   }) {
     const result=await db.rpc('reserve_zuvyr_code_deployment_rollback_pack079',{
       p_owner_id:ownerId,
       p_project_id:projectId,
       p_deploy_request_id:deployRequestId,
       p_request_id:requestId,
-      p_rollback_to_provider_deployment_id:rollbackToProviderDeploymentId,
       p_approval_receipt:approvalReceipt
     });
     if(result.error) throw releaseRepositoryError(
@@ -335,6 +390,9 @@ function createCodeReleaseRepository(db) {
     recordArtifact,
     getArtifact,
     listArtifacts,
+    getDeploymentTarget,
+    getDeploymentTargetInternal,
+    listDeploymentTargets,
     reserveDeploy,
     getDeploy,
     getDeployInternal,
