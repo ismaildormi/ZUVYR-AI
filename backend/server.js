@@ -88,6 +88,8 @@ const {
 const {
   createLearningPipelineRouter
 } = require('./lib/learningPipelineRoutes');
+const { requireAdmin } = require('./lib/requireAdmin');
+const { createModelLabRouter } = require('./lib/modelLabRoutes');
 const {
   createFinalProductRouter
 } = require('./lib/finalProductRoutes');
@@ -446,6 +448,14 @@ app.use(
   rateLimit('workspace'),
   createWorkspaceRouter()
 );
+app.use(
+  '/api/model-lab',
+  requireAuth,
+  requireAdmin,
+  rateLimit('workspace'),
+  createModelLabRouter({ db: supabaseAdmin })
+);
+
 app.use(
   '/api/learning',
   requireAuth,
