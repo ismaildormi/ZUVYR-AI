@@ -12,14 +12,15 @@
       "093"
     ],
     "completed_inflight_pack": "083",
-    "active_priority_pack": "095",
+    "active_priority_pack": "096",
     "immediate_sequence": [
       "094",
       "095",
       "096"
     ],
     "completed_priority_packs": [
-      "094"
+      "094",
+      "095"
     ]
   },
   "commercial_model": {
