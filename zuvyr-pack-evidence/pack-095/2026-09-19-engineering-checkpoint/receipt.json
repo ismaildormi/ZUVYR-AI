@@ -1,0 +1,109 @@
+{
+  "schema_version": "zuvyr.pack095.engineering-checkpoint.v1",
+  "pack": "095",
+  "title": "ZUVYR Model Lab",
+  "date": "2026-09-19",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonical_locked_verified": false,
+  "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+  "baseline_main_commit": "0a6fccc5c37871e6664697c5c10743413cc7c97d",
+  "implementation_pr": 39,
+  "implementation_candidate_commit": "2b6bbc460d65626e22c9dbd2f79fb64fb164198f",
+  "implementation_merge_commit": "008b3cfff6393da41f24ab4008d054737019add5",
+  "ci": {
+    "final_run": 35469559689,
+    "backend_quality": "PASS",
+    "release_quality": "PASS",
+    "repaired_issue": "PACK095 test used obsolete camelCase model-first policy path; canonical snake_case execution_priority path preserved."
+  },
+  "database": {
+    "migration_version": "20260919211025",
+    "migration_name": "pack095_model_lab",
+    "migration_status": "APPLIED_VERIFIED",
+    "control_plane_tables_expected": 15,
+    "control_plane_tables_present": 15,
+    "all_new_tables_rls": true,
+    "direct_browser_policy_count": 0,
+    "security_definer_functions_expected": 12,
+    "security_definer_functions_present": 12
+  },
+  "capabilities": {
+    "model_lab_datasets": true,
+    "dataset_versions": true,
+    "dataset_items": true,
+    "dataset_licenses": true,
+    "skills": true,
+    "curricula": true,
+    "curriculum_skills": true,
+    "compute_connectors": true,
+    "compute_attestations": true,
+    "training_runs": true,
+    "benchmarks": true,
+    "checkpoints": true,
+    "evaluations": true,
+    "rollout_stage_events": true,
+    "synthetic_jobs": true,
+    "rollout_stages": [
+      "LAB",
+      "EVAL",
+      "SHADOW",
+      "CANARY",
+      "SECONDARY",
+      "PRIMARY"
+    ],
+    "pack096_live_generation_policy": false
+  },
+  "privacy_security": {
+    "admin_service_role_only": true,
+    "browser_compute_credentials_exposed": false,
+    "credential_storage": "vault_backed_server_side_reference",
+    "pack094_rights_consent_privacy_provenance_revalidation": true,
+    "memory_training_permission_separate": true
+  },
+  "economics": {
+    "live_billing_allowed": false,
+    "live_paid_training_calls": 0,
+    "live_paid_compute_calls": 0,
+    "zuvyr_owned_model_api_software_fee_usd": 0,
+    "zuvyr_owned_model_usage_fee_usd": 0,
+    "inference_markup_usd": 0,
+    "customer_compute_cost_separate_from_zuvyr_control_plane_cost": true
+  },
+  "production": {
+    "railway": {
+      "exact_commit": "008b3cfff6393da41f24ab4008d054737019add5",
+      "backend": {
+        "deployment": "9a21a95f-b6ec-402e-bf1f-a0821091aa1b",
+        "status": "SUCCESS"
+      },
+      "worker": {
+        "deployment": "8843133a-3e76-4860-a6ac-d85162f07ff5",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deployment": "d1a94290-b5b1-4995-9813-6b593002dd38",
+        "status": "SUCCESS"
+      }
+    },
+    "vercel": {
+      "production_deployment": "dpl_5LyUdRjpxQNMjTB8BBN8nt4CvwtZ",
+      "production_status": "READY_BUT_STALE",
+      "production_commit": "60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4",
+      "pack095_preview": "dpl_3zTu9WqZSdCS4CvaeXVZnfqm9gjg",
+      "pack095_preview_status": "READY_PROTECTED",
+      "pack095_preview_commit": "e2179c47b92eb0673fc7fcce230e778ada3ff6d3",
+      "note": "Final candidate changed only backend/test-pack095-model-lab.js after this preview; frontend Pack095 source is unchanged. Preview content fetch remained protected by Vercel SSO/tooling."
+    }
+  },
+  "omissions": [
+    "Canonical Vercel production promotion is not verified; production remains stale.",
+    "Authenticated production owner/admin Model Lab UI flow is not executed in this tool context.",
+    "No live training run, BYOC checkpoint serving, shadow/canary traffic or owned-model routing is claimed; these are owned by PACK096/M21."
+  ],
+  "deferred_gates": [
+    "DEFERRED_PRODUCTION_FRONTEND_GATE",
+    "PACK095_AUTHENTICATED_PRODUCTION_ADMIN_UI_ACCEPTANCE"
+  ],
+  "next_pack": "096",
+  "next_pack_title": "ZUVYR 7 Manager / Operator — V1 Production Model + V2 Bridge"
+}
