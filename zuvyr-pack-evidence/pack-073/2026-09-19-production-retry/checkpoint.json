@@ -1,0 +1,53 @@
+{
+  "pack": "073",
+  "date": "2026-09-19",
+  "status": "PRODUCTION_BACKEND_VERIFIED_FRONTEND_RETRY_TRIGGER",
+  "sourceCommit": "7dd046c53d551dfcc415c3d0231241fa96565d20",
+  "githubCi": {
+    "workflowRun": 35420226728,
+    "backendQuality": "PASS",
+    "releaseQuality": "PASS"
+  },
+  "supabase": {
+    "migration": "pack073_realtime_voice",
+    "applied": true,
+    "turnsTableExists": true,
+    "turnsRls": true,
+    "directPolicyCount": 0,
+    "voiceSessionsRowsAtVerification": 0,
+    "voiceTurnRowsAtVerification": 0
+  },
+  "railway": {
+    "backend": {
+      "deploymentId": "9118f589-af84-4767-8f05-04cab8f4a293",
+      "status": "SUCCESS",
+      "commit": "7dd046c53d551dfcc415c3d0231241fa96565d20"
+    },
+    "worker": {
+      "deploymentId": "64a8f4ef-b196-493b-84d9-bb980b392912",
+      "status": "SUCCESS",
+      "commit": "7dd046c53d551dfcc415c3d0231241fa96565d20"
+    },
+    "maintenance": {
+      "deploymentId": "230a89f9-fd8e-4633-a3f0-2651277996ff",
+      "status": "SUCCESS",
+      "commit": "7dd046c53d551dfcc415c3d0231241fa96565d20"
+    },
+    "backendStartup": "ROX AI backend listening on port 8080",
+    "workerStartup": "ROX AI worker running (concurrency: image=2, video=1, audio=1, attachment=1)"
+  },
+  "vercel": {
+    "projectId": "prj_P6VddfynJKniiK29clC6Epr9byPk",
+    "productionHost": "rox-ai-sepia.vercel.app",
+    "lastProductionCommitBeforeRetry": "d309b822757096dd9d57879c4247084bc6d5c3f8",
+    "partialPreviewDeployment": "dpl_8q58geg83oftMM7zzAoWQQBhLhxS",
+    "partialPreviewCommit": "4ae19dc51e0f4222cada94c52903f501020c4913",
+    "blocker": "git-trigger build-rate-limit",
+    "retryStrategy": "docs-only main checkpoint commit to retrigger production build without runtime logic changes"
+  },
+  "billing": {
+    "liveBillingAllowed": false,
+    "paidRealtimeProviderExecution": false,
+    "providerCostPath": "browser Web Speech API / zero ZUVYR provider charge"
+  }
+}
