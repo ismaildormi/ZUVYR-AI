@@ -1213,13 +1213,26 @@ function createBrowserAgentController({
     return Object.freeze({ run, actions });
   }
 
+  async function listRuns({
+    ownerId,
+    browserSessionId = null,
+    limit = 30
+  } = {}) {
+    return agent.listRuns({
+      ownerId,
+      browserSessionId,
+      limit
+    });
+  }
+
   return Object.freeze({
     planRun,
     advance,
     approveAction,
     resumeHumanBoundary,
     stopRun,
-    getRun
+    getRun,
+    listRuns
   });
 }
 
