@@ -306,9 +306,21 @@ function createBrowserAgentRepository(db) {
     actionId = null,
     decisionSummary = {},
     model,
+    pricingVersion,
+    costEntryId,
     providerCostMicroUsd,
     creditsCharged
   } = {}) {
+    const normalizedPricingVersion = String(pricingVersion || '').trim();
+    const normalizedCostEntryId = String(costEntryId || '').trim();
+    if (
+      !normalizedPricingVersion ||
+      normalizedPricingVersion.length > 200 ||
+      !normalizedCostEntryId ||
+      normalizedCostEntryId.length > 200
+    ) {
+      throw repoError('browser_agent_reasoning_pricing_lineage_invalid');
+    }
     const result = await db
       .from('browser_agent_reasoning_turns')
       .update({
@@ -316,6 +328,8 @@ function createBrowserAgentRepository(db) {
         action_id: actionId,
         decision_summary: decisionSummary,
         model: String(model || '').slice(0, 200) || null,
+        pricing_version: normalizedPricingVersion,
+        cost_entry_id: normalizedCostEntryId,
         provider_cost_micro_usd: Number(providerCostMicroUsd || 0),
         credits_charged: Number(creditsCharged || 0),
         failure_code: null,
