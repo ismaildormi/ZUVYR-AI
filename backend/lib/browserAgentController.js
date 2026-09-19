@@ -1209,11 +1209,15 @@ function createBrowserAgentController({
       sessionId: run.browserSessionId
     });
 
+    const approvedAction = await agent.getAction({
+      ownerId,
+      actionId
+    });
     const executed = await withCdp(internalSession, cdp =>
       executeAction({
         ownerId,
         run,
-        action: await agent.getAction({ ownerId, actionId }),
+        action: approvedAction,
         cdp,
         inputText: transientText
       })
