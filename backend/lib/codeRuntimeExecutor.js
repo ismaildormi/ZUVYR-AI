@@ -957,6 +957,13 @@ function createCodeRuntimeExecutor({
     return Object.freeze(receipt);
   }
 
+  async function runtimeState({
+    ownerId,
+    sandboxSessionId
+  } = {}) {
+    return runtime.getRuntimeState({ ownerId, sandboxSessionId });
+  }
+
   async function logs({
     ownerId,
     jobId,
@@ -976,6 +983,7 @@ function createCodeRuntimeExecutor({
     cancel,
     listJobs,
     reconcileActive,
+    runtimeState,
     logs,
     deterministicCommandId,
     commandLogChunks
