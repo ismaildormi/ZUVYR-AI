@@ -178,7 +178,7 @@ async function run(){
       resolvedInputs:resolvedI2v,
       createClient:()=>({run:async()=>{networkCalls+=1;}})
     }),
-    /video_paid_execution_disabled/
+    /pack067_i2v_paid_execution_disabled/
   );
   assert.equal(networkCalls,0);
 
