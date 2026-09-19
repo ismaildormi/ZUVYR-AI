@@ -18,6 +18,9 @@ const {
   fetchModel3dResult
 } = require('./lib/model3dProvider');
 const { quoteGeneration } = require('./lib/dynamicPricing');
+const {
+  createModel3dInputResolver
+} = require('./lib/model3dInputResolver');
 
 const read = name => fs.readFileSync(path.join(__dirname, name), 'utf8');
 const migration = read('83_pack083_3d_generation.sql');
@@ -30,6 +33,10 @@ const conversationMemory = read('lib/conversationMemory.js');
 const plans = require('./config/plans.json');
 const cfg = require('./config/model3d-system.v1.json');
 const flags = require('./config/feature-flags.json');
+
+assert.equal(typeof createModel3dInputResolver, 'function');
+assert(!resolver.includes("require('./assetStoragePolicy')"));
+assert(resolver.includes("require('./assetStorageContract')"));
 
 const UUIDS = {
   front: '11111111-1111-4111-8111-111111111111',
