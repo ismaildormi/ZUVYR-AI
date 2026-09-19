@@ -413,6 +413,18 @@ begin
   from public.zuvyr_user_preferences
   where owner_id=p_owner_id;
 
+  update public.zuvyr_training_consent_events e
+  set
+    policy_version=coalesce(nullif(btrim(p_policy_version),''),'pack094-v1'),
+    source=case when p_source='enterprise_policy' then 'enterprise_policy' else 'learning_api' end
+  where e.id=(
+    select e2.id
+    from public.zuvyr_training_consent_events e2
+    where e2.owner_id=p_owner_id
+    order by e2.consent_version desc
+    limit 1
+  );
+
   select * into v_event
   from public.zuvyr_training_consent_events
   where owner_id=p_owner_id
