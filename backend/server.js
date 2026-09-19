@@ -123,6 +123,7 @@ const { assertImageRequestAvailable } = require('./lib/imageOperationRegistry');
 const { normalizeVideoRequest } = require('./lib/videoRequestContract');
 const { assertVideoRequestAvailable } = require('./lib/videoOperationRegistry');
 const { createVideoInputResolver } = require('./lib/videoReferenceResolver');
+const { createAssetStorageKernel } = require('./lib/assetStorageKernel');
 const { buildVideoJobSnapshot } = require('./lib/videoJobContract');
 // New, additive-only: stub routes for every not-yet-built feature (see
 // ARCHITECTURE.md). Each route is flag-gated and returns a clear
@@ -140,6 +141,10 @@ const diskMaintenanceModule = require('./src/modules/diskMonitor/maintenance');
 
 const videoInputResolver = createVideoInputResolver({
   db: supabaseAdmin,
+  storage: supabaseAdmin.storage
+});
+const assetStorageKernel = createAssetStorageKernel({
+  client: supabaseAdmin,
   storage: supabaseAdmin.storage
 });
 
@@ -1738,7 +1743,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
   let videoPricingContext = null;
   if (
     videoRequest &&
-    ['edit','extend','object_remove','background_remove','relight','recamera','lip_sync']
+    ['edit','extend','object_remove','background_remove','relight','recamera','lip_sync','subtitles','dub','enhance','export']
       .includes(videoRequest.operation)
   ) {
     try {
@@ -2154,11 +2159,108 @@ app.post('/api/generate-video', requireAuth, rateLimit('video'), validateVideoBo
   )
 );
 
+app.post('/api/video-jobs/:jobId/cancel', requireAuth, async (req, res) => {
+  const jobId = String(req.params.jobId || '').trim().toLowerCase();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(jobId)) {
+    return res.status(400).json({
+      status: 'error',
+      code: 'invalid_video_job_id',
+      message: 'Invalid video job id.'
+    });
+  }
+
+  const result = await supabaseAdmin.rpc('request_zuvyr_video_job_cancel', {
+    p_owner_id: req.userId,
+    p_job_id: jobId
+  });
+
+  if (result.error) {
+    const message = String(result.error.message || '');
+    if (message.includes('pack069_video_job_not_found')) {
+      return res.status(404).json({
+        status: 'error',
+        code: 'video_job_not_found',
+        message: 'Video job not found.'
+      });
+    }
+    console.error('[pack069-cancel] database request failed:', result.error.message);
+    return res.status(500).json({
+      status: 'error',
+      code: 'video_cancel_failed',
+      message: 'Video cancellation could not be recorded.'
+    });
+  }
+
+  const state = result.data && typeof result.data === 'object'
+    ? result.data
+    : {};
+
+  if (state.code === 'video_cancel_too_late') {
+    return res.status(409).json({
+      status: 'error',
+      code: 'video_cancel_too_late',
+      message: 'This video job has already started execution and can no longer be cancelled safely.',
+      jobStatus: state.status || null,
+      jobStage: state.stage || null
+    });
+  }
+
+  if (state.accepted === true || state.status === 'cancelled') {
+    try {
+      const queued = await videoQueue.getJob(jobId);
+      if (queued) {
+        const queueState = await queued.getState().catch(() => null);
+        if (['waiting','delayed','paused'].includes(queueState)) {
+          await queued.remove().catch(() => null);
+        }
+      }
+    } catch (_) {
+      // Database cancellation remains authoritative; an active worker
+      // will observe the terminal state before execution claim.
+    }
+
+    if (state.refundRequired === true || state.status === 'cancelled') {
+      try {
+        await refundCredits(jobId);
+        recordRefund('video');
+      } catch (refundError) {
+        await reportRefundFailure({
+          requestId: jobId,
+          userId: req.userId,
+          feature: 'video',
+          error: refundError
+        }).catch(() => null);
+        return res.status(503).json({
+          status: 'cancelled',
+          code: 'video_cancel_refund_pending',
+          message: 'The job is cancelled but its credit refund still needs reconciliation.',
+          jobId
+        });
+      }
+    }
+
+    return res.json({
+      status: 'cancelled',
+      jobId,
+      jobStatus: 'cancelled',
+      jobStage: 'cancelled'
+    });
+  }
+
+  return res.status(409).json({
+    status: 'error',
+    code: 'video_cancel_terminal',
+    message: 'This video job is already in a terminal state.',
+    jobStatus: state.status || null,
+    jobStage: state.stage || null
+  });
+});
+
 // Frontend polls this (or subscribes to the same row via Supabase Realtime)
 app.get('/api/job-status/:jobId', requireAuth, async (req, res) => {
   const { data, error } = await supabaseAdmin
     .from('generation_jobs')
-    .select('status, result_url, preview_url, export_url, error_message, feature, video_operation, progress_percent, job_stage, estimated_seconds, cancel_requested, created_at, completed_at, response_message_id, user_id, canonical_content_id')
+    .select('status, result_url, preview_url, export_url, error_message, feature, video_operation, video_options, progress_percent, job_stage, estimated_seconds, cancel_requested, created_at, completed_at, response_message_id, user_id, canonical_content_id')
     .eq('id', req.params.jobId)
     .single();
 
@@ -2166,7 +2268,79 @@ app.get('/api/job-status/:jobId', requireAuth, async (req, res) => {
   if (data.user_id !== req.userId) return res.status(403).json({ status: 'error', message: 'Access denied.' });
 
   try {
-    if (data.feature === 'video') return res.json(buildVideoJobSnapshot(data));
+    if (data.feature === 'video') {
+      const snapshot = buildVideoJobSnapshot(data);
+      if (!data.canonical_content_id) return res.json(snapshot);
+
+      const assetResult = await supabaseAdmin
+        .from('zuvyr_assets')
+        .select('id,canonical_version_id,mime_type,file_size_bytes,status,metadata,created_at')
+        .eq('owner_id', req.userId)
+        .eq('canonical_content_id', data.canonical_content_id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: true });
+
+      if (assetResult.error) {
+        return res.json(snapshot);
+      }
+
+      const rows = assetResult.data || [];
+      const videoAsset = rows.find(row =>
+        String(row.mime_type || '').toLowerCase().startsWith('video/')
+      );
+      if (!videoAsset) return res.json(snapshot);
+
+      const videoDownload = await assetStorageKernel.createSignedDownload({
+        ownerId: req.userId,
+        assetId: videoAsset.id,
+        requestId: 'job-status:' + req.params.jobId + ':video',
+        expiresIn: 3600
+      });
+
+      const subtitleAssets = [];
+      for (const row of rows.filter(item =>
+        ['application/x-subrip','text/vtt'].includes(
+          String(item.mime_type || '').toLowerCase()
+        )
+      )) {
+        const format =
+          String(row.mime_type || '').toLowerCase() === 'text/vtt'
+            ? 'vtt'
+            : 'srt';
+        const signed = await assetStorageKernel.createSignedDownload({
+          ownerId: req.userId,
+          assetId: row.id,
+          requestId:
+            'job-status:' + req.params.jobId + ':subtitle:' + format,
+          expiresIn: 3600
+        });
+        subtitleAssets.push({
+          assetId: row.id,
+          format,
+          mimeType: row.mime_type,
+          fileSizeBytes: Number(row.file_size_bytes || 0),
+          downloadUrl: signed.signedUrl
+        });
+      }
+
+      return res.json({
+        ...snapshot,
+        result_url: videoDownload.signedUrl,
+        preview_url: videoDownload.signedUrl,
+        export_url:
+          data.video_operation === 'export'
+            ? videoDownload.signedUrl
+            : snapshot.export_url,
+        canonical_content_id: data.canonical_content_id,
+        canonical_asset_id: videoAsset.id,
+        canonical_version_id: videoAsset.canonical_version_id,
+        canonical_mime_type: videoAsset.mime_type,
+        canonical_file_size_bytes: Number(videoAsset.file_size_bytes || 0),
+        download_url: videoDownload.signedUrl,
+        downloadable: true,
+        subtitle_assets: subtitleAssets
+      });
+    }
 
     if (data.feature === 'image' && data.canonical_content_id) {
       const assetResult = await supabaseAdmin
