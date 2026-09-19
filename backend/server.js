@@ -46,6 +46,7 @@ const { supabaseAdmin } = require('./lib/supabaseAdmin');
 const { register, setQueueDepth, recordCost, recordMargin, recordLoadLevel, recordRefund } = require('./lib/metrics');
 const { createHeaderSecretGuard } = require('./lib/operatorAuth');
 const { runMaintenanceOnce, requireMaintenanceStrategy } = require('./lib/maintenanceCoordinator');
+const { cleanupExpiredCodeSandboxes } = require('./lib/codeSandboxCleanup');
 const loadGuard = require('./lib/loadGuard');
 const { CREDIT_PRICE_USD, marginUsd } = require('./lib/creditEconomics');
 const { quoteGeneration } = require('./lib/dynamicPricing');
@@ -406,6 +407,7 @@ app.post(
       const result = await runMaintenanceOnce({
         redis: queueConnection,
         supabaseAdmin,
+        codeSandboxCleanup: cleanupExpiredCodeSandboxes,
       });
 
       if (result.status === 'success' || result.duplicate) {
