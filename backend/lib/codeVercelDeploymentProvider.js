@@ -24,6 +24,12 @@ function deploymentAvailability(env = process.env) {
   if (!envTrue(env.ZUVYR_M16_VERIFIED)) {
     blockers.push('pack079_m16_unverified');
   }
+  if (releaseConfig.deploy.pricingVerificationStatus !== 'verified') {
+    blockers.push('pack079_deploy_pricing_unverified');
+  }
+  if (!envTrue(env.ZUVYR_DEPLOY_PRICING_VERIFIED)) {
+    blockers.push('pack079_deploy_pricing_operator_gate_closed');
+  }
   for (const key of releaseConfig.deploy.requiredEnvironment) {
     if (!String(env[key] || '').trim()) {
       blockers.push('pack079_missing_' + key.toLowerCase());
