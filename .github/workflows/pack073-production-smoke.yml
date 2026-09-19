@@ -1,0 +1,288 @@
+name: PACK073 Production Smoke
+
+on:
+  push:
+    branches:
+      - pack073-production-smoke-20260919
+
+permissions:
+  contents: read
+
+jobs:
+  pack073-production-smoke:
+    name: PACK073 Production Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Run authenticated production voice smoke
+        shell: bash
+        run: |
+          node <<'NODE'
+          'use strict';
+
+          const assert = require('node:assert/strict');
+
+          const SUPABASE_URL = 'https://tqoqsgaymygmqrzddvtu.supabase.co';
+          const SUPABASE_KEY = 'sb_publishable_jxn-4TT28_G7LtZG4FJXTQ_75JiaSBi';
+          const API_BASE = 'https://rox-ai-production.up.railway.app';
+          const FRONTEND = 'https://rox-ai-sepia.vercel.app';
+          const runId = String(process.env.GITHUB_RUN_ID || 'manual');
+          const email = `zuvyr-pack073-smoke-${runId}@example.invalid`;
+          const password = `Zuvyr-P73-${runId}-A9!xQ`;
+
+          async function request(url, options = {}) {
+            const response = await fetch(url, options);
+            const text = await response.text();
+            let data = {};
+            try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text.slice(0, 500) }; }
+            return { response, data, text };
+          }
+
+          async function authRequest(path, body) {
+            return request(SUPABASE_URL + path, {
+              method: 'POST',
+              headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: 'Bearer ' + SUPABASE_KEY,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(body)
+            });
+          }
+
+          async function signIn() {
+            return authRequest('/auth/v1/token?grant_type=password', { email, password });
+          }
+
+          let login = await signIn();
+          if (!login.response.ok || !login.data?.access_token) {
+            const signup = await authRequest('/auth/v1/signup', {
+              email,
+              password,
+              data: { full_name: 'ZUVYR PACK073 Production Smoke' }
+            });
+
+            if (!signup.response.ok && !/already|registered|exists/i.test(JSON.stringify(signup.data))) {
+              console.error('PACK073_SMOKE_SIGNUP_FAILED', signup.response.status, signup.data?.code || signup.data?.error_code || 'unknown');
+              process.exit(41);
+            }
+
+            login = await signIn();
+          }
+
+          if (!login.response.ok || !login.data?.access_token) {
+            console.log('PACK073_SMOKE_NEEDS_CONFIRMATION=true');
+            console.log('PACK073_SMOKE_EMAIL=' + email);
+            console.log('PACK073_SMOKE_AUTH_STATUS=' + login.response.status);
+            process.exit(42);
+          }
+
+          const token = login.data.access_token;
+          const userId = login.data.user?.id || null;
+          assert(userId, 'authenticated user id required');
+
+          const api = async (path, options = {}) => {
+            const response = await fetch(API_BASE + path, {
+              ...options,
+              headers: {
+                Authorization: 'Bearer ' + token,
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+              }
+            });
+            const text = await response.text();
+            let data = {};
+            try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text.slice(0, 500) }; }
+            return { response, data };
+          };
+
+          const post = (path, body) =>
+            api(path, { method: 'POST', body: JSON.stringify(body) });
+
+          const jsRes = await fetch(FRONTEND + '/zuvyr-chat-workspace-v1.js');
+          const cssRes = await fetch(FRONTEND + '/zuvyr-chat-workspace-v1.css');
+          assert.equal(jsRes.status, 200);
+          assert.equal(cssRes.status, 200);
+          const js = await jsRes.text();
+          const css = await cssRes.text();
+
+          for (const marker of [
+            'ZUVYR PACK073 REALTIME VOICE CONTROLLER',
+            "if (sendButton.classList.contains('is-generating')) return;",
+            "void stopSession(button, 'timeout')",
+            'Retry STOP',
+            'Global STOP is local-first',
+            '/api/audio-studio/voice/sessions/request',
+            "'barge_in'"
+          ]) {
+            assert(js.includes(marker), 'missing production JS marker: ' + marker);
+          }
+          assert(css.includes('[data-zuvyr-voice-session-id]'), 'global STOP session selector missing');
+          assert(css.includes('ZUVYR PACK073 REALTIME VOICE STATUS'), 'realtime status CSS missing');
+
+          const create = await post('/api/audio-studio/voice/sessions/request', {
+            microphoneConsent: true,
+            continuousListening: false,
+            backgroundRecording: false,
+            storeRawAudio: false,
+            maxSeconds: 60,
+            retentionMode: 'transcript_only',
+            autoSpeak: true
+          });
+          assert.equal(create.response.status, 201, JSON.stringify(create.data));
+          assert.equal(create.data.status, 'success');
+          assert.equal(create.data.session.provider, 'browser');
+          assert.equal(create.data.session.transport, 'web_speech_api');
+          assert.equal(create.data.session.rawAudioStoredByZuvyr, false);
+          assert.equal(create.data.session.visibleRecordingIndicator, true);
+          assert.equal(create.data.session.stopControl, true);
+          assert.equal(create.data.session.bargeInEnabled, true);
+
+          const sessionId = create.data.session.id;
+          assert.match(sessionId, /^[0-9a-f-]{36}$/i);
+
+          let r = await post(`/api/audio-studio/voice/sessions/${sessionId}/state`, { state: 'listening' });
+          assert.equal(r.response.status, 200, JSON.stringify(r.data));
+          assert.equal(r.data.session.state, 'listening');
+
+          const userTurnId = `p73-user-${runId}`;
+          r = await post(`/api/audio-studio/voice/sessions/${sessionId}/turns`, {
+            clientTurnId: userTurnId,
+            turnIndex: 0,
+            role: 'user',
+            text: 'PACK073 production smoke dictation',
+            interrupted: false,
+            metadata: { source: 'pack073_production_smoke' }
+          });
+          assert.equal(r.response.status, 201, JSON.stringify(r.data));
+          assert.equal(r.data.turn.replayed, false);
+
+          r = await post(`/api/audio-studio/voice/sessions/${sessionId}/turns`, {
+            clientTurnId: userTurnId,
+            turnIndex: 0,
+            role: 'user',
+            text: 'PACK073 production smoke dictation',
+            interrupted: false,
+            metadata: { source: 'pack073_production_smoke' }
+          });
+          assert.equal(r.response.status, 200, JSON.stringify(r.data));
+          assert.equal(r.data.turn.replayed, true);
+
+          r = await post(`/api/audio-studio/voice/sessions/${sessionId}/state`, { state: 'ready' });
+          assert.equal(r.response.status, 200, JSON.stringify(r.data));
+          assert.equal(r.data.session.state, 'ready');
+
+          r = await post(`/api/audio-studio/voice/sessions/${sessionId}/state`, { state: 'listening' });
+          assert.equal(r.response.status, 200, JSON.stringify(r.data));
+          assert.equal(r.data.session.state, 'listening');
+
+          r = await post(`/api/audio-studio/voice/sessions/${sessionId}/state`, { state: 'processing' });
+          assert.equal(r.response.status, 200, JSON.stringify(r.data));
+          assert.equal(r.data.session.state, 'processing');
+
+          r = await post(`/api/audio-studio/voice/sessions/${sessionId}/state`, { state: 'speaking' });
+          assert.equal(r.response.status, 200, JSON.stringify(r.data));
+          assert.equal(r.data.session.state, 'speaking');
+
+          r = await post(`/api/audio-studio/voice/sessions/${sessionId}/turns`, {
+            clientTurnId: `p73-assistant-${runId}`,
+            turnIndex: 1,
+            role: 'assistant',
+            text: 'PACK073 production smoke assistant response',
+            interrupted: true,
+            metadata: { source: 'pack073_production_smoke', bargeIn: true }
+          });
+          assert.equal(r.response.status, 201, JSON.stringify(r.data));
+          assert.equal(r.data.turn.replayed, false);
+
+          r = await post(`/api/audio-studio/voice/sessions/${sessionId}/state`, {
+            state: 'listening',
+            reason: 'barge_in'
+          });
+          assert.equal(r.response.status, 200, JSON.stringify(r.data));
+          assert.equal(r.data.session.state, 'listening');
+
+          r = await post(`/api/audio-studio/voice/sessions/${sessionId}/turns`, {
+            clientTurnId: `p73-user2-${runId}`,
+            turnIndex: 2,
+            role: 'user',
+            text: 'PACK073 production smoke barge in follow up',
+            interrupted: false,
+            metadata: { source: 'pack073_production_smoke' }
+          });
+          assert.equal(r.response.status, 201, JSON.stringify(r.data));
+
+          r = await post(`/api/audio-studio/voice/sessions/${sessionId}/state`, { state: 'ready' });
+          assert.equal(r.response.status, 200, JSON.stringify(r.data));
+          assert.equal(r.data.session.state, 'ready');
+
+          r = await post(`/api/audio-studio/voice/sessions/${sessionId}/stop`, { reason: 'production_smoke_stop' });
+          assert.equal(r.response.status, 200, JSON.stringify(r.data));
+          assert.equal(r.data.session.state, 'stopped');
+          assert.equal(r.data.session.terminal, true);
+
+          const detail = await api(`/api/audio-studio/voice/sessions/${sessionId}`, { method: 'GET' });
+          assert.equal(detail.response.status, 200, JSON.stringify(detail.data));
+          assert.equal(detail.data.session.state, 'stopped');
+          assert.equal(detail.data.session.turn_count, 3);
+          assert.equal(detail.data.session.interruption_count, 1);
+          assert.equal(detail.data.session.turns.length, 3);
+          assert(detail.data.session.transcript_chars > 0);
+
+          r = await post(`/api/audio-studio/voice/sessions/${sessionId}/state`, { state: 'listening' });
+          assert.equal(r.response.status, 200, JSON.stringify(r.data));
+          assert.equal(r.data.session.state, 'stopped');
+          assert.equal(r.data.session.terminal, true);
+          assert.equal(r.data.session.changed, false);
+
+          r = await post(`/api/audio-studio/voice/sessions/${sessionId}/turns`, {
+            clientTurnId: `p73-after-stop-${runId}`,
+            turnIndex: 3,
+            role: 'user',
+            text: 'must not persist after stop'
+          });
+          assert.equal(r.response.status, 409, JSON.stringify(r.data));
+          assert.match(String(r.data.code || ''), /terminal/);
+
+          const noneCreate = await post('/api/audio-studio/voice/sessions/request', {
+            microphoneConsent: true,
+            continuousListening: false,
+            backgroundRecording: false,
+            storeRawAudio: false,
+            maxSeconds: 60,
+            retentionMode: 'none',
+            autoSpeak: false
+          });
+          assert.equal(noneCreate.response.status, 201, JSON.stringify(noneCreate.data));
+          const noneId = noneCreate.data.session.id;
+
+          r = await post(`/api/audio-studio/voice/sessions/${noneId}/state`, { state: 'listening' });
+          assert.equal(r.response.status, 200, JSON.stringify(r.data));
+
+          r = await post(`/api/audio-studio/voice/sessions/${noneId}/turns`, {
+            clientTurnId: `p73-none-${runId}`,
+            turnIndex: 0,
+            role: 'user',
+            text: 'this transcript must not be retained'
+          });
+          assert.equal(r.response.status, 201, JSON.stringify(r.data));
+          assert.equal(r.data.turn.skipped, true);
+          assert.equal(r.data.turn.reason, 'retention_none');
+
+          const noneDetail = await api(`/api/audio-studio/voice/sessions/${noneId}`, { method: 'GET' });
+          assert.equal(noneDetail.response.status, 200, JSON.stringify(noneDetail.data));
+          assert.equal(noneDetail.data.session.turn_count, 0);
+          assert.equal(noneDetail.data.session.turns.length, 0);
+
+          r = await post(`/api/audio-studio/voice/sessions/${noneId}/stop`, { reason: 'production_smoke_stop' });
+          assert.equal(r.response.status, 200, JSON.stringify(r.data));
+          assert.equal(r.data.session.state, 'stopped');
+
+          console.log('PACK073_PRODUCTION_SMOKE=PASS');
+          console.log('PACK073_SMOKE_USER_ID=' + userId);
+          console.log('PACK073_SMOKE_EMAIL=' + email);
+          console.log('PACK073_PRIMARY_SESSION=' + sessionId);
+          console.log('PACK073_RETENTION_NONE_SESSION=' + noneId);
+          console.log('PACK073_PROVIDER_CALLS=0');
+          console.log('PACK073_PAYMENT_CALLS=0');
+          NODE
