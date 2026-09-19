@@ -549,6 +549,443 @@ begin
 end;
 $pack094_candidate$;
 
+create or replace function public.admit_zuvyr_redacted_text_candidate_pack094(
+  p_owner_id uuid,
+  p_rights_id uuid,
+  p_source_event_id uuid,
+  p_domain text,
+  p_difficulty integer,
+  p_quality_score integer,
+  p_learning_value_score integer,
+  p_redacted_text text,
+  p_redacted_sha256 text,
+  p_redaction_summary jsonb
+) returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $pack094_text_candidate$
+declare
+  v_candidate jsonb;
+  v_candidate_id uuid;
+begin
+  if char_length(coalesce(p_redacted_text,'')) not between 1 and 200000 then
+    raise exception 'pack094_redacted_text_invalid';
+  end if;
+  if coalesce(p_redacted_sha256,'') !~ '^[0-9a-f]{64}
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $pack094_usage_trigger$
+declare
+  v_outcome text;
+  v_score integer;
+  v_actual numeric;
+begin
+  if new.state not in ('settled','refunded','failed') then
+    return new;
+  end if;
+
+  v_outcome := case
+    when new.state='settled' then 'settled'
+    when new.state='refunded' then 'refunded'
+    else 'failure'
+  end;
+  v_actual := new.actual_provider_cost_microusd;
+  v_score := public.pack094_learning_value_score(
+    'usage_outcome',
+    v_outcome,
+    0,
+    coalesce(new.cost_known,false),
+    null
+  );
+
+  insert into public.zuvyr_learning_events(
+    owner_id,source_kind,source_id,event_type,capability,provider,model_tool,
+    outcome,retry_count,failure_category,provider_result,actual_cost_microusd,
+    cost_known,learning_value_score,contains_user_content,metadata,created_at,updated_at
+  ) values (
+    new.user_id,'usage_record',new.id::text,'usage_outcome',
+    new.capability,new.provider,new.model_tool,
+    v_outcome,0,
+    case when new.state='failed' then 'usage_failed' else null end,
+    new.accounting_state,
+    v_actual,
+    coalesce(new.cost_known,false),
+    v_score,false,
+    jsonb_build_object(
+      'usage_kind',new.usage_kind,
+      'ledger_source',new.ledger_source,
+      'funding_source',new.funding_source,
+      'credits',coalesce(new.actual_credits,new.reserved_credits),
+      'refunded_credits',new.refunded_credits
+    ),
+    coalesce(new.settled_at,new.updated_at,new.created_at,now()),
+    now()
+  )
+  on conflict (owner_id,source_kind,source_id,event_type) do update set
+    outcome=excluded.outcome,
+    provider_result=excluded.provider_result,
+    actual_cost_microusd=excluded.actual_cost_microusd,
+    cost_known=excluded.cost_known,
+    learning_value_score=excluded.learning_value_score,
+    metadata=excluded.metadata,
+    updated_at=now();
+
+  return new;
+end;
+$pack094_usage_trigger$;
+
+create or replace function public.capture_zuvyr_task_run_learning_pack094()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $pack094_task_trigger$
+declare
+  v_cost numeric;
+  v_cost_known boolean := false;
+  v_latency bigint;
+  v_outcome text;
+  v_score integer;
+begin
+  if new.state not in ('succeeded','failed','cancelled') then
+    return new;
+  end if;
+
+  if new.usage_record_id is not null then
+    select actual_provider_cost_microusd,cost_known
+      into v_cost,v_cost_known
+    from public.zuvyr_usage_records
+    where id=new.usage_record_id;
+  end if;
+
+  v_latency := case
+    when new.started_at is not null and new.completed_at is not null
+      then greatest(0,floor(extract(epoch from (new.completed_at-new.started_at))*1000)::bigint)
+    else null
+  end;
+
+  v_outcome := case
+    when new.state='succeeded' then 'success'
+    when new.state='cancelled' then 'cancelled'
+    else 'failure'
+  end;
+
+  v_score := public.pack094_learning_value_score(
+    'task_outcome',
+    v_outcome,
+    greatest(0,coalesce(new.resume_count,0)),
+    coalesce(v_cost_known,false),
+    null
+  );
+
+  insert into public.zuvyr_learning_events(
+    owner_id,source_kind,source_id,event_type,capability,outcome,task_success,
+    latency_ms,retry_count,failure_category,actual_cost_microusd,cost_known,
+    cost_per_successful_task_microusd,learning_value_score,contains_user_content,
+    metadata,created_at,updated_at
+  ) values (
+    new.user_id,'task_run',new.id::text,'task_outcome','brain_task',
+    v_outcome,(new.state='succeeded'),v_latency,greatest(0,coalesce(new.resume_count,0)),
+    case when new.state='failed' then coalesce(nullif(new.error_code,''),'task_failed') else null end,
+    v_cost,coalesce(v_cost_known,false),
+    case when new.state='succeeded' and coalesce(v_cost_known,false) then coalesce(v_cost,0) else null end,
+    v_score,false,
+    jsonb_build_object(
+      'plan_version',new.plan_version,
+      'cancel_requested',new.cancel_requested,
+      'compensation_version',new.compensation_version
+    ),
+    coalesce(new.completed_at,new.updated_at,now()),now()
+  )
+  on conflict (owner_id,source_kind,source_id,event_type) do update set
+    outcome=excluded.outcome,
+    task_success=excluded.task_success,
+    latency_ms=excluded.latency_ms,
+    retry_count=excluded.retry_count,
+    failure_category=excluded.failure_category,
+    actual_cost_microusd=excluded.actual_cost_microusd,
+    cost_known=excluded.cost_known,
+    cost_per_successful_task_microusd=excluded.cost_per_successful_task_microusd,
+    learning_value_score=excluded.learning_value_score,
+    metadata=excluded.metadata,
+    updated_at=now();
+
+  return new;
+end;
+$pack094_task_trigger$;
+
+create or replace function public.capture_zuvyr_task_step_learning_pack094()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $pack094_step_trigger$
+declare
+  v_owner uuid;
+  v_cost numeric;
+  v_cost_known boolean := false;
+  v_latency bigint;
+  v_outcome text;
+  v_score integer;
+begin
+  if new.state not in ('succeeded','failed','cancelled') then
+    return new;
+  end if;
+
+  select user_id into v_owner
+  from public.zuvyr_task_runs
+  where id=new.task_run_id;
+
+  if v_owner is null then return new; end if;
+
+  if new.usage_record_id is not null then
+    select actual_provider_cost_microusd,cost_known
+      into v_cost,v_cost_known
+    from public.zuvyr_usage_records
+    where id=new.usage_record_id;
+  end if;
+
+  v_latency := case
+    when new.started_at is not null and new.completed_at is not null
+      then greatest(0,floor(extract(epoch from (new.completed_at-new.started_at))*1000)::bigint)
+    else null
+  end;
+  v_outcome := case
+    when new.state='succeeded' then 'success'
+    when new.state='cancelled' then 'cancelled'
+    else 'failure'
+  end;
+  v_score := public.pack094_learning_value_score(
+    'tool_outcome',
+    v_outcome,
+    greatest(0,coalesce(new.attempts,0)-1),
+    coalesce(v_cost_known,false),
+    null
+  );
+
+  insert into public.zuvyr_learning_events(
+    owner_id,source_kind,source_id,event_type,capability,provider,model_tool,
+    outcome,tool_success,latency_ms,retry_count,failure_category,
+    actual_cost_microusd,cost_known,learning_value_score,contains_user_content,
+    metadata,created_at,updated_at
+  ) values (
+    v_owner,'task_step',new.id::text,'tool_outcome',new.capability,new.provider,new.model_tool,
+    v_outcome,(new.state='succeeded'),v_latency,greatest(0,coalesce(new.attempts,0)-1),
+    case when new.state='failed' then coalesce(nullif(new.error_code,''),'tool_failed') else null end,
+    v_cost,coalesce(v_cost_known,false),v_score,false,
+    jsonb_build_object(
+      'step_key',new.step_key,
+      'sequence_number',new.sequence_number,
+      'resume_count',new.resume_count
+    ),
+    coalesce(new.completed_at,new.updated_at,now()),now()
+  )
+  on conflict (owner_id,source_kind,source_id,event_type) do update set
+    outcome=excluded.outcome,
+    tool_success=excluded.tool_success,
+    latency_ms=excluded.latency_ms,
+    retry_count=excluded.retry_count,
+    failure_category=excluded.failure_category,
+    actual_cost_microusd=excluded.actual_cost_microusd,
+    cost_known=excluded.cost_known,
+    learning_value_score=excluded.learning_value_score,
+    metadata=excluded.metadata,
+    updated_at=now();
+
+  return new;
+end;
+$pack094_step_trigger$;
+
+create or replace function public.capture_zuvyr_feedback_learning_pack094()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $pack094_feedback_trigger$
+declare
+  v_outcome text;
+  v_score integer;
+begin
+  v_outcome := case when new.rating=1 then 'positive' else 'negative' end;
+  v_score := public.pack094_learning_value_score('feedback',v_outcome,0,false,new.rating);
+
+  insert into public.zuvyr_learning_events(
+    owner_id,source_kind,source_id,event_type,capability,model_tool,outcome,
+    retry_count,learning_value_score,contains_user_content,metadata,created_at,updated_at
+  ) values (
+    new.user_id,'chat_feedback',new.id::text,'feedback',
+    new.feature,new.model,v_outcome,0,v_score,false,
+    '{}'::jsonb,new.updated_at,new.updated_at
+  )
+  on conflict (owner_id,source_kind,source_id,event_type) do update set
+    model_tool=excluded.model_tool,
+    outcome=excluded.outcome,
+    learning_value_score=excluded.learning_value_score,
+    updated_at=now();
+
+  return new;
+end;
+$pack094_feedback_trigger$;
+
+create or replace function public.capture_zuvyr_failure_bank_pack094()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $pack094_failure_trigger$
+declare
+  v_fingerprint text;
+begin
+  if new.outcome <> 'failure' or nullif(btrim(coalesce(new.failure_category,'')),'') is null then
+    return new;
+  end if;
+
+  v_fingerprint := md5(
+    concat_ws('|',
+      coalesce(new.capability,'unknown'),
+      coalesce(new.failure_category,'unknown'),
+      coalesce(new.provider,'unknown'),
+      coalesce(new.model_tool,'unknown'),
+      coalesce(new.domain,'unknown')
+    )
+  );
+
+  insert into public.zuvyr_failure_bank(
+    owner_id,fingerprint,capability,failure_category,provider,model_tool,domain,
+    occurrences,first_seen_at,last_seen_at,latest_event_id,latest_repair_outcome,status,updated_at
+  ) values (
+    new.owner_id,v_fingerprint,new.capability,new.failure_category,new.provider,new.model_tool,new.domain,
+    1,new.created_at,new.created_at,new.id,new.repair_outcome,'open',now()
+  )
+  on conflict (owner_id,fingerprint) do update set
+    occurrences=case
+      when public.zuvyr_failure_bank.latest_event_id = excluded.latest_event_id
+        then public.zuvyr_failure_bank.occurrences
+      else public.zuvyr_failure_bank.occurrences+1
+    end,
+    last_seen_at=greatest(public.zuvyr_failure_bank.last_seen_at,excluded.last_seen_at),
+    latest_event_id=excluded.latest_event_id,
+    latest_repair_outcome=excluded.latest_repair_outcome,
+    status=case when public.zuvyr_failure_bank.status='suppressed' then 'suppressed' else 'open' end,
+    updated_at=now();
+
+  return new;
+end;
+$pack094_failure_trigger$;
+
+drop trigger if exists trg_pack094_usage_learning on public.zuvyr_usage_records;
+create trigger trg_pack094_usage_learning
+after insert or update of state,actual_provider_cost_microusd,cost_known,actual_credits,refunded_credits,accounting_state
+on public.zuvyr_usage_records
+for each row execute function public.capture_zuvyr_usage_learning_pack094();
+
+drop trigger if exists trg_pack094_task_run_learning on public.zuvyr_task_runs;
+create trigger trg_pack094_task_run_learning
+after insert or update of state,error_code,completed_at,resume_count,usage_record_id
+on public.zuvyr_task_runs
+for each row execute function public.capture_zuvyr_task_run_learning_pack094();
+
+drop trigger if exists trg_pack094_task_step_learning on public.zuvyr_task_steps;
+create trigger trg_pack094_task_step_learning
+after insert or update of state,error_code,completed_at,attempts,resume_count,usage_record_id
+on public.zuvyr_task_steps
+for each row execute function public.capture_zuvyr_task_step_learning_pack094();
+
+drop trigger if exists trg_pack094_feedback_learning on public.chat_response_feedback;
+create trigger trg_pack094_feedback_learning
+after insert or update of rating,model,updated_at
+on public.chat_response_feedback
+for each row execute function public.capture_zuvyr_feedback_learning_pack094();
+
+drop trigger if exists trg_pack094_failure_bank on public.zuvyr_learning_events;
+create trigger trg_pack094_failure_bank
+after insert or update of outcome,failure_category,repair_outcome
+on public.zuvyr_learning_events
+for each row execute function public.capture_zuvyr_failure_bank_pack094();
+
+revoke all on function public.pack094_learning_value_score(text,text,integer,boolean,integer)
+  from public,anon,authenticated;
+revoke all on function public.set_zuvyr_learning_consent_pack094(uuid,boolean,text,text)
+  from public,anon,authenticated;
+revoke all on function public.upsert_zuvyr_training_rights_pack094(uuid,uuid,uuid,text,text,text,boolean)
+  from public,anon,authenticated;
+revoke all on function public.revoke_zuvyr_training_rights_pack094(uuid,uuid,text)
+  from public,anon,authenticated;
+revoke all on function public.mark_zuvyr_training_rights_privacy_pack094(uuid,uuid,text,text,text)
+  from public,anon,authenticated;
+revoke all on function public.admit_zuvyr_training_candidate_pack094(uuid,uuid,uuid,text,integer,integer,integer,text)
+  from public,anon,authenticated;
+
+revoke all on function public.admit_zuvyr_redacted_text_candidate_pack094(uuid,uuid,uuid,text,integer,integer,integer,text,text,jsonb)
+  from public,anon,authenticated;
+
+grant execute on function public.pack094_learning_value_score(text,text,integer,boolean,integer)
+  to service_role;
+grant execute on function public.set_zuvyr_learning_consent_pack094(uuid,boolean,text,text)
+  to service_role;
+grant execute on function public.upsert_zuvyr_training_rights_pack094(uuid,uuid,uuid,text,text,text,boolean)
+  to service_role;
+grant execute on function public.revoke_zuvyr_training_rights_pack094(uuid,uuid,text)
+  to service_role;
+grant execute on function public.mark_zuvyr_training_rights_privacy_pack094(uuid,uuid,text,text,text)
+  to service_role;
+grant execute on function public.admit_zuvyr_training_candidate_pack094(uuid,uuid,uuid,text,integer,integer,integer,text)
+  to service_role;
+
+grant execute on function public.admit_zuvyr_redacted_text_candidate_pack094(uuid,uuid,uuid,text,integer,integer,integer,text,text,jsonb)
+  to service_role;
+
+comment on table public.zuvyr_learning_events is
+  'PACK094 privacy-safe non-content learning telemetry. contains_user_content is permanently false; prompts, response text, files and raw conversation content do not belong here.';
+
+comment on table public.zuvyr_learning_consents is
+  'PACK094 global-model training consent. Default OFF. Deliberately separate from Memory permissions.';
+
+comment on table public.zuvyr_training_candidates is
+  'PACK094 rights/consent/privacy-approved training candidates only. Dataset/checkpoint admission is owned by PACK095.';
+
+comment on table public.zuvyr_training_candidate_payloads is
+  'PACK094 privacy-processed redacted candidate text. Service-role only. Raw source text stays in canonical content storage and is never copied here.';
+ then
+    raise exception 'pack094_redacted_hash_invalid';
+  end if;
+  if jsonb_typeof(coalesce(p_redaction_summary,'{}'::jsonb)) <> 'object' then
+    raise exception 'pack094_redaction_summary_invalid';
+  end if;
+
+  v_candidate := public.admit_zuvyr_training_candidate_pack094(
+    p_owner_id,
+    p_rights_id,
+    p_source_event_id,
+    p_domain,
+    p_difficulty,
+    p_quality_score,
+    p_learning_value_score,
+    'redacted_text'
+  );
+
+  v_candidate_id := (v_candidate->>'id')::uuid;
+
+  insert into public.zuvyr_training_candidate_payloads(
+    candidate_id,owner_id,redacted_text,redacted_sha256,redaction_summary,created_at
+  ) values (
+    v_candidate_id,p_owner_id,p_redacted_text,p_redacted_sha256,p_redaction_summary,now()
+  )
+  on conflict (candidate_id) do update set
+    redacted_text=excluded.redacted_text,
+    redacted_sha256=excluded.redacted_sha256,
+    redaction_summary=excluded.redaction_summary;
+
+  return v_candidate || jsonb_build_object(
+    'payload_kind','redacted_text',
+    'payload_sha256',p_redacted_sha256
+  );
+end;
+$pack094_text_candidate$;
+
 create or replace function public.capture_zuvyr_usage_learning_pack094()
 returns trigger
 language plpgsql
@@ -838,7 +1275,11 @@ begin
     1,new.created_at,new.created_at,new.id,new.repair_outcome,'open',now()
   )
   on conflict (owner_id,fingerprint) do update set
-    occurrences=public.zuvyr_failure_bank.occurrences+1,
+    occurrences=case
+      when public.zuvyr_failure_bank.latest_event_id = excluded.latest_event_id
+        then public.zuvyr_failure_bank.occurrences
+      else public.zuvyr_failure_bank.occurrences+1
+    end,
     last_seen_at=greatest(public.zuvyr_failure_bank.last_seen_at,excluded.last_seen_at),
     latest_event_id=excluded.latest_event_id,
     latest_repair_outcome=excluded.latest_repair_outcome,
