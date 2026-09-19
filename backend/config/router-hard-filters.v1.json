@@ -4,7 +4,7 @@
   "modelRegistryAuthority": "backend/lib/modelRegistry.js",
   "providerRegistryAuthority": "backend/lib/providerRegistry.js",
   "providerHealthQuotaAuthority": "backend/lib/providerHealthQuotaState.js",
-  "costAuthority": "backend/lib/modelCosts.js",
+  "costAuthority": "backend/lib/modelPricingAuthority.js",
   "filterOrder": [
     "ENTITLEMENT",
     "PERMISSION",
