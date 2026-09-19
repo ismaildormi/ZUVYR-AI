@@ -28,6 +28,7 @@ const {
 } = require('./lib/codeRepairPolicy');
 
 const migration = read('78_pack078_build_test_preview_repair.sql');
+const securityFix = read('78_pack078_security_fix1.sql');
 const routes = read('lib/codeStudioRoutes.js');
 const executor = read('lib/codeRuntimeExecutor.js');
 const repository = read('lib/codeRuntimeRepository.js');
@@ -226,7 +227,6 @@ for (const marker of [
   'create table if not exists public.code_repair_attempts',
   'attempt_no integer not null check (attempt_no between 1 and 2)',
   'pack078_repair_repeated_failure',
-  "v_operation not in ('terminal','dependencies','run','build','test')",
   'alter table public.code_repair_runs enable row level security',
   'alter table public.code_repair_attempts enable row level security',
   'from public,anon,authenticated',
@@ -237,7 +237,6 @@ for (const marker of [
 assert(!/grant\s+(?:select|insert|update|delete)[^;]*\s+to\s+(?:anon|authenticated)/i.test(migration));
 
 for (const functionName of [
-  'reserve_zuvyr_code_runtime_job_pack077',
   'reserve_zuvyr_code_repair_run_pack078',
   'claim_zuvyr_code_repair_attempt_pack078',
   'complete_zuvyr_code_repair_attempt_pack078'
@@ -246,6 +245,25 @@ for (const functionName of [
     migration.split('create or replace function public.' + functionName + '(').length - 1;
   assert.equal(count, 1, functionName + ' must exist exactly once');
 }
+
+assert.equal(
+  migration.split(
+    'create or replace function public.reserve_zuvyr_code_runtime_job_pack077('
+  ).length - 1,
+  0,
+  'PACK078 must not redefine the canonical PACK077 reserve RPC'
+);
+assert(
+  /drop function if exists public\.reserve_zuvyr_code_runtime_job_pack077\(\s*uuid,\s*uuid,\s*uuid,\s*uuid,\s*text,\s*text,\s*jsonb,\s*integer,\s*text,\s*text\s*\)/m
+    .test(securityFix),
+  'PACK078 SECURITY FIX1 must remove only the dead source-job overload'
+);
+assert(
+  securityFix.includes(
+    'comment on function public.reserve_zuvyr_code_runtime_job_pack077('
+  ),
+  'PACK078 SECURITY FIX1 must preserve/document the canonical PACK077 RPC'
+);
 assert(
   /reserve_zuvyr_code_repair_run_pack078\(\s*p_owner_id uuid,\s*p_project_id uuid,\s*p_sandbox_session_id uuid,\s*p_source_job_id uuid,/m
     .test(migration)
