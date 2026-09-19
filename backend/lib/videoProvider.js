@@ -84,6 +84,15 @@ function lipSyncBillingIncrements(value) {
   return Number(increments);
 }
 
+function roundedMinuteBillingUnits(value) {
+  const milliseconds = durationMilliseconds(value);
+  const units = (milliseconds + 59999n) / 60000n;
+  if (units > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw providerError('video_dub_billing_units_invalid');
+  }
+  return Number(units);
+}
+
 function requireTrustedDuration(item, code = 'video_source_duration_unavailable') {
   const duration = Number(item && item.durationSeconds);
   if (!Number.isFinite(duration) || duration <= 0) throw providerError(code);
@@ -588,7 +597,7 @@ async function generateVideo(request, {
     units = sourceDuration;
   } else if (request.operation === 'dub') {
     unitType = 'processing_operations';
-    units = Math.floor((sourceDuration * 1000 + 59999) / 60000);
+    units = roundedMinuteBillingUnits(sourceDuration);
   } else if (request.operation === 'enhance') {
     unitType = 'video_seconds';
     units = sourceDuration;
@@ -644,6 +653,7 @@ module.exports = {
   buildFalEnhanceInput,
   normalizePack069Metadata,
   lipSyncBillingIncrements,
+  roundedMinuteBillingUnits,
   defaultModelForOperation,
   providerForOperation,
   generateVideo
