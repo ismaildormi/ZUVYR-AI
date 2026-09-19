@@ -13,6 +13,7 @@ const {
 const read = file => fs.readFileSync(path.join(__dirname, file), 'utf8');
 
 const migration = read('94_pack094_learning_pipeline.sql');
+const migrationFix1 = read('94_pack094_learning_pipeline_fix1.sql');
 const repository = read('lib/learningPipelineRepository.js');
 const routes = read('lib/learningPipelineRoutes.js');
 const server = read('server.js');
@@ -69,8 +70,24 @@ assert(
   'training consent history trigger missing'
 );
 assert(
+  migration.includes('revoke all on public.zuvyr_training_consent_events from service_role'),
+  'consent history must explicitly clear Supabase default service_role grants'
+);
+assert(
   migration.includes('grant select,insert on public.zuvyr_training_consent_events to service_role'),
   'consent history should be append/read only'
+);
+assert(
+  migrationFix1.includes('revoke all on public.zuvyr_training_consent_events from service_role'),
+  'PACK094 FIX1 must revoke broad production service_role grants'
+);
+assert(
+  /grant\s+select\s*,\s*insert\s+on\s+public\.zuvyr_training_consent_events\s+to\s+service_role/i.test(migrationFix1),
+  'PACK094 FIX1 must restore only append/read service_role access'
+);
+assert(
+  !/grant\s+[^;]*(?:update|delete|truncate)[^;]*on\s+public\.zuvyr_training_consent_events/i.test(migrationFix1),
+  'PACK094 FIX1 must never grant mutation privileges to consent history'
 );
 assert(
   !migration.includes('grant select,insert,update,delete on public.zuvyr_training_consent_events'),
