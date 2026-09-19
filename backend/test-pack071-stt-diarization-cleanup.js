@@ -326,6 +326,14 @@ async function run(){
   assert(attachmentWorker.includes('probeMediaFileDurationSeconds'));
   assert(docker.includes('zuvyr-pack071-clean.wav'));
   assert(docker.includes('zuvyr-pack071-clean.mp3'));
+  assert.equal((docker.match(/ENTRYPOINT \[/g)||[]).length,1);
+  assert.equal((docker.match(/CMD \[/g)||[]).length,1);
+  assert.equal((docker.match(/ENV NODE_ENV=production/g)||[]).length,1);
+  assert.equal((docker.match(/FROM node:22-alpine AS runtime/g)||[]).length,1);
+  assert.equal((docker.match(/zuvyr-pack071-source\.wav/g)||[]).length,4);
+  assert(docker.includes('grep -Eq'));
+  assert(docker.includes('highpass=f=60,afftdn=nr=12:nf=-50:tn=1'));
+  assert(!docker.includes('CMD ["node", "worker.js"] \\'));
 
   console.log('PASS: PACK071 owner-scoped trusted-duration STT maps to exact Nova-3 mono/multilingual pricing with included diarization, zero-retention opt-out and no audio-time rounding');
   console.log('PASS: PACK071 transcript/segments and cleanup results persist through canonical content/assets/lineage with retry-safe provider evidence');
