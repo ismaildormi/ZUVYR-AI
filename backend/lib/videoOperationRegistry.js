@@ -17,7 +17,7 @@ function normalizeVideoOperation(value) {
   return operation;
 }
 
-function assertVideoOperationAvailable(value) {
+function assertVideoOperationAvailable(value, { env = process.env } = {}) {
   const operation = normalizeVideoOperation(value);
   const definition = config.operations[operation];
   if (definition.status === 'blocked_unpriced') {
@@ -26,11 +26,17 @@ function assertVideoOperationAvailable(value) {
   if (definition.enabledByDefault !== true) {
     throw videoOperationError('video_operation_disabled', operation);
   }
+  if (
+    definition.paidExecutionEnvironment &&
+    String(env[definition.paidExecutionEnvironment] || '').toLowerCase() !== 'true'
+  ) {
+    throw videoOperationError('video_operation_paid_execution_disabled', operation);
+  }
   return Object.freeze({ operation, ...definition });
 }
 
-function assertVideoRequestAvailable(request) {
-  return assertVideoOperationAvailable(request?.operation);
+function assertVideoRequestAvailable(request, options) {
+  return assertVideoOperationAvailable(request?.operation, options);
 }
 
 function providerSupports(provider, operation) {
@@ -46,7 +52,8 @@ function inventory() {
     version: config.version,
     operations: { ...config.operations },
     providers: { ...config.providers },
-    jobs: { ...config.jobs }
+    jobs: { ...config.jobs },
+    pack066: config.pack066 ? { ...config.pack066 } : null
   });
 }
 

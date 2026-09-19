@@ -1,29 +1,150 @@
 {
   "version": "pack-05.video-system.v1",
   "operations": {
-    "text_to_video": { "enabledByDefault": false, "status": "blocked_unpriced", "requiresPrompt": true, "requiresSourceImage": false, "requiresSourceVideo": false },
-    "image_to_video": { "enabledByDefault": false, "status": "blocked_unpriced", "requiresPrompt": true, "requiresSourceImage": true, "requiresSourceVideo": false },
-    "edit": { "enabledByDefault": false, "status": "blocked_unpriced", "requiresPrompt": false, "requiresSourceImage": false, "requiresSourceVideo": true },
-    "extend": { "enabledByDefault": false, "status": "blocked_unpriced", "requiresPrompt": true, "requiresSourceImage": false, "requiresSourceVideo": true },
-    "subtitles": { "enabledByDefault": false, "status": "blocked_unpriced", "requiresPrompt": false, "requiresSourceImage": false, "requiresSourceVideo": true },
-    "enhance": { "enabledByDefault": false, "status": "blocked_unpriced", "requiresPrompt": false, "requiresSourceImage": false, "requiresSourceVideo": true },
-    "export": { "enabledByDefault": false, "status": "blocked_unpriced", "requiresPrompt": false, "requiresSourceImage": false, "requiresSourceVideo": true }
+    "text_to_video": {
+      "enabledByDefault": true,
+      "status": "implemented_pack066_paid_live_deferred",
+      "requiresPrompt": true,
+      "requiresSourceImage": false,
+      "requiresSourceVideo": false,
+      "paidExecutionEnvironment": "PACK066_PAID_EXECUTION_ENABLED"
+    },
+    "image_to_video": {
+      "enabledByDefault": false,
+      "status": "blocked_unpriced",
+      "requiresPrompt": true,
+      "requiresSourceImage": true,
+      "requiresSourceVideo": false
+    },
+    "edit": {
+      "enabledByDefault": false,
+      "status": "blocked_unpriced",
+      "requiresPrompt": false,
+      "requiresSourceImage": false,
+      "requiresSourceVideo": true
+    },
+    "extend": {
+      "enabledByDefault": false,
+      "status": "blocked_unpriced",
+      "requiresPrompt": true,
+      "requiresSourceImage": false,
+      "requiresSourceVideo": true
+    },
+    "subtitles": {
+      "enabledByDefault": false,
+      "status": "blocked_unpriced",
+      "requiresPrompt": false,
+      "requiresSourceImage": false,
+      "requiresSourceVideo": true
+    },
+    "enhance": {
+      "enabledByDefault": false,
+      "status": "blocked_unpriced",
+      "requiresPrompt": false,
+      "requiresSourceImage": false,
+      "requiresSourceVideo": true
+    },
+    "export": {
+      "enabledByDefault": false,
+      "status": "blocked_unpriced",
+      "requiresPrompt": false,
+      "requiresSourceImage": false,
+      "requiresSourceVideo": true
+    }
   },
   "providers": {
-    "replicate": { "implementedOperations": ["text_to_video"], "status": "registered_unverified_price" }
+    "replicate": {
+      "implementedOperations": [
+        "text_to_video"
+      ],
+      "status": "verified_pack066_text_to_video",
+      "model": "wan-video/wan-2.2-t2v-fast"
+    }
   },
   "requestLimits": {
     "maxPromptCharacters": 2000,
-    "allowedDurationSeconds": [5, 6, 8, 10],
-    "allowedRatios": ["16:9", "9:16", "1:1", "4:3", "3:4"],
-    "allowedResolutions": ["720p", "1080p"],
-    "allowedFps": [24, 30],
-    "allowedExportFormats": ["mp4", "webm", "mov", "srt", "vtt"]
+    "allowedDurationSeconds": [
+      5,
+      6,
+      8,
+      10
+    ],
+    "allowedRatios": [
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+    ],
+    "allowedResolutions": [
+      "720p",
+      "1080p"
+    ],
+    "allowedFps": [
+      24,
+      30
+    ],
+    "allowedExportFormats": [
+      "mp4",
+      "webm",
+      "mov",
+      "srt",
+      "vtt"
+    ]
   },
   "jobs": {
-    "states": ["queued", "processing", "done", "failed", "cancelled"],
-    "stages": ["queued", "validating", "provider", "processing", "preview", "export", "done", "failed", "cancelled"],
+    "states": [
+      "queued",
+      "processing",
+      "done",
+      "failed",
+      "cancelled"
+    ],
+    "stages": [
+      "queued",
+      "validating",
+      "provider",
+      "processing",
+      "preview",
+      "export",
+      "done",
+      "failed",
+      "cancelled"
+    ],
     "maxProgressPercent": 100,
     "cancelEnabledByDefault": false
+  },
+  "pack066": {
+    "phase": "IMPLEMENTED_PAID_LIVE_DEFERRED",
+    "paidExecutionDefault": false,
+    "paidExecutionEnvironment": "PACK066_PAID_EXECUTION_ENABLED",
+    "provider": "replicate",
+    "model": "wan-video/wan-2.2-t2v-fast",
+    "pricingBasis": "fixed_per_output_video_by_resolution",
+    "textToVideo": {
+      "allowedDurationSeconds": [
+        5,
+        6,
+        7
+      ],
+      "allowedRatios": [
+        "16:9",
+        "9:16"
+      ],
+      "allowedResolutions": [
+        "480p",
+        "720p"
+      ],
+      "allowedFps": [
+        16
+      ],
+      "allowedExportFormats": [
+        "mp4"
+      ],
+      "audioSupported": false,
+      "frameFormula": "duration_seconds_x_16_plus_1",
+      "interpolateOutput": false,
+      "optimizePrompt": false
+    }
   }
 }

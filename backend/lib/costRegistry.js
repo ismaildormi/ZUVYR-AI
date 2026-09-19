@@ -9,6 +9,7 @@ const UNIT_TYPES = new Set([
   'requests',
   'searches',
   'images',
+  'videos',
   'video_seconds',
   'audio_seconds',
   'audio_minutes',

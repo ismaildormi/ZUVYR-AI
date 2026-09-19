@@ -52,43 +52,63 @@ function normalizeVideoRequest(body = {}) {
     throw requestError('invalid_video_options');
   }
   const options = raw || {};
-  const allowed = new Set([
-    'durationSeconds', 'ratio', 'resolution', 'fps', 'audio', 'seed',
-    'subtitleLanguage', 'targetLanguage', 'exportFormat'
-  ]);
+  const isPack066TextToVideo = operation === 'text_to_video';
+  const allowed = new Set(
+    isPack066TextToVideo
+      ? ['durationSeconds', 'ratio', 'resolution', 'fps', 'audio', 'seed', 'exportFormat']
+      : [
+          'durationSeconds', 'ratio', 'resolution', 'fps', 'audio', 'seed',
+          'subtitleLanguage', 'targetLanguage', 'exportFormat'
+        ]
+  );
   if (Object.keys(options).some(key => !allowed.has(key))) {
     throw requestError('unsupported_video_option');
   }
+
+  const limits = isPack066TextToVideo
+    ? config.pack066.textToVideo
+    : {
+        allowedDurationSeconds: config.requestLimits.allowedDurationSeconds,
+        allowedRatios: config.requestLimits.allowedRatios,
+        allowedResolutions: config.requestLimits.allowedResolutions,
+        allowedFps: config.requestLimits.allowedFps,
+        allowedExportFormats: config.requestLimits.allowedExportFormats
+      };
 
   const durationSeconds = options.durationSeconds === undefined
     ? 5
     : Number(options.durationSeconds);
   const ratio = String(options.ratio || '16:9');
-  const resolution = String(options.resolution || '720p').toLowerCase();
-  const fps = options.fps === undefined ? 24 : Number(options.fps);
+  const resolution = String(
+    options.resolution || (isPack066TextToVideo ? '480p' : '720p')
+  ).toLowerCase();
+  const fps = options.fps === undefined
+    ? (isPack066TextToVideo ? 16 : 24)
+    : Number(options.fps);
   const audio = options.audio === undefined ? false : options.audio;
   const seed = options.seed === undefined || options.seed === null
     ? null
     : Number(options.seed);
   const exportFormat = String(options.exportFormat || 'mp4').toLowerCase();
 
-  if (!config.requestLimits.allowedDurationSeconds.includes(durationSeconds)) {
+  if (!limits.allowedDurationSeconds.includes(durationSeconds)) {
     throw requestError('invalid_video_duration');
   }
-  if (!config.requestLimits.allowedRatios.includes(ratio)) {
+  if (!limits.allowedRatios.includes(ratio)) {
     throw requestError('invalid_video_ratio');
   }
-  if (!config.requestLimits.allowedResolutions.includes(resolution)) {
+  if (!limits.allowedResolutions.includes(resolution)) {
     throw requestError('invalid_video_resolution');
   }
-  if (!config.requestLimits.allowedFps.includes(fps)) {
+  if (!limits.allowedFps.includes(fps)) {
     throw requestError('invalid_video_fps');
   }
   if (typeof audio !== 'boolean') throw requestError('invalid_video_audio');
+  if (isPack066TextToVideo && audio) throw requestError('video_audio_unsupported');
   if (seed !== null && (!Number.isSafeInteger(seed) || seed < 0 || seed > 2147483647)) {
     throw requestError('invalid_video_seed');
   }
-  if (!config.requestLimits.allowedExportFormats.includes(exportFormat)) {
+  if (!limits.allowedExportFormats.includes(exportFormat)) {
     throw requestError('invalid_video_export_format');
   }
 
@@ -106,8 +126,12 @@ function normalizeVideoRequest(body = {}) {
       fps,
       audio,
       seed,
-      subtitleLanguage: normalizeLanguage(options.subtitleLanguage, 'auto'),
-      targetLanguage: normalizeLanguage(options.targetLanguage, 'auto'),
+      subtitleLanguage: isPack066TextToVideo
+        ? 'auto'
+        : normalizeLanguage(options.subtitleLanguage, 'auto'),
+      targetLanguage: isPack066TextToVideo
+        ? 'auto'
+        : normalizeLanguage(options.targetLanguage, 'auto'),
       exportFormat
     })
   });
