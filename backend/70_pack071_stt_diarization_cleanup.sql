@@ -10,6 +10,7 @@ alter table public.audio_jobs
     references public.zuvyr_assets(id) on delete set null,
   add column if not exists detected_language text,
   add column if not exists result_text text,
+  add column if not exists provider_result jsonb not null default '{}'::jsonb,
   add column if not exists cancel_requested boolean not null default false;
 
 alter table public.audio_artifacts
@@ -44,6 +45,10 @@ create index if not exists audio_jobs_asset_idx
   where canonical_asset_id is not null;
 create index if not exists audio_artifacts_asset_idx
   on public.audio_artifacts(canonical_asset_id)
+  where canonical_asset_id is not null;
+
+create unique index if not exists audio_artifacts_job_asset_type_unique
+  on public.audio_artifacts(job_id,canonical_asset_id,asset_type)
   where canonical_asset_id is not null;
 create index if not exists audio_segments_owner_job_idx
   on public.audio_transcript_segments(owner_id,job_id,segment_index);
