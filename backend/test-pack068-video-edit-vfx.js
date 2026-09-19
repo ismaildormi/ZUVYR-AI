@@ -293,7 +293,30 @@ async function run(){
   assert.equal(q(extend,'PACK068_EXTEND_PAID_EXECUTION_ENABLED',{sourceDurationSeconds:7}).providerCostMicroUsd,'800000');
   assert.equal(q(erase,'PACK068_OBJECT_REMOVE_PAID_EXECUTION_ENABLED',{sourceDurationSeconds:4}).providerCostMicroUsd,'560000');
   assert.equal(q(bg,'PACK068_BACKGROUND_PAID_EXECUTION_ENABLED',{sourceDurationSeconds:4}).providerCostMicroUsd,'200000');
-  assert.equal(q(lipsync,'PACK068_LIPSYNC_PAID_EXECUTION_ENABLED',{sourceDurationSeconds:7,audioDurationSeconds:5}).providerCostMicroUsd,'28000');
+  assert.equal(q(lipsync,'PACK068_LIPSYNC_PAID_EXECUTION_ENABLED',{
+    sourceDurationSeconds:7,
+    sourceFileSizeBytes:7000000,
+    sourceMimeType:'video/mp4',
+    audioDurationSeconds:5,
+    audioFileSizeBytes:80000,
+    audioMimeType:'audio/wav'
+  }).providerCostMicroUsd,'28000');
+  assert.equal(
+    q(
+      erase,
+      'PACK068_OBJECT_REMOVE_PAID_EXECUTION_ENABLED',
+      {sourceDurationSeconds:4.5}
+    ).providerCostMicroUsd,
+    '630000'
+  );
+  assert.equal(
+    q(
+      bg,
+      'PACK068_BACKGROUND_PAID_EXECUTION_ENABLED',
+      {sourceDurationSeconds:4.5}
+    ).providerCostMicroUsd,
+    '225000'
+  );
   assert.throws(
     ()=>quoteGeneration('video',{
       videoRequest:relight,
@@ -314,6 +337,9 @@ async function run(){
     const entry=costRegistry.entries.find(x=>x.id===id);
     assert(entry,'missing cost entry '+id);
     assert.equal(entry.verificationStatus,'verified');
+    if (id !== 'fal-kling-lipsync-5s-increment') {
+      assert.equal(entry.unitScale,'1000');
+    }
   }
   assert.equal(costRegistry.entries.find(x=>x.id==='fal-lightx-relight-output-second').enabledState,'blocked');
   assert.equal(costRegistry.entries.find(x=>x.id==='fal-lightx-recamera-output-second').enabledState,'blocked');
