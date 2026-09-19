@@ -38,7 +38,7 @@ function buildReplicateInput(request={}){
   if(options.seed!==null&&options.seed!==undefined)input.seed=Number(options.seed);
   return Object.freeze(input);
 }
-async function generateVideo(request,{env=process.env,createClient=token=>new Replicate({auth:token})}={}){
+async function generateVideo(request,{env=process.env,createClient = token => new Replicate({ auth: token })}={}){
   if(!providerSupports('replicate',request.operation))throw providerError('video_operation_not_supported_by_provider');
   if(!env.REPLICATE_API_TOKEN)throw providerError('replicate_video_provider_not_configured');
   if(env.REPLICATE_VIDEO_MODEL&&String(env.REPLICATE_VIDEO_MODEL).trim()!==DEFAULT_VIDEO_MODEL)throw providerError('replicate_video_model_mismatch');
