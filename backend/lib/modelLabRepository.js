@@ -149,6 +149,62 @@ function createModelLabRepository(client) {
     });
   }
 
+  async function listCandidatePool({ limit = 100, domain = null } = {}) {
+    let query = client
+      .from('zuvyr_training_candidates')
+      .select('id,owner_id,content_id,version_id,rights_id,consent_version,dedupe_sha256,payload_kind,domain,difficulty,quality_score,learning_value_score,status,created_at')
+      .eq('status','candidate')
+      .is('excluded_at', null)
+      .order('learning_value_score', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(Math.max(1,Math.min(200,Number(limit)||100)));
+    if (domain) query = query.eq('domain', String(domain).slice(0,160));
+    const result = await query;
+    if (result.error) throw labError('model_lab_candidate_pool_failed',500,result.error);
+    return Object.freeze((result.data||[]).map(row=>Object.freeze({
+      id:row.id,
+      sourceOwnerId:row.owner_id,
+      contentId:row.content_id,
+      versionId:row.version_id,
+      rightsId:row.rights_id,
+      consentVersion:Number(row.consent_version),
+      dedupeSha256:row.dedupe_sha256,
+      payloadKind:row.payload_kind,
+      domain:row.domain||null,
+      difficulty:row.difficulty,
+      qualityScore:row.quality_score,
+      learningValueScore:Number(row.learning_value_score||0),
+      status:row.status,
+      createdAt:row.created_at
+    })));
+  }
+
+  async function listFailurePatterns({ limit = 100 } = {}) {
+    const result = await client
+      .from('zuvyr_failure_bank')
+      .select('id,owner_id,fingerprint,capability,failure_category,provider,model_tool,domain,occurrences,first_seen_at,last_seen_at,latest_repair_outcome,status,updated_at')
+      .eq('status','open')
+      .order('occurrences',{ascending:false})
+      .order('last_seen_at',{ascending:false})
+      .limit(Math.max(1,Math.min(200,Number(limit)||100)));
+    if (result.error) throw labError('model_lab_failure_bank_failed',500,result.error);
+    return Object.freeze((result.data||[]).map(row=>Object.freeze({
+      id:row.id,
+      sourceOwnerId:row.owner_id,
+      fingerprint:row.fingerprint,
+      capability:row.capability||null,
+      failureCategory:row.failure_category,
+      provider:row.provider||null,
+      modelTool:row.model_tool||null,
+      domain:row.domain||null,
+      occurrences:Number(row.occurrences||0),
+      firstSeenAt:row.first_seen_at,
+      lastSeenAt:row.last_seen_at,
+      latestRepairOutcome:row.latest_repair_outcome||null,
+      status:row.status
+    })));
+  }
+
   async function listDatasets(ownerId) {
     const result = await client
       .from('zuvyr_model_lab_datasets')
@@ -722,6 +778,8 @@ function createModelLabRepository(client) {
 
   return Object.freeze({
     summary,
+    listCandidatePool,
+    listFailurePatterns,
     listDatasets,
     getDataset,
     createDataset,
