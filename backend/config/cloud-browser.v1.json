@@ -27,7 +27,8 @@
       "sourceUrl": "https://www.browserbase.com/pricing",
       "checkedAt": "2026-09-19"
     },
-    "rule": "Published plan prices are reference evidence only. ZUVYR paid execution stays blocked until the connected account plan and effective billing basis are verified."
+    "rule": "Published plan prices are reference evidence only. ZUVYR paid execution stays blocked until the connected account plan and effective billing basis are verified.",
+    "connectedAccountMicroUsdPerBrowserHour": null
   },
   "session": {
     "maxConcurrentPerOwner": 1,
