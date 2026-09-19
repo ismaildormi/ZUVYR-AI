@@ -280,8 +280,8 @@ async function run(){
   ]) assert(worker.includes(marker),marker);
 
   assert(repository.includes("kind:'text'"));
-  assert(repository.includes("['transcription',source.assetId,provider,model,'multi','diarize']"));
-  assert(repository.includes("['cleanup',source.assetId,format,strength]"));
+  assert(/sourceId:\s*\[\s*'transcription',source\.assetId,provider,model,'multi','diarize'\s*\]\.join\(':'\)/.test(repository));
+  assert(/sourceId:\s*\['cleanup',source\.assetId,format,strength\]\.join\(':'\)/.test(repository));
   assert(!repository.includes('transcriptTextAssetId'));
   assert(repository.includes("relationType:'extracted_from'"));
   assert(repository.includes("relationType:'edited_from'"));
