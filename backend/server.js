@@ -35,7 +35,7 @@ const { validateChatBody, validatePromptBody, validateImageBody, validateVideoBo
 const { normalizeSurfaceRequest } = require('./lib/universalRequest');
 const { loadRoxUserMiddleware, gatekeeperMiddleware, reserveCredits, refundCredits, settleCredits, logCreditEvent, reportRefundFailure } = require('./gatekeeper');
 const { routeRequest } = require('./aiRouter');
-const { imageQueue, videoQueue, audioQueue, defaultJobOptions, connection: queueConnection } = require('./lib/queue');
+const { imageQueue, videoQueue, audioQueue, model3dQueue, defaultJobOptions, connection: queueConnection } = require('./lib/queue');
 const {
   normalizeAiPreferences,
   buildTextPreferencePrompt,
@@ -139,6 +139,10 @@ const { createVideoInputResolver } = require('./lib/videoReferenceResolver');
 const { createAudioInputResolver } = require('./lib/audioReferenceResolver');
 const { createAssetStorageKernel } = require('./lib/assetStorageKernel');
 const { buildVideoJobSnapshot } = require('./lib/videoJobContract');
+const { normalizeModel3dRequest } = require('./lib/model3dRequestContract');
+const { createModel3dInputResolver } = require('./lib/model3dInputResolver');
+const { createModel3dGenerationRepository } = require('./lib/model3dGenerationRepository');
+const { model3dAvailability } = require('./lib/model3dPolicy');
 // New, additive-only: stub routes for every not-yet-built feature (see
 // ARCHITECTURE.md). Each route is flag-gated and returns a clear
 // "not enabled" response until the feature is actually implemented ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â
@@ -164,6 +168,16 @@ const audioInputResolver = createAudioInputResolver({
 const assetStorageKernel = createAssetStorageKernel({
   client: supabaseAdmin,
   storage: supabaseAdmin.storage
+});
+
+const model3dInputResolver = createModel3dInputResolver({
+  db: supabaseAdmin,
+  storage: supabaseAdmin.storage
+});
+const model3dRepository = createModel3dGenerationRepository({
+  db: supabaseAdmin,
+  storage: supabaseAdmin.storage,
+  assetKernel: assetStorageKernel
 });
 
 const codeSandboxProvider = createVercelSandboxProvider({
@@ -704,7 +718,7 @@ app.post('/api/chat', requireAuth, rateLimit('chat'), validateChatBody, loadRoxU
   const memoryRequestKey = turnId || requestId;
   let chatCoreBinding = null;
 
-  if (feature !== 'code') {
+  if (feature !== 'code' && feature !== '3d') {
     try {
       chatCoreBinding = normalizeChatCoreRequest({ body: req.body, requestId });
       req.universalRequest = chatCoreBinding.request;
@@ -1739,7 +1753,10 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
     sourceAudioAssetId = null,
     startFrameAssetId = null,
     endFrameAssetId = null,
-    videoOptions = {}
+    videoOptions = {},
+    model3dOperation = 'text_to_3d',
+    model3dViews = {},
+    model3dOptions = {}
   } = req.body;
   const imageRequest = feature === 'image'
     ? normalizeImageRequest({ imageOperation, referenceAssetIds, sourceAssetId, maskAssetId, imageOptions })
@@ -1757,6 +1774,31 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
         videoOptions
       })
     : null;
+  let model3dRequest = null;
+  if (feature === '3d') {
+    try {
+      model3dRequest = normalizeModel3dRequest({
+        prompt,
+        model3dOperation,
+        model3dViews,
+        model3dOptions
+      });
+    } catch (error) {
+      return res.status(Number(error.statusCode) || 400).json({
+        status: 'error',
+        code: error.code || 'model3d_request_invalid',
+        message: 'The 3D generation request is invalid.'
+      });
+    }
+
+    if (conversationId) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'model3d_conversation_not_supported_pack083',
+        message: 'PACK083 3D generation uses standalone jobs; conversation integration is owned by PACK084.'
+      });
+    }
+  }
 
   if (imageRequest) {
     try {
@@ -1780,15 +1822,37 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
       });
     }
   }
+  let model3dPricingContext = null;
+  if (model3dRequest && model3dRequest.operation !== 'text_to_3d') {
+    try {
+      const inspected = await model3dInputResolver.inspect({
+        ownerId: req.userId,
+        request: model3dRequest
+      });
+      model3dPricingContext = Object.freeze({
+        lineage: inspected.lineage,
+        viewCount: Object.keys(inspected.views || {}).length
+      });
+    } catch (error) {
+      return res.status(Number(error.statusCode) || 400).json({
+        status: 'error',
+        code: error.code || 'model3d_input_preflight_failed',
+        message: 'A selected 3D input image is invalid or unavailable.'
+      });
+    }
+  }
+
   const normalizedAiPreferences =
     normalizeAiPreferences(aiPreferences);
 
   const generationPrompt =
-    buildGenerationPrompt(
-      videoRequest?.prompt ?? prompt,
-      normalizedAiPreferences,
-      feature
-    );
+    model3dRequest
+      ? model3dRequest.prompt
+      : buildGenerationPrompt(
+          videoRequest?.prompt ?? prompt,
+          normalizedAiPreferences,
+          feature
+        );
   const userId = req.userId;
   // One id threads through everything: credit_audit_log.request_id,
   // generation_jobs.id, and the BullMQ jobId ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â so a job, its charge,
@@ -1899,7 +1963,9 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
         ? { imageRequest }
         : videoRequest
           ? { videoRequest, videoPricingContext }
-          : {}
+          : model3dRequest
+            ? { model3dRequest, model3dPricingContext }
+            : {}
     );
   } catch (err) {
     console.error(`[${feature}] pricing unavailable:`, err.message);
@@ -1938,7 +2004,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
         conversationId,
         ownerId: userId,
         feature,
-        prompt: videoRequest?.prompt ?? prompt,
+        prompt: model3dRequest?.prompt ?? videoRequest?.prompt ?? prompt,
         operation: imageRequest?.operation || videoRequest?.operation || 'generate',
         referenceAssetIds: imageRequest?.referenceAssetIds || [],
         sourceAssetId: imageRequest?.sourceAssetId || null,
@@ -2000,6 +2066,13 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
         video_options: videoRequest.options,
         progress_percent: 0,
         job_stage: 'queued'
+      } : {}),
+      ...(model3dRequest ? {
+        model3d_operation: model3dRequest.operation,
+        model3d_input_views: model3dRequest.views,
+        model3d_options: model3dRequest.options,
+        progress_percent: 0,
+        job_stage: 'queued'
       } : {})
     }]);
 
@@ -2055,7 +2128,10 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
       sourceAudioAssetId: videoRequest?.sourceAudioAssetId || null,
       startFrameAssetId: videoRequest?.startFrameAssetId || null,
       endFrameAssetId: videoRequest?.endFrameAssetId || null,
-      videoOptions: videoRequest?.options || {}
+      videoOptions: videoRequest?.options || {},
+      model3dOperation: model3dRequest?.operation || null,
+      model3dViews: model3dRequest?.views || {},
+      model3dOptions: model3dRequest?.options || {}
     }, {
       ...defaultJobOptions,
       jobId: requestId,
@@ -2103,6 +2179,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
     creditsCharged: creditsConsumed,
     imageOperation: imageRequest?.operation || undefined,
     videoOperation: videoRequest?.operation || undefined,
+    model3dOperation: model3dRequest?.operation || undefined,
     newBalance: reservation.newBalance,
   });
 }
@@ -2113,7 +2190,9 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
 function requirePlanFeature(feature) {
   return function (req, res, next) {
     const normalizedFeature =
-      feature === 'video' ? 'video' : 'image';
+      ['image', 'video', '3d'].includes(feature)
+        ? feature
+        : 'image';
     const planId = canonicalPlanIdFromProfile(req.roxUser);
 
     if (!planHasFeature(planId, normalizedFeature)) {
@@ -2278,6 +2357,157 @@ app.post('/api/generate-video', requireAuth, rateLimit('video'), validateVideoBo
   )
 );
 
+app.post(
+  '/api/generate-3d',
+  requireAuth,
+  rateLimit('3d'),
+  gatekeeperMiddleware,
+  requirePlanFeature('3d'),
+  (req, res) =>
+    handleGenerationRequest(req, res, {
+      feature: '3d',
+      queue: model3dQueue
+    })
+);
+
+app.get('/api/3d/capabilities', requireAuth, (req, res) => {
+  const availability = model3dAvailability(process.env);
+  return res.json({
+    status: 'success',
+    pack: 83,
+    entitlement: minimumPlanForFeature('3d'),
+    liveExecution: availability.live,
+    externalGate: availability.externalGate,
+    provider: availability.provider,
+    blockers: availability.blockers
+  });
+});
+
+app.get('/api/3d/history', requireAuth, async (req, res) => {
+  try {
+    const history = await model3dRepository.history({
+      ownerId: req.userId,
+      limit: req.query?.limit
+    });
+    return res.json({ status: 'success', history });
+  } catch (error) {
+    return res.status(Number(error.statusCode) || 500).json({
+      status: 'error',
+      code: error.code || 'model3d_history_failed',
+      message: '3D history is temporarily unavailable.'
+    });
+  }
+});
+
+app.get('/api/3d-jobs/:jobId/download/:role', requireAuth, async (req, res) => {
+  const role = String(req.params.role || '').trim().toLowerCase();
+  if (!/^(model_glb|thumbnail|export_(glb|obj|fbx|usdz))$/.test(role)) {
+    return res.status(400).json({
+      status: 'error',
+      code: 'model3d_output_role_invalid',
+      message: 'Unsupported 3D output role.'
+    });
+  }
+  try {
+    const signed = await model3dRepository.signRole({
+      ownerId: req.userId,
+      jobId: req.params.jobId,
+      role,
+      requestId: '3d-download:' + req.params.jobId + ':' + role
+    });
+    return res.json({ status: 'success', ...signed });
+  } catch (error) {
+    return res.status(Number(error.statusCode) || 404).json({
+      status: 'error',
+      code: error.code || 'model3d_output_not_found',
+      message: '3D output not found.'
+    });
+  }
+});
+
+app.post('/api/3d-jobs/:jobId/cancel', requireAuth, async (req, res) => {
+  const jobId = String(req.params.jobId || '').trim().toLowerCase();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(jobId)) {
+    return res.status(400).json({
+      status: 'error',
+      code: 'invalid_model3d_job_id',
+      message: 'Invalid 3D job id.'
+    });
+  }
+
+  const result = await supabaseAdmin.rpc(
+    'request_zuvyr_model3d_job_cancel_pack083',
+    { p_job_id: jobId, p_owner_id: req.userId }
+  );
+  if (result.error) {
+    const message = String(result.error.message || '');
+    if (message.includes('pack083_model3d_job_not_found')) {
+      return res.status(404).json({
+        status: 'error',
+        code: 'model3d_job_not_found',
+        message: '3D job not found.'
+      });
+    }
+    return res.status(500).json({
+      status: 'error',
+      code: 'model3d_cancel_failed',
+      message: '3D cancellation could not be recorded.'
+    });
+  }
+
+  const state = result.data && typeof result.data === 'object'
+    ? result.data
+    : {};
+
+  if (state.accepted === true || state.status === 'cancelled') {
+    try {
+      const queued = await model3dQueue.getJob(jobId);
+      if (queued) {
+        const queueState = await queued.getState().catch(() => null);
+        if (['waiting','delayed','paused'].includes(queueState)) {
+          await queued.remove().catch(() => null);
+        }
+      }
+    } catch (_) {}
+
+    if (state.refundRequired === true || state.status === 'cancelled') {
+      try {
+        await refundCredits(jobId);
+        recordRefund('3d');
+      } catch (refundError) {
+        await reportRefundFailure({
+          requestId: jobId,
+          userId: req.userId,
+          feature: '3d',
+          error: refundError
+        }).catch(() => null);
+        return res.status(503).json({
+          status: 'cancelled',
+          code: 'model3d_cancel_refund_pending',
+          message: 'The 3D job is cancelled but credit refund needs reconciliation.',
+          jobId
+        });
+      }
+    }
+
+    return res.json({
+      status: 'cancelled',
+      jobId,
+      jobStatus: 'cancelled',
+      jobStage: 'cancelled'
+    });
+  }
+
+  return res.status(409).json({
+    status: 'error',
+    code: state.tooLate ? 'model3d_cancel_too_late' : 'model3d_cancel_terminal',
+    message: state.tooLate
+      ? 'This 3D job has already entered provider execution and cannot be safely cancelled.'
+      : 'This 3D job is already terminal.',
+    jobStatus: state.status || null
+  });
+});
+
 app.post('/api/video-jobs/:jobId/cancel', requireAuth, async (req, res) => {
   const jobId = String(req.params.jobId || '').trim().toLowerCase();
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(jobId)) {
@@ -2379,7 +2609,7 @@ app.post('/api/video-jobs/:jobId/cancel', requireAuth, async (req, res) => {
 app.get('/api/job-status/:jobId', requireAuth, async (req, res) => {
   const { data, error } = await supabaseAdmin
     .from('generation_jobs')
-    .select('status, result_url, preview_url, export_url, error_message, feature, video_operation, video_options, progress_percent, job_stage, estimated_seconds, cancel_requested, created_at, completed_at, response_message_id, user_id, canonical_content_id')
+    .select('status, result_url, preview_url, export_url, error_message, feature, video_operation, video_options, model3d_operation, model3d_options, model3d_output_manifest, progress_percent, job_stage, estimated_seconds, cancel_requested, created_at, completed_at, response_message_id, user_id, canonical_content_id')
     .eq('id', req.params.jobId)
     .single();
 
@@ -2461,6 +2691,62 @@ app.get('/api/job-status/:jobId', requireAuth, async (req, res) => {
       });
     }
 
+    if (data.feature === '3d') {
+      const base = {
+        status: data.status,
+        error_message: data.error_message,
+        feature: '3d',
+        model3d_operation: data.model3d_operation,
+        model3d_options: data.model3d_options || {},
+        model3d_output_manifest: Array.isArray(data.model3d_output_manifest)
+          ? data.model3d_output_manifest
+          : [],
+        progress_percent: Number(data.progress_percent || 0),
+        job_stage: data.job_stage,
+        cancel_requested: data.cancel_requested === true,
+        created_at: data.created_at,
+        completed_at: data.completed_at,
+        canonical_content_id: data.canonical_content_id || null
+      };
+      if (!data.canonical_content_id || data.status !== 'done') {
+        return res.json(base);
+      }
+
+      const model = await model3dRepository.signRole({
+        ownerId: req.userId,
+        jobId: req.params.jobId,
+        role: 'model_glb',
+        requestId: 'job-status:' + req.params.jobId + ':model_glb'
+      });
+      let thumbnail = null;
+      try {
+        thumbnail = await model3dRepository.signRole({
+          ownerId: req.userId,
+          jobId: req.params.jobId,
+          role: 'thumbnail',
+          requestId: 'job-status:' + req.params.jobId + ':thumbnail'
+        });
+      } catch (_) {}
+
+      return res.json({
+        ...base,
+        result_url: model.signedUrl,
+        preview_url: thumbnail?.signedUrl || null,
+        download_url: model.signedUrl,
+        canonical_asset_id: model.assetId,
+        canonical_mime_type: model.mimeType,
+        canonical_file_size_bytes: model.fileSizeBytes,
+        downloadable: true,
+        model3d: {
+          primary: model,
+          thumbnail,
+          exports: base.model3d_output_manifest.filter(item =>
+            String(item.role || '').startsWith('export_')
+          )
+        }
+      });
+    }
+
     if (data.feature === 'image' && data.canonical_content_id) {
       const assetResult = await supabaseAdmin
         .from('zuvyr_assets')
@@ -2491,12 +2777,14 @@ app.get('/api/job-status/:jobId', requireAuth, async (req, res) => {
 
 // --- Queue depth -> metrics, polled periodically ---
 async function reportQueueDepths() {
-  const [imgWaiting, vidWaiting] = await Promise.all([
+  const [imgWaiting, vidWaiting, model3dWaiting] = await Promise.all([
     imageQueue.getWaitingCount(),
     videoQueue.getWaitingCount(),
+    model3dQueue.getWaitingCount(),
   ]);
   setQueueDepth('rox-image-generation', imgWaiting);
   setQueueDepth('rox-video-generation', vidWaiting);
+  setQueueDepth('zuvyr-3d-generation', model3dWaiting);
 }
 const queueDepthInterval = setInterval(reportQueueDepths, 10_000);
 
