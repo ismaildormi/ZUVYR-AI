@@ -140,7 +140,8 @@ for (const marker of [
   const pack049 = read('test-pack049-universal-actions-unit.js');
   assert(pack049.includes(marker), 'Pack049 image→video handoff marker missing: ' + marker);
 }
-assert(universal.includes("'video'"));
+assert(universal.includes('libraryStore.createSendTo({ ownerId, contentId, destination })'));
+assert(universal.includes('p_destination: descriptor.destination'));
 assert(workspace.includes("router.get('/library/items'"));
 assert(workspace.includes("router.post('/library/items/:contentId/send-to'"));
 assert(workspace.includes("router.post('/projects/:projectId/resources'"));
