@@ -1,0 +1,147 @@
+{
+  "pack": "094",
+  "title": "Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
+  "date": "2026-09-19",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonical_locked_verified": false,
+  "canonical_gate_reason": "Backend/source, CI, Supabase authority, production DB consent flow and exact Railway production deployment are verified. Vercel production remains on an older main commit, so the final Training & Data Rights frontend and authenticated production UI flow are not yet live on the canonical frontend domain.",
+  "source": {
+    "pre_pack_baseline": "086b43231ae19821eba10a1937a5626d7ab9cc8e",
+    "implementation_merge_commit": "33fba100352ea8c721cc93c63010738ecab9b3de",
+    "consent_authority_finalizer_pr": 37,
+    "consent_authority_finalizer_head": "bade6faa89cc93a563827c54e69541b0da337b1f",
+    "final_main_commit": "13b677a1d70bc541766b4f26c84ce381a054d999",
+    "rollback_source_commit": "33fba100352ea8c721cc93c63010738ecab9b3de"
+  },
+  "changed_systems": [
+    "Learning Pipeline",
+    "Failure Bank",
+    "training consent history",
+    "training rights and candidate admission",
+    "privacy/redaction/dedupe",
+    "data-rights UI",
+    "canonical preference training-consent writer"
+  ],
+  "canonical_consent_authority": {
+    "current": "zuvyr_user_preferences.training_consent",
+    "default": false,
+    "canonical_browser_mutation_endpoint": "PATCH /api/workspace/memory/preferences",
+    "learning_put_consent_role": "compatibility_alias_only",
+    "db_history_trigger": "trg_pack094_training_consent_history",
+    "memory_permission_independent": true
+  },
+  "github_ci": [
+    {
+      "run": 35466508486,
+      "scope": "initial PACK094 main implementation",
+      "backend": "PASS",
+      "release": "PASS"
+    },
+    {
+      "run": 35467897069,
+      "scope": "canonical consent-authority PR #37",
+      "backend": "PASS",
+      "release": "PASS"
+    },
+    {
+      "run": 35467958076,
+      "scope": "final main commit 13b677a1",
+      "backend": "PASS",
+      "release": "PASS"
+    }
+  ],
+  "supabase": {
+    "project": "tqoqsgaymygmqrzddvtu",
+    "migrations": [
+      {
+        "version": "20260919200545",
+        "name": "pack094_learning_pipeline"
+      },
+      {
+        "version": "20260919200635",
+        "name": "pack094_learning_pipeline"
+      },
+      {
+        "version": "20260919200826",
+        "name": "pack094_learning_pipeline_fix1"
+      }
+    ],
+    "migration_note": "The canonical migration name pack094_learning_pipeline appears twice in migration history from repeated idempotent application. Final table/function/trigger authority is singleton and verified; this is not evidence of duplicated runtime schema objects.",
+    "rls_on": [
+      "zuvyr_learning_events",
+      "zuvyr_failure_bank",
+      "zuvyr_training_consent_events",
+      "zuvyr_training_rights",
+      "zuvyr_training_candidates",
+      "zuvyr_training_candidate_payloads",
+      "zuvyr_training_exclusions"
+    ],
+    "direct_browser_policy_count": 0,
+    "production_smoke": {
+      "method": "existing inactive owner with zero prior preferences/learning-rights/candidate rows; temporary rows cleaned in same test flow",
+      "history_events_created": 3,
+      "latest_opt_in": false,
+      "previous_opt_in": true,
+      "history_source": "preference",
+      "policy_version": "pack094-v1",
+      "memory_still_enabled": true,
+      "residue": 0,
+      "auth_account_created": false
+    }
+  },
+  "railway": {
+    "exact_commit": "13b677a1d70bc541766b4f26c84ce381a054d999",
+    "backend": {
+      "deployment": "144c40e7-d1f5-47e9-bb78-b69e74d88894",
+      "status": "SUCCESS"
+    },
+    "worker": {
+      "deployment": "e95f74af-cc00-44aa-a365-51de2b2aa7f6",
+      "status": "SUCCESS"
+    },
+    "maintenance": {
+      "deployment": "212fcfa6-410d-4f79-be83-5a49e5eaeb01",
+      "status": "SUCCESS"
+    }
+  },
+  "vercel": {
+    "production_deployment": "dpl_5LyUdRjpxQNMjTB8BBN8nt4CvwtZ",
+    "production_status": "READY_BUT_STALE",
+    "production_commit": "60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4",
+    "newest_pack094_preview": "dpl_G6QGccjkV2CBVLTTHgDG1QZGvrE8",
+    "newest_pack094_preview_status": "READY",
+    "newest_pack094_preview_commit": "7d86986af09416ea6d9c5608080ca09f0a461f6e",
+    "final_consent_patch_fully_published_to_production": false,
+    "live_canonical_asset_check": "stale production zuvyr-unified-ux-v1.js did not contain final PACK094 training-toggle implementation",
+    "fallback_attempt": "Vercel connector advertised deploy_to_vercel, but runtime returned Tool deploy_to_vercel not found",
+    "deferred_gate": "DEFERRED_PRODUCTION_FRONTEND_GATE"
+  },
+  "privacy_security": {
+    "global_training_default_off": true,
+    "no_second_current_consent_table": true,
+    "memory_training_permissions_separate": true,
+    "candidate_content_requires_rights_consent_privacy_provenance": true,
+    "consent_history_append_read_only_service_role": true,
+    "no_direct_browser_learning_table_policies": true,
+    "no_raw_prompt_response_task_io_in_non_content_telemetry": true
+  },
+  "cost": {
+    "paid_provider_calls_during_final_verification": 0,
+    "payment_calls_during_final_verification": 0,
+    "live_billing_allowed": false
+  },
+  "rollback_recovery": {
+    "source_rollback_target": "33fba100352ea8c721cc93c63010738ecab9b3de",
+    "db_smoke_residue": 0,
+    "destructive_schema_rollback_performed": false,
+    "note": "No destructive rollback was needed. Canonical state can be source-reverted to the pre-finalizer commit; PACK094 schema is additive and customer rows are preserved."
+  },
+  "deferred_gates": [
+    "DEFERRED_PRODUCTION_FRONTEND_GATE",
+    "PACK094_AUTHENTICATED_PRODUCTION_DATA_RIGHTS_UI_ACCEPTANCE"
+  ],
+  "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+  "next_pack": "095",
+  "next_pack_title": "ZUVYR Model Lab",
+  "receipt_hash_note": "Git blob hash is recorded in canonical state after this file is created."
+}
