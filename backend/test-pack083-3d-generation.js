@@ -262,9 +262,21 @@ assert.equal(restored.artifacts[0].role, 'model_glb');
     "role: 'thumbnail'"
   ]) assert(server.includes(marker), marker);
 
-  const quoteIndex = server.indexOf("pricing = quoteGeneration(");
-  const reserveIndex = server.indexOf("reservation = await reserveCredits");
-  assert(quoteIndex >= 0 && reserveIndex > quoteIndex, '3D pricing gate must run before credit reservation');
+  const handlerStart = server.indexOf('async function handleGenerationRequest');
+  const handlerEnd = server.indexOf('\nfunction requirePlanFeature', handlerStart);
+  const generationHandler = server.slice(
+    handlerStart,
+    handlerEnd > handlerStart ? handlerEnd : server.length
+  );
+  const quoteIndex = generationHandler.indexOf("pricing = quoteGeneration(");
+  const reserveIndex = generationHandler.indexOf("reservation = await reserveCredits");
+  assert(
+    quoteIndex >= 0 && reserveIndex > quoteIndex,
+    '3D pricing gate must run before credit reservation inside handleGenerationRequest'
+  );
+  assert(generationHandler.includes("feature !== 'code' && feature !== '3d'"));
+  assert(generationHandler.includes("prompt: model3dRequest?.prompt ?? videoRequest?.prompt ?? prompt"));
+  assert(generationHandler.includes("originalPrompt: model3dRequest?.prompt ?? videoRequest?.prompt ?? prompt"));
 
   for (const marker of [
     'async function processModel3dJob',
