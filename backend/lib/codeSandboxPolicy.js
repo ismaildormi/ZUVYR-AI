@@ -54,6 +54,29 @@ function assertLiveAvailable(env = process.env) {
   return status;
 }
 
+function providerCredentialsAvailability(env = process.env) {
+  const blockers = [];
+  for (const key of config.provider.requiredEnvironment) {
+    if (!String(env[key] || '').trim()) {
+      blockers.push('pack076_missing_' + key.toLowerCase());
+    }
+  }
+  return Object.freeze({
+    available: blockers.length === 0,
+    blockers: Object.freeze(blockers)
+  });
+}
+
+function assertProviderCredentials(env = process.env) {
+  const status = providerCredentialsAvailability(env);
+  if (!status.available) {
+    const error = sandboxError('code_sandbox_provider_credentials_unavailable');
+    error.blockers = status.blockers;
+    throw error;
+  }
+  return status;
+}
+
 function createPreviewCredential({ now = Date.now(), ttlSeconds } = {}) {
   const ttl = Math.max(
     30,
@@ -183,6 +206,8 @@ module.exports = {
   sandboxError,
   availability,
   assertLiveAvailable,
+  providerCredentialsAvailability,
+  assertProviderCredentials,
   createPreviewCredential,
   hashPreviewToken,
   safeResourceLimits,
