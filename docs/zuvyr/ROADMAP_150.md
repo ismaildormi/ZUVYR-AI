@@ -10,8 +10,8 @@ This specification is not an execution receipt. Missing historical state must be
 
 This override is canonical and changes **execution order without renumbering historical Packs**.
 
-- The already in-flight **PACK083** may finish and be reconciled normally; do not discard or duplicate its work.
-- After PACK083, execute **PACK094 → PACK095 → PACK096 before PACK084–PACK093**.
+- **PACK083 is engineering-finalized** with its M18 live paid-provider acceptance deferred and preserved in evidence/state.
+- **PACK094 is now the active Pack.** Execute **PACK094 → PACK095 → PACK096 before PACK084–PACK093**.
 - PACK084–PACK093 are deferred, not cancelled. Resume the original sequence at PACK084 after PACK096 is truthfully gated.
 - PACK091–PACK093 are no longer prerequisites for PACK094. Their Manager/Profit surfaces become downstream consumers of the learning/model telemetry produced by PACK094–PACK096.
 - Fresh production evidence still overrides stale roadmap/status text. This priority override does not retroactively mark any Pack complete.
