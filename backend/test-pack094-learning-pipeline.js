@@ -18,6 +18,8 @@ const routes = read('lib/learningPipelineRoutes.js');
 const server = read('server.js');
 const memoryUi = read('../frontend/zuvyr-memory-v1.js');
 const memoryCss = read('../frontend/zuvyr-memory-v1.css');
+const unifiedUi = read('../frontend/zuvyr-unified-ux-v1.js');
+const unifiedCss = read('../frontend/zuvyr-unified-ux-v1.css');
 const config = require('./config/learning-pipeline.v1.json');
 
 function occurrences(source, needle) {
@@ -201,6 +203,60 @@ assert.equal(
   'task_success_and_total_cost_per_successful_task'
 );
 assert.equal(config.externalGate, null);
+assert.equal(config.training.consentPolicyVersion, 'pack094-v1');
+assert.equal(config.sharedLearningPlane.version, 'pack094-shared-learning-plane-v1');
+assert.deepEqual(
+  config.sharedLearningPlane.runtimeKnowledge.appliesTo,
+  ['zuvyr_owned_model','external_provider_model']
+);
+assert.equal(
+  config.sharedLearningPlane.runtimeKnowledge.ownerAndResourceScoped,
+  true
+);
+assert.equal(
+  config.sharedLearningPlane.runtimeKnowledge.permissionGoverned,
+  true
+);
+assert.equal(
+  config.sharedLearningPlane.runtimeKnowledge.memoryPermissionIndependentFromTrainingConsent,
+  true
+);
+assert.equal(
+  config.sharedLearningPlane.ownedModelLearning.enabledByDesign,
+  true
+);
+assert.equal(
+  config.sharedLearningPlane.ownedModelLearning.admissionOwner,
+  'PACK095'
+);
+assert.equal(
+  config.sharedLearningPlane.ownedModelLearning.productionOwnedCheckpointOwner,
+  'PACK096'
+);
+assert.equal(
+  config.sharedLearningPlane.externalModelPolicy.receivesAuthorizedRuntimeKnowledge,
+  true
+);
+assert.equal(
+  config.sharedLearningPlane.externalModelPolicy.directWeightTrainingByZuvyr,
+  false
+);
+assert.equal(
+  config.sharedLearningPlane.externalModelPolicy.teacherUseRequiresContractOrLicensePermission,
+  true
+);
+assert.equal(
+  config.sharedLearningPlane.externalModelPolicy.prohibitProviderSystemPromptCollection,
+  true
+);
+assert.equal(
+  config.sharedLearningPlane.externalModelPolicy.prohibitProviderWeightCopying,
+  true
+);
+assert.equal(
+  config.sharedLearningPlane.externalModelPolicy.prohibitCustomerPrivateTrainingWithoutRights,
+  true
+);
 
 const secretText = [
   'Contact me at person@example.com',
@@ -278,6 +334,8 @@ assert.equal(
 );
 assert(routes.includes('optOutExcludesExistingCandidates: true'));
 assert(routes.includes('dataDeleteRequestExcludesExistingCandidates: true'));
+assert(routes.includes('consentPolicyVersion: learningConfig.training.consentPolicyVersion'));
+assert(routes.includes('sharedLearningPlane: learningConfig.sharedLearningPlane'));
 
 assert(server.includes("createLearningPipelineRouter"));
 const mount = server.indexOf("'/api/learning'");
@@ -304,9 +362,38 @@ assert(memoryCss.includes('ZUVYR PACK094 LEARNING STATUS'));
 assert(memoryCss.includes('.zuvyr-learning-status'));
 assert(memoryCss.includes('.zuvyr-learning-grid'));
 
+for (const marker of [
+  'ZUVYR PACK094 DATA RIGHTS + SHARED LEARNING PLANE',
+  'Training & Learning',
+  'Memory and global-model training are separate permissions',
+  'Shared model knowledge',
+  'All routed models receive the same authorized ZUVYR runtime knowledge envelope',
+  'ZUVYR-owned models',
+  'External provider models',
+  '/api/learning/consent',
+  '/api/learning/rights?limit=50',
+  '/api/learning/candidates?limit=50',
+  '/api/learning/exclusions?limit=50',
+  '/api/learning/consent/history?limit=20',
+  'data-zuvyr-pack094-revoke-right',
+  'data-zuvyr-pack094-exclude-candidate',
+  'data-zuvyr-pack094-training-toggle'
+]) {
+  assert(unifiedUi.includes(marker), marker);
+}
+assert(!unifiedUi.includes('redactedText'));
+assert(!unifiedUi.includes('providerSystemPrompt'));
+assert.doesNotThrow(() => new Function(unifiedUi));
+assert(unifiedCss.includes('ZUVYR PACK094 DATA RIGHTS + SHARED LEARNING PLANE'));
+assert(unifiedCss.includes('.zuvyr-pack094-data-rights'));
+assert(unifiedCss.includes('.zuvyr-pack094-model-grid'));
+assert(unifiedCss.includes('@media (max-width:700px)'));
+
 console.log('PASS: PACK094 uses one canonical training-consent authority and immutable consent history');
 console.log('PASS: PACK094 non-content telemetry excludes prompts/responses/task content');
 console.log('PASS: PACK094 candidate admission requires opt-in, rights, provenance, privacy and dedupe');
 console.log('PASS: PACK094 revocation/data-rights exclusions and Failure Bank authority are wired');
 console.log('PASS: PACK094 learning status is authenticated and user-visible');
+console.log('PASS: PACK094 shared learning plane keeps routed-model knowledge consistent without claiming external weight training');
+console.log('PASS: PACK094 Data Rights UI exposes consent, rights, candidates, exclusions and Memory/Training separation');
 console.log('LIVE PROVIDER / PAYMENT CALLS: NONE');
