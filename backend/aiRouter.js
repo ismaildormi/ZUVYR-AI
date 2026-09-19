@@ -393,6 +393,7 @@ async function routeRequest(feature, messages, opts = {}) {
         pricing: {
           version: actualQuote.registryVersion,
           cost_entry_id: actualQuote.costEntryId,
+          provider_cost_micro_usd: actualQuote.providerCostMicroUsd,
           verification_status: actualQuote.verificationStatus,
           effective_date: actualQuote.effectiveDate,
           review_before: actualQuote.reviewBefore
