@@ -920,11 +920,12 @@
       "latencyClass": "pre_recorded",
       "commercialEligibility": {
         "state": "verified_for_launch",
-        "evidence": "Official Deepgram pre-recorded Nova-3 pricing/docs revalidated 2026-09-19; paid execution remains environment-gated."
+        "evidence": "Official Deepgram pre-recorded Nova-3 mono/multilingual pricing/docs revalidated 2026-09-19; paid execution remains environment-gated; ZUVYR opts every request out of provider model improvement."
       },
       "priceReference": {
         "authority": "backend/config/cost-registry.v1.json",
         "entryIds": [
+          "deepgram-nova-3-monolingual-prerecorded",
           "deepgram-nova-3-multilingual-prerecorded"
         ],
         "verification": "verified",
