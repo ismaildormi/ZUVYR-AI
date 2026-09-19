@@ -1,5 +1,5 @@
 {
-  "version": "pack-074.audio-system.v1",
+  "version": "pack-071.audio-system.v1",
   "localCapabilities": {
     "browser_dictation": {
       "enabledByDefault": true,
