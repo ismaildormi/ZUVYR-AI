@@ -123,10 +123,15 @@ assert(frontend.includes("source: 'browser_speech_recognition'"));
 assert(frontend.includes("source: 'browser_speech_synthesis'"));
 assert(frontend.includes("composedPromptIncludesExistingText"));
 assert(frontend.includes("event.stopImmediatePropagation()"));
+assert(frontend.includes("expiryTimer: 0"));
+assert(frontend.includes("void stopSession(button, 'timeout')"));
+assert(frontend.includes("if (button.classList.contains('is-listening'))"));
+assert(frontend.includes("if (sendButton.classList.contains('is-generating')) return;"));
+assert(css.includes('[data-zuvyr-voice-session-id]'));
 assert(css.includes('ZUVYR PACK073 REALTIME VOICE STATUS'));
 assert.doesNotThrow(()=>new Function(frontend));
 
 console.log('PASS: PACK073 browser realtime voice is consent-gated, owner-session-authoritative and zero-provider-charge');
 console.log('PASS: PACK073 STOP is terminal, transcript turns are idempotent/retention-aware, and raw microphone audio is not persisted by ZUVYR');
-console.log('PASS: PACK073 FIX1 binds processing to the real chat request, dedupes final assistant speech, preserves voice settings and records only the dictated suffix');
+console.log('PASS: PACK073 FIX2 keeps global STOP visible, fails microphone capture closed on session errors, enforces local expiry and never speaks partial streaming output');
 console.log('LIVE PROVIDER / PAYMENT / PRODUCTION DATABASE / NETWORK CALLS: NONE');
