@@ -165,6 +165,9 @@ function normalizePublicUrl(value, { allowedHosts = null } = {}) {
   if (!config.network.allowedSchemes.includes(url.protocol.replace(':',''))) {
     throw browserError('cloud_browser_url_scheme_blocked');
   }
+  if (url.username || url.password) {
+    throw browserError('cloud_browser_url_credentials_forbidden');
+  }
   const host = url.hostname.toLowerCase().replace(/^\[|\]$/g,'');
   if (
     net.isIP(host) !== 0 ||
