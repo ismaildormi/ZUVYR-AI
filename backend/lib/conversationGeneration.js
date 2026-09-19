@@ -106,6 +106,7 @@ async function completeGenerationConversation({
   endFrameAssetId = null,
   referenceImageAssetIds = [],
   videoOptions = {},
+  durationSeconds = null,
   canonicalContentId = null,
   canonicalAssetId = null,
   logger = console
@@ -144,6 +145,7 @@ async function completeGenerationConversation({
         },
         imageOptions,
         videoOptions,
+        durationSeconds,
         canonicalContentId,
         canonicalAssetId
       },
@@ -162,6 +164,7 @@ async function completeGenerationConversation({
     ownerId,
     assetType,
     url: resultUrl,
+    durationSeconds,
     metadata: {
       generation_status: 'done',
       request_key: requestKey,
@@ -176,6 +179,7 @@ async function completeGenerationConversation({
       end_frame_asset_id: endFrameAssetId,
       reference_image_asset_ids: referenceImageAssetIds,
       video_options: videoOptions,
+      duration_seconds: durationSeconds,
       canonical_content_id: canonicalContentId,
       canonical_asset_id: canonicalAssetId
     }
