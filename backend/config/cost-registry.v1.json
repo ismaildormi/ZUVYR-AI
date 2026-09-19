@@ -2124,7 +2124,7 @@
       "modelToolId": "browserbase-cloud-browser",
       "capability": "browser",
       "operationType": "browser_runtime",
-      "unitType": "browser_seconds",
+      "unitType": "runtime_seconds",
       "unitScale": "1",
       "currency": "USD",
       "inputUnitPriceMicroUsd": null,
