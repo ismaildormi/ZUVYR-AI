@@ -19,6 +19,7 @@ function publicRun(row) {
     id: row.id,
     projectId: row.project_id,
     sandboxSessionId: row.sandbox_session_id,
+    sourceJobId: row.source_job_id,
     requestId: row.request_id,
     baseRevision: Number(row.base_revision),
     status: row.status,
@@ -118,6 +119,7 @@ function createCodeRepairRepository(db) {
     ownerId,
     projectId,
     sandboxSessionId,
+    sourceJobId,
     requestId,
     baseRevision,
     failureFingerprint
@@ -126,6 +128,7 @@ function createCodeRepairRepository(db) {
       p_owner_id: ownerId,
       p_project_id: projectId,
       p_sandbox_session_id: sandboxSessionId,
+      p_source_job_id: sourceJobId,
       p_request_id: requestId,
       p_base_revision: baseRevision,
       p_failure_fingerprint: failureFingerprint
