@@ -23,7 +23,7 @@
     "test:browser-checkpoint": "node test-pack081-cloud-browser-runtime.js && node test-pack082-browser-agent.js",
     "test:model-first-policy": "node test-model-first-byo-compute-policy.js",
     "test:learning-checkpoint": "node test-pack094-learning-pipeline.js",
-    "test:model-lab-checkpoint": "node test-pack095-model-lab.js"
+    "test:model-lab-checkpoint": "node test-pack095-model-lab.js && node test-pack096-owned-manager-operator.js"
   },
   "dependencies": {
     "@embedpdf/fonts-arabic": "1.0.0",
