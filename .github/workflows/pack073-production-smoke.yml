@@ -22,6 +22,7 @@ jobs:
 
           const assert = require('node:assert/strict');
 
+          async function main() {
           const SUPABASE_URL = 'https://tqoqsgaymygmqrzddvtu.supabase.co';
           const SUPABASE_KEY = 'sb_publishable_jxn-4TT28_G7LtZG4FJXTQ_75JiaSBi';
           const API_BASE = 'https://rox-ai-production.up.railway.app';
@@ -285,4 +286,10 @@ jobs:
           console.log('PACK073_RETENTION_NONE_SESSION=' + noneId);
           console.log('PACK073_PROVIDER_CALLS=0');
           console.log('PACK073_PAYMENT_CALLS=0');
+          }
+
+          main().catch(error => {
+            console.error('PACK073_SMOKE_FATAL', error?.stack || error);
+            process.exit(1);
+          });
           NODE
