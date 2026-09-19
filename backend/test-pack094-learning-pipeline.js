@@ -16,6 +16,8 @@ const migration = read('94_pack094_learning_pipeline.sql');
 const migrationFix1 = read('94_pack094_learning_pipeline_fix1.sql');
 const repository = read('lib/learningPipelineRepository.js');
 const routes = read('lib/learningPipelineRoutes.js');
+const workspaceRoutes = read('lib/workspaceRoutes.js');
+const workspaceMemoryRepository = read('lib/workspaceMemoryRepository.js');
 const server = read('server.js');
 const memoryUi = read('../frontend/zuvyr-memory-v1.js');
 const memoryCss = read('../frontend/zuvyr-memory-v1.css');
@@ -64,6 +66,42 @@ assert(
 assert(
   migration.includes('new.training_consent'),
   'preference writes must drive consent history'
+);
+assert(
+  workspaceRoutes.includes("router.patch('/memory/preferences'"),
+  'canonical preference mutation route must remain available'
+);
+assert(
+  workspaceMemoryRepository.includes('payload.training_consent = patch.trainingConsent'),
+  'canonical preference writer must own training_consent mutation'
+);
+assert(
+  routes.includes("const preferences = createWorkspaceMemoryStore(db);"),
+  'learning compatibility route must reuse the canonical preference writer'
+);
+assert(
+  routes.includes("canonicalMutationEndpoint: '/api/workspace/memory/preferences'"),
+  'learning compatibility response must advertise the canonical mutation endpoint'
+);
+assert(
+  !routes.includes("const consent = await learning.setConsent({"),
+  'browser learning route must not own an independent consent writer'
+);
+assert(
+  unifiedUi.includes("api('/api/workspace/memory/preferences'"),
+  'Training UI must call the canonical preference mutation endpoint'
+);
+assert(
+  unifiedUi.includes("method: 'PATCH'"),
+  'Training UI must use the canonical preference PATCH contract'
+);
+assert(
+  unifiedUi.includes('trainingConsent: next === true'),
+  'Training UI must mutate only trainingConsent through preferences'
+);
+assert(
+  !unifiedUi.includes("api('/api/learning/consent',"),
+  'Training UI must not use the compatibility learning-consent writer'
 );
 assert(
   migration.includes('trg_pack094_training_consent_history'),
