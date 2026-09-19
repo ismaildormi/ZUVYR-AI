@@ -221,7 +221,7 @@
         "provider_managed"
       ],
       "quotaType": "provider_managed",
-      "termsLicenseNotes": "Pack061 ordinary FLUX Schnell may route through HF_TOKEN or direct FAL_KEY. Pack062 FLUX Kontext multi requires direct FAL_KEY because Hugging Face Inference Providers returned model-not-supported for provider fal-ai on 2026-09-18. Pack063 adds direct-Fal source edit, Qwen inpaint and directional outpaint adapters. Paid Pack063 execution remains disabled by default; inpaint/outpaint variable-MP billing activation is fail-closed. Pack064 Phase01 adds repository adapters for BiRefNet v2 background removal, Flux Vision Upscaler and Image Apps v2 relighting. No operation is exposed or externally executed until Phase02 completes pricing/persistence/runtime wiring.",
+      "termsLicenseNotes": "Pack061 ordinary FLUX Schnell may route through HF_TOKEN or direct FAL_KEY. Pack062 FLUX Kontext multi requires direct FAL_KEY because Hugging Face Inference Providers returned model-not-supported for provider fal-ai on 2026-09-18. Pack063 adds direct-Fal source edit, Qwen inpaint and directional outpaint adapters. Paid Pack063 execution remains disabled by default; inpaint/outpaint variable-MP billing activation is fail-closed. Pack064 Phase01 adds repository adapters for BiRefNet v2 background removal, Flux Vision Upscaler and Image Apps v2 relighting. No operation is exposed or externally executed until Phase02 completes pricing/persistence/runtime wiring. Pack068 adds direct-fal video edit/VFX adapters. LTX 2.3 retake/extend, Bria erase/background removal and Kling LipSync have verified pre-charge pricing. LightX relight/recamera adapters are repository-verified but paid execution remains blocked because fal prices output seconds and source-to-output duration equivalence is not documented.",
       "adapter": "image.providers",
       "capabilities": [
         {
@@ -370,6 +370,161 @@
           "routing": {
             "mode": "direct_fal",
             "authority": "https://fal.ai/models/fal-ai/image-apps-v2/relighting/api"
+          }
+        },
+        {
+          "id": "video.edit",
+          "verification": "verified_repository",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "model": "fal-ai/ltx-2.3/retake-video",
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/fal-ai/ltx-2.3/retake-video/api"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "fal-ltx23-retake-second"
+            ],
+            "requiredEnvironment": {
+              "name": "PACK068_EDIT_PAID_EXECUTION_ENABLED",
+              "value": "true"
+            }
+          }
+        },
+        {
+          "id": "video.extend",
+          "verification": "verified_repository",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "model": "fal-ai/ltx-2.3/extend-video",
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/fal-ai/ltx-2.3/extend-video/api"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "fal-ltx23-extend-second"
+            ],
+            "requiredEnvironment": {
+              "name": "PACK068_EXTEND_PAID_EXECUTION_ENABLED",
+              "value": "true"
+            }
+          }
+        },
+        {
+          "id": "video.object_remove",
+          "verification": "verified_repository",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "model": "bria/video/erase/prompt",
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/bria/video/erase/prompt/api"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "fal-bria-video-erase-prompt-second"
+            ],
+            "requiredEnvironment": {
+              "name": "PACK068_OBJECT_REMOVE_PAID_EXECUTION_ENABLED",
+              "value": "true"
+            }
+          }
+        },
+        {
+          "id": "video.background_remove",
+          "verification": "verified_repository",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "model": "bria/video/background-removal/v3",
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/bria/video/background-removal/v3/api"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "fal-bria-video-background-v3-second"
+            ],
+            "requiredEnvironment": {
+              "name": "PACK068_BACKGROUND_PAID_EXECUTION_ENABLED",
+              "value": "true"
+            }
+          }
+        },
+        {
+          "id": "video.relight",
+          "verification": "repository_adapter_verified_pricing_activation_pending",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "model": "fal-ai/lightx/relight",
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/fal-ai/lightx/relight/api"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "fal-lightx-relight-output-second"
+            ],
+            "activation": "blocked_until_exact_precharge_duration_basis"
+          }
+        },
+        {
+          "id": "video.recamera",
+          "verification": "repository_adapter_verified_pricing_activation_pending",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "model": "fal-ai/lightx/recamera",
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/fal-ai/lightx/recamera/api"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "fal-lightx-recamera-output-second"
+            ],
+            "activation": "blocked_until_exact_precharge_duration_basis"
+          }
+        },
+        {
+          "id": "video.lip_sync",
+          "verification": "verified_repository",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "model": "fal-ai/kling-video/lipsync/audio-to-video",
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/fal-ai/kling-video/lipsync/audio-to-video/api"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "fal-kling-lipsync-5s-increment"
+            ],
+            "requiredEnvironment": {
+              "name": "PACK068_LIPSYNC_PAID_EXECUTION_ENABLED",
+              "value": "true"
+            }
           }
         }
       ]
