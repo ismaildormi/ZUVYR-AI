@@ -271,7 +271,11 @@ for (const marker of [
 ]) {
   assert(routes.includes(marker), marker);
 }
-assert(routes.includes("currentConsentAuthority: 'zuvyr_user_preferences.training_consent'"));
+assert(routes.includes('currentConsentAuthority: learningConfig.training.currentConsentAuthority'));
+assert.equal(
+  config.training.currentConsentAuthority,
+  'zuvyr_user_preferences.training_consent'
+);
 assert(routes.includes('optOutExcludesExistingCandidates: true'));
 assert(routes.includes('dataDeleteRequestExcludesExistingCandidates: true'));
 
