@@ -2824,6 +2824,7 @@
         processingBaselineNode: null,
         speakTimer: 0,
         expiresAt: null,
+        expiryTimer: 0,
         transitionChain: Promise.resolve()
       };
       runtime.set(button, state);
@@ -2910,6 +2911,17 @@
     });
     state.sessionId = data.session.id;
     state.expiresAt = data.session.expiresAt || null;
+    clearTimeout(state.expiryTimer);
+    state.expiryTimer = 0;
+    const expiresAtMs = Date.parse(state.expiresAt || '');
+    if (Number.isFinite(expiresAtMs)) {
+      const remainingMs = Math.max(0, expiresAtMs - Date.now());
+      state.expiryTimer = window.setTimeout(() => {
+        if (state.sessionId && !state.stopping) {
+          void stopSession(button, 'timeout');
+        }
+      }, remainingMs + 50);
+    }
     state.lastAssistantNode = latestAssistant(messages);
     state.processingBaselineNode = state.lastAssistantNode;
     state.transitionChain = Promise.resolve();
@@ -3106,6 +3118,8 @@
     if (state.stopping) return;
     state.stopping = true;
     clearTimeout(state.speakTimer);
+    clearTimeout(state.expiryTimer);
+    state.expiryTimer = 0;
     state.speechToken += 1;
 
     if (window.speechSynthesis) window.speechSynthesis.cancel();
@@ -3223,6 +3237,11 @@
         } catch (error) {
           console.warn('[zuvyr-pack073] voice session start failed', error);
           setStatus(button, 'Voice session unavailable', 'error');
+          // Fail closed: if browser dictation already opened the microphone
+          // but backend session authority could not be created, stop capture now.
+          if (button.classList.contains('is-listening')) {
+            try { button.click(); } catch (_) {}
+          }
         }
         return;
       }
@@ -3315,6 +3334,9 @@
     });
 
     new MutationObserver(() => {
+      // Never speak a streaming/partial assistant message. The send button's
+      // generating state is the canonical frontend completion signal.
+      if (sendButton.classList.contains('is-generating')) return;
       scheduleAssistantSpeech(button, messages);
     }).observe(messages, {
       childList: true,
