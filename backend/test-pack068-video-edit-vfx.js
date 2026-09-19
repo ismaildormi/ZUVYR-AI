@@ -360,6 +360,7 @@ async function run(){
   assert.equal(readTrustedMediaDurationSeconds(wav,{assetType:'audio',mimeType:'audio/wav'}),2);
 
   const migration=fs.readFileSync(path.join(__dirname,'67_pack068_video_edit_vfx_foundation.sql'),'utf8');
+  const indexMigration=fs.readFileSync(path.join(__dirname,'68_pack068_source_audio_fk_index.sql'),'utf8');
   const server=fs.readFileSync(path.join(__dirname,'server.js'),'utf8');
   const worker=fs.readFileSync(path.join(__dirname,'worker.js'),'utf8');
   for(const marker of ['duration_seconds','source_audio_asset_id',"'object_remove'","'lip_sync'"]){
@@ -374,6 +375,14 @@ async function run(){
   assert(
     migration.includes("add column if not exists source_audio_asset_id uuid"),
     'source audio column declaration must be intact'
+  );
+  assert(
+    indexMigration.includes('create index if not exists generation_jobs_source_audio_asset_idx'),
+    'source-audio foreign key must have an idempotent covering index migration'
+  );
+  assert(
+    indexMigration.includes('on public.generation_jobs(source_audio_asset_id)'),
+    'source-audio index must cover the exact foreign-key column'
   );
   for(const marker of [
     'videoInputResolver.inspect({',
