@@ -89,7 +89,8 @@ function createBrowserbaseProvider({
       timeout:ttl,
       proxies:config.session.proxies === true,
       browserSettings:{
-        recordSession:config.session.recordSession === true
+        recordSession:config.session.recordSession === true,
+        logSession:config.session.logSession === true
       },
       userMetadata:{
         zuvyrSessionId:String(localSessionId || '').slice(0,100)
