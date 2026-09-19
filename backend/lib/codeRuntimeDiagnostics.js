@@ -14,7 +14,7 @@ function redact(value) {
     )
     .replace(/\bBearer\s+[A-Za-z0-9._~+\/-]{12,}/gi, 'Bearer [redacted]')
     .replace(
-      /\b(?:api[_-]?key|token|secret|password)\s*[:=]\s*['"]?[^\s'",;]+/gi,
+      /(?:api[_-]?key|token|secret|password)\s*[:=]\s*['"]?[^\s'",;]+/gi,
       match => match.replace(/([:=]\s*['"]?).*$/,'$1[redacted]')
     )
     .replace(/\b(?:sk|pk|vcp|sbp)_[A-Za-z0-9_-]{12,}\b/g, '[redacted]');
