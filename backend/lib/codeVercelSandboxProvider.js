@@ -140,6 +140,71 @@ function createVercelSandboxProvider({
     });
   }
 
+  function safeUpstreamUrl(value) {
+    let url;
+    try {
+      url = new URL(String(value || ''));
+    } catch (_) {
+      throw providerError('code_preview_provider_route_invalid');
+    }
+    if (url.protocol !== 'https:') {
+      throw providerError('code_preview_provider_route_invalid');
+    }
+    const host = url.hostname.toLowerCase();
+    if (
+      host === 'localhost' ||
+      host.endsWith('.localhost') ||
+      host.endsWith('.local') ||
+      host === '0.0.0.0' ||
+      host === '127.0.0.1' ||
+      host === '::1' ||
+      /^10\./.test(host) ||
+      /^192\.168\./.test(host) ||
+      /^169\.254\./.test(host) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(host)
+    ) {
+      throw providerError('code_preview_provider_route_private');
+    }
+    return url.toString().replace(/\/$/, '');
+  }
+
+  async function resolvePreviewRoute({
+    localSessionId,
+    providerSessionId,
+    port
+  } = {}) {
+    const expected = String(providerSessionId || '').trim();
+    if (!/^sbx_[A-Za-z0-9_-]{6,}$/.test(expected)) {
+      throw providerError('code_sandbox_provider_session_invalid');
+    }
+    const numericPort = Number(port);
+    if (!Number.isInteger(numericPort) || numericPort < 1 || numericPort > 65535) {
+      throw providerError('code_preview_port_invalid');
+    }
+
+    const name = require('./codeSandboxPolicy').providerSandboxName(localSessionId);
+    const projectId = String(env.VERCEL_PROJECT_ID || '').trim();
+    if (!projectId) throw providerError('pack076_missing_vercel_project_id');
+
+    const result = await request(
+      '/v2/sandboxes/' + encodeURIComponent(name) +
+      '?projectId=' + encodeURIComponent(projectId),
+      { method: 'GET' }
+    );
+
+    if (String(result?.session?.id || '') !== expected) {
+      throw providerError('code_preview_provider_session_mismatch');
+    }
+
+    const route = (Array.isArray(result?.routes) ? result.routes : [])
+      .find(item => Number(item?.port) === numericPort);
+    if (!route?.url) {
+      throw providerError('code_preview_provider_route_missing');
+    }
+
+    return safeUpstreamUrl(route.url);
+  }
+
   async function stopSession(providerSessionId) {
     const id = String(providerSessionId || '').trim();
     if (!/^sbx_[A-Za-z0-9_-]{6,}$/.test(id)) {
@@ -160,6 +225,7 @@ function createVercelSandboxProvider({
   return Object.freeze({
     createSession,
     getSession,
+    resolvePreviewRoute,
     stopSession
   });
 }
