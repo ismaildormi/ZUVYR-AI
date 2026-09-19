@@ -22,6 +22,7 @@ const imageQueue = new Queue('rox-image-generation', { connection });
 const videoQueue = new Queue('rox-video-generation', { connection });
 const audioQueue = new Queue('zuvyr-audio-processing', { connection });
 const attachmentQueue = new Queue('zuvyr-attachment-processing', { connection });
+const model3dQueue = new Queue('zuvyr-3d-generation', { connection });
 
 const defaultJobOptions = {
   attempts: 3,
@@ -30,4 +31,4 @@ const defaultJobOptions = {
   removeOnFail: 1000
 };
 
-module.exports = { connection, imageQueue, videoQueue, audioQueue, attachmentQueue, defaultJobOptions };
+module.exports = { connection, imageQueue, videoQueue, audioQueue, attachmentQueue, model3dQueue, defaultJobOptions };
