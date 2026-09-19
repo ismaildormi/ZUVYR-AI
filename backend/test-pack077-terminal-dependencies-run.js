@@ -194,7 +194,7 @@ assert.equal(permissionReplayAccepted({
 }), false);
 
 const chunks = commandLogChunks(
-  '{"stream":"stderr","message":"bad"}\\nplain output\\n'
+  ['{"stream":"stderr","message":"bad"}','plain output',''].join('\n')
 );
 assert.equal(chunks[0].stream, 'stderr');
 assert.equal(chunks[0].message, 'bad');
