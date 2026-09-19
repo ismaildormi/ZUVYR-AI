@@ -23,7 +23,8 @@
       "requiresPrompt": true,
       "requiresSourceImage": false,
       "requiresSourceVideo": true,
-      "paidExecutionEnvironment": "PACK068_EDIT_PAID_EXECUTION_ENABLED"
+      "paidExecutionEnvironment": "PACK068_EDIT_PAID_EXECUTION_ENABLED",
+      "requiresTrustedSourceDuration": true
     },
     "extend": {
       "enabledByDefault": true,
@@ -82,22 +83,20 @@
       "paidExecutionEnvironment": "PACK068_BACKGROUND_PAID_EXECUTION_ENABLED"
     },
     "relight": {
-      "enabledByDefault": true,
-      "status": "implemented_pack068_paid_live_deferred",
+      "enabledByDefault": false,
+      "status": "implemented_pack068_output_duration_pricing_deferred",
       "requiresPrompt": true,
       "requiresSourceImage": false,
       "requiresSourceVideo": true,
-      "requiresTrustedSourceDuration": true,
-      "paidExecutionEnvironment": "PACK068_RELIGHT_PAID_EXECUTION_ENABLED"
+      "requiresTrustedSourceDuration": true
     },
     "recamera": {
-      "enabledByDefault": true,
-      "status": "implemented_pack068_paid_live_deferred",
+      "enabledByDefault": false,
+      "status": "implemented_pack068_output_duration_pricing_deferred",
       "requiresPrompt": false,
       "requiresSourceImage": false,
       "requiresSourceVideo": true,
-      "requiresTrustedSourceDuration": true,
-      "paidExecutionEnvironment": "PACK068_RECAMERA_PAID_EXECUTION_ENABLED"
+      "requiresTrustedSourceDuration": true
     },
     "lip_sync": {
       "enabledByDefault": true,
@@ -380,7 +379,8 @@
         "Bottom"
       ],
       "cfg": 2,
-      "pricingMicroUsdPerSourceSecond": 100000
+      "pricingMicroUsdPerSourceSecond": 100000,
+      "activation": "blocked_until_output_duration_precharge_basis_is_proven"
     },
     "recamera": {
       "model": "fal-ai/lightx/recamera",
@@ -396,7 +396,8 @@
         "direct",
         "dolly-zoom"
       ],
-      "pricingMicroUsdPerSourceSecond": 100000
+      "pricingMicroUsdPerSourceSecond": 100000,
+      "activation": "blocked_until_output_duration_precharge_basis_is_proven"
     },
     "lipSync": {
       "model": "fal-ai/kling-video/lipsync/audio-to-video",
