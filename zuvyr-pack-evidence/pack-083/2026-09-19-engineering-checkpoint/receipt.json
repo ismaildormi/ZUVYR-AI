@@ -9,7 +9,8 @@
     "implementation_merge_commit": "f88e297895cf4fedb9a1ffa706bf1a6526c428c8",
     "production_hotfix_commit": "60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4",
     "pull_request": 30,
-    "hotfix_reason": "Initial Railway worker/backend rollout exposed a missing module import in model3dInputResolver; canonical assetStorageContract import restored and regression-tested."
+    "hotfix_reason": "Initial Railway worker/backend rollout exposed a missing module import in model3dInputResolver; canonical assetStorageContract import restored and regression-tested.",
+    "hotfix_pull_request": 32
   },
   "ci": {
     "implementation_branch_run": 35464298584,
@@ -34,11 +35,13 @@
       "exact_commit": "60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4",
       "backend": {
         "deployment": "76a8bf1e-3927-4c13-8c7f-dc26820acc73",
-        "status": "SUCCESS"
+        "status": "SUCCESS",
+        "startup": "ROX AI backend listening on port 8080"
       },
       "worker": {
         "deployment": "1cbe7b84-0e72-437a-acfa-ac69ee7dc7cd",
-        "status": "SUCCESS"
+        "status": "SUCCESS",
+        "startup": "ROX AI worker running (concurrency: image=2, video=1, model3d=1, audio=1, attachment=1)"
       },
       "maintenance": {
         "deployment": "d40ee2ef-6e91-4622-bac6-01e7e1804192",
@@ -70,7 +73,14 @@
     "live_billing_allowed": false,
     "paid_execution_default": false,
     "paid_provider_calls_during_verification": 0,
-    "payment_calls_during_verification": 0
+    "payment_calls_during_verification": 0,
+    "primary_format": "glb",
+    "supported_exports": [
+      "glb",
+      "obj",
+      "fbx",
+      "usdz"
+    ]
   },
   "deferred_gates": [
     "M18"
@@ -100,5 +110,10 @@
     ],
     "resume_original_sequence_at": "084",
     "final_release_pack": "150"
-  }
+  },
+  "omissions": [
+    "No paid live 3D generation was executed while M18 and paid-execution/live-billing gates remain closed.",
+    "No claim is made that a generated production GLB/viewer/export flow was accepted live.",
+    "Canonical LOCKED_VERIFIED remains open until the dated M18 live user-flow gate is satisfied."
+  ]
 }
