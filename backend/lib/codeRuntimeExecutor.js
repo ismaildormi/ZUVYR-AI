@@ -48,6 +48,19 @@ function permissionCode(value) {
   return String(value?.error || 'permission_required');
 }
 
+function providerTimestamp(value, fallbackMs = Date.now()) {
+  if (value === null || value === undefined || value === '') {
+    return new Date(fallbackMs).toISOString();
+  }
+  const numeric = Number(value);
+  if (Number.isFinite(numeric) && numeric > 0) {
+    return new Date(numeric).toISOString();
+  }
+  const parsed = Date.parse(String(value));
+  if (Number.isFinite(parsed)) return new Date(parsed).toISOString();
+  return new Date(fallbackMs).toISOString();
+}
+
 function commandLogChunks(text) {
   const source = String(text || '');
   if (!source) return Object.freeze([]);
@@ -328,8 +341,7 @@ function createCodeRuntimeExecutor({
     if (!Number.isFinite(hardExpiry) || hardExpiry <= current) return;
     const next = Math.min(
       hardExpiry,
-      current + runtimeConfig.live?.idleTimeoutMs ||
-        current + 300000
+      current + 300000
     );
     if (next <= current) return;
     await sandboxes.touch({
@@ -541,32 +553,30 @@ function createCodeRuntimeExecutor({
       );
       providerStarted = true;
 
+      const priorState = await runtime.getRuntimeState({
+        ownerId,
+        sandboxSessionId: request.sandboxSessionId
+      });
       await runtime.upsertRuntimeState({
         ownerId,
         projectId: request.projectId,
         sandboxSessionId: request.sandboxSessionId,
         syncedRevision: project.revision,
         filesDigest: sync.digest,
-        dependencyDigest:
-          request.operation === 'dependencies'
-            ? commandSpec.dependencyDigest
-            : (await runtime.getRuntimeState({
-                ownerId,
-                sandboxSessionId: request.sandboxSessionId
-              }))?.dependencyDigest || null,
+        // Dependency cache becomes authoritative only after npm exits 0.
+        dependencyDigest: priorState?.dependencyDigest || null,
         packageManager:
-          request.operation === 'dependencies' ? 'npm' : null,
+          request.operation === 'dependencies'
+            ? 'npm'
+            : priorState?.packageManager || null,
         runtimeScript:
           request.operation === 'run'
             ? commandSpec.script
-            : null,
+            : priorState?.runtimeScript || null,
         providerCommandId: commandId,
         processStatus: 'running',
         previewPort: null,
-        startedAt:
-          started.startedAt
-            ? new Date(Number(started.startedAt)).toISOString()
-            : new Date(now()).toISOString()
+        startedAt: providerTimestamp(started.startedAt, now())
       });
 
       await touchSandbox(ownerId, session);
@@ -815,5 +825,6 @@ module.exports = {
   createCodeRuntimeExecutor,
   deterministicCommandId,
   permissionReplayAccepted,
-  commandLogChunks
+  commandLogChunks,
+  providerTimestamp
 };
