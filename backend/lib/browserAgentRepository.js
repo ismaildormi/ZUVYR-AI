@@ -186,7 +186,6 @@ function createBrowserAgentRepository(db) {
       p_target: classified.persistedTarget || {},
       p_input_sha256: classified.inputSha256,
       p_input_length: classified.inputLength,
-      p_input_text_redacted: classified.text,
       p_risk: classified.risk,
       p_permission_action: classified.permissionAction
     });
