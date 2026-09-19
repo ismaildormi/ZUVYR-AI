@@ -13,7 +13,11 @@
 
 const { canRoute, reportOutcome } = require('./lib/modelHealth');
 const { recordFallback, recordModelLatency, recordModelOutcome } = require('./lib/metrics');
-const { estimateCostUsd, costTier } = require('./lib/modelCosts');
+const {
+  quoteModelCost,
+  modelCostTier,
+  providerReportedCostTelemetry
+} = require('./lib/modelPricingAuthority');
 const intelligenceRegistry = require('./lib/intelligenceRegistry');
 /* ZUVYR_PACK026_ROUTER_HARD_FILTERS */
 const { routerHardFilters } = require('./lib/routerHardFilters');
@@ -24,7 +28,6 @@ const {
   createDecisionContext,
   marginGuard,
   estimatePreCallCostUsd,
-  actualCostUsd,
   buildDecisionReceipt,
   routerDecisionLogger
 } = require('./lib/routerDecisionLog');
@@ -86,7 +89,26 @@ const MULTIMODAL_ROUTE = {
 function getEffectiveChain(feature, loadLevel, isPro = true) {
   const chain = ROUTES[feature] || ROUTES.chat;
   if (feature !== 'chat' || loadLevel !== 'high') return chain;
-  return [...chain].filter(route => Number.isFinite(costTier(route.model, { provider: route.provider }))).sort((a, b) => costTier(a.model, { provider: a.provider }) - costTier(b.model, { provider: b.provider }));
+  return [...chain]
+    .filter(route =>
+      Number.isFinite(modelCostTier({
+        provider: route.provider,
+        model: route.model,
+        capability: feature
+      }))
+    )
+    .sort((a, b) =>
+      modelCostTier({
+        provider: a.provider,
+        model: a.model,
+        capability: feature
+      }) -
+      modelCostTier({
+        provider: b.provider,
+        model: b.model,
+        capability: feature
+      })
+    );
 }
 
 async function withTimeout(promise, ms) {
@@ -257,6 +279,7 @@ async function routeRequest(feature, messages, opts = {}) {
     const estimatedCost = estimatePreCallCostUsd({
       provider: route.provider,
       model: route.model,
+      capability,
       messages
     });
 
@@ -311,11 +334,16 @@ async function routeRequest(feature, messages, opts = {}) {
         });
         continue;
       }
-      const actualRouteCost = actualCostUsd({
+      const actualQuote = quoteModelCost({
         provider: route.provider,
         model: route.model,
-        usage: result.usage
+        capability,
+        usage: result.usage,
+        requireMeasuredUsage: true
       });
+      const actualRouteCost = actualQuote.providerCostUsd;
+      const providerReportedCostUsd =
+        providerReportedCostTelemetry(result.usage);
       const successReceipt = buildDecisionReceipt({
         context: decisionContext,
         provider: route.provider,
@@ -361,10 +389,15 @@ async function routeRequest(feature, messages, opts = {}) {
         ranking_changed: rankingResult.rankingChanged,
         load_level: loadLevel,
         usage: result.usage,
-        cost_usd:
-          Number.isFinite(Number(result.usage?.cost))
-            ? Number(result.usage.cost)
-            : estimateCostUsd(route.model, result.usage, { provider: route.provider }),
+        cost_usd: actualRouteCost,
+        pricing: {
+          version: actualQuote.registryVersion,
+          cost_entry_id: actualQuote.costEntryId,
+          verification_status: actualQuote.verificationStatus,
+          effective_date: actualQuote.effectiveDate,
+          review_before: actualQuote.reviewBefore
+        },
+        provider_reported_cost_usd: providerReportedCostUsd,
         attempts,
         decision_receipt: successReceipt,
         decision_log: decisionLog,
