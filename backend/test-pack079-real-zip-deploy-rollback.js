@@ -49,7 +49,7 @@ for (const marker of [
   'reserve_zuvyr_code_deployment_rollback_pack079',
   'transition_zuvyr_code_deployment_rollback_pack079',
   'deploy.rollback',
-  'permission.deploy.rollback.v1'
+  "v_expected_consequence := 'permission.' || v_action || '.v1'"
 ]) {
   assert(migration.includes(marker), marker);
 }
