@@ -17,6 +17,7 @@ const root=path.join(__dirname,'..');
 const routes=fs.readFileSync(path.join(__dirname,'lib/audioStudioRoutes.js'),'utf8');
 const repository=fs.readFileSync(path.join(__dirname,'lib/voiceSessionRepository.js'),'utf8');
 const migration=fs.readFileSync(path.join(__dirname,'73_pack073_realtime_voice.sql'),'utf8');
+const fix1Migration=fs.readFileSync(path.join(__dirname,'73_pack073_realtime_voice_fix1.sql'),'utf8');
 const frontend=fs.readFileSync(path.join(root,'frontend/zuvyr-chat-workspace-v1.js'),'utf8');
 const css=fs.readFileSync(path.join(root,'frontend/zuvyr-chat-workspace-v1.css'),'utf8');
 
@@ -86,6 +87,9 @@ for(const marker of [
 ]) assert(migration.includes(marker),marker);
 assert(migration.includes("retention_mode in ('transcript_only','none')"));
 assert(migration.includes('Raw microphone audio is not stored by ZUVYR'));
+assert(fix1Migration.includes("v_session.state='listening' and v_next in ('listening','ready','processing','stopped','failed')"));
+assert(fix1Migration.includes('for update'));
+assert(fix1Migration.includes('to service_role'));
 
 for(const marker of [
   'retention_mode',
@@ -96,7 +100,19 @@ for(const marker of [
 ]) assert(repository.includes(marker),marker);
 
 assert(frontend.includes('ZUVYR PACK073 REALTIME VOICE CONTROLLER'));
-assert(frontend.includes("window.speechSynthesis.cancel()"));
+assert(frontend.includes('const dictatedSuffix = (value, beforeValue) =>'));
+assert(frontend.includes("state.processingBaselineNode = latestAssistant(messages)"));
+assert(frontend.includes("sendButton.classList.contains('is-generating')"));
+assert(frontend.includes("await transition(state, 'ready')"));
+assert(frontend.includes("void transition(state, 'processing')"));
+assert(frontend.includes("window.speechSynthesis.cancel();"));
+assert(frontend.includes("window.speechSynthesis.speak(utterance);"));
+assert(frontend.indexOf("window.speechSynthesis.cancel();\n    window.speechSynthesis.speak(utterance);") >= 0);
+assert(frontend.includes("localStorage.getItem('roxVoiceRate')"));
+assert(frontend.includes("localStorage.getItem('roxVoiceName')"));
+assert(frontend.includes("message === state.lastAssistantNode"));
+assert(!frontend.includes("clean === state.lastAssistantText"));
+assert(!frontend.includes("}, 900);"));
 assert(frontend.includes("'barge_in'"));
 assert(frontend.includes("/api/audio-studio/voice/sessions/request"));
 assert(frontend.includes("/turns"));
@@ -105,11 +121,12 @@ assert(/storeRawAudio\s*:\s*false/.test(frontend));
 assert(/rawAudioStoredByZuvyr\s*:\s*false/.test(routes));
 assert(frontend.includes("source: 'browser_speech_recognition'"));
 assert(frontend.includes("source: 'browser_speech_synthesis'"));
+assert(frontend.includes("composedPromptIncludesExistingText"));
 assert(frontend.includes("event.stopImmediatePropagation()"));
 assert(css.includes('ZUVYR PACK073 REALTIME VOICE STATUS'));
 assert.doesNotThrow(()=>new Function(frontend));
 
 console.log('PASS: PACK073 browser realtime voice is consent-gated, owner-session-authoritative and zero-provider-charge');
 console.log('PASS: PACK073 STOP is terminal, transcript turns are idempotent/retention-aware, and raw microphone audio is not persisted by ZUVYR');
-console.log('PASS: PACK073 browser controller wires listening/processing/speaking, barge-in cancellation and authenticated session APIs without enabling a paid realtime provider');
+console.log('PASS: PACK073 FIX1 binds processing to the real chat request, dedupes final assistant speech, preserves voice settings and records only the dictated suffix');
 console.log('LIVE PROVIDER / PAYMENT / PRODUCTION DATABASE / NETWORK CALLS: NONE');

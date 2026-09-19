@@ -2770,6 +2770,7 @@
   'use strict';
 
   const runtime = new WeakMap();
+
   const api = async (path, options = {}) => {
     if (typeof window.authFetch !== 'function') {
       throw new Error('voice_auth_unavailable');
@@ -2790,6 +2791,23 @@
     return 'voice-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
   };
 
+  const compactText = value =>
+    String(value || '').replace(/\s+/g, ' ').trim();
+
+  const dictatedSuffix = (value, beforeValue) => {
+    const current = compactText(value);
+    const before = compactText(beforeValue);
+    if (!current || current === before) return '';
+    if (!before) return current;
+    if (current.startsWith(before)) {
+      return current.slice(before.length).trim();
+    }
+    return current;
+  };
+
+  const latestAssistant = messages =>
+    messages?.querySelector(':scope > .msg.bot:last-of-type') || null;
+
   const getState = (button) => {
     let state = runtime.get(button);
     if (!state) {
@@ -2802,9 +2820,11 @@
         statusNode: null,
         speechToken: 0,
         speaking: null,
-        lastAssistantText: '',
+        lastAssistantNode: null,
+        processingBaselineNode: null,
         speakTimer: 0,
-        expiresAt: null
+        expiresAt: null,
+        transitionChain: Promise.resolve()
       };
       runtime.set(button, state);
     }
@@ -2840,9 +2860,19 @@
     );
   };
 
+  const transition = (state, next, reason = null) => {
+    state.transitionChain = state.transitionChain
+      .catch(() => null)
+      .then(() => {
+        if (!state.sessionId || state.stopping) return null;
+        return postState(state, next, reason);
+      });
+    return state.transitionChain;
+  };
+
   const recordTurn = async (state, role, text, interrupted = false, metadata = {}) => {
     if (!state.sessionId) return null;
-    const clean = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 12000);
+    const clean = compactText(text).slice(0, 12000);
     if (!clean) return null;
     const turnIndex = state.turnIndex++;
     return api(
@@ -2862,7 +2892,7 @@
     );
   };
 
-  const ensureSession = async (button) => {
+  const ensureSession = async (button, messages) => {
     const state = getState(button);
     if (state.sessionId) return state;
     const data = await api('/api/audio-studio/voice/sessions/request', {
@@ -2880,6 +2910,10 @@
     });
     state.sessionId = data.session.id;
     state.expiresAt = data.session.expiresAt || null;
+    state.lastAssistantNode = latestAssistant(messages);
+    state.processingBaselineNode = state.lastAssistantNode;
+    state.transitionChain = Promise.resolve();
+
     const row = button.closest('.chat-input-row');
     if (row) {
       row.dataset.zuvyrVoiceSessionId = state.sessionId;
@@ -2913,61 +2947,158 @@
 
   const interruptSpeech = async (button, reason = 'barge_in') => {
     const state = getState(button);
-    if (!state.speaking && !window.speechSynthesis?.speaking && !window.speechSynthesis?.pending) {
+    if (
+      !state.speaking &&
+      !window.speechSynthesis?.speaking &&
+      !window.speechSynthesis?.pending
+    ) {
       return false;
     }
     state.speechToken += 1;
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     await finishSpeakingTurn(button, true);
     if (state.sessionId && !state.stopping) {
-      try { await postState(state, 'listening', reason); } catch (_) {}
+      try { await transition(state, 'listening', reason); } catch (_) {}
     }
     setStatus(button, 'Listening', 'listening');
     return true;
   };
 
-  const speakAssistant = async (button, text) => {
+  const applySpeechPreferences = (utterance, text) => {
+    const selectedLanguage = localStorage.getItem('roxVoiceLanguage');
+    const isArabic = /[\u0600-\u06FF]/.test(String(text));
+    const preferredLang =
+      selectedLanguage ||
+      (isArabic
+        ? 'ar-MA'
+        : (document.documentElement.lang || navigator.language || 'fr-FR'));
+
+    utterance.lang = preferredLang;
+
+    const savedRate = Number(localStorage.getItem('roxVoiceRate'));
+    utterance.rate =
+      Number.isFinite(savedRate) && savedRate >= 0.75 && savedRate <= 1.5
+        ? savedRate
+        : 1;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    const voices = window.speechSynthesis.getVoices();
+    const selectedVoiceId = localStorage.getItem('roxVoiceName');
+    const selectedVoice = selectedVoiceId
+      ? voices.find(
+          voice =>
+            voice.voiceURI === selectedVoiceId ||
+            voice.name === selectedVoiceId
+        )
+      : null;
+    const exactVoice = voices.find(
+      voice => voice.lang.toLowerCase() === preferredLang.toLowerCase()
+    );
+    const languageVoice = voices.find(
+      voice =>
+        voice.lang.toLowerCase().startsWith(
+          preferredLang.toLowerCase().split('-')[0]
+        )
+    );
+
+    utterance.voice = selectedVoice || exactVoice || languageVoice || null;
+  };
+
+  const assistantText = (message) => {
+    if (!message || !message.classList?.contains('bot')) return '';
+    if (message.classList.contains('zuvyr-chat-welcome')) return '';
+    const clone = message.cloneNode(true);
+    clone
+      .querySelectorAll(
+        'button,nav,.msg-actions,.zuvyr-next-actions,.sources,.citations'
+      )
+      .forEach(node => node.remove());
+    return compactText(clone.textContent).slice(0, 12000);
+  };
+
+  const speakAssistant = async (button, message) => {
     const state = getState(button);
-    const clean = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 12000);
+    const clean = assistantText(message);
     if (
       !state.sessionId ||
       state.stopping ||
       state.listening ||
+      !message ||
+      message === state.lastAssistantNode ||
       !clean ||
-      clean === state.lastAssistantText ||
       !('speechSynthesis' in window) ||
       typeof window.SpeechSynthesisUtterance !== 'function'
     ) {
       return;
     }
-    state.lastAssistantText = clean;
+
+    if (
+      state.speaking ||
+      window.speechSynthesis.speaking ||
+      window.speechSynthesis.pending
+    ) {
+      state.speechToken += 1;
+      window.speechSynthesis.cancel();
+      await finishSpeakingTurn(button, true);
+    }
+
+    state.lastAssistantNode = message;
     const token = ++state.speechToken;
+
     try {
-      await postState(state, 'speaking');
+      await transition(state, 'speaking');
     } catch (error) {
       console.warn('[zuvyr-pack073] speaking state failed', error);
       return;
     }
+
+    if (!state.sessionId || state.stopping || state.listening) return;
+
     const utterance = new window.SpeechSynthesisUtterance(clean);
-    const lang = document.documentElement.lang || navigator.language || 'en';
-    utterance.lang = lang;
-    state.speaking = { text: clean, token };
+    applySpeechPreferences(utterance, clean);
+    state.speaking = { text: clean, token, node: message };
+
     utterance.onstart = () => {
-      if (token === state.speechToken) setStatus(button, 'Speaking — tap mic to interrupt', 'speaking');
+      if (token === state.speechToken) {
+        setStatus(button, 'Speaking — tap mic to interrupt', 'speaking');
+      }
     };
+
     utterance.onend = async () => {
       if (token !== state.speechToken || state.stopping) return;
       await finishSpeakingTurn(button, false);
-      try { await postState(state, 'ready'); } catch (_) {}
+      try { await transition(state, 'ready'); } catch (_) {}
       setStatus(button, 'Voice ready', 'ready');
     };
+
     utterance.onerror = async () => {
       if (token !== state.speechToken || state.stopping) return;
       await finishSpeakingTurn(button, true);
-      try { await postState(state, 'ready', 'speech_error'); } catch (_) {}
+      try { await transition(state, 'ready', 'speech_error'); } catch (_) {}
       setStatus(button, 'Voice ready', 'ready');
     };
+
+    // Existing Auto Read may have started in sendChat() immediately after
+    // appendMsg(). Realtime Voice owns speech while its session is active:
+    // cancel any older browser utterance, then speak exactly this final node.
+    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
+  };
+
+  const scheduleAssistantSpeech = (button, messages) => {
+    const state = getState(button);
+    if (!state.sessionId || state.stopping || state.listening) return;
+
+    const message = latestAssistant(messages);
+    if (!message || message === state.lastAssistantNode) return;
+
+    clearTimeout(state.speakTimer);
+    state.speakTimer = setTimeout(() => {
+      const latest = latestAssistant(messages);
+      if (!latest || latest === state.lastAssistantNode) return;
+      void speakAssistant(button, latest);
+    }, 0);
   };
 
   const stopSession = async (button, reason = 'user_stop') => {
@@ -2976,6 +3107,7 @@
     state.stopping = true;
     clearTimeout(state.speakTimer);
     state.speechToken += 1;
+
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     await finishSpeakingTurn(button, true);
 
@@ -3003,7 +3135,11 @@
     state.listening = false;
     state.speaking = null;
     state.beforeText = '';
+    state.lastAssistantNode = null;
+    state.processingBaselineNode = null;
+    state.transitionChain = Promise.resolve();
     state.stopping = false;
+
     const row = button.closest('.chat-input-row');
     if (row) {
       delete row.dataset.zuvyrVoiceSessionId;
@@ -3017,54 +3153,49 @@
     setStatus(button, 'Voice stopped', 'stopped');
   };
 
-  const assistantText = (message) => {
-    if (!message || !message.classList?.contains('bot')) return '';
-    if (message.classList.contains('zuvyr-chat-welcome')) return '';
-    const clone = message.cloneNode(true);
-    clone.querySelectorAll('button,nav,.msg-actions,.zuvyr-next-actions,.sources,.citations').forEach((node) => node.remove());
-    return String(clone.textContent || '').replace(/\s+/g, ' ').trim();
-  };
-
-  const scheduleAssistantSpeech = (button) => {
-    const state = getState(button);
-    if (!state.sessionId || state.stopping || state.listening) return;
-    clearTimeout(state.speakTimer);
-    state.speakTimer = setTimeout(() => {
-      const messages = document.getElementById('msgs-chat');
-      const last = messages?.querySelector(':scope > .msg.bot:last-of-type');
-      const text = assistantText(last);
-      if (text) void speakAssistant(button, text);
-    }, 900);
-  };
-
   const wire = () => {
-    const button = document.querySelector('#feature-chat button[data-voice-input="chat"]');
+    const button = document.querySelector(
+      '#feature-chat button[data-voice-input="chat"]'
+    );
     if (!button || button.dataset.zuvyrRealtimeVoice === '1') return;
+
     const row = button.closest('.chat-input-row');
     const input = row?.querySelector('[data-feature="chat"]');
     const cancel = row?.querySelector('.zuvyr-voice-cancel');
+    const sendButton = document.querySelector(
+      '#feature-chat [data-send="chat"]'
+    );
     const messages = document.getElementById('msgs-chat');
-    if (!row || !input || !cancel || !messages) return;
+
+    if (!row || !input || !cancel || !sendButton || !messages) return;
 
     button.dataset.zuvyrRealtimeVoice = '1';
     const state = getState(button);
     setStatus(button, 'Voice ready', 'ready');
 
-    button.addEventListener('click', () => {
-      if (!button.classList.contains('is-listening') && state.speaking) {
-        void interruptSpeech(button, 'barge_in');
-      }
-      if (!button.classList.contains('is-listening')) {
-        state.beforeText = String(input.value || '');
-      }
-    }, true);
+    button.addEventListener(
+      'click',
+      () => {
+        if (!button.classList.contains('is-listening') && state.speaking) {
+          void interruptSpeech(button, 'barge_in');
+        }
+        if (!button.classList.contains('is-listening')) {
+          state.beforeText = String(input.value || '');
+        }
+      },
+      true
+    );
 
-    cancel.addEventListener('click', (event) => {
-      if (!state.sessionId) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      void stopSession(button, 'user_stop');
-    }, true);
+    cancel.addEventListener(
+      'click',
+      event => {
+        if (!state.sessionId) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        void stopSession(button, 'user_stop');
+      },
+      true
+    );
 
     let previousListening = button.classList.contains('is-listening');
     state.listening = previousListening;
@@ -3072,16 +3203,21 @@
     new MutationObserver(async () => {
       const listening = button.classList.contains('is-listening');
       if (listening === previousListening) return;
+
       previousListening = listening;
       state.listening = listening;
 
       if (listening) {
         try {
-          await ensureSession(button);
-          if (state.speaking || window.speechSynthesis?.speaking || window.speechSynthesis?.pending) {
+          await ensureSession(button, messages);
+          if (
+            state.speaking ||
+            window.speechSynthesis?.speaking ||
+            window.speechSynthesis?.pending
+          ) {
             await interruptSpeech(button, 'barge_in');
           } else {
-            await postState(state, 'listening');
+            await transition(state, 'listening');
           }
           setStatus(button, 'Listening', 'listening');
         } catch (error) {
@@ -3092,27 +3228,95 @@
       }
 
       if (!state.sessionId || state.stopping) return;
+
       if (row.dataset.zuvyrVoiceCancel === '1') {
         await stopSession(button, 'dictation_cancelled');
         return;
       }
 
       try {
-        await postState(state, 'processing');
-        const text = String(input.value || '').trim();
-        const before = String(state.beforeText || '').trim();
-        if (text && text !== before) {
-          await recordTurn(state, 'user', text, false, { source: 'browser_speech_recognition' });
+        const dictated = dictatedSuffix(input.value, state.beforeText);
+        if (dictated) {
+          await recordTurn(
+            state,
+            'user',
+            dictated,
+            false,
+            {
+              source: 'browser_speech_recognition',
+              composedPromptIncludesExistingText:
+                Boolean(compactText(state.beforeText))
+            }
+          );
         }
-        setStatus(button, 'Processing', 'processing');
-        scheduleAssistantSpeech(button);
+
+        await transition(state, 'ready');
+        setStatus(button, 'Voice ready — send when ready', 'ready');
       } catch (error) {
-        console.warn('[zuvyr-pack073] voice processing state failed', error);
+        console.warn('[zuvyr-pack073] dictation finalization failed', error);
         setStatus(button, 'Voice session needs attention', 'error');
       }
-    }).observe(button, { attributes: true, attributeFilter: ['class'] });
+    }).observe(button, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
 
-    new MutationObserver(() => scheduleAssistantSpeech(button)).observe(messages, {
+    let previousGenerating = sendButton.classList.contains('is-generating');
+
+    new MutationObserver(() => {
+      const generating = sendButton.classList.contains('is-generating');
+      if (generating === previousGenerating) return;
+
+      previousGenerating = generating;
+      if (!state.sessionId || state.stopping) return;
+
+      if (generating) {
+        state.processingBaselineNode = latestAssistant(messages);
+        void transition(state, 'processing')
+          .then(() => {
+            if (state.sessionId && !state.stopping) {
+              setStatus(button, 'Processing', 'processing');
+            }
+          })
+          .catch(error => {
+            console.warn('[zuvyr-pack073] processing state failed', error);
+            setStatus(button, 'Voice session needs attention', 'error');
+          });
+        return;
+      }
+
+      setTimeout(() => {
+        if (
+          !state.sessionId ||
+          state.stopping ||
+          state.listening ||
+          state.speaking
+        ) {
+          return;
+        }
+
+        const latest = latestAssistant(messages);
+        if (latest && latest !== state.processingBaselineNode) {
+          scheduleAssistantSpeech(button, messages);
+          return;
+        }
+
+        void transition(state, 'ready')
+          .then(() => {
+            if (state.sessionId && !state.stopping) {
+              setStatus(button, 'Voice ready', 'ready');
+            }
+          })
+          .catch(() => null);
+      }, 0);
+    }).observe(sendButton, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    new MutationObserver(() => {
+      scheduleAssistantSpeech(button, messages);
+    }).observe(messages, {
       childList: true,
       subtree: true,
       characterData: true
@@ -3126,6 +3330,9 @@
   };
 
   wire();
-  new MutationObserver(wire).observe(document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(wire).observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  });
 })();
 
