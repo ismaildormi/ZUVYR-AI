@@ -1,0 +1,100 @@
+{
+  "version": "pack-096.owned-manager-operator.v1",
+  "status": "engineering_candidate_awaiting_m21",
+  "modelFamily": {
+    "productName": "ZUVYR 7 Manager / Operator",
+    "owner": "zuvyr",
+    "baseModelCommercialPermissionRequired": true,
+    "checkpointIdentityAuthority": "zuvyr_model_lab_checkpoints",
+    "deploymentAuthority": "zuvyr_owned_model_deployments"
+  },
+  "liveGate": {
+    "externalGate": "M21",
+    "env": "ZUVYR_M21_VERIFIED",
+    "enabledByDefault": false,
+    "requireRealOwnedCheckpoint": true,
+    "requireRealByocTarget": true,
+    "noSyntheticProof": true
+  },
+  "workloadPolicy": {
+    "initialEligibleFeatures": [
+      "chat"
+    ],
+    "initialInputModalities": [
+      "text"
+    ],
+    "disallowedModes": [
+      "web_search",
+      "deep_research",
+      "shopping",
+      "local_research",
+      "connected_research"
+    ],
+    "attachmentsAllowed": false,
+    "codeAllowed": false,
+    "lowRiskOnly": true
+  },
+  "rollout": {
+    "stages": [
+      "LAB",
+      "EVAL",
+      "SHADOW",
+      "CANARY",
+      "SECONDARY",
+      "PRIMARY"
+    ],
+    "routableStages": [
+      "SHADOW",
+      "CANARY",
+      "SECONDARY",
+      "PRIMARY"
+    ],
+    "requireIndependentPassedEvaluation": true,
+    "requireRegressionPass": true,
+    "requireQualifiedHealthyConnector": true,
+    "connectorHealthFreshSeconds": 3600,
+    "defaultCanaryTrafficBps": 500,
+    "maxCanaryTrafficBps": 2500,
+    "secondaryTrafficBps": 5000,
+    "primaryTrafficBps": 10000,
+    "automaticRollback": true,
+    "externalFallbackRequired": true
+  },
+  "serving": {
+    "connectorKind": "openai_compatible_https",
+    "chatCompletionsPath": "/v1/chat/completions",
+    "requestTimeoutMs": 30000,
+    "maxResponseBytes": 4194304,
+    "maxOutputTokens": 4096,
+    "zuvyrPaidGpuRequired": false,
+    "apiSoftwareFeeUsd": 0,
+    "ownedModelUsageFeeUsd": 0,
+    "inferenceMarkupUsd": 0,
+    "customerComputeBilledDirectly": true,
+    "providerCostToZuvyrUsd": 0
+  },
+  "accounting": {
+    "ownedModelCreditsCharged": 0,
+    "customerComputeCostInformational": true,
+    "zuvyrControlPlaneCostSeparate": true,
+    "externalFallbackUsesExistingVerifiedEconomics": true,
+    "shadowCustomerComputeCostExplicit": true
+  },
+  "teacherGateway": {
+    "rawProviderSystemPromptsAllowed": false,
+    "providerWeightsAllowed": false,
+    "customerPrivateContentWithoutRightsAllowed": false,
+    "requiresContractOrLicensePermission": true,
+    "requiresCanonicalContentVersion": true,
+    "requiresPack094Rights": true,
+    "requiresTrainingConsent": true,
+    "requiresPrivacyProcessed": true,
+    "requiresVerifiedProvenance": true,
+    "admissionAuthority": "admit_zuvyr_training_candidate_pack094",
+    "allowedUses": [
+      "training_finetune",
+      "evaluation"
+    ],
+    "teacherOutputStoredByGateway": false
+  }
+}
