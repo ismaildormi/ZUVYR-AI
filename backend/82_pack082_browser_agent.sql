@@ -424,6 +424,20 @@ begin
     raise exception 'pack082_max_steps_invalid';
   end if;
 
+  if p_conversation_id is not null and not exists (
+    select 1 from public.conversations c
+    where c.id=p_conversation_id and c.owner_id=p_owner_id
+  ) then
+    raise exception 'pack082_conversation_not_owned';
+  end if;
+
+  if p_task_run_id is not null and not exists (
+    select 1 from public.zuvyr_task_runs t
+    where t.id=p_task_run_id and t.owner_id=p_owner_id
+  ) then
+    raise exception 'pack082_task_run_not_owned';
+  end if;
+
   select * into v_existing
   from public.browser_agent_runs
   where owner_id=p_owner_id and request_id=p_request_id;
