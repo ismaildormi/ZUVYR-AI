@@ -171,6 +171,17 @@ function createVideoInputResolver({ db, storage }) {
       }
     }
 
+    if (
+      ['edit','object_remove','background_remove','relight','recamera','lip_sync']
+        .includes(operation) &&
+      !source?.durationSeconds
+    ) {
+      throw resolverError('video_source_duration_unavailable');
+    }
+    if (operation === 'lip_sync' && !audio?.durationSeconds) {
+      throw resolverError('video_source_audio_duration_unavailable');
+    }
+
     const sourceInputField =
       operation === 'image_to_video'
         ? (request.startFrameAssetId ? 'startFrameAssetId' : 'sourceImageAssetId')
