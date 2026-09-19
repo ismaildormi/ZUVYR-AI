@@ -1,5 +1,5 @@
 {
-  "version": "pack-071.audio-system.v1",
+  "version": "pack-072.audio-system.v1",
   "localCapabilities": {
     "browser_dictation": {
       "enabledByDefault": true,
@@ -21,10 +21,11 @@
       "paidExecutionEnvironment": "PACK071_STT_PAID_EXECUTION_ENABLED"
     },
     "text_to_speech": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
+      "enabledByDefault": true,
+      "status": "implemented_pack072_paid_live_deferred",
       "unitType": "speech_characters",
-      "requiresText": true
+      "requiresText": true,
+      "paidExecutionEnvironment": "PACK072_TTS_PAID_EXECUTION_ENABLED"
     },
     "voice_chat": {
       "enabledByDefault": false,
@@ -94,12 +95,14 @@
       "implementedOperations": []
     },
     "deepgram": {
-      "status": "verified_pack071_paid_live_deferred",
+      "status": "verified_pack072_paid_live_deferred",
       "implementedOperations": [
-        "transcription"
+        "transcription",
+        "text_to_speech"
       ],
       "models": {
-        "transcription": "nova-3"
+        "transcription": "nova-3",
+        "text_to_speech": "aura-2-thalia-en"
       }
     },
     "local": {
@@ -114,7 +117,7 @@
   },
   "requestLimits": {
     "maxPromptCharacters": 2000,
-    "maxSpeechCharacters": 5000,
+    "maxSpeechCharacters": 2000,
     "maxSourceAudioBytes": 52428800,
     "maxDurationSeconds": 600,
     "maxVoiceSessionSeconds": 900,
@@ -218,6 +221,35 @@
       "rawAudioProviderPersistence": "not_required_by_zuvyr",
       "providerModelImprovementOptOut": true,
       "providerRetentionAfterResponse": "zero_data_retention_when_mip_opt_out_true"
+    }
+  },
+  "pack072": {
+    "phase": "IMPLEMENTED_PAID_LIVE_DEFERRED",
+    "textToSpeech": {
+      "provider": "deepgram",
+      "family": "aura-2",
+      "defaultVoice": "aura-2-thalia-en",
+      "allowedVoices": [
+        "aura-2-thalia-en",
+        "aura-2-selena-es"
+      ],
+      "allowedOutputFormats": [
+        "mp3",
+        "wav"
+      ],
+      "paidExecutionEnvironment": "PACK072_TTS_PAID_EXECUTION_ENABLED",
+      "exactPricing": {
+        "payAsYouGoUsdPerThousandCharacters": "0.030",
+        "unit": "input_characters",
+        "billingBasis": "normalized_request_text_code_points"
+      }
+    },
+    "voiceDesignAndCloning": {
+      "provider": "elevenlabs",
+      "executionStatus": "blocked_until_exact_operation_pricing_and_voice_rights",
+      "explicitVoiceRightsRequired": true,
+      "providerVerificationRequired": true,
+      "trainingRightsIndependent": true
     }
   }
 }
