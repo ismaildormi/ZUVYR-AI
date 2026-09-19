@@ -589,7 +589,7 @@
   "status": "PACK080_LOCKED_ENGINEERING_VERIFIED",
   "next_pack_allowed": true,
   "next_external_gate": "M17",
-  "next_pack": "081 - Cloud Browser Runtime",
+  "next_pack": "082 - Browser Agent",
   "pack042": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "258ce1f4df2e3a4630cfc87069668f073c0dee79",
@@ -834,7 +834,7 @@
     "final_release_pack": "150",
     "previous_plan_preserved": true
   },
-  "active_pack": "081",
+  "active_pack": "082",
   "pack061": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
@@ -1688,5 +1688,66 @@
     "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
     "next_pack": "081",
     "next_pack_title": "Cloud Browser Runtime"
+  },
+  "pack081": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "Cloud Browser Runtime",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "PACK081 source, CI, migration, RLS/RPC authority and exact Railway production deployment are verified. Canonical live Browserbase acceptance remains blocked because production has no Browserbase credentials, effective pricing gate variables or ZUVYR_M17_VERIFIED.",
+    "pull_request": 26,
+    "baseline_commit": "a56c1ca9a174ab6bab507aa7ab148471a7da0803",
+    "ci_head": "fc749cb0b0377f3b0f7b82195af7695e58d0c023",
+    "github_ci_run": 35457685381,
+    "backend_quality": "PASS",
+    "release_quality": "PASS",
+    "source_commit": "d7b0592cf3b12c8e65168036d1b2ba9c9998d43c",
+    "main_ci_run": 35457790389,
+    "migration": "20260919171945 pack081_cloud_browser_runtime",
+    "receipt_path": "zuvyr-pack-evidence/pack-081/2026-09-19-engineering-checkpoint/receipt.json",
+    "receipt_sha256": "1DE498C5A0975C90D1D8031C218376ABD3B99B5343B940C67FE03E95BEC95B14",
+    "production": {
+      "railway": {
+        "backend": {
+          "deployment": "35bd3a58-48d9-4ded-ac46-c3d95dab185a",
+          "status": "SUCCESS"
+        },
+        "worker": {
+          "deployment": "8365646a-7d79-4833-835c-3d48da9e496f",
+          "status": "SUCCESS"
+        },
+        "maintenance": {
+          "deployment": "2c821f9c-c88a-40cf-9c7a-630125ac70c9",
+          "status": "SUCCESS"
+        },
+        "exact_commit": "d7b0592cf3b12c8e65168036d1b2ba9c9998d43c",
+        "healthcheck_path": "/readyz"
+      },
+      "vercel": {
+        "frontend_changed": false,
+        "unchanged_production_deployment": "dpl_3VLpyDnEWwNP2y9ck6ZnpNfbnR3h",
+        "unchanged_production_commit": "ac644e6dd6fe88ff836257c7b7baab6e86f41cc5",
+        "branch_preview": "dpl_D6WNb9kPDfqr1QXLFCTPAbbJaHw5",
+        "branch_preview_status": "READY"
+      }
+    },
+    "database": {
+      "browser_sessions_rls": true,
+      "browser_session_artifacts_rls": true,
+      "direct_policy_count": 0,
+      "rpc_count": 4,
+      "rows_at_verification": {
+        "browser_sessions": 0,
+        "browser_session_artifacts": 0
+      }
+    },
+    "deferred_gates": [
+      "M17"
+    ],
+    "paid_provider_calls_during_checkpoint": 0,
+    "payment_calls_during_checkpoint": 0,
+    "live_browserbase_calls_during_checkpoint": 0,
+    "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+    "next_pack": "082",
+    "next_pack_title": "Browser Agent"
   }
 }
