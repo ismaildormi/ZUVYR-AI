@@ -332,8 +332,18 @@ assert.equal(
   config.training.currentConsentAuthority,
   'zuvyr_user_preferences.training_consent'
 );
-assert(routes.includes('optOutExcludesExistingCandidates: true'));
-assert(routes.includes('dataDeleteRequestExcludesExistingCandidates: true'));
+assert(routes.includes('optOutExcludesExistingCandidates:'));
+assert(routes.includes('learningConfig.training.optOutBehavior'));
+assert.equal(
+  config.training.optOutBehavior,
+  'exclude_existing_candidates_and_block_future_admission'
+);
+assert(routes.includes('dataDeleteRequestExcludesExistingCandidates:'));
+assert(routes.includes('learningConfig.training.dataDeleteBehavior'));
+assert.equal(
+  config.training.dataDeleteBehavior,
+  'exclude_existing_training_candidates_immediately'
+);
 assert(routes.includes('consentPolicyVersion: learningConfig.training.consentPolicyVersion'));
 assert(routes.includes('sharedLearningPlane: learningConfig.sharedLearningPlane'));
 
