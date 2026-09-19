@@ -34,6 +34,16 @@ const {
   createCodeRuntimeExecutor
 } = require('./codeRuntimeExecutor');
 const {
+  createCodeRepairRepository
+} = require('./codeRepairRepository');
+const {
+  assertRepairableJob,
+  repairTargets,
+  repairInstruction,
+  retestOperation,
+  repairStatusFromJob
+} = require('./codeRepairPolicy');
+const {
   runtimePricingStatus
 } = require('./codeRuntimePricing');
 const runtimeConfig = require('../config/code-runtime.v1.json');
@@ -321,6 +331,7 @@ function createCodeStudioRouter({
   const usageBridge = createCodeStudioUsageBridge(creditApi || {});
   const projects = db ? createCodeProjectRepository(db) : null;
   const sandboxes = db ? createCodeSandboxRepository(db) : null;
+  const repairs = db ? createCodeRepairRepository(db) : null;
   const sandbox =
     sandboxProvider ||
     createVercelSandboxProvider({ env: sandboxEnv });
@@ -364,6 +375,265 @@ function createCodeStudioRouter({
     }
     return runtimeExecutor;
   };
+
+  const repairRepository = () => {
+    if (!repairs) {
+      const error = new Error('code_repair_repository_unavailable');
+      error.code = 'code_repair_repository_unavailable';
+      throw error;
+    }
+    return repairs;
+  };
+
+  async function executeAiEdit({
+    ownerId,
+    projectId,
+    instruction: rawInstruction,
+    targetPaths,
+    expectedRevision,
+    requestId: suppliedRequestId = null,
+    reasonPrefix = 'ai_edit'
+  } = {}) {
+    let requestId = '';
+    let receiptStarted = false;
+    let receiptOwned = false;
+    let reservationStarted = false;
+    let settlementDone = false;
+
+    try {
+      if (!uuid(projectId)) {
+        const error = new Error('invalid_code_project_id');
+        error.code = 'invalid_code_project_id';
+        throw error;
+      }
+
+      const instruction = requiredInstruction(rawInstruction);
+      const project = await projectRepository().get({ ownerId, projectId });
+
+      const suppliedRevision = Number(expectedRevision);
+      if (
+        Number.isSafeInteger(suppliedRevision) &&
+        suppliedRevision !== project.revision
+      ) {
+        const error = new Error('pack075_revision_conflict');
+        error.code = 'pack075_revision_conflict';
+        throw error;
+      }
+
+      const planId = await ownerPlan(db, ownerId);
+      if (!planHasFeature(planId, 'code')) {
+        const error = new Error('code_requires_plan');
+        error.code = 'code_requires_plan';
+        throw error;
+      }
+
+      const targets = normalizeAiTargets(project, targetPaths);
+      const instructionSha256 = crypto
+        .createHash('sha256')
+        .update(instruction, 'utf8')
+        .digest('hex');
+
+      requestId =
+        String(suppliedRequestId || '').trim() ||
+        crypto.randomUUID();
+
+      if (!requestId || requestId.length > 200) {
+        const error = new Error('code_ai_edit_idempotency_key_invalid');
+        error.code = 'code_ai_edit_idempotency_key_invalid';
+        throw error;
+      }
+
+      const started = await projectRepository().beginAiEdit({
+        ownerId,
+        projectId: project.id,
+        requestId,
+        instructionSha256,
+        targetPaths: targets
+      });
+      receiptStarted = true;
+      receiptOwned = started.replayed !== true;
+
+      if (started.replayed) {
+        if (started.receipt.status === 'succeeded') {
+          return Object.freeze({
+            replayed: true,
+            project: await projectRepository().get({
+              ownerId,
+              projectId: project.id
+            }),
+            aiEdit: started.receipt,
+            newBalance: null
+          });
+        }
+        const error = new Error(
+          started.receipt.status === 'processing'
+            ? 'code_ai_edit_in_progress'
+            : 'code_ai_edit_previous_failed'
+        );
+        error.code = error.message;
+        throw error;
+      }
+
+      await usageBridge.reserveUsage({
+        userId: ownerId,
+        requestId,
+        projectId: project.id,
+        taskId: requestId,
+        stepId: 'ai-edit',
+        usageKind: 'ai_code_edit',
+        creditsConsumed: CODE_EDIT_RESERVATION_CREDITS,
+        modelUsed: 'code-router'
+      });
+      reservationStarted = true;
+
+      const byPath = new Map(project.files.map(file => [file.path, file]));
+      const messages = [
+        {
+          role: 'system',
+          content: [
+            'You are the ZUVYR Code Studio editing engine.',
+            'Return ONLY one JSON object with keys summary and files.',
+            'files must be an array of objects with path, content and optional language.',
+            'Edit only the exact target paths supplied by the user.',
+            'Do not add, delete or rename files.',
+            'Do not wrap the JSON in markdown.',
+            'Preserve unrelated code and make the smallest correct changes.'
+          ].join(' ')
+        },
+        {
+          role: 'user',
+          content: JSON.stringify({
+            instruction,
+            project: {
+              name: project.name,
+              branch: project.currentBranch,
+              revision: project.revision,
+              entryFile: project.entryFile,
+              manifest: project.files.map(file => ({
+                path: file.path,
+                language: file.language,
+                sha256: file.sha256
+              }))
+            },
+            targetPaths: targets,
+            targetFiles: targets.map(targetPath => ({
+              path: targetPath,
+              language: byPath.get(targetPath)?.language || null,
+              content: byPath.get(targetPath)?.content || ''
+            }))
+          })
+        }
+      ];
+
+      let modelResult;
+      try {
+        modelResult = await routeCodeRequest('code', messages, {
+          requestId,
+          isPro: isPaidPlan(planId),
+          loadLevel: 'normal'
+        });
+      } catch (cause) {
+        const error = new Error('code_ai_edit_provider_failed');
+        error.code = 'code_ai_edit_provider_failed';
+        error.cause = cause;
+        throw error;
+      }
+
+      const parsed = parseAiEditOutput(modelResult.text);
+      const merged = mergeAiEdits(project, targets, parsed);
+      const creditsCharged = finalCodeCredits(modelResult.cost_usd);
+
+      const settlement = await usageBridge.settleUsage(
+        requestId,
+        creditsCharged
+      );
+      settlementDone = true;
+
+      let savedProject = project;
+      if (merged.changedPaths.length) {
+        savedProject = await projectRepository().save({
+          ownerId,
+          projectId: project.id,
+          project: merged.project,
+          expectedRevision: project.revision,
+          branchName: project.currentBranch,
+          reason: String(reasonPrefix || 'ai_edit').slice(0, 80) + ':' + requestId
+        });
+      }
+
+      const receipt = await projectRepository().completeAiEdit({
+        ownerId,
+        requestId,
+        model: modelResult.model,
+        creditsCharged,
+        result: {
+          summary: parsed.summary,
+          changedPaths: merged.changedPaths,
+          versionId: savedProject.versions?.[0]?.id || null,
+          revision: savedProject.revision,
+          branch: savedProject.currentBranch,
+          providerCostUsd: Number(modelResult.cost_usd || 0)
+        }
+      });
+
+      if (typeof creditApi?.logCreditEvent === 'function') {
+        await creditApi.logCreditEvent({
+          userId: ownerId,
+          feature: 'code',
+          modelUsed: modelResult.model,
+          fallbackTriggered: modelResult.fallback_triggered === true,
+          status: 'success',
+          requestId: requestId + ':detail',
+          metadata: {
+            project_id: project.id,
+            task_id: requestId,
+            step_id: 'ai-edit',
+            usage_kind: 'ai_code_edit',
+            usage: modelResult.usage,
+            attempts: modelResult.attempts,
+            billing_scope: modelResult.billing_scope,
+            cost_usd: Number(modelResult.cost_usd || 0),
+            changed_paths: merged.changedPaths
+          }
+        });
+      }
+
+      return Object.freeze({
+        replayed: false,
+        project: savedProject,
+        aiEdit: receipt,
+        newBalance:
+          settlement?.new_balance ??
+          settlement?.newBalance ??
+          null
+      });
+    } catch (error) {
+      if (reservationStarted) {
+        try {
+          await usageBridge.refundUsage(requestId);
+        } catch (refundError) {
+          if (typeof creditApi?.reportRefundFailure === 'function') {
+            await creditApi.reportRefundFailure({
+              requestId,
+              userId: ownerId,
+              feature: 'code',
+              error: refundError
+            }).catch(() => null);
+          }
+        }
+      }
+
+      if (receiptStarted && receiptOwned && requestId) {
+        await projectRepository().failAiEdit({
+          ownerId,
+          requestId,
+          errorCode: error.code || error.message,
+          result: { reservationStarted, settlementDone }
+        }).catch(() => null);
+      }
+      throw error;
+    }
+  }
 
   router.get(
     '/capabilities',
@@ -604,248 +874,17 @@ function createCodeStudioRouter({
   });
 
   router.post('/projects/:projectId/ai-edit', async (req, res) => {
-    let requestId = '';
-    let receiptStarted = false;
-    let receiptOwned = false;
-    let reservationStarted = false;
-    let settlementDone = false;
-
     try {
-      if (!uuid(req.params.projectId)) {
-        const error = new Error('invalid_code_project_id');
-        error.code = 'invalid_code_project_id';
-        throw error;
-      }
-
-      const instruction = requiredInstruction(req.body?.instruction);
-      const project = await projectRepository().get({
+      const result = await executeAiEdit({
         ownerId: req.userId,
-        projectId: req.params.projectId
+        projectId: req.params.projectId,
+        instruction: req.body?.instruction,
+        targetPaths: req.body?.targetPaths,
+        expectedRevision: req.body?.expectedRevision,
+        requestId: req.headers['idempotency-key']
       });
-
-      const suppliedRevision = Number(req.body?.expectedRevision);
-      if (
-        Number.isSafeInteger(suppliedRevision) &&
-        suppliedRevision !== project.revision
-      ) {
-        const error = new Error('pack075_revision_conflict');
-        error.code = 'pack075_revision_conflict';
-        throw error;
-      }
-
-      const planId = await ownerPlan(db, req.userId);
-      if (!planHasFeature(planId, 'code')) {
-        const error = new Error('code_requires_plan');
-        error.code = 'code_requires_plan';
-        throw error;
-      }
-
-      const targets = normalizeAiTargets(project, req.body?.targetPaths);
-      const instructionSha256 = crypto
-        .createHash('sha256')
-        .update(instruction, 'utf8')
-        .digest('hex');
-
-      requestId =
-        String(req.headers['idempotency-key'] || '').trim() ||
-        crypto.randomUUID();
-
-      if (requestId.length > 200) {
-        const error = new Error('code_ai_edit_idempotency_key_invalid');
-        error.code = 'code_ai_edit_idempotency_key_invalid';
-        throw error;
-      }
-
-      const started = await projectRepository().beginAiEdit({
-        ownerId: req.userId,
-        projectId: project.id,
-        requestId,
-        instructionSha256,
-        targetPaths: targets
-      });
-      receiptStarted = true;
-      receiptOwned = started.replayed !== true;
-
-      if (started.replayed) {
-        if (started.receipt.status === 'succeeded') {
-          return res.json({
-            status: 'success',
-            replayed: true,
-            aiEdit: started.receipt
-          });
-        }
-        const error = new Error(
-          started.receipt.status === 'processing'
-            ? 'code_ai_edit_in_progress'
-            : 'code_ai_edit_previous_failed'
-        );
-        error.code = error.message;
-        throw error;
-      }
-
-      await usageBridge.reserveUsage({
-        userId: req.userId,
-        requestId,
-        projectId: project.id,
-        taskId: requestId,
-        stepId: 'ai-edit',
-        usageKind: 'ai_code_edit',
-        creditsConsumed: CODE_EDIT_RESERVATION_CREDITS,
-        modelUsed: 'code-router'
-      });
-      reservationStarted = true;
-
-      const byPath = new Map(project.files.map(file => [file.path, file]));
-      const messages = [
-        {
-          role: 'system',
-          content: [
-            'You are the ZUVYR Code Studio editing engine.',
-            'Return ONLY one JSON object with keys summary and files.',
-            'files must be an array of objects with path, content and optional language.',
-            'Edit only the exact target paths supplied by the user.',
-            'Do not add, delete or rename files.',
-            'Do not wrap the JSON in markdown.',
-            'Preserve unrelated code and make the smallest correct changes.'
-          ].join(' ')
-        },
-        {
-          role: 'user',
-          content: JSON.stringify({
-            instruction,
-            project: {
-              name: project.name,
-              branch: project.currentBranch,
-              revision: project.revision,
-              entryFile: project.entryFile,
-              manifest: project.files.map(file => ({
-                path: file.path,
-                language: file.language,
-                sha256: file.sha256
-              }))
-            },
-            targetPaths: targets,
-            targetFiles: targets.map(path => ({
-              path,
-              language: byPath.get(path)?.language || null,
-              content: byPath.get(path)?.content || ''
-            }))
-          })
-        }
-      ];
-
-      let modelResult;
-      try {
-        modelResult = await routeCodeRequest('code', messages, {
-          requestId,
-          isPro: isPaidPlan(planId),
-          loadLevel: 'normal'
-        });
-      } catch (cause) {
-        const error = new Error('code_ai_edit_provider_failed');
-        error.code = 'code_ai_edit_provider_failed';
-        error.cause = cause;
-        throw error;
-      }
-
-      const parsed = parseAiEditOutput(modelResult.text);
-      const merged = mergeAiEdits(project, targets, parsed);
-      const creditsCharged = finalCodeCredits(modelResult.cost_usd);
-
-      const settlement = await usageBridge.settleUsage(
-        requestId,
-        creditsCharged
-      );
-      settlementDone = true;
-
-      let savedProject = project;
-      if (merged.changedPaths.length) {
-        savedProject = await projectRepository().save({
-          ownerId: req.userId,
-          projectId: project.id,
-          project: merged.project,
-          expectedRevision: project.revision,
-          branchName: project.currentBranch,
-          reason: 'ai_edit:' + requestId
-        });
-      }
-
-      const receipt = await projectRepository().completeAiEdit({
-        ownerId: req.userId,
-        requestId,
-        model: modelResult.model,
-        creditsCharged,
-        result: {
-          summary: parsed.summary,
-          changedPaths: merged.changedPaths,
-          versionId:
-            savedProject.versions?.[0]?.id || null,
-          revision: savedProject.revision,
-          branch: savedProject.currentBranch,
-          providerCostUsd: Number(modelResult.cost_usd || 0)
-        }
-      });
-
-      if (typeof creditApi?.logCreditEvent === 'function') {
-        await creditApi.logCreditEvent({
-          userId: req.userId,
-          feature: 'code',
-          modelUsed: modelResult.model,
-          fallbackTriggered: modelResult.fallback_triggered === true,
-          status: 'success',
-          requestId: requestId + ':detail',
-          metadata: {
-            project_id: project.id,
-            task_id: requestId,
-            step_id: 'ai-edit',
-            usage_kind: 'ai_code_edit',
-            usage: modelResult.usage,
-            attempts: modelResult.attempts,
-            billing_scope: modelResult.billing_scope,
-            cost_usd: Number(modelResult.cost_usd || 0),
-            changed_paths: merged.changedPaths
-          }
-        });
-      }
-
-      return res.json({
-        status: 'success',
-        replayed: false,
-        project: savedProject,
-        aiEdit: receipt,
-        newBalance:
-          settlement?.new_balance ??
-          settlement?.newBalance ??
-          null
-      });
+      return res.json({ status: 'success', ...result });
     } catch (error) {
-      if (reservationStarted) {
-        try {
-          await usageBridge.refundUsage(requestId);
-        } catch (refundError) {
-          if (typeof creditApi?.reportRefundFailure === 'function') {
-            await creditApi.reportRefundFailure({
-              requestId,
-              userId: req.userId,
-              feature: 'code',
-              error: refundError
-            }).catch(() => null);
-          }
-        }
-      }
-
-      if (receiptStarted && receiptOwned && requestId) {
-        await projectRepository().failAiEdit({
-          ownerId: req.userId,
-          requestId,
-          errorCode: error.code || error.message,
-          result: {
-            reservationStarted,
-            settlementDone
-          }
-        }).catch(() => null);
-      }
-
       return errorResponse(res, error, 'code_ai_edit_failed');
     }
   });
