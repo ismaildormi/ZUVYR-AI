@@ -1861,7 +1861,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
   const memoryRequestKey = turnId || requestId;
   let chatCoreBinding = null;
 
-  if (feature !== 'code') {
+  if (feature !== 'code' && feature !== '3d') {
     try {
       chatCoreBinding = normalizeChatCoreRequest({ body: req.body, requestId });
       req.universalRequest = chatCoreBinding.request;
@@ -2044,7 +2044,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
       id: requestId,
       user_id: userId,
       feature,
-      prompt: videoRequest?.prompt ?? prompt,
+      prompt: model3dRequest?.prompt ?? videoRequest?.prompt ?? prompt,
       status: 'queued',
       conversation_id: conversationId || null,
       request_message_id:
@@ -2107,7 +2107,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
       requestId,
       userId,
       prompt: generationPrompt,
-      originalPrompt: videoRequest?.prompt ?? prompt,
+      originalPrompt: model3dRequest?.prompt ?? videoRequest?.prompt ?? prompt,
       aiPreferences: normalizedAiPreferences,
       feature,
       creditsConsumed,
