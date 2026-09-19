@@ -696,6 +696,7 @@ function createCodeStudioRouter({
     const started = await runtimeExecution().start({
       ownerId,
       idempotencyKey: requestId,
+      sourceJobId: attempt.sourceJobId,
       body: {
         operation,
         projectId: project.id,
