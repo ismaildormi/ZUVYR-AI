@@ -1263,6 +1263,23 @@ function createCodeStudioRouter({
         error.code = 'pack078_preview_scope_invalid';
         throw error;
       }
+
+      let repairSourceJobId = null;
+      if (state?.lastDiagnostic?.fingerprint) {
+        const jobs = await runtimeExecution().listJobs({
+          ownerId: req.userId,
+          projectId: project.id,
+          limit: 30
+        });
+        const failed = (Array.isArray(jobs) ? jobs : []).find(job =>
+          job?.sandboxSessionId === req.query.sandboxSessionId &&
+          job?.status === 'failed' &&
+          ['build','test','run'].includes(job?.operation) &&
+          job?.result?.diagnostic?.fingerprint === state.lastDiagnostic.fingerprint
+        );
+        repairSourceJobId = failed?.id || null;
+      }
+
       return res.json({
         status: 'success',
         preview: {
@@ -1272,6 +1289,7 @@ function createCodeStudioRouter({
           diagnostic: state?.lastDiagnostic || {},
           lastBuildJobId: state?.lastBuildJobId || null,
           lastTestJobId: state?.lastTestJobId || null,
+          repairSourceJobId,
           updatedAt: state?.previewUpdatedAt || state?.updatedAt || null,
           ticketAvailable:
             state?.previewState === 'ready' &&
