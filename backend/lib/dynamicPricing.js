@@ -155,8 +155,56 @@ function providerQuote(feature, {
   videoRequest = null,
   videoPricingContext = null,
   audioRequest = null,
-  audioPricingContext = null
+  audioPricingContext = null,
+  model3dRequest = null
 } = {}) {
+  if (feature === '3d' && model3dRequest) {
+    if (String(env.PACK083_3D_PAID_EXECUTION_ENABLED || '').toLowerCase() !== 'true') {
+      throw pricingError('pack083_3d_paid_execution_disabled');
+    }
+    if (!env.FAL_KEY) {
+      throw pricingError('no_configured_pack083_3d_provider');
+    }
+
+    const query = operationType => resolveCostEntry({
+      provider: 'fal',
+      modelToolId: 'fal-ai/hunyuan-3d/v3.1/pro',
+      capability: '3d_generation',
+      operationType
+    }, { env, now });
+
+    const entries = [query('model3d_generation_base')];
+    if (model3dRequest.pricing?.usesPbrAddon) {
+      entries.push(query('model3d_pbr_addon'));
+    }
+    if (model3dRequest.pricing?.usesMultiviewAddon) {
+      entries.push(query('model3d_multiview_addon'));
+    }
+    if (model3dRequest.pricing?.usesCustomFaceCountAddon) {
+      entries.push(query('model3d_custom_face_count_addon'));
+    }
+
+    const providerCostMicroUsd = entries
+      .reduce(
+        (total, entry) =>
+          total + BigInt(estimateProviderCostMicroUsd(entry)),
+        0n
+      )
+      .toString();
+
+    const versions = [...new Set(entries.map(entry => entry.registryVersion))];
+    if (versions.length !== 1) {
+      throw pricingError('pack083_3d_pricing_version_mismatch');
+    }
+
+    return Object.freeze({
+      provider: 'fal',
+      providerCostMicroUsd,
+      pricingVersion: versions[0],
+      costEntryIds: Object.freeze(entries.map(entry => entry.id))
+    });
+  }
+
   if (feature === 'audio' && audioRequest) {
     if (audioRequest.operation === 'audio_cleanup') {
       const entry = resolveCostEntry({
