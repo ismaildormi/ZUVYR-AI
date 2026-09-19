@@ -1367,7 +1367,7 @@
     "paid_provider_calls_during_verification": 0,
     "payment_calls_during_verification": 0,
     "receipt_path": "zuvyr-pack-evidence/pack-072/2026-09-19-no-cost-final/receipt.json",
-    "receipt_git_blob": "d0f1c43b8d8cdce20d3073cb34c0b753b98edede",
+    "receipt_git_blob": "88a2144d6ea55cb3c680f354ecd38178acce269f",
     "progression": "USER_APPROVED_NO_COST_DEFERRED_GATE",
     "next_pack_allowed": true,
     "next_pack": "073"
