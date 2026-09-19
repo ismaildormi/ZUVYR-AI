@@ -2117,6 +2117,38 @@
         "name": "PACK074_AUDIO_TO_VIDEO_PAID_EXECUTION_ENABLED",
         "value": "true"
       }
+    },
+    {
+      "id": "browserbase-cloud-browser-runtime-unverified",
+      "provider": "browserbase",
+      "modelToolId": "browserbase-cloud-browser",
+      "capability": "browser",
+      "operationType": "browser_runtime",
+      "unitType": "runtime_seconds",
+      "unitScale": "1",
+      "currency": "USD",
+      "inputUnitPriceMicroUsd": null,
+      "outputUnitPriceMicroUsd": null,
+      "cachedUnitPriceMicroUsd": null,
+      "fixedOperationPriceMicroUsd": null,
+      "minimumBillableMicroUsd": null,
+      "pricingSource": "browserbase_official_reference_account_plan_unverified",
+      "pricingSourceUrl": "https://www.browserbase.com/pricing",
+      "pricingEffectiveDate": "2026-09-19T00:00:00Z",
+      "pricingReviewBefore": "2026-10-19T00:00:00Z",
+      "verificationStatus": "unverified",
+      "verificationEvidence": "Browserbase official pricing reviewed 2026-09-19. Published Developer/Startup/x402 rates differ by plan and included-hour basis. ZUVYR has no verified connected Browserbase account plan or effective marginal billing authority; paid execution must remain blocked.",
+      "requiredEnvironment": {
+        "name": "ZUVYR_BROWSER_PRICING_VERIFIED",
+        "value": "true"
+      },
+      "enabledState": "blocked",
+      "safetyReserveBps": 0,
+      "infrastructureReserveMicroUsd": "0",
+      "currencyChangeReserveBps": 0,
+      "targetGrossMarginBps": 5000,
+      "creditConversionResult": null,
+      "legacyGenerationDefault": false
     }
   ],
   "schemaVersion": 2,

@@ -1,0 +1,108 @@
+{
+  "version": "pack-081.cloud-browser.v1",
+  "status": "engineering_implementation_m17_deferred",
+  "provider": {
+    "id": "browserbase",
+    "apiBaseUrl": "https://api.browserbase.com",
+    "createPath": "/v1/sessions",
+    "requiredEnvironment": [
+      "BROWSERBASE_API_KEY",
+      "BROWSERBASE_PROJECT_ID",
+      "BROWSERBASE_BROWSER_HOUR_PRICE_MICRO_USD",
+      "BROWSERBASE_PRICING_VERSION"
+    ],
+    "liveGateEnvironment": [
+      "ZUVYR_M17_VERIFIED",
+      "ZUVYR_BROWSER_PRICING_VERIFIED"
+    ],
+    "externalGate": "M17",
+    "liveEnabledByDefault": false
+  },
+  "pricing": {
+    "verificationStatus": "operator_verification_required",
+    "billingAuthority": false,
+    "unitType": "browser_seconds",
+    "publishedReference": {
+      "developerOverageUsdPerHour": "0.12",
+      "startupOverageUsdPerHour": "0.10",
+      "x402PayPerUseUsdPerHour": "0.12",
+      "sourceUrl": "https://www.browserbase.com/pricing",
+      "checkedAt": "2026-09-19"
+    },
+    "rule": "Published plan prices are reference evidence only. ZUVYR paid execution stays blocked until the connected account plan and effective billing basis are verified.",
+    "accountPriceEnvironment": "BROWSERBASE_BROWSER_HOUR_PRICE_MICRO_USD",
+    "pricingVersionEnvironment": "BROWSERBASE_PRICING_VERSION",
+    "targetGrossMarginBps": 5000,
+    "maxAcceptedBrowserHourPriceMicroUsd": 10000000
+  },
+  "session": {
+    "maxConcurrentPerOwner": 1,
+    "defaultTtlSeconds": 900,
+    "maxTtlSeconds": 900,
+    "idleTtlSeconds": 300,
+    "keepAlive": true,
+    "persistContext": false,
+    "recordSession": false,
+    "proxies": false,
+    "captchaSolving": false,
+    "logSession": false
+  },
+  "network": {
+    "mode": "public-web-only",
+    "allowedSchemes": [
+      "https",
+      "http"
+    ],
+    "blockPrivateIpLiterals": true,
+    "blockLocalhost": true,
+    "blockLinkLocal": true,
+    "blockCloudMetadata": true,
+    "blockedHostSuffixes": [
+      ".localhost",
+      ".local",
+      ".internal"
+    ],
+    "rawCdpUrlReturnedToClient": false,
+    "allowedHostsRequired": true,
+    "maxAllowedHosts": 32
+  },
+  "secrets": {
+    "injectBackendEnvironment": false,
+    "persistCookiesOutsideProvider": false,
+    "persistConnectUrl": false,
+    "logConnectUrl": false,
+    "logApiKey": false,
+    "rawCredentialInputAllowed": false
+  },
+  "observations": {
+    "maxDomBytes": 2097152,
+    "maxScreenshotBytes": 20971520,
+    "screenshotFormats": [
+      "png",
+      "jpeg"
+    ],
+    "maxTabs": 10
+  },
+  "files": {
+    "maxUploadBytes": 104857600,
+    "maxDownloadBytes": 104857600,
+    "canonicalAssetBucket": "conversation-files",
+    "uploadsRequireOwnedCanonicalAsset": true,
+    "downloadsBecomeCanonicalAssets": true
+  },
+  "metering": {
+    "usageKind": "browser_runtime",
+    "operationType": "browser_runtime",
+    "unitType": "browser_seconds",
+    "exactProviderUsageRequiredBeforeSettlement": true,
+    "reserveWhilePricingUnknown": false,
+    "pricingSource": "connected_account_verified_snapshot",
+    "reserveBasis": "requested_session_ttl",
+    "settleBasis": "provider_started_ended_duration"
+  },
+  "gates": {
+    "canCreateLiveSession": true,
+    "reason": "Implementation is ready; live execution requires M17, Browserbase credentials and operator-verified connected-account price/version.",
+    "noProviderCallsInPack081Verification": true
+  }
+}
