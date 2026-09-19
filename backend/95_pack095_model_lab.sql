@@ -1168,6 +1168,114 @@ begin
 end;
 $pack095_promote_checkpoint$;
 
+
+create or replace function public.rollback_zuvyr_model_lab_checkpoint_pack095(
+  p_admin_id uuid,
+  p_checkpoint_id uuid,
+  p_target_stage text default 'LAB',
+  p_reason text default null
+) returns jsonb
+language plpgsql
+security definer
+set search_path=public,pg_temp
+as $pack095_rollback_checkpoint$
+declare
+  v_checkpoint public.zuvyr_model_lab_checkpoints%rowtype;
+  v_target text := upper(btrim(coalesce(p_target_stage,'LAB')));
+  v_reason text := left(btrim(coalesce(p_reason,'')),1000);
+  v_cancelled_plans integer := 0;
+begin
+  perform public.pack095_require_admin(p_admin_id);
+
+  select * into v_checkpoint
+  from public.zuvyr_model_lab_checkpoints
+  where id=p_checkpoint_id
+    and owner_id=p_admin_id
+  for update;
+
+  if v_checkpoint.id is null then
+    raise exception 'pack095_checkpoint_not_found';
+  end if;
+
+  if v_target <> 'LAB' then
+    raise exception 'pack095_rollback_target_invalid';
+  end if;
+
+  if v_checkpoint.current_stage not in ('LAB','EVAL') then
+    raise exception 'pack095_live_stage_rollback_owned_by_pack096';
+  end if;
+
+  select count(*)::int into v_cancelled_plans
+  from public.zuvyr_model_lab_stage_events
+  where owner_id=p_admin_id
+    and checkpoint_id=v_checkpoint.id
+    and event_status='planned'
+    and to_stage in ('SHADOW','CANARY','SECONDARY','PRIMARY');
+
+  if v_checkpoint.current_stage='LAB' and v_cancelled_plans=0 then
+    return jsonb_build_object(
+      'checkpoint_id',v_checkpoint.id,
+      'stage','LAB',
+      'replayed',true,
+      'cancelled_planned_stages',0,
+      'production_routing_enabled',false
+    );
+  end if;
+
+  if v_checkpoint.current_stage='EVAL' then
+    update public.zuvyr_model_lab_checkpoints
+    set
+      current_stage='LAB',
+      status='rolled_back',
+      updated_at=now()
+    where id=v_checkpoint.id;
+
+    insert into public.zuvyr_model_lab_stage_events(
+      owner_id,checkpoint_id,from_stage,to_stage,event_status,evidence
+    ) values (
+      p_admin_id,v_checkpoint.id,'EVAL','LAB','rolled_back',
+      jsonb_build_object(
+        'reason',nullif(v_reason,''),
+        'runtime_owner','PACK095',
+        'production_routing_enabled',false
+      )
+    );
+  end if;
+
+  if v_cancelled_plans>0 then
+    insert into public.zuvyr_model_lab_stage_events(
+      owner_id,checkpoint_id,from_stage,to_stage,event_status,evidence
+    )
+    select
+      p_admin_id,
+      v_checkpoint.id,
+      planned.to_stage,
+      'LAB',
+      'rolled_back',
+      jsonb_build_object(
+        'reason',nullif(v_reason,''),
+        'cancelled_planned_stage',planned.to_stage,
+        'source_stage_event_id',planned.id,
+        'production_routing_enabled',false
+      )
+    from public.zuvyr_model_lab_stage_events planned
+    where planned.owner_id=p_admin_id
+      and planned.checkpoint_id=v_checkpoint.id
+      and planned.event_status='planned'
+      and planned.to_stage in ('SHADOW','CANARY','SECONDARY','PRIMARY');
+  end if;
+
+  return jsonb_build_object(
+    'checkpoint_id',v_checkpoint.id,
+    'stage','LAB',
+    'replayed',false,
+    'cancelled_planned_stages',v_cancelled_plans,
+    'production_routing_enabled',false,
+    'runtime_owner','PACK095'
+  );
+end;
+$pack095_rollback_checkpoint$;
+
 revoke all on function public.pack095_require_admin(uuid) from public,anon,authenticated;
 revoke all on function public.create_zuvyr_model_lab_dataset_pack095(uuid,text,text) from public,anon,authenticated;
 revoke all on function public.add_zuvyr_model_lab_candidate_pack095(uuid,uuid,uuid) from public,anon,authenticated;
@@ -1179,6 +1287,7 @@ revoke all on function public.clear_zuvyr_compute_connector_secret_pack095(uuid,
 revoke all on function public.create_zuvyr_model_lab_training_run_pack095(uuid,uuid,uuid,uuid,text,text,jsonb) from public,anon,authenticated;
 revoke all on function public.record_zuvyr_model_lab_checkpoint_pack095(uuid,uuid,text,text,text,text,numeric,numeric,boolean) from public,anon,authenticated;
 revoke all on function public.promote_zuvyr_model_lab_checkpoint_pack095(uuid,uuid,text,uuid) from public,anon,authenticated;
+revoke all on function public.rollback_zuvyr_model_lab_checkpoint_pack095(uuid,uuid,text,text) from public,anon,authenticated;
 
 grant execute on function public.pack095_require_admin(uuid) to service_role;
 grant execute on function public.create_zuvyr_model_lab_dataset_pack095(uuid,text,text) to service_role;
@@ -1191,6 +1300,7 @@ grant execute on function public.clear_zuvyr_compute_connector_secret_pack095(uu
 grant execute on function public.create_zuvyr_model_lab_training_run_pack095(uuid,uuid,uuid,uuid,text,text,jsonb) to service_role;
 grant execute on function public.record_zuvyr_model_lab_checkpoint_pack095(uuid,uuid,text,text,text,text,numeric,numeric,boolean) to service_role;
 grant execute on function public.promote_zuvyr_model_lab_checkpoint_pack095(uuid,uuid,text,uuid) to service_role;
+grant execute on function public.rollback_zuvyr_model_lab_checkpoint_pack095(uuid,uuid,text,text) to service_role;
 
 comment on table public.zuvyr_model_lab_dataset_items is
   'PACK095 immutable dataset candidate lineage. Rows reference PACK094 rights/consent/privacy-approved candidates; freeze and training-run creation revalidate current eligibility.';
