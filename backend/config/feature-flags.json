@@ -668,5 +668,11 @@
     "enabled": false,
     "tier": "pro",
     "status": "implemented_pack069_paid_live_deferred"
+  },
+  "model3d_generation": {
+    "enabled": false,
+    "tier": "pro",
+    "status": "implemented_pack083_live_deferred_m18",
+    "note": "Text/image/multiview-to-3D engineering path is implemented; live paid provider execution remains disabled until M18, LIVE_BILLING_ALLOWED, exact pricing and FAL credential gates are all satisfied."
   }
 }
