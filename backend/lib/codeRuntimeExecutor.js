@@ -806,6 +806,50 @@ function createCodeRuntimeExecutor({
     return runtime.list({ ownerId, projectId, limit });
   }
 
+  async function reconcileActive({ limit = 50, logger = console } = {}) {
+    const items = await runtime.activeJobs({ limit });
+    const receipt = {
+      scanned: items.length,
+      refreshed: 0,
+      terminal: 0,
+      deferred: 0,
+      failures: []
+    };
+
+    for (const item of items) {
+      try {
+        if (item.status === 'queued') {
+          // Queued means provider execution never became authoritative.
+          // Leave it for an idempotent POST replay or explicit cancel rather
+          // than starting user code from maintenance.
+          receipt.deferred += 1;
+          continue;
+        }
+
+        const job = await refresh({
+          ownerId: item.ownerId,
+          jobId: item.id
+        });
+        receipt.refreshed += 1;
+        if (['succeeded','failed','cancelled'].includes(job.status)) {
+          receipt.terminal += 1;
+        }
+      } catch (error) {
+        receipt.failures.push({
+          jobId: item.id,
+          code: String(error?.code || 'code_runtime_reconcile_failed')
+        });
+        logger.error(
+          '[code-runtime-reconcile] job failed:',
+          item.id,
+          String(error?.code || error?.message || error)
+        );
+      }
+    }
+
+    return Object.freeze(receipt);
+  }
+
   async function logs({
     ownerId,
     jobId,
@@ -824,6 +868,7 @@ function createCodeRuntimeExecutor({
     refresh,
     cancel,
     listJobs,
+    reconcileActive,
     logs,
     deterministicCommandId,
     commandLogChunks
