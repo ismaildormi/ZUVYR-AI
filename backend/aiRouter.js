@@ -440,7 +440,14 @@ async function routeRequest(feature, messages, opts = {}) {
   throw error;
 }
 
-module.exports = { routeRequest, ROUTES, MULTIMODAL_ROUTE, getEffectiveChain, rankEligibleRoutes: routerRanking.rankEligibleRoutes };
+module.exports = {
+  routeRequest,
+  ROUTES,
+  MULTIMODAL_ROUTE,
+  getEffectiveChain,
+  estimatePreCallCostUsd,
+  rankEligibleRoutes: routerRanking.rankEligibleRoutes
+};
 
 
 
