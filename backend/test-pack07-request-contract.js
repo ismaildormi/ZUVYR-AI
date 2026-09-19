@@ -9,7 +9,16 @@ assert.equal(transcription.options.diarization, true);
 assert.equal(transcription.options.smartFormat, true);
 assert.equal(normalizeAudioRequest({ operation: 'text_to_speech', text: 'سلام', voiceId: 'voice-1', outputFormat: 'wav' }).outputFormat, 'wav');
 assert.equal(normalizeAudioRequest({ operation: 'music_generation', prompt: 'calm instrumental', durationSeconds: 60 }).durationSeconds, 60);
-assert.equal(normalizeAudioRequest({ operation: 'audio_to_video', sourceAudioAssetId: id, visualAssetIds: [id, id], subtitles: true, outputFormat: 'mp4' }).visualAssetIds.length, 1);
+assert.equal(normalizeAudioRequest({
+  operation: 'audio_to_video',
+  sourceAudioAssetId: id,
+  sourceVideoAssetId: id,
+  visualAssetIds: [id, id],
+  subtitles: true,
+  outputFormat: 'mp4',
+  sourceRightsConfirmed: true,
+  rightsBasis: 'owned_source_media'
+}).visualAssetIds.length, 1);
 assert.throws(() => normalizeAudioRequest({ operation: 'transcription' }), { code: 'source_audio_asset_required' });
 assert.throws(() => normalizeAudioRequest({ operation: 'text_to_speech', text: '' }), { code: 'speech_text_required' });
 assert.throws(() => normalizeAudioRequest({ operation: 'voice_chat' }), { code: 'microphone_consent_required' });
