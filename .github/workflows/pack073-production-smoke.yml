@@ -28,7 +28,7 @@ jobs:
           const API_BASE = 'https://rox-ai-production.up.railway.app';
           const FRONTEND = 'https://rox-ai-sepia.vercel.app';
           const runId = String(process.env.GITHUB_RUN_ID || 'manual');
-          const email = `zuvyr-pack073-smoke-${runId}@example.com`;
+          const email = `zuvyr.pack073.smoke.${runId}.x9q7@gmail.com`;
           const password = `Zuvyr-P73-${runId}-A9!xQ`;
 
           async function request(url, options = {}) {
