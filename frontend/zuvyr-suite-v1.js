@@ -2105,6 +2105,7 @@
         applyProject(data.project);
         setStatus('Project loaded.');
         render();
+        return hydrateRuntimeForProject();
       })
       .catch(function (error) {
         setStatus(error.message);
@@ -2165,6 +2166,7 @@
       state.projects = Array.isArray(data.projects) ? data.projects : [];
       setStatus('Project created.');
       render();
+      return hydrateRuntimeForProject();
     }).catch(function (error) {
       setStatus(error.message);
     });
@@ -2194,6 +2196,7 @@
       setStatus('Saved as a new immutable version.');
       render();
       saveEditorStateSoon();
+      schedulePostSaveValidation();
       return state.project;
     }).catch(function (error) {
       setStatus(error.code === 'pack075_revision_conflict'
@@ -2304,6 +2307,7 @@
       setStatus('Switched to ' + name + '.');
       render();
       saveEditorStateSoon();
+      return hydrateRuntimeForProject();
     }).catch(function (error) {
       setStatus(error.message);
     });
@@ -2399,6 +2403,37 @@
       if (event.target.closest('[data-zs-code-new-branch]')) return createBranch();
       if (event.target.closest('[data-zs-code-ai-apply]')) return applyAiEdit();
 
+      var runtimeButton = event.target.closest('[data-zs-code-runtime]');
+      if (runtimeButton) {
+        return runRuntimeOperation(
+          runtimeButton.getAttribute('data-zs-code-runtime')
+        );
+      }
+
+      if (event.target.closest('[data-zs-code-repair]')) {
+        return startRepair();
+      }
+
+      if (event.target.closest('[data-zs-code-preview-refresh]')) {
+        return refreshPreviewFrame();
+      }
+
+      if (event.target.closest('[data-zs-code-preview-open]')) {
+        return openPreview();
+      }
+
+      if (event.target.closest('[data-zs-code-preview-fullscreen]')) {
+        return fullscreenPreview();
+      }
+
+      var viewportButton = event.target.closest('[data-zs-code-viewport]');
+      if (viewportButton) {
+        state.previewViewport =
+          viewportButton.getAttribute('data-zs-code-viewport') || 'fit';
+        render();
+        return;
+      }
+
       if (event.target.closest('[data-zs-code-toggle-preview]')) {
         state.previewVisible = !state.previewVisible;
         render();
@@ -2426,6 +2461,7 @@
           render();
           return;
         }
+        clearRuntimeTimers();
         loadProject(event.target.value);
       }
       if (event.target.matches('[data-zs-code-branch-select]')) {
@@ -2492,7 +2528,11 @@
 
     if (screen.classList.contains('active') && !root.dataset.loaded) {
       root.dataset.loaded = 'true';
-      loadProjects(false);
+      loadCapabilities()
+        .catch(function () { return null; })
+        .finally(function () {
+          loadProjects(false);
+        });
     }
   }
 
