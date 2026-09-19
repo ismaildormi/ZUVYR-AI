@@ -50,6 +50,8 @@ const { cleanupExpiredCodeSandboxes } = require('./lib/codeSandboxCleanup');
 const {
   reconcileActiveCodeRuntimeJobs
 } = require('./lib/codeRuntimeMaintenance');
+const { cleanupExpiredCloudBrowsers } = require('./lib/cloudBrowserCleanup');
+const { createCloudBrowserRouter } = require('./lib/cloudBrowserRoutes');
 const loadGuard = require('./lib/loadGuard');
 const { CREDIT_PRICE_USD, marginUsd } = require('./lib/creditEconomics');
 const { quoteGeneration } = require('./lib/dynamicPricing');
@@ -334,6 +336,24 @@ app.use(
 // subresources can load without exposing the user's API session to sandbox code.
 // Global IP protection still runs before this mount.
 app.use(
+  '/api/cloud-browser',
+  requireAuth,
+  rateLimit('chat'),
+  createCloudBrowserRouter({
+    db: supabaseAdmin,
+    storage: supabaseAdmin.storage,
+    env: process.env,
+    creditApi: {
+      reserveCredits,
+      settleCredits,
+      refundCredits,
+      logCreditEvent,
+      reportRefundFailure
+    }
+  })
+);
+
+app.use(
   '/api/code-preview',
   createCodePreviewTransportRouter({
     db: supabaseAdmin,
@@ -433,6 +453,16 @@ app.post(
               settleCredits,
               refundCredits,
               logCreditEvent,
+              reportRefundFailure
+            }
+          }),
+        cloudBrowserCleanup: options =>
+          cleanupExpiredCloudBrowsers({
+            ...options,
+            env: process.env,
+            creditApi: {
+              settleCredits,
+              refundCredits,
               reportRefundFailure
             }
           }),
