@@ -128,8 +128,37 @@ function configuredProviders(feature, env) {
 function providerQuote(feature, {
   env = process.env,
   now = Date.now(),
-  imageRequest = null
+  imageRequest = null,
+  videoRequest = null
 } = {}) {
+  if (feature === 'video' && videoRequest?.operation === 'text_to_video') {
+    if (String(env.PACK066_PAID_EXECUTION_ENABLED || '').toLowerCase() !== 'true') {
+      throw pricingError('pack066_paid_execution_disabled');
+    }
+    if (!env.REPLICATE_API_TOKEN) {
+      throw pricingError('no_configured_video_provider');
+    }
+    const model = env.REPLICATE_VIDEO_MODEL || 'wan-video/wan-2.2-t2v-fast';
+    if (model !== 'wan-video/wan-2.2-t2v-fast') {
+      throw pricingError('replicate_video_model_unverified');
+    }
+    const resolution = String(videoRequest.options?.resolution || '').toLowerCase();
+    if (!['480p', '720p'].includes(resolution)) {
+      throw pricingError('pack066_video_resolution_unpriced');
+    }
+    const entry = resolveCostEntry({
+      provider: 'replicate',
+      modelToolId: 'wan-video/wan-2.2-t2v-fast',
+      capability: 'video',
+      operationType: `text_to_video_${resolution}`
+    }, { env, now });
+    return Object.freeze({
+      provider: 'replicate',
+      providerCostMicroUsd: estimateProviderCostMicroUsd(entry, { units: 1 }),
+      pricingVersion: entry.registryVersion,
+      costEntryId: entry.id
+    });
+  }
   if (
     feature === 'image' &&
     imageRequest &&

@@ -16,15 +16,15 @@ for (const marker of [
   "assertVideoRequestAvailable({ operation: 'text_to_video' })",
   "app.post('/api/generate-video'"
 ]) assert(server.includes(marker), `Missing server marker: ${marker}`);
-assert(generation.indexOf('assertVideoRequestAvailable(videoRequest)') < generation.indexOf('pricing = quoteGeneration(feature)'));
+assert(generation.indexOf('assertVideoRequestAvailable(videoRequest)') < generation.indexOf('pricing = quoteGeneration('));
 assert(generation.indexOf('assertVideoRequestAvailable(videoRequest)') < generation.indexOf('reservation = await reserveCredits'));
 
 for (const marker of [
   "require('./lib/videoProvider')", 'assertVideoRequestAvailable(videoRequest)',
-  'const result = await generateVideo', 'buildVideoArtifact({',
+  'providerResult = await generateVideo', 'buildVideoArtifact({',
   "job_stage: 'preview'", "job_stage: 'done'", 'preview_url: artifact.previewUrl'
 ]) assert(worker.includes(marker), `Missing worker marker: ${marker}`);
-assert(worker.indexOf('assertVideoRequestAvailable(videoRequest)') < worker.indexOf('const result = await generateVideo'));
+assert(worker.indexOf('assertVideoRequestAvailable(videoRequest)') < worker.indexOf('providerResult = await generateVideo'));
 
 assert.equal(flags.video_generation.enabled, false);
 assert.equal(flags.video_jobs.enabled, true);

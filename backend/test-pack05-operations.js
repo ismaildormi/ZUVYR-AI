@@ -10,8 +10,9 @@ const {
 } = require('./lib/videoOperationRegistry');
 
 assert.equal(config.version, 'pack-05.video-system.v1');
+
 for (const operation of [
-  'text_to_video', 'image_to_video', 'edit', 'extend',
+  'image_to_video', 'edit', 'extend',
   'subtitles', 'enhance', 'export'
 ]) {
   assert.throws(
@@ -23,6 +24,19 @@ for (const operation of [
     error => error.code === 'video_operation_unpriced'
   );
 }
+
+assert.throws(
+  () => assertVideoOperationAvailable('text_to_video', { env: {} }),
+  error => error.code === 'video_operation_paid_execution_disabled'
+);
+assert.equal(
+  assertVideoRequestAvailable(
+    { operation: 'text_to_video' },
+    { env: { PACK066_PAID_EXECUTION_ENABLED: 'true' } }
+  ).operation,
+  'text_to_video'
+);
+
 assert.throws(
   () => assertVideoOperationAvailable('not-real'),
   error => error.code === 'unknown_video_operation'
@@ -33,4 +47,4 @@ assert.equal(providerSupports('unknown', 'text_to_video'), false);
 assert.deepEqual(Object.keys(inventory().operations), Object.keys(config.operations));
 assert.equal(inventory().jobs.cancelEnabledByDefault, false);
 
-console.log('PASS: Pack 05 video registry and every unpriced operation fail closed');
+console.log('PASS: Pack 05 registry preserves blocked future video operations while Pack066 T2V is guarded by an explicit paid-execution gate');

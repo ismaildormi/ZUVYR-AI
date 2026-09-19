@@ -1641,7 +1641,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
       return res.status(error.code === 'unknown_video_operation' ? 400 : 503).json({
         status: 'error',
         code: error.code || 'video_operation_unavailable',
-        message: 'This video operation is not enabled until its provider price is verified.',
+        message: 'This video operation is not enabled for paid execution yet.',
         videoOperation: error.operation || videoRequest.operation
       });
     }
@@ -1729,7 +1729,11 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
   try {
     pricing = quoteGeneration(
       feature,
-      imageRequest ? { imageRequest } : {}
+      imageRequest
+        ? { imageRequest }
+        : videoRequest
+          ? { videoRequest }
+          : {}
     );
   } catch (err) {
     console.error(`[${feature}] pricing unavailable:`, err.message);
@@ -1745,7 +1749,13 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
 
   let reservation;
   try {
-    reservation = await reserveCredits({ userId, requestId, feature, creditsConsumed });
+    reservation = await reserveCredits({
+      userId,
+      requestId,
+      feature,
+      creditsConsumed,
+      pricingVersion: pricing.pricingVersion
+    });
   } catch (err) {
     if (err.code === 'insufficient_credits') {
       return res.status(402).json({ status: 'error', message: 'Insufficient credits.' });
@@ -1857,6 +1867,8 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
       aiPreferences: normalizedAiPreferences,
       feature,
       creditsConsumed,
+      pricingVersion: pricing.pricingVersion,
+      quotedProviderCostMicroUsd: pricing.providerCostMicroUsd,
       conversationId: conversationId || null,
       requestMessageId:
         requestMessage ? requestMessage.id : null,

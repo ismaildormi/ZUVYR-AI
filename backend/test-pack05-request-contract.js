@@ -10,7 +10,7 @@ const text = normalizeVideoRequest({ prompt: '  Moroccan coast at sunrise  ' });
 assert.equal(text.operation, 'text_to_video');
 assert.equal(text.prompt, 'Moroccan coast at sunrise');
 assert.deepEqual(text.options, {
-  durationSeconds: 5, ratio: '16:9', resolution: '720p', fps: 24,
+  durationSeconds: 5, ratio: '16:9', resolution: '480p', fps: 16,
   audio: false, seed: null, subtitleLanguage: 'auto',
   targetLanguage: 'auto', exportFormat: 'mp4'
 });

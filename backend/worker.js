@@ -49,6 +49,7 @@ const { generateVideo, DEFAULT_VIDEO_MODEL } = require('./lib/videoProvider');
 const { normalizeVideoRequest } = require('./lib/videoRequestContract');
 const { assertVideoRequestAvailable } = require('./lib/videoOperationRegistry');
 const { buildVideoArtifact } = require('./lib/videoArtifactContract');
+const { getDefaultVideoGenerationRepository } = require('./lib/videoGenerationRepository');
 const { connection } = require('./lib/queue');
 const { startBrainKernelWorker } = require('./lib/brainKernelWorker');
 const { supabaseAdmin } = require('./lib/supabaseAdmin');
@@ -596,6 +597,9 @@ async function processVideoJob(job) {
     requestId,
     userId,
     prompt,
+    creditsConsumed,
+    pricingVersion = null,
+    quotedProviderCostMicroUsd = null,
     conversationId = null,
     memoryRequestKey = null,
     videoOperation = 'text_to_video',
@@ -615,8 +619,7 @@ async function processVideoJob(job) {
     endFrameAssetId,
     videoOptions
   });
-  // Defence in depth: even a manually injected queue job cannot reach a paid
-  // provider while the operation is unpriced or disabled.
+
   assertVideoRequestAvailable(videoRequest);
 
   await markJob(jobRowId, {
@@ -626,26 +629,101 @@ async function processVideoJob(job) {
     started_at: new Date().toISOString()
   });
 
-  await markJob(jobRowId, { progress_percent: 15, job_stage: 'provider' });
-  const result = await generateVideo(videoRequest, {
-    env: { ...process.env, REPLICATE_VIDEO_MODEL: VIDEO_MODEL }
+  const repository = getDefaultVideoGenerationRepository();
+  let persisted = await repository.getExisting({
+    ownerId: userId,
+    jobId: jobRowId
   });
+  let providerResult = null;
+
+  if (!persisted) {
+    await markJob(jobRowId, {
+      progress_percent: 15,
+      job_stage: 'provider'
+    });
+    await markJob(jobRowId, {
+      progress_percent: 35,
+      job_stage: 'processing'
+    });
+
+    providerResult = await generateVideo(videoRequest, {
+      env: { ...process.env, REPLICATE_VIDEO_MODEL: VIDEO_MODEL }
+    });
+
+    if (
+      providerResult.billableUnits?.unitType !== 'videos' ||
+      providerResult.billableUnits?.units !== 1 ||
+      providerResult.billableUnits?.resolution !== videoRequest.options.resolution
+    ) {
+      const error = new Error('video_billable_units_mismatch');
+      error.code = 'video_billable_units_mismatch';
+      throw error;
+    }
+
+    persisted = await repository.persistGenerated({
+      ownerId: userId,
+      jobId: jobRowId,
+      prompt,
+      providerUrl: providerResult.url,
+      provider: providerResult.provider,
+      model: providerResult.model,
+      operation: videoRequest.operation,
+      options: videoRequest.options,
+      billing: {
+        pricingVersion,
+        quotedProviderCostMicroUsd,
+        unitType: providerResult.billableUnits.unitType,
+        units: providerResult.billableUnits.units,
+        resolution: providerResult.billableUnits.resolution,
+        providerFrames: providerResult.numFrames,
+        providerFps: providerResult.fps
+      }
+    });
+  }
+
+  const provider =
+    providerResult?.provider ||
+    persisted.options?.outputProvider ||
+    'replicate';
+  const model =
+    providerResult?.model ||
+    persisted.options?.outputModel ||
+    VIDEO_MODEL;
+
+  const artifactOptions = {
+    ...videoRequest.options,
+    actualDurationSeconds: persisted.actualDurationSeconds,
+    outputProvider: provider,
+    outputModel: model,
+    billing: persisted.options?.billing || null
+  };
+
   const artifact = buildVideoArtifact({
-    url: result.url,
+    url: persisted.providerUrl,
     operation: videoRequest.operation,
-    provider: result.provider,
-    model: result.model,
+    provider,
+    model,
     sourceImageAssetId: videoRequest.sourceImageAssetId,
     sourceVideoAssetId: videoRequest.sourceVideoAssetId,
     startFrameAssetId: videoRequest.startFrameAssetId,
     endFrameAssetId: videoRequest.endFrameAssetId,
-    options: videoRequest.options
+    options: artifactOptions
   });
 
-  await markJob(jobRowId, { progress_percent: 90, job_stage: 'preview' });
+  await markJob(jobRowId, {
+    progress_percent: 90,
+    job_stage: 'preview'
+  });
+
+  const finalCredits = Number(creditsConsumed);
+  if (!Number.isSafeInteger(finalCredits) || finalCredits < 1) {
+    const error = new Error('video_credit_settlement_invalid');
+    error.code = 'video_credit_settlement_invalid';
+    throw error;
+  }
+  await settleCredits(requestId, finalCredits);
 
   let memoryResult = null;
-
   if (conversationId) {
     try {
       memoryResult = await completeGenerationConversation({
@@ -654,14 +732,16 @@ async function processVideoJob(job) {
         feature: 'video',
         resultUrl: artifact.url,
         requestKey: memoryRequestKey || requestId || jobRowId,
-        provider: 'replicate',
-        model: VIDEO_MODEL,
+        provider,
+        model,
         operation: artifact.operation,
         sourceImageAssetId: artifact.lineage.sourceImageAssetId,
         sourceVideoAssetId: artifact.lineage.sourceVideoAssetId,
         startFrameAssetId: artifact.lineage.startFrameAssetId,
         endFrameAssetId: artifact.lineage.endFrameAssetId,
-        videoOptions: artifact.options
+        videoOptions: artifact.options,
+        canonicalContentId: persisted.contentId,
+        canonicalAssetId: persisted.assetId
       });
     } catch (memoryError) {
       console.error(
@@ -674,6 +754,7 @@ async function processVideoJob(job) {
   await markJob(jobRowId, {
     status: 'done',
     result_url: artifact.url,
+    canonical_content_id: persisted.contentId,
     preview_url: artifact.previewUrl,
     export_url: artifact.exportUrl,
     progress_percent: 100,
