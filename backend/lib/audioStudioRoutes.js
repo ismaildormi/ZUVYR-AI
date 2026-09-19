@@ -1,41 +1,407 @@
 'use strict';
 
+const crypto = require('node:crypto');
 const express = require('express');
 const { publicInventory, assertAudioOperationAvailable } = require('./audioOperationRegistry');
 const { normalizeAudioRequest } = require('./audioRequestContract');
 const { buildAudioJobSnapshot } = require('./audioJobContract');
 const { normalizeVoiceSessionRequest } = require('./voiceSessionContract');
+const { quoteGeneration } = require('./dynamicPricing');
 
 function statusFor(error) {
-  return ['audio_operation_unpriced', 'audio_operation_disabled'].includes(error.code) ? 503 : 400;
+  if ([
+    'audio_operation_unpriced',
+    'audio_operation_disabled',
+    'audio_operation_paid_execution_disabled',
+    'pricing_unconfigured'
+  ].includes(error.code)) return 503;
+  return 400;
 }
 
-function createAudioStudioRouter() {
+function uuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
+}
+
+function createAudioStudioRouter({
+  db = null,
+  queue = null,
+  creditApi = null,
+  audioInputResolver = null,
+  assetKernel = null,
+  env = process.env
+} = {}) {
   const router = express.Router();
-  router.get('/capabilities', (_req, res) => res.json({ status: 'success', ...publicInventory() }));
+
+  router.get('/capabilities', (_req, res) =>
+    res.json({ status: 'success', ...publicInventory() })
+  );
+
   router.post('/requests/validate', (req, res) => {
-    try { return res.json({ status: 'success', request: normalizeAudioRequest(req.body) }); }
-    catch (error) { return res.status(statusFor(error)).json({ status: 'error', code: error.code || 'invalid_audio_request', message: 'Audio request validation failed.' }); }
-  });
-  router.post('/jobs/request', (req, res) => {
     try {
-      const request = normalizeAudioRequest(req.body);
-      assertAudioOperationAvailable(request.operation);
-      const job = buildAudioJobSnapshot({ userId: req.userId, requestId: req.headers['idempotency-key'], request });
-      return res.status(501).json({ status: 'error', code: 'audio_provider_unavailable', job });
+      return res.json({
+        status: 'success',
+        request: normalizeAudioRequest(req.body)
+      });
     } catch (error) {
-      return res.status(statusFor(error)).json({ status: 'error', code: error.code || 'audio_operation_disabled', operation: error.operation, message: 'Audio provider execution is not enabled.' });
+      return res.status(statusFor(error)).json({
+        status: 'error',
+        code: error.code || 'invalid_audio_request',
+        message: 'Audio request validation failed.'
+      });
     }
   });
+
+  router.post('/jobs/request', async (req, res) => {
+    if (
+      !db ||
+      !queue ||
+      !creditApi ||
+      typeof creditApi.reserveCredits !== 'function' ||
+      typeof creditApi.refundCredits !== 'function' ||
+      !audioInputResolver
+    ) {
+      return res.status(503).json({
+        status: 'error',
+        code: 'audio_runtime_dependencies_unavailable',
+        message: 'Audio execution is not available.'
+      });
+    }
+
+    let request;
+    try {
+      request = normalizeAudioRequest(req.body);
+      assertAudioOperationAvailable(request.operation, { env });
+    } catch (error) {
+      return res.status(statusFor(error)).json({
+        status: 'error',
+        code: error.code || 'audio_operation_disabled',
+        operation: error.operation,
+        message: 'Audio provider execution is not enabled.'
+      });
+    }
+
+    const requestId =
+      String(req.headers['idempotency-key'] || '').trim() ||
+      crypto.randomUUID();
+
+    const existing = await db
+      .from('audio_jobs')
+      .select('id,owner_id,request_id,status,stage,progress_percent,reserved_credits,canonical_content_id,canonical_asset_id')
+      .eq('owner_id', req.userId)
+      .eq('request_id', requestId)
+      .maybeSingle();
+
+    if (existing.error) {
+      return res.status(500).json({
+        status: 'error',
+        code: 'audio_job_lookup_failed',
+        message: 'Audio job lookup failed.'
+      });
+    }
+    if (existing.data) {
+      return res.status(202).json({
+        status: 'success',
+        replayed: true,
+        job: {
+          id: existing.data.id,
+          requestId,
+          status: existing.data.status,
+          stage: existing.data.stage,
+          progressPercent: Number(existing.data.progress_percent || 0),
+          reservedCredits: Number(existing.data.reserved_credits || 0),
+          canonicalContentId: existing.data.canonical_content_id || null,
+          canonicalAssetId: existing.data.canonical_asset_id || null
+        }
+      });
+    }
+
+    let inspected;
+    try {
+      inspected = await audioInputResolver.inspect({
+        ownerId: req.userId,
+        request
+      });
+    } catch (error) {
+      const code = String(error.code || error.message || '');
+      return res.status(code.includes('duration') || code.includes('not_ready') ? 409 : 400).json({
+        status: 'error',
+        code: code || 'audio_source_preflight_failed',
+        message: 'The selected audio source is not ready.'
+      });
+    }
+
+    let pricing;
+    try {
+      pricing = quoteGeneration('audio', {
+        audioRequest: request,
+        audioPricingContext: {
+          sourceDurationSeconds: inspected.source.durationSeconds,
+          sourceFileSizeBytes: inspected.source.fileSizeBytes,
+          sourceMimeType: inspected.source.mimeType,
+          canonicalLineage: inspected.lineage
+        },
+        env
+      });
+    } catch (error) {
+      return res.status(503).json({
+        status: 'error',
+        code: error.message || error.code || 'audio_pricing_unavailable',
+        message: 'Audio pricing is unavailable.'
+      });
+    }
+
+    let reservation;
+    try {
+      reservation = await creditApi.reserveCredits({
+        userId: req.userId,
+        requestId,
+        feature: 'audio',
+        creditsConsumed: pricing.credits,
+        pricingVersion: pricing.pricingVersion
+      });
+    } catch (error) {
+      if (error.code === 'insufficient_credits') {
+        return res.status(402).json({
+          status: 'error',
+          code: 'insufficient_credits',
+          message: 'Insufficient credits.'
+        });
+      }
+      return res.status(500).json({
+        status: 'error',
+        code: 'audio_credit_reservation_failed',
+        message: 'Audio credits could not be reserved.'
+      });
+    }
+
+    const jobId = crypto.randomUUID();
+    const row = {
+      id: jobId,
+      owner_id: req.userId,
+      conversation_id: request.conversationId,
+      request_id: requestId,
+      operation: request.operation,
+      source_audio_asset_id: request.sourceAudioAssetId,
+      options: request,
+      status: 'queued',
+      stage: 'validating',
+      progress_percent: 0,
+      pricing_status: 'verified',
+      reservation_request_id: requestId,
+      reserved_credits: pricing.credits,
+      provider: pricing.provider,
+      usage: {
+        pricingVersion: pricing.pricingVersion,
+        quotedProviderCostMicroUsd: pricing.providerCostMicroUsd,
+        sourceDurationSeconds: inspected.source.durationSeconds,
+        sourceMimeType: inspected.source.mimeType,
+        sourceFileSizeBytes: inspected.source.fileSizeBytes
+      }
+    };
+
+    const inserted = await db.from('audio_jobs').insert(row);
+    if (inserted.error) {
+      await creditApi.refundCredits(requestId).catch(() => null);
+      return res.status(500).json({
+        status: 'error',
+        code: 'audio_job_create_failed',
+        message: 'Audio job could not be created.'
+      });
+    }
+
+    try {
+      await queue.add('process', {
+        jobRowId: jobId,
+        requestId,
+        userId: req.userId,
+        request,
+        creditsConsumed: pricing.credits,
+        pricingVersion: pricing.pricingVersion,
+        quotedProviderCostMicroUsd: pricing.providerCostMicroUsd
+      }, {
+        jobId,
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: 500,
+        removeOnFail: 1000
+      });
+    } catch (error) {
+      await db.from('audio_jobs').update({
+        status: 'failed',
+        stage: 'failed',
+        error_code: 'audio_queue_failed',
+        completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }).eq('id', jobId).eq('owner_id', req.userId);
+      await creditApi.refundCredits(requestId).catch(() => null);
+      return res.status(503).json({
+        status: 'error',
+        code: 'audio_queue_failed',
+        message: 'Audio job could not be queued.'
+      });
+    }
+
+    return res.status(202).json({
+      status: 'success',
+      replayed: reservation?.replayed === true,
+      job: {
+        id: jobId,
+        requestId,
+        operation: request.operation,
+        status: 'queued',
+        stage: 'validating',
+        progressPercent: 0,
+        reservedCredits: pricing.credits,
+        provider: pricing.provider
+      }
+    });
+  });
+
+  router.get('/jobs/:jobId', async (req, res) => {
+    if (!db) {
+      return res.status(503).json({ status: 'error', code: 'audio_runtime_dependencies_unavailable' });
+    }
+    const jobId = String(req.params.jobId || '').trim();
+    if (!uuid(jobId)) {
+      return res.status(400).json({ status: 'error', code: 'invalid_audio_job_id' });
+    }
+
+    const result = await db
+      .from('audio_jobs')
+      .select('id,request_id,operation,status,stage,progress_percent,provider,model,usage,result_text,detected_language,error_code,canonical_content_id,canonical_asset_id,created_at,updated_at,completed_at')
+      .eq('id', jobId)
+      .eq('owner_id', req.userId)
+      .maybeSingle();
+
+    if (result.error) return res.status(500).json({ status: 'error', code: 'audio_job_lookup_failed' });
+    if (!result.data) return res.status(404).json({ status: 'error', code: 'audio_job_not_found' });
+
+    let downloadUrl = null;
+    if (result.data.canonical_asset_id && assetKernel) {
+      try {
+        const signed = await assetKernel.createSignedDownload({
+          ownerId: req.userId,
+          assetId: result.data.canonical_asset_id,
+          requestId: 'audio-job:' + jobId + ':download',
+          expiresIn: 3600
+        });
+        downloadUrl = signed.signedUrl;
+      } catch (_) {
+        downloadUrl = null;
+      }
+    }
+
+    const segments = result.data.operation === 'transcription'
+      ? await db.from('audio_transcript_segments')
+          .select('segment_index,start_seconds,end_seconds,speaker,confidence,text,metadata')
+          .eq('owner_id', req.userId)
+          .eq('job_id', jobId)
+          .order('segment_index', { ascending: true })
+      : { data: [], error: null };
+
+    return res.json({
+      status: 'success',
+      job: {
+        id: result.data.id,
+        requestId: result.data.request_id,
+        operation: result.data.operation,
+        status: result.data.status,
+        stage: result.data.stage,
+        progressPercent: Number(result.data.progress_percent || 0),
+        provider: result.data.provider,
+        model: result.data.model,
+        language: result.data.detected_language,
+        transcript: result.data.result_text,
+        errorCode: result.data.error_code,
+        canonicalContentId: result.data.canonical_content_id,
+        canonicalAssetId: result.data.canonical_asset_id,
+        downloadUrl,
+        segments: segments.error ? [] : (segments.data || []),
+        usage: result.data.usage || {},
+        createdAt: result.data.created_at,
+        updatedAt: result.data.updated_at,
+        completedAt: result.data.completed_at
+      }
+    });
+  });
+
+  router.post('/jobs/:jobId/cancel', async (req, res) => {
+    if (!db || !queue || !creditApi) {
+      return res.status(503).json({ status: 'error', code: 'audio_runtime_dependencies_unavailable' });
+    }
+    const jobId = String(req.params.jobId || '').trim();
+    if (!uuid(jobId)) return res.status(400).json({ status: 'error', code: 'invalid_audio_job_id' });
+
+    const before = await db.from('audio_jobs')
+      .select('id,reservation_request_id,status,stage')
+      .eq('id', jobId).eq('owner_id', req.userId).maybeSingle();
+    if (before.error) return res.status(500).json({ status: 'error', code: 'audio_job_lookup_failed' });
+    if (!before.data) return res.status(404).json({ status: 'error', code: 'audio_job_not_found' });
+
+    const result = await db.rpc('request_zuvyr_audio_job_cancel', {
+      p_owner_id: req.userId,
+      p_job_id: jobId
+    });
+    if (result.error) {
+      return res.status(500).json({ status: 'error', code: 'audio_cancel_failed' });
+    }
+    const state = result.data || {};
+    if (state.code === 'audio_cancel_too_late') {
+      return res.status(409).json({
+        status: 'error',
+        code: 'audio_cancel_too_late',
+        jobStatus: state.status,
+        jobStage: state.stage
+      });
+    }
+    if (state.status === 'cancelled') {
+      try {
+        const queued = await queue.getJob(jobId);
+        if (queued) {
+          const queueState = await queued.getState().catch(() => null);
+          if (['waiting','delayed','paused'].includes(queueState)) await queued.remove().catch(() => null);
+        }
+      } catch (_) {}
+      if (state.refundRequired === true && before.data.reservation_request_id) {
+        await creditApi.refundCredits(before.data.reservation_request_id).catch(async error => {
+          if (typeof creditApi.reportRefundFailure === 'function') {
+            await creditApi.reportRefundFailure({
+              requestId: before.data.reservation_request_id,
+              userId: req.userId,
+              feature: 'audio',
+              error
+            }).catch(() => null);
+          }
+        });
+      }
+      return res.json({ status: 'cancelled', jobId });
+    }
+    return res.status(409).json({
+      status: 'error',
+      code: 'audio_cancel_terminal',
+      jobStatus: state.status,
+      jobStage: state.stage
+    });
+  });
+
   router.post('/voice/sessions/request', (req, res) => {
     try {
       const session = normalizeVoiceSessionRequest(req.body);
-      assertAudioOperationAvailable('voice_chat');
-      return res.status(501).json({ status: 'error', code: 'voice_provider_unavailable', session });
+      assertAudioOperationAvailable('voice_chat', { env });
+      return res.status(501).json({
+        status: 'error',
+        code: 'voice_provider_unavailable',
+        session
+      });
     } catch (error) {
-      return res.status(statusFor(error)).json({ status: 'error', code: error.code || 'voice_chat_disabled', message: 'Voice Chat is not enabled.' });
+      return res.status(statusFor(error)).json({
+        status: 'error',
+        code: error.code || 'voice_chat_disabled',
+        message: 'Voice Chat is not enabled.'
+      });
     }
   });
+
   return router;
 }
 
