@@ -184,17 +184,19 @@ function providerQuote(feature, {
         audioPricingContext?.sourceDurationSeconds,
         'pack071_source_duration'
       );
-      const billableSeconds = ceilDiv(durationMs, 1000n);
+      const multilingual = !audioRequest.language;
       const entry = resolveCostEntry({
         provider: 'deepgram',
         modelToolId: 'nova-3',
         capability: 'audio_transcription',
-        operationType: 'speech_to_text_multilingual_diarization'
+        operationType: multilingual
+          ? 'speech_to_text_multilingual_diarization'
+          : 'speech_to_text_monolingual_diarization'
       }, { env, now });
       return Object.freeze({
         provider: 'deepgram',
         providerCostMicroUsd: estimateProviderCostMicroUsd(entry, {
-          inputUnits: safeUsageInteger(billableSeconds, 'pack071_audio_seconds')
+          inputUnits: safeUsageInteger(durationMs, 'pack071_audio_duration_ms')
         }),
         pricingVersion: entry.registryVersion,
         costEntryId: entry.id

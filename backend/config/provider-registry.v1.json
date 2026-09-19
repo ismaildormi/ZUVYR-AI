@@ -736,6 +736,7 @@
             "mode": "registry_verified_entry",
             "authority": "backend/config/cost-registry.v1.json",
             "entryIds": [
+              "deepgram-nova-3-monolingual-prerecorded",
               "deepgram-nova-3-multilingual-prerecorded"
             ]
           }

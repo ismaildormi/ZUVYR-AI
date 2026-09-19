@@ -182,9 +182,12 @@
       "model": "nova-3",
       "paidExecutionEnvironment": "PACK071_STT_PAID_EXECUTION_ENABLED",
       "exactPricing": {
-        "payAsYouGoUsdPerMinute": "0.0052",
+        "payAsYouGoUsdPerMinuteMonolingual": "0.0043",
+        "payAsYouGoUsdPerMinuteMultilingual": "0.0052",
         "billingGranularity": "true_per_second",
-        "diarizationIncludedForPreRecorded": true
+        "diarizationIncludedForPreRecorded": true,
+        "smartFormattingIncluded": true,
+        "billingBasis": "trusted_server_measured_milliseconds"
       },
       "features": {
         "detectLanguage": true,
@@ -204,7 +207,6 @@
       ],
       "filters": [
         "highpass",
-        "lowpass",
         "afftdn",
         "loudnorm"
       ]
@@ -213,7 +215,9 @@
       "sourceAssets": "owner_scoped_private",
       "transcriptInheritsSourceRetention": true,
       "trainingRightsIndependent": true,
-      "rawAudioProviderPersistence": "not_required_by_zuvyr"
+      "rawAudioProviderPersistence": "not_required_by_zuvyr",
+      "providerModelImprovementOptOut": true,
+      "providerRetentionAfterResponse": "zero_data_retention_when_mip_opt_out_true"
     }
   }
 }

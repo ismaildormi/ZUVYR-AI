@@ -59,7 +59,8 @@ async function run(){
   assert.equal(url.origin,'https://api.deepgram.com');
   assert.equal(url.pathname,'/v1/listen');
   assert.equal(url.searchParams.get('model'),'nova-3');
-  assert.equal(url.searchParams.get('language'),'multi');
+  assert.equal(url.searchParams.get('language'),'ar-MA');
+  assert.equal(url.searchParams.get('mip_opt_out'),'true');
   assert.equal(url.searchParams.get('diarize_model'),'latest');
   assert.equal(url.searchParams.get('smart_format'),'true');
   assert.equal(url.searchParams.get('utterances'),'true');
@@ -108,7 +109,9 @@ async function run(){
     env:{DEEPGRAM_API_KEY:'synthetic',PACK071_STT_PAID_EXECUTION_ENABLED:'true'},
     fetchImpl:async(url,options)=>{
       providerCalls+=1;
-      assert.equal(new URL(url).searchParams.get('language'),'multi');
+      const calledUrl=new URL(url);
+      assert.equal(calledUrl.searchParams.get('language'),'ar-MA');
+      assert.equal(calledUrl.searchParams.get('mip_opt_out'),'true');
       assert.equal(options.method,'POST');
       assert.equal(options.headers.Authorization,'Token synthetic');
       return {ok:true,json:async()=>payload};
@@ -183,14 +186,36 @@ async function run(){
     now
   });
   assert.equal(sttQuote.provider,'deepgram');
-  assert.equal(sttQuote.providerCostMicroUsd,'1300');
+  assert.equal(sttQuote.providerCostMicroUsd,'1018');
+
+  const multilingualRequest=normalizeAudioRequest({
+    operation:'transcription',
+    sourceAudioAssetId:CONVERSATION_ASSET,
+    diarization:true,
+    smartFormat:true,
+    utterances:true
+  });
+  const multilingualUrl=new URL(buildDeepgramUrl(multilingualRequest));
+  assert.equal(multilingualUrl.searchParams.get('language'),'multi');
+  assert.equal(multilingualUrl.searchParams.get('mip_opt_out'),'true');
+  const multilingualQuote=quoteGeneration('audio',{
+    audioRequest:multilingualRequest,
+    audioPricingContext:{sourceDurationSeconds:14.2},
+    env:{
+      DEEPGRAM_API_KEY:'synthetic',
+      PACK071_STT_PAID_EXECUTION_ENABLED:'true'
+    },
+    now
+  });
+  assert.equal(multilingualQuote.providerCostMicroUsd,'1231');
 
   const cleanupRequest=normalizeAudioRequest({
     operation:'audio_cleanup',
     sourceAudioAssetId:CONVERSATION_ASSET,
-    outputFormat:'wav',
     cleanupStrength:'balanced'
   });
+  assert.equal(cleanupRequest.outputFormat,'wav');
+  assert.equal(cleanupRequest.options.cleanupFormat,'wav');
   const cleanupQuote=quoteGeneration('audio',{
     audioRequest:cleanupRequest,
     audioPricingContext:{sourceDurationSeconds:14.2},
@@ -224,10 +249,14 @@ async function run(){
   assert.equal(measured,12.345);
 
   const sttCost=costs.entries.find(x=>x.id==='deepgram-nova-3-multilingual-prerecorded');
+  const monoCost=costs.entries.find(x=>x.id==='deepgram-nova-3-monolingual-prerecorded');
   assert(sttCost);
+  assert(monoCost);
   assert.equal(sttCost.verificationStatus,'verified');
   assert.equal(sttCost.inputUnitPriceMicroUsd,'5200');
-  assert.equal(sttCost.unitScale,'60');
+  assert.equal(monoCost.inputUnitPriceMicroUsd,'4300');
+  assert.equal(sttCost.unitScale,'60000');
+  assert.equal(monoCost.unitScale,'60000');
   assert.equal(sttCost.unitType,'audio_seconds');
   const cleanupCost=costs.entries.find(x=>x.id==='local-ffmpeg-audio-cleanup');
   assert(cleanupCost);
@@ -240,6 +269,15 @@ async function run(){
 
   assert.equal(flags.audio_transcription.enabled,false);
   assert.equal(flags.audio_cleanup.enabled,true);
+  assert.equal(audioSystem.pack071.privacy.providerModelImprovementOptOut,true);
+  assert.equal(
+    audioSystem.pack071.privacy.providerRetentionAfterResponse,
+    'zero_data_retention_when_mip_opt_out_true'
+  );
+  assert.equal(
+    audioSystem.pack071.transcription.exactPricing.billingBasis,
+    'trusted_server_measured_milliseconds'
+  );
 
   const migration=fs.readFileSync(path.join(__dirname,'70_pack071_stt_diarization_cleanup.sql'),'utf8');
   const fkIndexes=fs.readFileSync(path.join(__dirname,'71_pack071_audio_fk_indexes.sql'),'utf8');
@@ -289,7 +327,7 @@ async function run(){
   assert(docker.includes('zuvyr-pack071-clean.wav'));
   assert(docker.includes('zuvyr-pack071-clean.mp3'));
 
-  console.log('PASS: PACK071 owner-scoped trusted-duration STT maps to Nova-3 multilingual with included diarization and exact per-second precharge');
+  console.log('PASS: PACK071 owner-scoped trusted-duration STT maps to exact Nova-3 mono/multilingual pricing with included diarization, zero-retention opt-out and no audio-time rounding');
   console.log('PASS: PACK071 transcript/segments and cleanup results persist through canonical content/assets/lineage with retry-safe provider evidence');
   console.log('PASS: PACK071 local cleanup is shell-safe and provider-free; paid STT gate blocks before network');
   console.log('LIVE PROVIDER / PAYMENT / PRODUCTION DATABASE / NETWORK CALLS: NONE');
