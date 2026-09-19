@@ -2,6 +2,7 @@
 
 const express = require('express');
 const { createLearningPipelineRepository } = require('./learningPipelineRepository');
+const learningConfig = require('../config/learning-pipeline.v1.json');
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const RIGHTS_BASES = new Set([
@@ -70,25 +71,27 @@ function createLearningPipelineRouter({ db } = {}) {
   router.get('/policy', (_req, res) => res.json({
     status: 'success',
     policy: {
-      version: 'pack094-v1',
-      nonContentAggregateLearning: true,
-      nonContentSignalsDoNotRequireTrainingOptIn: true,
+      version: learningConfig.version,
+      nonContentAggregateLearning:
+        learningConfig.telemetry.nonContentAggregateLearning === true,
+      nonContentSignalsDoNotRequireTrainingOptIn:
+        learningConfig.telemetry.trainingOptInRequiredForNonContentTelemetry === false,
       globalTrainingOptInDefault: false,
-      memoryPermissionSeparateFromTrainingPermission: true,
+      memoryPermissionSeparateFromTrainingPermission:
+        learningConfig.training.memoryPermissionSeparate === true,
       automaticConversationContentTraining: false,
-      currentConsentAuthority: 'zuvyr_user_preferences.training_consent',
-      optOutExcludesExistingCandidates: true,
-      dataDeleteRequestExcludesExistingCandidates: true,
-      trainingCandidateRequirements: [
-        'explicit_global_training_opt_in',
-        'active_training_rights',
-        'canonical_content_ownership',
-        'traceable_provenance',
-        'privacy_processing_and_redaction',
-        'dedupe_sha256'
-      ],
-      datasetAndCheckpointAdmissionOwner: 'PACK095',
-      primaryEvaluationObjective: 'task_success_and_total_cost_per_successful_task'
+      currentConsentAuthority: learningConfig.training.currentConsentAuthority,
+      optOutExcludesExistingCandidates:
+        learningConfig.training.optOutBehavior ===
+        'exclude_existing_candidates_and_block_future_admission',
+      dataDeleteRequestExcludesExistingCandidates:
+        learningConfig.training.dataDeleteBehavior ===
+        'exclude_existing_training_candidates_immediately',
+      trainingCandidateRequirements: learningConfig.training.requirements,
+      datasetAndCheckpointAdmissionOwner:
+        learningConfig.evaluation.datasetCheckpointAdmissionOwner,
+      primaryEvaluationObjective: learningConfig.evaluation.primaryObjective,
+      sharedLearningPlane: learningConfig.sharedLearningPlane
     }
   }));
 
