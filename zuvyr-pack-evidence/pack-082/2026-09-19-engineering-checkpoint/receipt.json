@@ -1,0 +1,149 @@
+{
+  "pack": "082",
+  "title": "Browser Agent",
+  "date": "2026-09-19",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonicalLockedVerified": false,
+  "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+  "baseline": {
+    "baseMainCommit": "b7c1ceefc6639f738446d7797373628a26cf906f",
+    "pullRequest": 28,
+    "ciHead": "6a75167d572f93bb80a770027f5c7d59f15eeba2",
+    "prCiRun": 35460385234,
+    "backendQuality": "PASS",
+    "releaseQuality": "PASS",
+    "mergeCommit": "77627619a88f005bb27b67140e8835f22d1df188",
+    "mainCiRun": 35460492715,
+    "mainBackendQuality": "PASS",
+    "mainReleaseQuality": "PASS"
+  },
+  "database": {
+    "migrationName": "pack082_browser_agent",
+    "migrationHistoryVersions": [
+      "20260919181201",
+      "20260919181205"
+    ],
+    "concurrentIdempotentApplyNote": "Two history rows with the same canonical migration name were recorded within four seconds by concurrent project executions. Final schema contains singleton tables/functions, zero Browser Agent rows, and the verified function bodies match the final CI-green source.",
+    "tables": {
+      "browser_agent_runs": {
+        "exists": true,
+        "rls": true,
+        "rowsAtVerification": 0
+      },
+      "browser_agent_actions": {
+        "exists": true,
+        "rls": true,
+        "rowsAtVerification": 0
+      },
+      "browser_agent_reasoning_turns": {
+        "exists": true,
+        "rls": true,
+        "rowsAtVerification": 0
+      }
+    },
+    "directPolicies": 0,
+    "verifiedRpcSignatures": 11,
+    "deferredTaskState": true,
+    "browserPermissionHostRequired": true,
+    "browserPermissionActionFingerprintRequired": true,
+    "browserPrivateHostBlocked": true
+  },
+  "productionEvidence": {
+    "railway": {
+      "exactCommit": "77627619a88f005bb27b67140e8835f22d1df188",
+      "backend": {
+        "deployment": "6397dcef-90c3-4153-b99b-39003d330e9a",
+        "status": "SUCCESS",
+        "startup": "ROX AI backend listening on port 8080",
+        "healthcheckPath": "/readyz",
+        "healthcheckTimeoutSeconds": 15
+      },
+      "worker": {
+        "deployment": "60250032-99aa-44fa-bc7d-eb884ee08665",
+        "status": "SUCCESS",
+        "startup": "ROX AI worker running (concurrency: image=2, video=1, audio=1, attachment=1)"
+      },
+      "maintenance": {
+        "deployment": "8d9572cc-5dca-43a6-8fb1-e840927a5807",
+        "status": "SUCCESS"
+      }
+    },
+    "vercel": {
+      "frontendFilesChangedByPack082": false,
+      "unchangedProductionDeployment": "dpl_3VLpyDnEWwNP2y9ck6ZnpNfbnR3h",
+      "unchangedProductionCommit": "ac644e6dd6fe88ff836257c7b7baab6e86f41cc5",
+      "note": "PACK082 changed backend/config/runtime only; no frontend production promotion is required for this pack's source/runtime proof."
+    },
+    "externalHttpChecker": {
+      "available": false,
+      "note": "The external web checker could not access the Railway domain from its own environment; Railway-native deployment status, startup logs and configured /readyz healthcheck are the production proof."
+    }
+  },
+  "runtimeProof": {
+    "capability": "browser.agent.run",
+    "explicitPlannerOutputs": [
+      "browser",
+      "web_agent"
+    ],
+    "ambiguousWorkDefaultDisabled": true,
+    "loop": [
+      "plan",
+      "observe",
+      "act",
+      "verify"
+    ],
+    "permissionCenter": true,
+    "scopedSiteHostRequired": true,
+    "actionFingerprintRequired": true,
+    "durableDeferral": true,
+    "duplicateDeferralQueueCreated": false,
+    "globalStop": true,
+    "cancellationPreserved": true,
+    "uncertainExternalOutcomeBlindRetry": false,
+    "evidenceCapture": true,
+    "rawTypedInputPersisted": false,
+    "postProviderSuccessAccountingFailureTriggersFallback": false
+  },
+  "securityProof": {
+    "ownerScopedRunActionReasoningAuthority": true,
+    "browserSessionOwnershipRequired": true,
+    "passwordsAgentEntry": false,
+    "otpAgentEntry": false,
+    "paymentCardAgentEntry": false,
+    "captchaAgentSolve": false,
+    "privateNetworkBlocked": true,
+    "robotsBoundary": "respect",
+    "browserSubmitUploadRequireAllowOnce": true,
+    "workSurfaceRequiresExplicitBrowserIntent": true
+  },
+  "costProof": {
+    "modelCostAuthority": "backend/lib/modelPricingAuthority.js",
+    "measuredUsageRequiredForActualModelCost": true,
+    "providerReportedCostIsTelemetryOnly": true,
+    "noFallbackAfterProviderSuccessWithUnknownAccounting": true,
+    "oneUsageLedgerPreserved": true,
+    "targetMatureScaleNetMarginBps": 5000
+  },
+  "deferredGates": [
+    {
+      "id": "M17",
+      "inheritedFrom": "PACK081",
+      "reason": "Live Browser Agent execution depends on the PACK081 Browserbase runtime. Production still lacks the verified Browserbase credential/effective-pricing/M17 gate required for a real permitted multi-step browser task."
+    }
+  ],
+  "noCostVerification": {
+    "paidProviderCalls": 0,
+    "paymentCalls": 0,
+    "liveBrowserbaseCalls": 0,
+    "browserAgentRowsCreatedForCheckpoint": 0,
+    "liveBillingAllowed": false
+  },
+  "omissions": [
+    "No live permitted multi-step Browser Agent flow is claimed while inherited M17 remains closed.",
+    "No paid provider or payment call was made.",
+    "Canonical LOCKED_VERIFIED remains deferred; engineering production deployment and security/accounting contracts are verified."
+  ],
+  "nextPack": "083",
+  "nextPackTitle": "3D Generation",
+  "nextPackExternalGate": "M18"
+}
