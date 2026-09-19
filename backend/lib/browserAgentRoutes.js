@@ -33,6 +33,7 @@ function statusFor(error) {
   if (code === 'insufficient_credits' || code === 'out_of_credits') return 402;
   if (
     code.includes('approval') ||
+    code === 'browser_agent_input_resubmission_required' ||
     code.includes('uncertain') ||
     code.includes('in_progress') ||
     code.includes('idempotency') ||
@@ -261,7 +262,11 @@ function createBrowserAgentRouter({
           actionId: requiredUuid(
             req.params.actionId,
             'browser_agent_action_invalid'
-          )
+          ),
+          inputText:
+            req.body && Object.prototype.hasOwnProperty.call(req.body, 'inputText')
+              ? req.body.inputText
+              : null
         });
         res.set('Cache-Control', 'no-store');
         return res.json({ status: 'success', ...result });
