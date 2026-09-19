@@ -589,7 +589,7 @@
   "status": "PACK080_LOCKED_ENGINEERING_VERIFIED",
   "next_pack_allowed": true,
   "next_external_gate": "M17",
-  "next_pack": "082 - Browser Agent",
+  "next_pack": "083 - 3D Generation",
   "pack042": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "258ce1f4df2e3a4630cfc87069668f073c0dee79",
@@ -834,7 +834,7 @@
     "final_release_pack": "150",
     "previous_plan_preserved": true
   },
-  "active_pack": "082",
+  "active_pack": "083",
   "pack061": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
@@ -1749,5 +1749,91 @@
     "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
     "next_pack": "082",
     "next_pack_title": "Browser Agent"
+  },
+  "pack082": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "Browser Agent",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "PACK082 source, PR/main CI, Supabase authority and exact Railway production deployment are verified. Canonical live multi-step Browser Agent acceptance remains deferred because execution inherits PACK081 M17 Browserbase credential/effective-pricing gate.",
+    "pull_request": 28,
+    "baseline_commit": "b7c1ceefc6639f738446d7797373628a26cf906f",
+    "ci_head": "6a75167d572f93bb80a770027f5c7d59f15eeba2",
+    "github_ci_run": 35460385234,
+    "backend_quality": "PASS",
+    "release_quality": "PASS",
+    "source_commit": "77627619a88f005bb27b67140e8835f22d1df188",
+    "main_ci_run": 35460492715,
+    "migration": [
+      "20260919181201 pack082_browser_agent",
+      "20260919181205 pack082_browser_agent"
+    ],
+    "migration_note": "Concurrent idempotent project executions recorded the same canonical migration name twice within four seconds; final singleton schema/function authority is verified and Browser Agent tables contained zero rows.",
+    "receipt_path": "zuvyr-pack-evidence/pack-082/2026-09-19-engineering-checkpoint/receipt.json",
+    "receipt_sha256": "3E6F06B11E241402D73260908861D29590F74BBB623D5B1101E01A7BA5A0C014",
+    "production": {
+      "railway": {
+        "backend": {
+          "deployment": "6397dcef-90c3-4153-b99b-39003d330e9a",
+          "status": "SUCCESS"
+        },
+        "worker": {
+          "deployment": "60250032-99aa-44fa-bc7d-eb884ee08665",
+          "status": "SUCCESS"
+        },
+        "maintenance": {
+          "deployment": "8d9572cc-5dca-43a6-8fb1-e840927a5807",
+          "status": "SUCCESS"
+        },
+        "exact_commit": "77627619a88f005bb27b67140e8835f22d1df188",
+        "backend_startup": "ROX AI backend listening on port 8080",
+        "worker_startup": "ROX AI worker running (concurrency: image=2, video=1, audio=1, attachment=1)",
+        "healthcheck_path": "/readyz",
+        "healthcheck_timeout_seconds": 15
+      },
+      "vercel": {
+        "frontend_changed": false,
+        "unchanged_production_deployment": "dpl_3VLpyDnEWwNP2y9ck6ZnpNfbnR3h",
+        "unchanged_production_commit": "ac644e6dd6fe88ff836257c7b7baab6e86f41cc5"
+      }
+    },
+    "database": {
+      "browser_agent_runs_rls": true,
+      "browser_agent_actions_rls": true,
+      "browser_agent_reasoning_turns_rls": true,
+      "direct_policy_count": 0,
+      "rows_at_verification": {
+        "browser_agent_runs": 0,
+        "browser_agent_actions": 0,
+        "browser_agent_reasoning_turns": 0
+      },
+      "deferred_task_state": true,
+      "browser_host_bound_permissions": true,
+      "browser_action_fingerprint_required": true
+    },
+    "runtime": {
+      "capability": "browser.agent.run",
+      "loop": [
+        "plan",
+        "observe",
+        "act",
+        "verify"
+      ],
+      "explicit_output_required": true,
+      "ambiguous_work_default": false,
+      "durable_deferral": true,
+      "global_stop": true,
+      "raw_typed_input_persisted": false,
+      "post_provider_success_accounting_fallback": false
+    },
+    "deferred_gates": [
+      "M17"
+    ],
+    "paid_provider_calls_during_checkpoint": 0,
+    "payment_calls_during_checkpoint": 0,
+    "live_browserbase_calls_during_checkpoint": 0,
+    "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+    "next_pack": "083",
+    "next_pack_title": "3D Generation",
+    "next_pack_external_gate": "M18"
   }
 }
