@@ -781,6 +781,7 @@ async function processVideoJob(job) {
         endFrameAssetId: artifact.lineage.endFrameAssetId,
         referenceImageAssetIds: artifact.lineage.referenceImageAssetIds,
         videoOptions: artifact.options,
+        durationSeconds: persisted.actualDurationSeconds,
         canonicalContentId: persisted.contentId,
         canonicalAssetId: persisted.assetId
       });
