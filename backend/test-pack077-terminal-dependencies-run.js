@@ -315,6 +315,16 @@ assert.match(providerTimestamp('2026-09-19T00:00:00Z'), /^2026-09-19T00:00:00\.0
   const writeCall = calls.find(item => item.url.includes('/fs/write'));
   assert.equal(writeCall.headers['Content-Type'], 'application/gzip');
 
+  const startFunctionBegin = executorSource.indexOf('  async function start({');
+  const startFunctionEnd = executorSource.indexOf(
+    '\n  async function refresh(',
+    startFunctionBegin
+  );
+  assert(startFunctionBegin >= 0 && startFunctionEnd > startFunctionBegin);
+  const startFunctionSource = executorSource.slice(
+    startFunctionBegin,
+    startFunctionEnd
+  );
   const order = [
     'pricing.quoteRuntimeReservation',
     'projects.get',
@@ -324,7 +334,7 @@ assert.match(providerTimestamp('2026-09-19T00:00:00Z'), /^2026-09-19T00:00:00\.0
     'syncProject',
     'runtime.claim',
     'sandbox.startCommand'
-  ].map(value => executorSource.indexOf(value));
+  ].map(value => startFunctionSource.indexOf(value));
   assert(order.every(index => index >= 0), 'executor lifecycle markers missing');
   for (let i = 1; i < order.length; i += 1) {
     assert(order[i] > order[i - 1], 'executor lifecycle order invalid: ' + i);
