@@ -281,9 +281,9 @@
     "status": "existing_browser_capability"
   },
   "voice_ai": {
-    "enabled": false,
+    "enabled": true,
     "tier": "pro",
-    "status": "foundation"
+    "status": "implemented_pack073_browser_runtime"
   },
   "audio_transcription": {
     "enabled": false,
@@ -296,9 +296,9 @@
     "status": "implemented_pack072_paid_live_deferred"
   },
   "audio_voice_chat": {
-    "enabled": false,
+    "enabled": true,
     "tier": "pro",
-    "status": "blocked_unpriced"
+    "status": "implemented_pack073_browser_runtime"
   },
   "audio_music_generation": {
     "enabled": false,
