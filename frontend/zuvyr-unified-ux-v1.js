@@ -588,13 +588,11 @@
     const button = panel()?.querySelector('[data-zuvyr-pack094-training-toggle]');
     if (button) button.disabled = true;
     try {
-      await api('/api/learning/consent', {
-        method: 'PUT',
+      await api('/api/workspace/memory/preferences', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          globalTrainingOptIn: next === true,
-          policyVersion:
-            state.policy?.consentPolicyVersion || 'pack094-v1'
+          trainingConsent: next === true
         })
       });
       document.dispatchEvent(new CustomEvent('zuvyr:training-consent-changed', {
