@@ -1,7 +1,7 @@
 {
   "schema_version": "zuvyr.roadmap.150.v1",
   "date": "2026-09-19",
-  "active_pack": "094",
+  "active_pack": "095",
   "total_packs": 150,
   "authority": "Latest user MASTER EXECUTION PROMPT plus 2026-09-19 Model-First BYO Compute priority override",
   "source_sha256": "148699a2a98439391bf4a3b656a09c42fc9fd8e42779a98bdab68ed84e7a1a5f",
@@ -4085,6 +4085,9 @@
     "default_compute_payer": "user_or_organization",
     "default_serving_mode": "bring_your_own_compute",
     "completed_inflight_pack": "083",
-    "active_priority_pack": "094"
+    "active_priority_pack": "095",
+    "completed_priority_packs": [
+      "094"
+    ]
   }
 }

@@ -1445,3 +1445,37 @@ When Vercel build capacity is available, deploy current `main`, verify published
 
 Exactly one next step:
 After Vercel rolling capacity opens, trigger one production deploy of current main, verify `/zuvyr-chat-workspace-v1.js` contains FIX3 markers, then perform authenticated realtime start → dictation → send/processing → final speech → barge-in → STOP acceptance. Only then lock PACK073 and open PACK074.
+
+
+## PACK094 ENGINEERING FINAL / PACK095 OPEN — 2026-09-19
+
+- **PACK094 — Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank:** `LOCKED_ENGINEERING_VERIFIED`.
+- Canonical `LOCKED_VERIFIED`: **NO** because Vercel production is still on main commit `60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4`; the final Training & Data Rights frontend and authenticated production UI acceptance are deferred.
+- Final PACK094 main source: `13b677a1d70bc541766b4f26c84ce381a054d999`.
+- CI: implementation run `35466508486` PASS/PASS; consent-finalizer run `35467897069` PASS/PASS; final-main run `35467958076` PASS/PASS.
+- Canonical training-consent authority: `zuvyr_user_preferences.training_consent`, default OFF.
+- Canonical browser writer: `PATCH /api/workspace/memory/preferences`.
+- Legacy `PUT /api/learning/consent` is compatibility-only and delegates to the same preference writer.
+- Production DB acceptance: ON→OFF produced 3 consent-history events; latest=false, previous=true, source=`preference`, policy=`pack094-v1`; Memory remained enabled; cleanup residue=0; no auth account was created.
+- Learning tables RLS ON; direct browser policies=0; Memory permission remains independent.
+- Railway exact commit `13b677a1d70bc541766b4f26c84ce381a054d999`:
+  - backend `144c40e7-d1f5-47e9-bb78-b69e74d88894` — SUCCESS
+  - worker `e95f74af-cc00-44aa-a365-51de2b2aa7f6` — SUCCESS
+  - maintenance `212fcfa6-410d-4f79-be83-5a49e5eaeb01` — SUCCESS
+- Vercel PACK094 preview exists and is READY, but production promotion is blocked by connector/tooling: advertised `deploy_to_vercel` returns runtime `Tool deploy_to_vercel not found`. Do not retry-loop.
+- Receipt: `zuvyr-pack-evidence/pack-094/2026-09-19-engineering-checkpoint/receipt.json`
+- Receipt Git blob: `a14a37f7e7d1da33c012816d47b3ba4562e6088b`
+- Deferred gates:
+  - `DEFERRED_PRODUCTION_FRONTEND_GATE`
+  - `PACK094_AUTHENTICATED_PRODUCTION_DATA_RIGHTS_UI_ACCEPTANCE`
+- Progression: `USER_APPROVED_DEFERRED_GATE_CONTINUATION`.
+
+### PACK095 OPEN — ZUVYR Model Lab
+
+- **PACK095 — ZUVYR Model Lab is the active model-first Pack.**
+- Build owner/admin Model Lab for datasets, licenses, skills/curricula, synthetic data, training runs, independent evals/benchmarks, failure-bank linkage, checkpoints, lineage and rollout stages `LAB→EVAL→SHADOW→CANARY→SECONDARY→PRIMARY`.
+- Add the canonical Compute Connector registry for user/org-owned training/serving targets, ownership proof, capability/health attestation, encrypted credential references and measured compute metadata.
+- Reuse PACK094 rights-approved candidates and Failure Bank; do not bypass consent/privacy/provenance.
+- BYOC compute cost and ZUVYR control-plane/storage/egress/observability cost must remain separate.
+- No browser-visible compute credentials. No live paid training/compute calls while `LIVE_BILLING_ALLOWED=false`.
+- PACK096 remains next after PACK095; PACK084–PACK093 remain deferred, not cancelled. Do not renumber packs.
