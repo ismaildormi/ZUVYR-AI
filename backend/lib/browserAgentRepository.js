@@ -155,6 +155,22 @@ function createBrowserAgentRepository(db) {
     return getRun({ ownerId, runId });
   }
 
+  async function requestStop({
+    ownerId,
+    runId,
+    reason = 'user_requested'
+  } = {}) {
+    const result = await db.rpc('request_stop_zuvyr_browser_agent_run_pack082', {
+      p_owner_id: ownerId,
+      p_run_id: runId,
+      p_reason: String(reason || 'user_requested').slice(0, 200)
+    });
+    if (result.error) {
+      throw repoError(rpcCode(result.error, 'browser_agent_stop_failed'), result.error);
+    }
+    return getRun({ ownerId, runId });
+  }
+
   async function reserveAction({
     ownerId,
     runId,
@@ -347,6 +363,7 @@ function createBrowserAgentRepository(db) {
     byRequest,
     listRuns,
     transitionRun,
+    requestStop,
     reserveAction,
     getAction,
     getActionInternal,
