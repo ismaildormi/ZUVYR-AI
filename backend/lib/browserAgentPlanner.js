@@ -18,6 +18,14 @@ function requestId(value) {
   return raw;
 }
 
+function uuid(value, code) {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(raw)) {
+    throw plannerError(code);
+  }
+  return raw;
+}
+
 function cleanGoal(value) {
   const goal = String(value || '').trim();
   if (!goal || goal.length > 4000) throw plannerError('pack082_goal_invalid');
@@ -43,12 +51,14 @@ function redactGoal(value) {
 function createBrowserAgentBrainPlan({
   requestId: suppliedRequestId,
   goal,
+  browserSessionId,
   conversationId = null,
   taskRunId = null,
   allowedHosts = [],
   maxSteps = 20
 } = {}) {
   const id = requestId(suppliedRequestId);
+  const sessionId = uuid(browserSessionId, 'pack082_browser_session_id_invalid');
   const redactedGoal = redactGoal(goal);
   const universalRequest = normalizeUniversalRequest({
     requestId: id,
@@ -56,12 +66,14 @@ function createBrowserAgentBrainPlan({
     goal: redactedGoal,
     inputs: {
       feature: 'browser',
+      browserSessionId: sessionId,
       conversationId,
       taskRunId
     },
     constraints: {
       allowedHosts,
       maxSteps,
+      browserSessionId: sessionId,
       browserAgent: true
     },
     outputs: {
@@ -77,7 +89,8 @@ function createBrowserAgentBrainPlan({
     clientState: {},
     metadata: {
       pack: '082',
-      adapter: 'browser_agent'
+      adapter: 'browser_agent',
+      browserSessionId: sessionId
     }
   });
 
@@ -90,6 +103,7 @@ function createBrowserAgentBrainPlan({
 
   const intentLock = createIntentLock(universalRequest, extraction);
   const plan = createBrainPlan({
+    browserSessionId: sessionId,
     request: universalRequest,
     extraction,
     intentLock
