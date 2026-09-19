@@ -1,0 +1,67 @@
+{
+  "pack": "067",
+  "title": "Image/Reference-to-Video",
+  "phase": "PRE_PROMOTION_CI_AND_SCHEMA_VERIFIED",
+  "date": "2026-09-19",
+  "baselineCommit": "c6da466072f5cc607abcfa6b7b6676fb650ca5c1",
+  "candidateCommit": "ba261b2c29b72e85869abda696ccce930c952b8e",
+  "candidatePullRequest": 4,
+  "candidateWorkflowRun": 35410247788,
+  "validation": {
+    "releaseQuality": "PASS",
+    "backendQuality": "PASS",
+    "liveProviderCalls": 0,
+    "paymentCalls": 0,
+    "productionDbWritesFromTests": 0,
+    "focusedAssertions": [
+      "I2V owner-scoped source/last-frame canonical assets are resolved and actually mapped into Wan 2.2 I2V provider inputs",
+      "R2V ordered reference images are resolved, lineage-bound and actually mapped into Wan 2.7 R2V provider inputs",
+      "Exact provider pricing and independent paid execution gates fail closed before live inference"
+    ]
+  },
+  "providerContracts": {
+    "imageToVideo": {
+      "provider": "replicate",
+      "model": "wan-video/wan-2.2-i2v-fast",
+      "pricing": {
+        "480pMicroUsdPerOutputVideo": 50000,
+        "720pMicroUsdPerOutputVideo": 110000
+      },
+      "paidGate": "PACK067_I2V_PAID_EXECUTION_ENABLED"
+    },
+    "referenceToVideo": {
+      "provider": "replicate",
+      "model": "wan-video/wan-2.7-r2v",
+      "pricing": {
+        "microUsdPerOutputSecond": 100000
+      },
+      "durationSeconds": [
+        2,
+        10
+      ],
+      "paidGate": "PACK067_R2V_PAID_EXECUTION_ENABLED"
+    }
+  },
+  "productionSchema": {
+    "projectRef": "tqoqsgaymygmqrzddvtu",
+    "migration": "pack067_video_reference_foundation",
+    "migrationVersion": "20260919004354",
+    "applied": true,
+    "column": "generation_jobs.video_reference_asset_ids jsonb not null default []",
+    "operationConstraintIncludes": "reference_to_video",
+    "maxReferenceImages": 4,
+    "existingPack067Jobs": 0
+  },
+  "safety": {
+    "pack066PaidGateMustRemainOff": true,
+    "pack067PaidGatesMustRemainOff": true,
+    "paidLiveE2EExecuted": false,
+    "canonicalLockedVerified": false,
+    "reason": "No paid Replicate inference or provider billing/settlement E2E was executed; engineering paths are verified with injected no-network tests."
+  },
+  "advisorReview": {
+    "pack067SpecificNewSecurityFinding": false,
+    "pack067SpecificNewPerformanceFinding": false,
+    "note": "Supabase advisors still report pre-existing project-wide RLS-policy and foreign-key-index debt unrelated to this additive Pack067 column/constraint migration."
+  }
+}

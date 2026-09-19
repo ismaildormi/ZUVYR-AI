@@ -41,6 +41,7 @@ async function prepareGenerationConversation({
   sourceVideoAssetId = null,
   startFrameAssetId = null,
   endFrameAssetId = null,
+  referenceImageAssetIds = [],
   videoOptions = {},
   requestKey
 }) {
@@ -74,6 +75,7 @@ async function prepareGenerationConversation({
       sourceVideoAssetId,
       startFrameAssetId,
       endFrameAssetId,
+      referenceImageAssetIds,
       videoOptions
     },
     metadata: {
@@ -102,6 +104,7 @@ async function completeGenerationConversation({
   sourceVideoAssetId = null,
   startFrameAssetId = null,
   endFrameAssetId = null,
+  referenceImageAssetIds = [],
   videoOptions = {},
   canonicalContentId = null,
   canonicalAssetId = null,
@@ -136,7 +139,8 @@ async function completeGenerationConversation({
           sourceImageAssetId,
           sourceVideoAssetId,
           startFrameAssetId,
-          endFrameAssetId
+          endFrameAssetId,
+          referenceImageAssetIds
         },
         imageOptions,
         videoOptions,
@@ -170,6 +174,7 @@ async function completeGenerationConversation({
       source_video_asset_id: sourceVideoAssetId,
       start_frame_asset_id: startFrameAssetId,
       end_frame_asset_id: endFrameAssetId,
+      reference_image_asset_ids: referenceImageAssetIds,
       video_options: videoOptions,
       canonical_content_id: canonicalContentId,
       canonical_asset_id: canonicalAssetId

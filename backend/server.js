@@ -1603,6 +1603,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
     maskAssetId = null,
     imageOptions = {},
     videoOperation = 'text_to_video',
+    referenceImageAssetIds = [],
     sourceImageAssetId = null,
     sourceVideoAssetId = null,
     startFrameAssetId = null,
@@ -1616,6 +1617,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
     ? normalizeVideoRequest({
         prompt,
         videoOperation,
+        referenceImageAssetIds,
         sourceImageAssetId,
         sourceVideoAssetId,
         startFrameAssetId,
@@ -1782,6 +1784,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
         sourceVideoAssetId: videoRequest?.sourceVideoAssetId || null,
         startFrameAssetId: videoRequest?.startFrameAssetId || null,
         endFrameAssetId: videoRequest?.endFrameAssetId || null,
+        referenceImageAssetIds: videoRequest?.referenceImageAssetIds || [],
         videoOptions: videoRequest?.options || {},
         requestKey: memoryRequestKey
       });
@@ -1827,6 +1830,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
         source_video_asset_id: videoRequest.sourceVideoAssetId,
         start_frame_asset_id: videoRequest.startFrameAssetId,
         end_frame_asset_id: videoRequest.endFrameAssetId,
+        video_reference_asset_ids: videoRequest.referenceImageAssetIds,
         video_options: videoRequest.options,
         progress_percent: 0,
         job_stage: 'queued'
@@ -1879,6 +1883,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
       maskAssetId: imageRequest?.maskAssetId || null,
       imageOptions: imageRequest?.options || {},
       videoOperation: videoRequest?.operation || 'text_to_video',
+      referenceImageAssetIds: videoRequest?.referenceImageAssetIds || [],
       sourceImageAssetId: videoRequest?.sourceImageAssetId || null,
       sourceVideoAssetId: videoRequest?.sourceVideoAssetId || null,
       startFrameAssetId: videoRequest?.startFrameAssetId || null,

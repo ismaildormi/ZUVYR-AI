@@ -210,7 +210,8 @@ function createVideoGenerationRepository({
     model,
     operation = 'text_to_video',
     options = {},
-    billing = {}
+    billing = {},
+    lineage = {}
   }) {
     const existing = await getExisting({ ownerId, jobId });
     if (existing) return existing;
@@ -224,11 +225,12 @@ function createVideoGenerationRepository({
       outputProvider: provider,
       outputModel: model,
       billing: {
-        ...billing,
-        unitType: 'videos',
-        units: 1,
-        resolution: options.resolution
-      }
+        ...billing
+      },
+      canonicalLineage:
+        lineage && typeof lineage === 'object'
+          ? lineage
+          : {}
     };
 
     const record = await contentRepo.ensure({
@@ -242,7 +244,7 @@ function createVideoGenerationRepository({
       sourceVersionKey: sha256,
       metadata: {
         videoGeneration: true,
-        pack: 66,
+        pack: operation === 'text_to_video' ? 66 : 67,
         jobId,
         provider,
         model,
@@ -263,7 +265,10 @@ function createVideoGenerationRepository({
           options: persistedOptions
         },
         provenance: {
-          source: 'pack066_text_to_video',
+          source:
+            operation === 'text_to_video'
+              ? 'pack066_text_to_video'
+              : 'pack067_image_reference_to_video',
           jobId,
           provider,
           model
@@ -296,7 +301,7 @@ function createVideoGenerationRepository({
       retentionClass: 'standard',
       metadata: {
         videoGeneration: true,
-        pack: 66,
+        pack: operation === 'text_to_video' ? 66 : 67,
         jobId,
         provider,
         model,
