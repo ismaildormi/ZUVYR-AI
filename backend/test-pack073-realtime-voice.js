@@ -50,7 +50,8 @@ assert.equal(session.continuousListening,false);
 const browserCost=costs.entries.find(x=>x.id==='browser-web-speech-realtime-voice');
 assert(browserCost);
 assert.equal(browserCost.verificationStatus,'verified');
-assert.equal(browserCost.fixedOperationPriceMicroUsd,'0');
+assert.equal(browserCost.inputUnitPriceMicroUsd,'0');
+assert.equal(browserCost.fixedOperationPriceMicroUsd,null);
 assert.equal(browserCost.enabledState,'enabled');
 const quote=resolveCostQuote({
   provider:'browser',
