@@ -372,7 +372,10 @@ function createCloudBrowserRouter({
         status:'provisioning'
       });
 
-      providerSession=await browserbase.createSession({localSessionId:local.id});
+      providerSession=await browserbase.createSession({
+        localSessionId:local.id,
+        ttlSeconds:quote.ttlSeconds
+      });
       local=await repository.transition({
         ownerId:req.userId,
         sessionId:local.id,
