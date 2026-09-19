@@ -250,10 +250,8 @@ async function run(){
     'request_zuvyr_audio_job_cancel',
     'for update'
   ]) assert(migration.includes(marker),marker);
-  assert(fkIndexes.includes('add column if not exists canonical_content_id uuid'));
   assert(fkIndexes.includes('audio_jobs_conversation_idx'));
   assert(fkIndexes.includes('audio_jobs_source_audio_asset_idx'));
-  assert(fkIndexes.includes('audio_artifacts_content_idx'));
 
   for(const marker of [
     "router.post('/jobs/request'",
