@@ -1224,3 +1224,78 @@ Hard rules:
 Exactly one next step:
 Audit the existing text_to_speech request/DB/audio job foundation, permission-center voice rights primitives, provider/model/cost registries and worker audio queue; then select only provider TTS capabilities with exact current prices and a consent-safe path for optional voice design/cloning.
 
+## PACK072 FINAL — Text-to-Speech / Voice Design — 2026-09-19
+
+- Status: LOCKED_ENGINEERING_VERIFIED
+- Canonical LOCKED_VERIFIED: NO
+- Reason: live paid TTS inference was intentionally not executed; LIVE_BILLING_ALLOWED=false and the PACK072 paid execution gate is absent in production.
+- Runtime commit: `1544edee204acff16519ef60d644caa3a04b0e53`
+- PR #11 candidate `1022ee511e1c278cf21bc1603847fe90079e6866`
+- GitHub CI 35419488597: Backend PASS / Release PASS
+- Supabase migration:
+  - `20260919034710 pack072_tts_voice_rights` — APPLIED_VERIFIED
+- TTS engineering:
+  - Deepgram Aura-2
+  - verified stock voices: `aura-2-thalia-en`, `aura-2-selena-es`
+  - MP3 + WAV output contracts
+  - exact provider price: $0.030 / 1,000 input characters
+  - unsupported voice/language is rejected before credit reservation
+  - paid gate is checked before network/provider execution
+  - provider binary is retry-recoverable before canonical persistence, preventing duplicate paid calls after a persistence retry
+  - canonical owner-scoped audio persistence and signed-download compatibility are wired
+  - usage kind: `audio_text_to_speech`
+- Voice rights:
+  - owner-scoped source audio + exact canonical source asset
+  - explicit consent required
+  - scopes: `voice_clone`, `voice_design_reference`
+  - rights basis: self voice or documented permission
+  - revocable
+  - model-training consent remains separate
+  - voice design/cloning provider execution remains blocked until exact operation pricing + active rights are both verified
+- Production DB verification:
+  - voice-rights table exists, RLS ON
+  - direct authenticated policy count = 0; service-role API only
+  - voice-rights rows = 0
+  - TTS jobs = 0
+  - TTS completed jobs = 0
+  - TTS usage rows = 0
+- Production provider/payment calls during final verification: 0 / 0
+- Railway exact runtime commit `1544edee204acff16519ef60d644caa3a04b0e53`:
+  - backend `4add8303-143f-4bb1-be1b-82ceeb8ae6b2` — SUCCESS
+  - worker `22a887cb-f52d-444f-9abd-394b9759720a` — SUCCESS
+  - maintenance `77d3f3d5-5f2d-4516-9575-6674fb76ae36` — SUCCESS
+  - backend startup: `ROX AI backend listening on port 8080`
+  - worker startup: `ROX AI worker running (concurrency: image=2, video=1, audio=1, attachment=1)`
+  - backend healthcheck path: `/readyz`
+- Production variable-name audit:
+  - `PACK072_TTS_PAID_EXECUTION_ENABLED` absent on backend + worker
+  - `DEEPGRAM_API_KEY` absent on backend + worker
+  - no secret values were read or recorded
+- Vercel: PACK072 changed no frontend file. Existing frontend runtime remains the last READY identity; the Git trigger for the backend-only promotion hit the account build-rate-limit.
+- Final receipt: `zuvyr-pack-evidence/pack-072/2026-09-19-no-cost-final/receipt.json`
+- Receipt Git blob: `88a2144d6ea55cb3c680f354ecd38178acce269f`
+- External deferred gate: PAID_LIVE_TTS_AND_OPTIONAL_VOICE_DESIGN_DEFERRED
+- Progression: USER_APPROVED_NO_COST_DEFERRED_GATE
+- Active pack after reconciliation: PACK073
+
+## PACK073 OPEN — Realtime Voice
+
+What this pack does:
+Implement low-latency realtime voice sessions with microphone permission, visible listening state, interruption/barge-in, STOP, transcript, usage aggregation and retention policy on top of the verified PACK071/PACK072 audio foundation.
+
+Canonical acceptance:
+A realtime session starts and stops cleanly, interruption stops the current assistant speech, usage is aggregated once, transcript/retention rules are enforced, and no microphone/provider stream can remain running silently after STOP/disconnect/error.
+
+Hard rules:
+- Explicit microphone permission + visible active capture indication.
+- Global STOP terminates microphone capture, provider/session streaming and pending speech output.
+- Barge-in must not create duplicate turns, duplicate settlement or orphaned streams.
+- Session/transcript/usage is owner-scoped.
+- Unknown or ambiguous realtime provider pricing blocks paid execution.
+- Paid realtime provider execution remains OFF until exact current pricing and session accounting are verified.
+- Microphone/session permission does not grant model-training permission.
+- No fake realtime UI or simulated provider success may be advertised as live capability.
+
+Exactly one next step:
+Audit the existing voice-session contract/routes, browser microphone/speech UI, queue/websocket/runtime primitives, provider/model/cost registries, transcript persistence, STOP/cancel paths and production feature flags; then choose the smallest verified realtime architecture that preserves PACK071/PACK072 privacy, consent, billing and canonical transcript rules with all paid realtime gates OFF.
+
