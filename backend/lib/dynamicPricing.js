@@ -184,7 +184,6 @@ function providerQuote(feature, {
         audioPricingContext?.sourceDurationSeconds,
         'pack071_source_duration'
       );
-      const billableSeconds = ceilDiv(durationMs, 1000n);
       const multilingual = !audioRequest.language;
       const entry = resolveCostEntry({
         provider: 'deepgram',
@@ -197,7 +196,7 @@ function providerQuote(feature, {
       return Object.freeze({
         provider: 'deepgram',
         providerCostMicroUsd: estimateProviderCostMicroUsd(entry, {
-          inputUnits: safeUsageInteger(billableSeconds, 'pack071_audio_seconds')
+          inputUnits: safeUsageInteger(durationMs, 'pack071_audio_duration_ms')
         }),
         pricingVersion: entry.registryVersion,
         costEntryId: entry.id
