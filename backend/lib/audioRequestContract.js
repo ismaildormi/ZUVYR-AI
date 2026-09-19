@@ -48,6 +48,9 @@ function normalizeAudioRequest(value) {
   const outputFormat = String(value.outputFormat || (operation === 'audio_to_video' ? 'mp4' : 'mp3')).toLowerCase();
   const allowedFormats = operation === 'audio_to_video' ? config.requestLimits.allowedVideoFormats : config.requestLimits.allowedOutputFormats;
   if (!allowedFormats.includes(outputFormat)) throw requestError('invalid_audio_output_format', 'outputFormat');
+  if (operation === 'audio_cleanup' && !['wav','mp3'].includes(outputFormat)) {
+    throw requestError('invalid_audio_cleanup_format', 'outputFormat');
+  }
   const sampleRate = value.sampleRate === undefined ? null : value.sampleRate;
   if (sampleRate !== null && !config.requestLimits.allowedSampleRates.includes(sampleRate)) throw requestError('invalid_audio_sample_rate', 'sampleRate');
 
