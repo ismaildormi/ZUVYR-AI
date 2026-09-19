@@ -304,14 +304,14 @@ assert.doesNotThrow(()=>rejectRawSecrets({
   const createRoute=routesSource.slice(createStart,createEnd);
   assert(createRoute.indexOf('assertLiveAvailable(env)')>=0);
   assert(createRoute.indexOf('assertLiveAvailable(env)')<createRoute.indexOf('browserbase.createSession'));
-  assert(createRoute.indexOf('planHasFeature(planId,\\'ip\\')')<createRoute.indexOf('browserbase.createSession'));
+  assert(createRoute.indexOf("planHasFeature(planId,'ip')")<createRoute.indexOf('browserbase.createSession'));
   assert(createRoute.indexOf('reserveCredits')<createRoute.indexOf('browserbase.createSession'));
 
   assert(repositorySource.includes("kind: kind === 'screenshot' ? 'image' : kind === 'dom' ? 'text' : 'document'"));
   assert(universal.kinds.includes('document'));
   assert(repositorySource.includes('createSignedDownload'));
   assert(repositorySource.includes('resolveOwnedAsset'));
-  assert(repositorySource.includes('cacheControl:\\'3600\\''));
+  assert(repositorySource.includes("cacheControl:'3600'"));
 
   assert(cleanupSource.includes('cleanupExpiredCloudBrowsers'));
   assert(cleanupSource.includes('browserbase.releaseSession'));
