@@ -713,6 +713,182 @@
         "state": "active",
         "replacedBy": null
       }
+    },
+    {
+      "id": "fal:video.subtitles:runtime",
+      "providerId": "fal",
+      "modelId": "fal-ai/workflow-utilities/auto-subtitle",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "video.subtitles"
+      ],
+      "modalities": {
+        "input": [
+          "video"
+        ],
+        "output": [
+          "video",
+          "text"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Official fal model/API page revalidated 2026-09-19. Paid execution remains environment gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "fal-auto-subtitle-input-minute"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK069_SUBTITLES_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "fal:video.dub:runtime",
+      "providerId": "fal",
+      "modelId": "fal-ai/elevenlabs/dubbing",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "video.dub"
+      ],
+      "modalities": {
+        "input": [
+          "video"
+        ],
+        "output": [
+          "video"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Official fal model/API page revalidated 2026-09-19. Paid execution remains environment gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "fal-elevenlabs-dubbing-rounded-minute"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK069_DUB_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "fal:video.enhance:runtime",
+      "providerId": "fal",
+      "modelId": "bria/video/increase-resolution",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "video.enhance"
+      ],
+      "modalities": {
+        "input": [
+          "video"
+        ],
+        "output": [
+          "video"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Official fal model/API page revalidated 2026-09-19. Paid execution remains environment gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "fal-bria-video-increase-resolution-second"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK069_ENHANCE_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "local:video.export:runtime",
+      "providerId": "local",
+      "modelId": "ffmpeg-alpine",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "video.export"
+      ],
+      "modalities": {
+        "input": [
+          "video"
+        ],
+        "output": [
+          "video"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Local FFmpeg worker runtime; no external provider execution."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "local-ffmpeg-video-export"
+        ],
+        "verification": "verified"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
     }
   ]
 }
