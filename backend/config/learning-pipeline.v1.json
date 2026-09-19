@@ -1,0 +1,84 @@
+{
+  "version": "pack-094.learning-pipeline.v1",
+  "status": "implementation_candidate",
+  "activePack": "094",
+  "telemetry": {
+    "nonContentAggregateLearning": true,
+    "trainingOptInRequiredForNonContentTelemetry": false,
+    "allowedSignals": [
+      "task_success",
+      "tool_success",
+      "latency_ms",
+      "retry_count",
+      "provider_or_model_outcome",
+      "cost_per_successful_task",
+      "failure_category",
+      "rollback_or_repair_outcome",
+      "explicit_response_feedback"
+    ],
+    "forbiddenContentFields": [
+      "prompt",
+      "response_text",
+      "conversation_content",
+      "intent",
+      "plan",
+      "final_result",
+      "task_input",
+      "task_output",
+      "raw_provider_error",
+      "raw_tool_output"
+    ]
+  },
+  "training": {
+    "globalTrainingDefault": "opt_in_off",
+    "currentConsentAuthority": "zuvyr_user_preferences.training_consent",
+    "memoryPermissionSeparate": true,
+    "requirements": [
+      "explicit_global_training_opt_in",
+      "canonical_owner_scoped_content",
+      "active_training_rights",
+      "rights_or_license_evidence_when_required",
+      "verified_provenance",
+      "privacy_processing_and_redaction",
+      "dedupe_sha256",
+      "no_active_training_exclusion"
+    ],
+    "optOutBehavior": "exclude_existing_candidates_and_block_future_admission",
+    "reOptInBehavior": "does_not_reinclude_previously_excluded_candidates",
+    "dataDeleteBehavior": "exclude_existing_training_candidates_immediately"
+  },
+  "privacy": {
+    "rawSourceDuplicatedIntoLearningEvents": false,
+    "redactedCandidatePayloadServiceRoleOnly": true,
+    "deterministicRedactionProcessor": "pack094-deterministic-redaction-v1",
+    "contentCandidateMaxChars": 200000
+  },
+  "failureBank": {
+    "rawErrorTextStored": false,
+    "fingerprintInputs": [
+      "capability",
+      "failure_category",
+      "provider",
+      "model_tool",
+      "domain"
+    ],
+    "dedupeScope": "owner"
+  },
+  "evaluation": {
+    "primaryObjective": "task_success_and_total_cost_per_successful_task",
+    "learningValueScorePurpose": "prioritization_only",
+    "learningValueScoreRange": [
+      0,
+      10000
+    ],
+    "datasetCheckpointAdmissionOwner": "PACK095"
+  },
+  "economics": {
+    "zuvyrOwnedModelApiFeeUsd": 0,
+    "zuvyrOwnedModelUsageFeeUsd": 0,
+    "zuvyrInferenceMarkupUsd": 0,
+    "userOrOrganizationComputePaidDirectly": true,
+    "externalTeacherAndFallbackCostsRemainExplicit": true
+  },
+  "externalGate": null
+}
