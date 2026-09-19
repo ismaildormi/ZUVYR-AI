@@ -1,9 +1,9 @@
 {
   "schema_version": "zuvyr.roadmap.150.v1",
-  "date": "2026-09-17",
-  "active_pack": "062",
+  "date": "2026-09-19",
+  "active_pack": "083",
   "total_packs": 150,
-  "authority": "Latest user MASTER EXECUTION PROMPT overrides attached 100-pack and one-step rules",
+  "authority": "Latest user MASTER EXECUTION PROMPT plus 2026-09-19 Model-First BYO Compute priority override",
   "source_sha256": "148699a2a98439391bf4a3b656a09c42fc9fd8e42779a98bdab68ed84e7a1a5f",
   "preservation": "001–099 retain numbering and original scope; 100 remains hardening checkpoint; 101–150 extend integration/operational qualification without repeating original feature builds. Historical status is not newly verified.",
   "packs": [
@@ -2448,7 +2448,8 @@
       "deployment_plan": "Inspect exact current Git/dirty/deployment state; back up touched paths; validate scoped patch; commit explicit paths; push and verify exact production deployment. Apply only necessary compatible migrations through the approved connector.",
       "rollback_plan": "Retain pre-change hashes and previous release; reverse only scoped changes with a forward repair or validated prior deployment. Preserve customer rows; no reset/stash or blind migration replay. Verify recovery.",
       "evidence_requirements": "Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.",
-      "final_gate": "LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate."
+      "final_gate": "LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate.",
+      "priority_note": "Under the 2026-09-19 Model-First override, this Pack executes after PACK094–PACK096 and consumes their learning/model telemetry. Numbering and original scope remain unchanged."
     },
     {
       "id": "092",
@@ -2473,7 +2474,8 @@
       "deployment_plan": "Inspect exact current Git/dirty/deployment state; back up touched paths; validate scoped patch; commit explicit paths; push and verify exact production deployment. Apply only necessary compatible migrations through the approved connector.",
       "rollback_plan": "Retain pre-change hashes and previous release; reverse only scoped changes with a forward repair or validated prior deployment. Preserve customer rows; no reset/stash or blind migration replay. Verify recovery.",
       "evidence_requirements": "Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.",
-      "final_gate": "LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate."
+      "final_gate": "LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate.",
+      "priority_note": "Under the 2026-09-19 Model-First override, this Pack executes after PACK094–PACK096 and consumes their learning/model telemetry. Numbering and original scope remain unchanged."
     },
     {
       "id": "093",
@@ -2499,20 +2501,18 @@
       "deployment_plan": "Inspect exact current Git/dirty/deployment state; back up touched paths; validate scoped patch; commit explicit paths; push and verify exact production deployment. Apply only necessary compatible migrations through the approved connector.",
       "rollback_plan": "Retain pre-change hashes and previous release; reverse only scoped changes with a forward repair or validated prior deployment. Preserve customer rows; no reset/stash or blind migration replay. Verify recovery.",
       "evidence_requirements": "Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.",
-      "final_gate": "LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate."
+      "final_gate": "LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate.",
+      "priority_note": "Under the 2026-09-19 Model-First override, this Pack executes after PACK094–PACK096 and consumes their learning/model telemetry. Numbering and original scope remain unchanged."
     },
     {
       "id": "094",
       "title": "Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
-      "scope": "Capture execution outcomes/verified failures/tool traces, explicit training-rights/consent, redaction/PII, dedupe, quality/difficulty/domain and Learning Value Score. Make every V1 user session valuable beyond revenue through privacy-safe aggregate product telemetry, task-success/failure metrics and model/provider performance signals; only opt-in, rights-approved content/traces may enter global model training. Global training opt-in default OFF and Memory permission remains separate.",
+      "scope": "Capture execution outcomes/verified failures/tool traces, explicit training-rights/consent, redaction/PII, dedupe, quality/difficulty/domain and Learning Value Score. Make every V1 user session valuable beyond revenue through privacy-safe aggregate product telemetry, task-success/failure metrics and model/provider performance signals; only opt-in, rights-approved content/traces may enter global model training. Global training opt-in default OFF and Memory permission remains separate. ADD the canonical continuous-learning event contract required by the Model-First override: task success, tool success, latency, retry/failure category, model/provider result, cost per successful task and repair/rollback outcome feed the Learning Pipeline/Failure Bank without making conversation content automatically trainable.",
       "acceptance": "Every V1 session can improve product/routing/evals through non-content aggregate signals, while only rights-approved, privacy-processed, explicitly eligible records can enter training candidates; the contribution path, consent state and revocation/exclusion behavior are testable.",
       "external_gate": "—",
       "dependencies": [
         "045",
-        "047",
-        "091",
-        "092",
-        "093"
+        "047"
       ],
       "systems": "Existing systems described in scope; exact paths must be grounded from the execution baseline",
       "status": "PLANNED",
@@ -2520,19 +2520,20 @@
       "architecture": "Reuse canonical Brain/Kernel, registry/router, content IDs, permissions and one usage ledger. Preserve historical implementation and receipt identity.",
       "ux": "For affected controls, verify loading, empty, error, cancel, retry and reopen states; keyboard, RTL and responsive behavior. Infrastructure-only work has no invented UI requirement.",
       "security_privacy": "Enforce owner/resource scopes server-side, redact secrets, keep memory and training rights separate; training content admitted only with traceable rights/consent.",
-      "cost": "Record measured provider/compute/storage/egress/retry cost and reserve/settle/refund impact; unknown costs block paid execution. Track the >=50% mature-scale net operating margin target separately from actual measured margin.",
+      "cost": "For ZUVYR-owned-model learning/serving, keep model/API usage fee at $0 and separate ZUVYR control-plane cost from customer-funded compute cost. External teacher/fallback/provider costs remain explicitly measured and unknown paid-provider cost still blocks paid execution. Track total cost per successful task rather than treating user-funded compute as ZUVYR inference revenue.",
       "model_learning": "Record eligible non-content outcome/cost/failure signals; any dataset content requires rights/consent and lineage. Evaluate model changes independently with fallback and rollback.",
       "test_plan": "Every V1 session can improve product/routing/evals through non-content aggregate signals, while only rights-approved, privacy-processed, explicitly eligible records can enter training candidates; the contribution path, consent state and revocation/exclusion behavior are testable. Also exercise denial, failure/retry, persistence and accounting boundaries affected by this change; preserve relevant prior regressions.",
       "deployment_plan": "Inspect exact current Git/dirty/deployment state; back up touched paths; validate scoped patch; commit explicit paths; push and verify exact production deployment. Apply only necessary compatible migrations through the approved connector.",
       "rollback_plan": "Retain pre-change hashes and previous release; reverse only scoped changes with a forward repair or validated prior deployment. Preserve customer rows; no reset/stash or blind migration replay. Verify recovery.",
       "evidence_requirements": "Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.",
-      "final_gate": "LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate."
+      "final_gate": "LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate.",
+      "priority_note": "091–093 are downstream consumers, not prerequisites, under the Model-First override."
     },
     {
       "id": "095",
       "title": "ZUVYR Model Lab",
-      "scope": "Owner/admin UI + backend for datasets, licenses, skills, curricula, synthetic data, training runs, evals, benchmarks, failure bank, checkpoints, lineage and deployment stages LAB→EVAL→SHADOW→CANARY→SECONDARY→PRIMARY.",
-      "acceptance": "Every checkpoint traces to exact dataset/version/license/eval and can be rolled back.",
+      "scope": "Owner/admin UI + backend for datasets, licenses, skills, curricula, synthetic data, training runs, evals, benchmarks, failure bank, checkpoints, lineage and deployment stages LAB→EVAL→SHADOW→CANARY→SECONDARY→PRIMARY. ADD a Compute Connector registry for training/serving targets, capability/health attestation, endpoint ownership, encrypted credential references and measured compute metadata. Serving targets must support the BYOC policy; training/R&D compute remains separately accounted from end-user inference.",
+      "acceptance": "Every checkpoint traces to exact dataset/version/license/eval and can be rolled back; Model Lab can register and qualify user/org-owned compute separately from ZUVYR control-plane infrastructure.",
       "external_gate": "—",
       "dependencies": [
         "022",
@@ -2550,7 +2551,7 @@
       "security_privacy": "Enforce owner/resource scopes server-side, redact secrets, keep memory and training rights separate; training content admitted only with traceable rights/consent.",
       "cost": "Record measured provider/compute/storage/egress/retry cost and reserve/settle/refund impact; unknown costs block paid execution. Track the >=50% mature-scale net operating margin target separately from actual measured margin.",
       "model_learning": "Record eligible non-content outcome/cost/failure signals; any dataset content requires rights/consent and lineage. Evaluate model changes independently with fallback and rollback.",
-      "test_plan": "Every checkpoint traces to exact dataset/version/license/eval and can be rolled back. Also exercise denial, failure/retry, persistence and accounting boundaries affected by this change; preserve relevant prior regressions.",
+      "test_plan": "Every checkpoint traces to exact dataset/version/license/eval and can be rolled back. A BYOC compute target can be registered/health-checked without exposing its credential to the browser; customer compute cost and ZUVYR control-plane cost remain separate. Also exercise denial, failure/retry, persistence and accounting boundaries affected by this change; preserve relevant prior regressions.",
       "deployment_plan": "Inspect exact current Git/dirty/deployment state; back up touched paths; validate scoped patch; commit explicit paths; push and verify exact production deployment. Apply only necessary compatible migrations through the approved connector.",
       "rollback_plan": "Retain pre-change hashes and previous release; reverse only scoped changes with a forward repair or validated prior deployment. Preserve customer rows; no reset/stash or blind migration replay. Verify recovery.",
       "evidence_requirements": "Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.",
@@ -2559,8 +2560,8 @@
     {
       "id": "096",
       "title": "ZUVYR 7 Manager / Operator — V1 Production Model + V2 Bridge",
-      "scope": "Using a commercially permitted open-weight base, train/evaluate the first ZUVYR-owned Manager/Operator checkpoint inside V1; require independent B>A eval, no unacceptable regression, measured serving cost and Router integration through LAB→EVAL→SHADOW→CANARY. After passing the gates, allow a bounded set of low-risk eligible V1 workloads to route to the ZUVYR-owned model with automatic external-model fallback and rollback. Prove the controlled Teacher Gateway can collect only contract/license-permitted teacher outputs and ZUVYR execution traces; attach rights metadata, provenance, consent state, cost, latency, tool-success and outcome labels; prohibit unrestricted scraping/copying of provider system prompts, weights or customer-private content.",
-      "acceptance": "V1 ships with at least one real ZUVYR-owned model serving a bounded production workload, not merely a future lab prototype. One complete rights-approved learning loop is proven from eligible V1 evidence → dataset → train → independent eval → registry → shadow/canary → bounded production routing → rollback/fallback, with exact lineage and no claim of frontier superiority required.",
+      "scope": "Using a commercially permitted open-weight base, train/evaluate the first ZUVYR-owned Manager/Operator checkpoint inside V1; require independent B>A eval, no unacceptable regression, measured serving cost and Router integration through LAB→EVAL→SHADOW→CANARY. Serve the qualifying owned checkpoint by default on a registered user/org-funded BYOC GPU/server endpoint through the ZUVYR Compute Connector: ZUVYR API/self-hosting software fee $0, ZUVYR-owned model usage fee $0, inference markup $0, and no ZUVYR-paid GPU required for the normal owned-model path. After passing the gates, allow a bounded set of low-risk eligible V1 workloads to route to the ZUVYR-owned model with automatic external-model fallback and rollback. Prove the controlled Teacher Gateway can collect only contract/license-permitted teacher outputs and ZUVYR execution traces; attach rights metadata, provenance, consent state, cost, latency, tool-success and outcome labels; prohibit unrestricted scraping/copying of provider system prompts, weights or customer-private content.",
+      "acceptance": "V1 ships with at least one real ZUVYR-owned model serving a bounded production workload through user/org-funded BYOC with ZUVYR API/software fee $0, owned-model usage fee $0 and inference markup $0; the normal owned-model request does not require a ZUVYR-paid GPU. One complete rights-approved learning loop is proven from eligible V1 evidence → dataset → train → independent eval → registry → shadow/canary → bounded BYOC production routing → rollback/fallback, with exact lineage and no claim of frontier superiority required.",
       "external_gate": "M21",
       "dependencies": [
         "021",
@@ -2580,9 +2581,9 @@
       "architecture": "Reuse canonical Brain/Kernel, registry/router, content IDs, permissions and one usage ledger. Preserve historical implementation and receipt identity.",
       "ux": "For affected controls, verify loading, empty, error, cancel, retry and reopen states; keyboard, RTL and responsive behavior. Infrastructure-only work has no invented UI requirement.",
       "security_privacy": "Enforce owner/resource scopes server-side, redact secrets, keep memory and training rights separate; training content admitted only with traceable rights/consent.",
-      "cost": "Record measured provider/compute/storage/egress/retry cost and reserve/settle/refund impact; unknown costs block paid execution. Track the >=50% mature-scale net operating margin target separately from actual measured margin.",
+      "cost": "The owned-model usage/API fee is canonically $0; customer GPU/server cost is paid directly by the user/org and is informational for optimization, not ZUVYR model-usage revenue. Record ZUVYR control-plane/storage/egress/observability cost separately. External paid fallback/teacher usage keeps its existing verified economics and must never be hidden as free owned-model usage.",
       "model_learning": "Record eligible non-content outcome/cost/failure signals; any dataset content requires rights/consent and lineage. Evaluate model changes independently with fallback and rollback.",
-      "test_plan": "V1 ships with at least one real ZUVYR-owned model serving a bounded production workload, not merely a future lab prototype. One complete rights-approved learning loop is proven from eligible V1 evidence → dataset → train → independent eval → registry → shadow/canary → bounded production routing → rollback/fallback, with exact lineage and no claim of frontier superiority required. Also exercise denial, failure/retry, persistence and accounting boundaries affected by this change; preserve relevant prior regressions.",
+      "test_plan": "V1 ships with at least one real ZUVYR-owned model serving a bounded production workload from a registered BYOC compute target, not merely a future lab prototype. Verify ZUVYR API/model usage fee = $0, no default ZUVYR-paid GPU is used for that request, customer compute ownership/billing is explicit, and paid external fallback remains separately visible. One complete rights-approved learning loop is proven from eligible V1 evidence → dataset → train → independent eval → registry → shadow/canary → bounded BYOC production routing → rollback/fallback, with exact lineage and no claim of frontier superiority required. Also exercise denial, failure/retry, persistence and accounting boundaries affected by this change; preserve relevant prior regressions.",
       "deployment_plan": "Inspect exact current Git/dirty/deployment state; back up touched paths; validate scoped patch; commit explicit paths; push and verify exact production deployment. Apply only necessary compatible migrations through the approved connector.",
       "rollback_plan": "Retain pre-change hashes and previous release; reverse only scoped changes with a forward repair or validated prior deployment. Preserve customer rows; no reset/stash or blind migration replay. Verify recovery.",
       "evidence_requirements": "Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.",
@@ -4055,5 +4056,34 @@
       "evidence_requirements": "Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.",
       "final_gate": "LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate."
     }
-  ]
+  ],
+  "priority_override": {
+    "id": "MODEL_FIRST_BYO_COMPUTE_2026_09_19",
+    "current_inflight_pack_may_finish": "083",
+    "execute_next": [
+      "094",
+      "095",
+      "096"
+    ],
+    "resume_original_sequence_at": "084",
+    "deferred_not_cancelled": [
+      "084",
+      "085",
+      "086",
+      "087",
+      "088",
+      "089",
+      "090",
+      "091",
+      "092",
+      "093"
+    ],
+    "do_not_renumber_existing_packs": true,
+    "economics_policy_path": "backend/config/zuvyr-owned-model-runtime-policy.v1.json",
+    "owned_model_api_software_fee_usd": 0,
+    "owned_model_usage_fee_usd": 0,
+    "inference_markup_usd": 0,
+    "default_compute_payer": "user_or_organization",
+    "default_serving_mode": "bring_your_own_compute"
+  }
 }

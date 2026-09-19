@@ -6,6 +6,52 @@ Latest user MASTER EXECUTION PROMPT overrides attached 100-pack and one-step rul
 
 This specification is not an execution receipt. Missing historical state must be reconciled with existing receipts without rerunning completed work. PACK150 alone may declare final V1 readiness. FIX iterations retain their pack number.
 
+## MODEL-FIRST PRIORITY OVERRIDE — 2026-09-19
+
+This override is canonical and changes **execution order without renumbering historical Packs**.
+
+- The already in-flight **PACK083** may finish and be reconciled normally; do not discard or duplicate its work.
+- After PACK083, execute **PACK094 → PACK095 → PACK096 before PACK084–PACK093**.
+- PACK084–PACK093 are deferred, not cancelled. Resume the original sequence at PACK084 after PACK096 is truthfully gated.
+- PACK091–PACK093 are no longer prerequisites for PACK094. Their Manager/Profit surfaces become downstream consumers of the learning/model telemetry produced by PACK094–PACK096.
+- Fresh production evidence still overrides stale roadmap/status text. This priority override does not retroactively mark any Pack complete.
+
+### Canonical ZUVYR-owned model economics
+
+The default owned-model/self-hosting contract is:
+
+- **ZUVYR API/self-hosting software fee: $0.**
+- **ZUVYR-owned model usage fee: $0.**
+- **ZUVYR inference markup: $0.**
+- **GPU/server/compute is paid directly by the user or organization** through their own local GPU, remote GPU server, cloud account or compute-provider account.
+- The default owned-model inference path must not require a ZUVYR-paid GPU. Target ZUVYR variable **GPU inference** cost per owned-model request is therefore approximately $0; this does **not** mean total company operating cost is literally zero because control-plane, storage, network/egress, observability and support costs remain measurable.
+- Training/R&D compute for developing ZUVYR-owned checkpoints is a separate owner/company cost and is not an end-user model-usage fee.
+- External-provider fallback is not automatically free. Any fallback to a paid third-party model keeps its own verified economics and must be shown/accounted separately rather than being hidden inside the $0 ZUVYR-owned-model promise.
+- Customer compute cost may be measured for optimization and total cost per successful task, but it is not ZUVYR model-usage revenue.
+
+Machine-readable policy: backend/config/zuvyr-owned-model-runtime-policy.v1.json.
+
+### Owned-model serving architecture
+
+- Use **Bring Your Own Compute (BYOC)** as the default production serving architecture.
+- A user or organization registers a local/remote compute endpoint through a ZUVYR Compute Connector; credentials stay server-side/encrypted and are never exposed to the browser.
+- Prefer an OpenAI-compatible serving contract where practical so vLLM/SGLang/llama.cpp/Ollama-like or equivalent runtimes can be normalized without coupling the Router to one GPU vendor.
+- The canonical Router treats a registered ZUVYR-owned-model endpoint as a provider target with ZUVYR model usage fee = $0, health/capability checks, task routing, fallback and rollback.
+- Do not silently proxy the normal owned-model path through a ZUVYR-paid GPU. A future optional managed-compute product would be a separate explicit product and must not change this default economics contract.
+- Shadow/canary/fallback remain mandatory until a ZUVYR-owned checkpoint meets the required quality/safety/task-success gates.
+
+### Continuous learning / evaluation machine
+
+V1 must prepare ZUVYR as a continuously improving system rather than a static checkpoint:
+
+- every eligible session may contribute **privacy-safe non-content aggregate signals** such as task success, tool success, latency, retry/failure category, model/provider outcome, cost per successful task and repair/rollback outcome;
+- Memory permission and model-training permission remain separate;
+- global-model training content remains opt-in OFF by default;
+- content/traces may enter training candidates only when eligibility, rights/license, consent where required, privacy processing, provenance and revocation/exclusion are all traceable;
+- the required pipeline is: **Learning Pipeline → Failure Bank → rights matrix → privacy/dedupe → dataset lineage → Teacher Gateway where permitted → train/fine-tune → independent eval → registry → shadow → canary → rollback/fallback**;
+- primary evaluation combines task success/quality with total cost per successful task rather than raw benchmark score alone.
+
+
 ## PACK001 — Freeze Production Truth
 
 - **Objective:** Freeze Production Truth
@@ -1818,6 +1864,8 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 
 ## PACK091 — ZUVYR Manager Observability
 
+> **Model-First ordering note:** Under the 2026-09-19 priority override, this Pack executes after PACK094–PACK096 and consumes their learning/model telemetry. Its number and original scope are unchanged.
+
 - **Objective:** ZUVYR Manager Observability
 - **Scope:** Build owner/admin Manager Studio: health, incidents, providers, models, DB, deployments, errors, traffic, cost/margin, stuck jobs and user-impact summaries. ADD Code Studio runtime observability: active/idle preview sessions, sandbox resource use, startup/build/HMR failures, preview-proxy errors, cleanup leaks and stuck runtimes—without storing source code/prompts unnecessarily.
 - **Dependencies:** 010, 020, 030, 040, 050, 060, 070, 080, 090
@@ -1838,6 +1886,8 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 
 ## PACK092 — Manager Diagnose / Propose / Safe Action
 
+> **Model-First ordering note:** Under the 2026-09-19 priority override, this Pack executes after PACK094–PACK096 and consumes their learning/model telemetry. Its number and original scope are unchanged.
+
 - **Objective:** Manager Diagnose / Propose / Safe Action
 - **Scope:** Implement detect→diagnose→propose→sandbox/test→approval policy→canary→monitor→rollback; action classes prevent unrestricted production mutation.
 - **Dependencies:** 039, 047, 091
@@ -1857,6 +1907,8 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 - **Recorded status:** PLANNED
 
 ## PACK093 — Profit Intelligence + Competitive Monitor
+
+> **Model-First ordering note:** Under the 2026-09-19 priority override, this Pack executes after PACK094–PACK096 and consumes their learning/model telemetry. Its number and original scope are unchanged.
 
 - **Objective:** Profit Intelligence + Competitive Monitor
 - **Scope:** Add full-technical-cost reconciliation, profit dashboard, bounded optimization recommendations and public competitor/provider capability/pricing watch feeding proposals—not automatic copying.
@@ -1879,13 +1931,13 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 ## PACK094 — Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank
 
 - **Objective:** Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank
-- **Scope:** Capture execution outcomes/verified failures/tool traces, explicit training-rights/consent, redaction/PII, dedupe, quality/difficulty/domain and Learning Value Score. Make every V1 user session valuable beyond revenue through privacy-safe aggregate product telemetry, task-success/failure metrics and model/provider performance signals; only opt-in, rights-approved content/traces may enter global model training. Global training opt-in default OFF and Memory permission remains separate.
-- **Dependencies:** 045, 047, 091, 092, 093
+- **Scope:** Capture execution outcomes/verified failures/tool traces, explicit training-rights/consent, redaction/PII, dedupe, quality/difficulty/domain and Learning Value Score. Make every V1 user session valuable beyond revenue through privacy-safe aggregate product telemetry, task-success/failure metrics and model/provider performance signals; only opt-in, rights-approved content/traces may enter global model training. Global training opt-in default OFF and Memory permission remains separate. ADD the canonical continuous-learning event contract required by the Model-First override: task success, tool success, latency, retry/failure category, model/provider result, cost per successful task and repair/rollback outcome feed the Learning Pipeline/Failure Bank without making conversation content automatically trainable.
+- **Dependencies:** 045, 047. **Priority override:** 091–093 are downstream consumers, not prerequisites.
 - **Files/systems affected:** Existing systems described in scope; exact paths must be grounded from the execution baseline
 - **Architecture decisions:** Reuse canonical Brain/Kernel, registry/router, content IDs, permissions and one usage ledger. Preserve historical implementation and receipt identity.
 - **UX requirements:** For affected controls, verify loading, empty, error, cancel, retry and reopen states; keyboard, RTL and responsive behavior. Infrastructure-only work has no invented UI requirement.
 - **Security/privacy:** Enforce owner/resource scopes server-side, redact secrets, keep memory and training rights separate; training content admitted only with traceable rights/consent.
-- **Cost impact:** Record measured provider/compute/storage/egress/retry cost and reserve/settle/refund impact; unknown costs block paid execution. Track the >=50% mature-scale net operating margin target separately from actual measured margin.
+- **Cost impact:** For ZUVYR-owned-model learning/serving, keep model/API usage fee at $0 and separate ZUVYR control-plane cost from customer-funded compute cost. External teacher/fallback/provider costs remain explicitly measured and unknown paid-provider cost still blocks paid execution. Track total cost per successful task rather than treating user-funded compute as ZUVYR inference revenue.
 - **Model/learning impact:** Record eligible non-content outcome/cost/failure signals; any dataset content requires rights/consent and lineage. Evaluate model changes independently with fallback and rollback.
 - **Test plan:** Every V1 session can improve product/routing/evals through non-content aggregate signals, while only rights-approved, privacy-processed, explicitly eligible records can enter training candidates; the contribution path, consent state and revocation/exclusion behavior are testable. Also exercise denial, failure/retry, persistence and accounting boundaries affected by this change; preserve relevant prior regressions.
 - **Deployment plan:** Inspect exact current Git/dirty/deployment state; back up touched paths; validate scoped patch; commit explicit paths; push and verify exact production deployment. Apply only necessary compatible migrations through the approved connector.
@@ -1899,7 +1951,7 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 ## PACK095 — ZUVYR Model Lab
 
 - **Objective:** ZUVYR Model Lab
-- **Scope:** Owner/admin UI + backend for datasets, licenses, skills, curricula, synthetic data, training runs, evals, benchmarks, failure bank, checkpoints, lineage and deployment stages LAB→EVAL→SHADOW→CANARY→SECONDARY→PRIMARY.
+- **Scope:** Owner/admin UI + backend for datasets, licenses, skills, curricula, synthetic data, training runs, evals, benchmarks, failure bank, checkpoints, lineage and deployment stages LAB→EVAL→SHADOW→CANARY→SECONDARY→PRIMARY. ADD a Compute Connector registry for training/serving targets, capability/health attestation, endpoint ownership, encrypted credential references and measured compute metadata. Serving targets must support the BYOC policy; training/R&D compute remains separately accounted from end-user inference.
 - **Dependencies:** 022, 041, 042, 045, 047, 094
 - **Files/systems affected:** Existing systems described in scope; exact paths must be grounded from the execution baseline
 - **Architecture decisions:** Reuse canonical Brain/Kernel, registry/router, content IDs, permissions and one usage ledger. Preserve historical implementation and receipt identity.
@@ -1907,10 +1959,10 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 - **Security/privacy:** Enforce owner/resource scopes server-side, redact secrets, keep memory and training rights separate; training content admitted only with traceable rights/consent.
 - **Cost impact:** Record measured provider/compute/storage/egress/retry cost and reserve/settle/refund impact; unknown costs block paid execution. Track the >=50% mature-scale net operating margin target separately from actual measured margin.
 - **Model/learning impact:** Record eligible non-content outcome/cost/failure signals; any dataset content requires rights/consent and lineage. Evaluate model changes independently with fallback and rollback.
-- **Test plan:** Every checkpoint traces to exact dataset/version/license/eval and can be rolled back. Also exercise denial, failure/retry, persistence and accounting boundaries affected by this change; preserve relevant prior regressions.
+- **Test plan:** Every checkpoint traces to exact dataset/version/license/eval and can be rolled back. A BYOC compute target can be registered/health-checked without exposing its credential to the browser; customer compute cost and ZUVYR control-plane cost remain separate. Also exercise denial, failure/retry, persistence and accounting boundaries affected by this change; preserve relevant prior regressions.
 - **Deployment plan:** Inspect exact current Git/dirty/deployment state; back up touched paths; validate scoped patch; commit explicit paths; push and verify exact production deployment. Apply only necessary compatible migrations through the approved connector.
 - **Rollback plan:** Retain pre-change hashes and previous release; reverse only scoped changes with a forward repair or validated prior deployment. Preserve customer rows; no reset/stash or blind migration replay. Verify recovery.
-- **Acceptance criteria:** Every checkpoint traces to exact dataset/version/license/eval and can be rolled back.
+- **Acceptance criteria:** Every checkpoint traces to exact dataset/version/license/eval and can be rolled back; Model Lab can register and qualify user/org-owned compute separately from ZUVYR control-plane infrastructure.
 - **Evidence/receipt requirements:** Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.
 - **Final gate:** LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate.
 - **External gate:** —
@@ -1919,18 +1971,18 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 ## PACK096 — ZUVYR 7 Manager / Operator — V1 Production Model + V2 Bridge
 
 - **Objective:** ZUVYR 7 Manager / Operator — V1 Production Model + V2 Bridge
-- **Scope:** Using a commercially permitted open-weight base, train/evaluate the first ZUVYR-owned Manager/Operator checkpoint inside V1; require independent B>A eval, no unacceptable regression, measured serving cost and Router integration through LAB→EVAL→SHADOW→CANARY. After passing the gates, allow a bounded set of low-risk eligible V1 workloads to route to the ZUVYR-owned model with automatic external-model fallback and rollback. Prove the controlled Teacher Gateway can collect only contract/license-permitted teacher outputs and ZUVYR execution traces; attach rights metadata, provenance, consent state, cost, latency, tool-success and outcome labels; prohibit unrestricted scraping/copying of provider system prompts, weights or customer-private content.
+- **Scope:** Using a commercially permitted open-weight base, train/evaluate the first ZUVYR-owned Manager/Operator checkpoint inside V1; require independent B>A eval, no unacceptable regression, measured serving cost and Router integration through LAB→EVAL→SHADOW→CANARY. Serve the qualifying owned checkpoint by default on a registered **user/org-funded BYOC GPU/server endpoint** through the ZUVYR Compute Connector: ZUVYR API/self-hosting software fee $0, ZUVYR-owned model usage fee $0, inference markup $0, and no ZUVYR-paid GPU required for the normal owned-model path. After passing the gates, allow a bounded set of low-risk eligible V1 workloads to route to the ZUVYR-owned model with automatic external-model fallback and rollback. Prove the controlled Teacher Gateway can collect only contract/license-permitted teacher outputs and ZUVYR execution traces; attach rights metadata, provenance, consent state, cost, latency, tool-success and outcome labels; prohibit unrestricted scraping/copying of provider system prompts, weights or customer-private content.
 - **Dependencies:** 021, 022, 023, 026, 027, 028, 029, 030, 094, 095
 - **Files/systems affected:** Existing systems described in scope; exact paths must be grounded from the execution baseline
 - **Architecture decisions:** Reuse canonical Brain/Kernel, registry/router, content IDs, permissions and one usage ledger. Preserve historical implementation and receipt identity.
 - **UX requirements:** For affected controls, verify loading, empty, error, cancel, retry and reopen states; keyboard, RTL and responsive behavior. Infrastructure-only work has no invented UI requirement.
 - **Security/privacy:** Enforce owner/resource scopes server-side, redact secrets, keep memory and training rights separate; training content admitted only with traceable rights/consent.
-- **Cost impact:** Record measured provider/compute/storage/egress/retry cost and reserve/settle/refund impact; unknown costs block paid execution. Track the >=50% mature-scale net operating margin target separately from actual measured margin.
+- **Cost impact:** The owned-model usage/API fee is canonically $0; customer GPU/server cost is paid directly by the user/org and is informational for optimization, not ZUVYR model-usage revenue. Record ZUVYR control-plane/storage/egress/observability cost separately. External paid fallback/teacher usage keeps its existing verified economics and must never be hidden as free owned-model usage.
 - **Model/learning impact:** Record eligible non-content outcome/cost/failure signals; any dataset content requires rights/consent and lineage. Evaluate model changes independently with fallback and rollback.
-- **Test plan:** V1 ships with at least one real ZUVYR-owned model serving a bounded production workload, not merely a future lab prototype. One complete rights-approved learning loop is proven from eligible V1 evidence → dataset → train → independent eval → registry → shadow/canary → bounded production routing → rollback/fallback, with exact lineage and no claim of frontier superiority required. Also exercise denial, failure/retry, persistence and accounting boundaries affected by this change; preserve relevant prior regressions.
+- **Test plan:** V1 ships with at least one real ZUVYR-owned model serving a bounded production workload from a registered BYOC compute target, not merely a future lab prototype. Verify ZUVYR API/model usage fee = $0, no default ZUVYR-paid GPU is used for that request, customer compute ownership/billing is explicit, and paid external fallback remains separately visible. One complete rights-approved learning loop is proven from eligible V1 evidence → dataset → train → independent eval → registry → shadow/canary → bounded BYOC production routing → rollback/fallback, with exact lineage and no claim of frontier superiority required. Also exercise denial, failure/retry, persistence and accounting boundaries affected by this change; preserve relevant prior regressions.
 - **Deployment plan:** Inspect exact current Git/dirty/deployment state; back up touched paths; validate scoped patch; commit explicit paths; push and verify exact production deployment. Apply only necessary compatible migrations through the approved connector.
 - **Rollback plan:** Retain pre-change hashes and previous release; reverse only scoped changes with a forward repair or validated prior deployment. Preserve customer rows; no reset/stash or blind migration replay. Verify recovery.
-- **Acceptance criteria:** V1 ships with at least one real ZUVYR-owned model serving a bounded production workload, not merely a future lab prototype. One complete rights-approved learning loop is proven from eligible V1 evidence → dataset → train → independent eval → registry → shadow/canary → bounded production routing → rollback/fallback, with exact lineage and no claim of frontier superiority required.
+- **Acceptance criteria:** V1 ships with at least one real ZUVYR-owned model serving a bounded production workload through user/org-funded BYOC with ZUVYR API/software fee $0, owned-model usage fee $0 and inference markup $0; the normal owned-model request does not require a ZUVYR-paid GPU. One complete rights-approved learning loop is proven from eligible V1 evidence → dataset → train → independent eval → registry → shadow/canary → bounded BYOC production routing → rollback/fallback, with exact lineage and no claim of frontier superiority required.
 - **Evidence/receipt requirements:** Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.
 - **Final gate:** LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate.
 - **External gate:** M21
