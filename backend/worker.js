@@ -80,6 +80,16 @@ const {
   restoreProviderResult: restorePack074ProviderResult
 } = require('./lib/audioFalProvider');
 const { getDefaultAudioResultRepository } = require('./lib/audioResultRepository');
+const { normalizeModel3dRequest } = require('./lib/model3dRequestContract');
+const { createModel3dInputResolver } = require('./lib/model3dInputResolver');
+const {
+  MODELS: MODEL3D_MODELS,
+  submitModel3d,
+  fetchModel3dResult,
+  serializeProviderResult: serializeModel3dProviderResult,
+  restoreProviderResult: restoreModel3dProviderResult
+} = require('./lib/model3dProvider');
+const { createModel3dGenerationRepository } = require('./lib/model3dGenerationRepository');
 const { connection } = require('./lib/queue');
 const { startBrainKernelWorker } = require('./lib/brainKernelWorker');
 const { supabaseAdmin } = require('./lib/supabaseAdmin');
@@ -92,6 +102,14 @@ const resolveVideoReferences = createVideoReferenceResolver({
   storage: supabaseAdmin.storage
 });
 const audioInputResolver = createAudioInputResolver({
+  db: supabaseAdmin,
+  storage: supabaseAdmin.storage
+});
+const model3dInputResolver = createModel3dInputResolver({
+  db: supabaseAdmin,
+  storage: supabaseAdmin.storage
+});
+const model3dRepository = createModel3dGenerationRepository({
   db: supabaseAdmin,
   storage: supabaseAdmin.storage
 });
@@ -1565,6 +1583,333 @@ async function handleAudioFailure(job, error) {
   );
 }
 
+
+async function model3dJobRpc(name, args) {
+  const result = await supabaseAdmin.rpc(name, args);
+  if (result.error) {
+    const error = new Error(name + '_failed');
+    error.code = name + '_failed';
+    error.cause = result.error;
+    throw error;
+  }
+  return result.data && typeof result.data === 'object'
+    ? result.data
+    : {};
+}
+
+async function model3dJobState({ ownerId, jobId }) {
+  const result = await supabaseAdmin
+    .from('generation_jobs')
+    .select(
+      'status,job_stage,cancel_requested,model3d_operation,model3d_input_views,' +
+      'model3d_options,model3d_submission_started_at,model3d_provider_request_id,' +
+      'model3d_provider_result,model3d_output_manifest,canonical_content_id'
+    )
+    .eq('id', jobId)
+    .eq('user_id', ownerId)
+    .eq('feature', '3d')
+    .maybeSingle();
+
+  if (result.error) {
+    const error = new Error('model3d_job_state_lookup_failed');
+    error.code = 'model3d_job_state_lookup_failed';
+    error.cause = result.error;
+    throw error;
+  }
+  return result.data || null;
+}
+
+async function refundModel3d({ requestId, userId }) {
+  try {
+    await refundCredits(requestId);
+    recordRefund('3d');
+  } catch (error) {
+    await reportRefundFailure({
+      requestId,
+      userId,
+      feature: '3d',
+      error
+    });
+  }
+}
+
+async function processModel3dJob(job) {
+  const {
+    jobRowId,
+    requestId,
+    userId,
+    request: rawRequest,
+    creditsConsumed,
+    pricingVersion = null,
+    quotedProviderCostMicroUsd = null
+  } = job.data;
+
+  const request = normalizeModel3dRequest({
+    prompt: rawRequest?.prompt,
+    model3dOperation: rawRequest?.operation,
+    model3dViews: rawRequest?.views,
+    model3dOptions: rawRequest?.options
+  });
+
+  const finalCredits = Number(creditsConsumed);
+  if (!Number.isSafeInteger(finalCredits) || finalCredits < 1) {
+    const error = new UnrecoverableError('model3d_credit_settlement_invalid');
+    error.code = 'model3d_credit_settlement_invalid';
+    throw error;
+  }
+
+  let state = await model3dJobState({
+    ownerId: userId,
+    jobId: jobRowId
+  });
+
+  if (!state) {
+    const error = new UnrecoverableError('model3d_job_not_found');
+    error.code = 'model3d_job_not_found';
+    throw error;
+  }
+
+  if (state.status === 'done') {
+    return { status: 'done', replayed: true };
+  }
+
+  if (state.status === 'cancelled') {
+    await refundModel3d({ requestId, userId });
+    return { status: 'cancelled', replayed: true };
+  }
+
+  let persisted = await model3dRepository.getExisting({
+    ownerId: userId,
+    jobId: jobRowId
+  });
+
+  if (!persisted) {
+    const claim = await model3dJobRpc(
+      'claim_zuvyr_model3d_execution_pack083',
+      {
+        p_job_id: jobRowId,
+        p_owner_id: userId
+      }
+    );
+
+    if (claim.status === 'cancelled') {
+      await refundModel3d({ requestId, userId });
+      return { status: 'cancelled' };
+    }
+    if (claim.status === 'done') {
+      return { status: 'done', replayed: true };
+    }
+
+    state = await model3dJobState({
+      ownerId: userId,
+      jobId: jobRowId
+    });
+
+    const resolvedInputs =
+      request.operation === 'text_to_3d'
+        ? { views: {}, lineage: {} }
+        : await model3dInputResolver.resolve({
+            ownerId: userId,
+            request,
+            requestId
+          });
+
+    let providerResult =
+      restoreModel3dProviderResult(state?.model3d_provider_result);
+
+    if (!providerResult && state?.model3d_provider_request_id) {
+      providerResult = await fetchModel3dResult({
+        operation: request.operation,
+        providerRequestId: state.model3d_provider_request_id
+      });
+
+      await model3dJobRpc(
+        'record_zuvyr_model3d_provider_result_pack083',
+        {
+          p_job_id: jobRowId,
+          p_owner_id: userId,
+          p_result: serializeModel3dProviderResult(providerResult)
+        }
+      );
+    }
+
+    if (
+      !providerResult &&
+      state?.model3d_submission_started_at &&
+      !state?.model3d_provider_request_id
+    ) {
+      const error = new UnrecoverableError(
+        'model3d_submission_outcome_uncertain'
+      );
+      error.code = 'model3d_submission_outcome_uncertain';
+      throw error;
+    }
+
+    if (!providerResult) {
+      await model3dJobRpc(
+        'mark_zuvyr_model3d_submission_started_pack083',
+        {
+          p_job_id: jobRowId,
+          p_owner_id: userId
+        }
+      );
+
+      const submitted = await submitModel3d(request, {
+        resolvedInputs
+      });
+
+      await model3dJobRpc(
+        'record_zuvyr_model3d_provider_request_pack083',
+        {
+          p_job_id: jobRowId,
+          p_owner_id: userId,
+          p_provider_request_id: submitted.providerRequestId
+        }
+      );
+
+      providerResult = await fetchModel3dResult({
+        operation: request.operation,
+        providerRequestId: submitted.providerRequestId
+      });
+
+      await model3dJobRpc(
+        'record_zuvyr_model3d_provider_result_pack083',
+        {
+          p_job_id: jobRowId,
+          p_owner_id: userId,
+          p_result: serializeModel3dProviderResult(providerResult)
+        }
+      );
+    }
+
+    state = await model3dJobState({
+      ownerId: userId,
+      jobId: jobRowId
+    });
+
+    if (state?.status === 'cancelled') {
+      // A pre-provider cancellation is terminal/refundable. Once the provider
+      // was submitted the cancel RPC reports tooLate instead of setting
+      // status=cancelled, so a paid result is never silently discarded here.
+      await refundModel3d({ requestId, userId });
+      return { status: 'cancelled' };
+    }
+
+    persisted = await model3dRepository.persistProviderResult({
+      ownerId: userId,
+      jobId: jobRowId,
+      providerResult,
+      provider: providerResult.provider,
+      model: MODEL3D_MODELS[request.operation],
+      request,
+      lineage: resolvedInputs.lineage || {}
+    });
+  }
+
+  await markJob(jobRowId, {
+    progress_percent: 90,
+    job_stage: 'processing'
+  });
+
+  await settleCredits(requestId, finalCredits);
+
+  await markJob(jobRowId, {
+    status: 'done',
+    job_stage: 'done',
+    progress_percent: 100,
+    final_credits: finalCredits,
+    canonical_content_id: persisted.contentId,
+    completed_at: new Date().toISOString(),
+    error_message: null
+  });
+
+  await logCreditEvent({
+    userId,
+    feature: '3d',
+    modelUsed: MODEL3D_MODELS[request.operation],
+    status: 'success',
+    requestId: requestId + ':detail',
+    metadata: {
+      operation: request.operation,
+      pricing_version: pricingVersion,
+      quoted_provider_cost_micro_usd: quotedProviderCostMicroUsd,
+      canonical_content_id: persisted.contentId,
+      artifact_roles: persisted.manifest.map(item => item.role)
+    }
+  }).catch(() => null);
+
+  return {
+    status: 'done',
+    operation: request.operation,
+    canonicalContentId: persisted.contentId,
+    artifactCount: persisted.manifest.length
+  };
+}
+
+async function handleModel3dFailure(job, error) {
+  const attempts = Number(job.opts.attempts || 1);
+  const exhausted =
+    error.name === 'UnrecoverableError' ||
+    job.attemptsMade >= attempts;
+  if (!exhausted) return;
+
+  const { jobRowId, requestId, userId } = job.data;
+
+  const state = await model3dJobState({
+    ownerId: userId,
+    jobId: jobRowId
+  }).catch(() => null);
+
+  if (state?.status === 'done') {
+    console.warn(
+      '[model3d-worker] ignored post-success failure:',
+      job.id,
+      error.code || error.message
+    );
+    return;
+  }
+
+  if (state?.status === 'cancelled') {
+    await refundModel3d({ requestId, userId });
+    return;
+  }
+
+  await markJob(jobRowId, {
+    status: 'failed',
+    job_stage: 'failed',
+    progress_percent: 0,
+    error_message: String(
+      error.code || error.message || 'model3d_job_failed'
+    ).slice(0, 500),
+    completed_at: new Date().toISOString()
+  }).catch(() => null);
+
+  await refundModel3d({ requestId, userId });
+
+  await logCreditEvent({
+    userId,
+    feature: '3d',
+    status: 'error',
+    requestId: requestId + ':detail',
+    errorMessage: error.message,
+    metadata: {
+      submission_outcome_uncertain:
+        String(error.code || '') ===
+        'model3d_submission_outcome_uncertain',
+      provider_request_id_known:
+        Boolean(state?.model3d_provider_request_id),
+      provider_result_stored:
+        Boolean(state?.model3d_provider_result)
+    }
+  }).catch(() => null);
+
+  console.error(
+    '[model3d-worker] job failed and reservation reconciled:',
+    job.id,
+    error.code || error.message
+  );
+}
+
 const imageWorker = new Worker('rox-image-generation', processImageJob, {
   connection,
   concurrency: CONCURRENCY,
@@ -1579,6 +1924,15 @@ const audioWorker = new Worker('zuvyr-audio-processing', processAudioJob, {
   connection,
   concurrency: 1
 });
+
+const model3dWorker = new Worker(
+  'zuvyr-3d-generation',
+  processModel3dJob,
+  {
+    connection,
+    concurrency: 1
+  }
+);
 
 const attachmentWorker = new Worker(
   'zuvyr-attachment-processing',
@@ -1763,6 +2117,9 @@ async function handleJobFailure(job, err, feature) {
 imageWorker.on('failed', (job, err) => handleJobFailure(job, err, 'image'));
 videoWorker.on('failed', (job, err) => handleJobFailure(job, err, 'video'));
 audioWorker.on('failed', (job, err) => handleAudioFailure(job, err));
+model3dWorker.on('failed', (job, err) =>
+  handleModel3dFailure(job, err)
+);
 attachmentWorker.on('failed', (job, err) =>
   handleAttachmentFailure(job, err)
 );
@@ -1781,4 +2138,4 @@ brainKernelWorker.on('failed', (job, error) => {
   );
 });
 
-console.log(`ROX AI worker running (concurrency: image=${CONCURRENCY}, video=${Math.max(1, Math.floor(CONCURRENCY / 2))}, audio=1, attachment=${ATTACHMENT_WORKER_CONCURRENCY})`);
+console.log(`ROX AI worker running (concurrency: image=${CONCURRENCY}, video=${Math.max(1, Math.floor(CONCURRENCY / 2))}, audio=1, model3d=1, attachment=${ATTACHMENT_WORKER_CONCURRENCY})`);
