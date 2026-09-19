@@ -67,6 +67,47 @@ const lipsync = normalizeVideoRequest({
 });
 assert.equal(lipsync.sourceAudioAssetId, AUDIO);
 
+const subtitles = normalizeVideoRequest({
+  videoOperation: 'subtitles',
+  sourceVideoAssetId: VIDEO,
+  videoOptions: {
+    subtitleLanguage: 'fr',
+    subtitleFormats: ['srt','vtt'],
+    wordsPerSubtitle: 4,
+    position: 'bottom'
+  }
+});
+assert.equal(subtitles.options.subtitleLanguage, 'fr');
+assert.deepEqual(subtitles.options.subtitleFormats, ['srt','vtt']);
+assert.equal(subtitles.options.wordsPerSubtitle, 4);
+
+const dub = normalizeVideoRequest({
+  videoOperation: 'dub',
+  sourceVideoAssetId: VIDEO,
+  videoOptions: {
+    sourceLanguage: 'en',
+    targetLanguage: 'fr',
+    highestResolution: true
+  }
+});
+assert.equal(dub.options.sourceLanguage, 'en');
+assert.equal(dub.options.targetLanguage, 'fr');
+
+const enhance = normalizeVideoRequest({
+  videoOperation: 'enhance',
+  sourceVideoAssetId: VIDEO,
+  videoOptions: { increaseFactor: 4, preserveAudio: true, exportFormat: 'webm' }
+});
+assert.equal(enhance.options.increaseFactor, 4);
+assert.equal(enhance.options.exportFormat, 'webm');
+
+const exported = normalizeVideoRequest({
+  videoOperation: 'export',
+  sourceVideoAssetId: VIDEO,
+  videoOptions: { exportFormat: 'mov' }
+});
+assert.equal(exported.options.exportFormat, 'mov');
+
 for (const [body, code] of [
   [{}, 'video_prompt_required'],
   [{ videoOperation: 'image_to_video', prompt: 'Move' }, 'video_source_image_required'],
@@ -88,7 +129,15 @@ for (const [body, code] of [
   [{ videoOperation: 'reference_to_video', prompt: 'x', referenceImageAssetIds: [REF], sourceImageAssetId: IMAGE }, 'video_reference_source_conflict'],
   [{ videoOperation: 'background_remove', sourceVideoAssetId: VIDEO, sourceAudioAssetId: AUDIO }, 'video_source_audio_not_supported'],
   [{ videoOperation: 'recamera', sourceVideoAssetId: VIDEO, videoOptions: { cameraMode:'target' } }, 'invalid_video_target_pose'],
-  [{ videoOperation: 'extend', sourceVideoAssetId: VIDEO, videoOptions: { durationSeconds: 8.1234 } }, 'invalid_video_duration']
+  [{ videoOperation: 'extend', sourceVideoAssetId: VIDEO, videoOptions: { durationSeconds: 8.1234 } }, 'invalid_video_duration'],
+  [{ videoOperation: 'subtitles' }, 'video_source_video_required'],
+  [{ videoOperation: 'subtitles', sourceVideoAssetId: VIDEO, videoOptions: { wordsPerSubtitle: 13 } }, 'invalid_video_words_per_subtitle'],
+  [{ videoOperation: 'subtitles', sourceVideoAssetId: VIDEO, videoOptions: { subtitleFormats: ['txt'] } }, 'invalid_video_subtitle_formats'],
+  [{ videoOperation: 'dub', sourceVideoAssetId: VIDEO, videoOptions: { targetLanguage: 'auto' } }, 'invalid_video_target_language'],
+  [{ videoOperation: 'dub', sourceVideoAssetId: VIDEO, videoOptions: { targetLanguage: 'fra' } }, 'invalid_video_target_language'],
+  [{ videoOperation: 'enhance', sourceVideoAssetId: VIDEO, videoOptions: { increaseFactor: 3 } }, 'invalid_video_increase_factor'],
+  [{ videoOperation: 'export', sourceVideoAssetId: VIDEO, videoOptions: { exportFormat: 'avi' } }, 'invalid_video_export_format'],
+  [{ videoOperation: 'export', sourceVideoAssetId: VIDEO, sourceAudioAssetId: AUDIO }, 'video_source_audio_not_supported']
 ]) assert.throws(() => normalizeVideoRequest(body), error => error.code === code, code);
 
-console.log('PASS: Pack05/067/068 request contracts remain bounded and operation-specific');
+console.log('PASS: Pack05/067/068/069 request contracts remain bounded and operation-specific');
