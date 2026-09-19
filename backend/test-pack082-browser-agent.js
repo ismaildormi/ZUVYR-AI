@@ -256,6 +256,14 @@ assert.equal(config.liveGate.providerCallsAllowedWhenPack081Live, false);
 assert(graph.capabilities['browser.agent.run']);
 assert.equal(graph.outputAliases.browser, 'browser.agent.run');
 assert.equal(graph.outputAliases.web_agent, 'browser.agent.run');
+assert.equal(
+  Object.prototype.hasOwnProperty.call(
+    graph.plannerRules.surfaceDefaults,
+    'work'
+  ),
+  false,
+  'Work must require an explicit browser/web_agent output'
+);
 assert(
   graph.edges.some(edge =>
     Array.isArray(edge) &&
