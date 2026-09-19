@@ -44,15 +44,15 @@ assert(migration.includes('pack075_revision_conflict'));
 assert(/unique\s*\(\s*owner_id\s*,\s*request_id\s*\)/i.test(migration));
 assert(!/grant\s+(?:select|insert|update|delete)[^;]*\s+to\s+(?:anon|authenticated)/i.test(migration));
 
-assert.equal(config.version, 'pack-078.code-studio.v1');
+assert.equal(config.version, 'pack-079.code-studio.v1');
 for (const capability of ['assistant','files','editor','history']) {
   assert.equal(config.capabilities[capability].enabledByDefault, true);
   assert.equal(config.capabilities[capability].status, 'implemented_pack075');
 }
 assert.equal(config.capabilities.preview.enabledByDefault, true);
 assert.equal(config.capabilities.preview.status, 'pack078_product_layer_live_deferred');
-assert.equal(config.capabilities.export_zip.enabledByDefault, false);
-assert.equal(config.capabilities.export_zip.status, 'blocked_until_pack079');
+assert.equal(config.capabilities.export_zip.enabledByDefault, true);
+assert.equal(config.capabilities.export_zip.status, 'implemented_pack079');
 
 for (const marker of [
   "router.get('/projects'",
