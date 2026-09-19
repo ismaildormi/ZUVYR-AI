@@ -547,7 +547,7 @@ function createBrowserAgentController({
     }
 
     let before = null;
-    if (classified.permissionAction || config.evidence.beforeConsequenceAction) {
+    if (classified.permissionAction && config.evidence.beforeConsequenceAction) {
       before = await captureEvidence({
         ownerId,
         run,
