@@ -1,0 +1,139 @@
+{
+  "pack": "067",
+  "title": "Image/Reference-to-Video",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonicalLockedVerified": false,
+  "date": "2026-09-19",
+  "baselineCommit": "c6da466072f5cc607abcfa6b7b6676fb650ca5c1",
+  "candidate": {
+    "branch": "zuvyr-pack067-candidate",
+    "head": "ba261b2c29b72e85869abda696ccce930c952b8e",
+    "pullRequest": 4,
+    "workflowRun": 35410247788,
+    "releaseQuality": "PASS",
+    "backendQuality": "PASS"
+  },
+  "production": {
+    "sourceCommit": "43547de7c90cebdf3fb02933657ddfe49f057f76",
+    "mainPushWorkflowRun": 35410404636,
+    "releaseQuality": "PASS",
+    "backendQuality": "PASS",
+    "vercel": {
+      "status": "SUCCESS"
+    },
+    "railway": {
+      "backend": {
+        "service": "rox-ai",
+        "deploymentId": "f3997380-e4ec-4e41-82c7-4cfafed31818",
+        "status": "SUCCESS",
+        "healthcheckPath": "/readyz",
+        "healthcheckDeployment": "PASS"
+      },
+      "worker": {
+        "service": "loving-harmony",
+        "deploymentId": "5631f803-17f2-4be8-81ee-06fccd961a0b",
+        "status": "SUCCESS",
+        "startup": "PASS"
+      },
+      "maintenance": {
+        "service": "zuvyr-maintenance-runner",
+        "deploymentId": "e5b5e5bb-1344-41c8-a174-08e29a4ef2ea",
+        "status": "SUCCESS"
+      }
+    }
+  },
+  "providerContracts": {
+    "imageToVideo": {
+      "provider": "replicate",
+      "model": "wan-video/wan-2.2-i2v-fast",
+      "sourceImageConsumedByAdapter": true,
+      "optionalLastImageConsumedByAdapter": true,
+      "durationsSeconds": [
+        5,
+        6,
+        7
+      ],
+      "resolutions": [
+        "480p",
+        "720p"
+      ],
+      "fps": 16,
+      "audioSupported": false,
+      "exportFormat": "mp4",
+      "pricing": {
+        "480pMicroUsdPerOutputVideo": 50000,
+        "720pMicroUsdPerOutputVideo": 110000
+      },
+      "paidExecutionEnvironment": "PACK067_I2V_PAID_EXECUTION_ENABLED"
+    },
+    "referenceToVideo": {
+      "provider": "replicate",
+      "model": "wan-video/wan-2.7-r2v",
+      "referenceImagesConsumedByAdapter": true,
+      "referenceVideosExposed": false,
+      "durationSecondsMin": 2,
+      "durationSecondsMax": 10,
+      "resolutions": [
+        "720p",
+        "1080p"
+      ],
+      "ratios": [
+        "16:9",
+        "9:16",
+        "1:1",
+        "4:3",
+        "3:4"
+      ],
+      "shotTypes": [
+        "single",
+        "multi"
+      ],
+      "audioSupported": false,
+      "exportFormat": "mp4",
+      "pricing": {
+        "microUsdPerOutputSecond": 100000
+      },
+      "paidExecutionEnvironment": "PACK067_R2V_PAID_EXECUTION_ENABLED"
+    }
+  },
+  "canonicalLineage": {
+    "ownerScopedConversationAssetLookup": true,
+    "canonicalAssetOwnershipResolution": true,
+    "canonicalContentVersionAssetRecorded": true,
+    "signedProviderInputsEphemeral": true,
+    "signedUrlsPersistedInLineage": false
+  },
+  "database": {
+    "projectRef": "tqoqsgaymygmqrzddvtu",
+    "migrationName": "pack067_video_reference_foundation",
+    "migrationVersion": "20260919004354",
+    "status": "APPLIED_VERIFIED",
+    "videoReferenceAssetIds": "jsonb not null default []",
+    "referenceToVideoOperationAllowed": true,
+    "maxReferenceImages": 4,
+    "productionPack067JobsAtVerification": 0
+  },
+  "productionGate": {
+    "pack066PaidExecutionEnvironmentDefinedBackend": false,
+    "pack066PaidExecutionEnvironmentDefinedWorker": false,
+    "pack067I2vPaidExecutionEnvironmentDefinedBackend": false,
+    "pack067I2vPaidExecutionEnvironmentDefinedWorker": false,
+    "pack067R2vPaidExecutionEnvironmentDefinedBackend": false,
+    "pack067R2vPaidExecutionEnvironmentDefinedWorker": false,
+    "replicateCredentialNamePresentBackend": true,
+    "replicateCredentialNamePresentWorker": true,
+    "secretValuesReadOrExposed": false,
+    "paidProviderCallsDuringVerification": 0
+  },
+  "advisors": {
+    "pack067SpecificNewSecurityFinding": false,
+    "pack067SpecificNewPerformanceFinding": false,
+    "preExistingProjectDebtObserved": true
+  },
+  "canonicalGateReason": "The engineering path proves owner-scoped assets are resolved and mapped into exact provider input fields, but no paid live I2V/R2V inference, actual provider billing, or end-to-end paid settlement was executed. The production paid gates remain OFF.",
+  "externalGate": "M13_DEFERRED",
+  "progression": "USER_APPROVED_NO_COST_DEFERRED_GATE",
+  "nextPack": "068",
+  "nextPackTitle": "Video Edit / Extend / VFX",
+  "nextStep": "Open PACK068 by re-verifying current official edit/extend/VFX provider schemas, source-media semantics and exact prices; expose only capability-specific operations that can produce a new playable version with provenance and verified pricing, while keeping paid execution OFF."
+}

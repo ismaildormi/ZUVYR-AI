@@ -904,3 +904,88 @@ Pack067 must preserve:
 
 Exactly one next step:
 Re-verify current official Image/Reference-to-Video provider schemas, supported source/start/end/reference semantics and exact prices; then map only those proven capabilities into the existing video request/provider/cost/canonical-asset contracts without paid inference.
+
+## PACK067 NO-COST FINAL RECONCILIATION — 2026-09-19
+
+- Baseline commit: c6da466072f5cc607abcfa6b7b6676fb650ca5c1
+- Production source commit: 43547de7c90cebdf3fb02933657ddfe49f057f76
+- Candidate validation head: ba261b2c29b72e85869abda696ccce930c952b8e
+- Candidate PR: #4
+- Candidate GitHub Actions run: 35410247788 — SUCCESS
+- Main push GitHub Actions run: 35410404636 — SUCCESS
+- Release Quality: PASS
+- Backend Quality: PASS
+- Supabase migration: pack067_video_reference_foundation / 20260919004354 — APPLIED_VERIFIED
+- Production schema:
+  - generation_jobs.video_reference_asset_ids = jsonb NOT NULL default []
+  - reference_to_video admitted by generation_jobs_video_operation_allowed
+  - generation_jobs_video_reference_assets_array max length = 4
+  - Pack067 production jobs observed at verification = 0
+- Verified I2V provider contract:
+  - Replicate wan-video/wan-2.2-i2v-fast
+  - owner-scoped canonical source image is resolved to provider image
+  - optional end/last frame is resolved to provider last_image
+  - 5 / 6 / 7 seconds; 480p / 720p; 16 fps; no audio; MP4
+  - 480p = $0.05/output video
+  - 720p = $0.11/output video
+- Verified R2V provider contract:
+  - Replicate wan-video/wan-2.7-r2v
+  - ordered owner-scoped reference images are resolved to provider reference_images
+  - reference videos remain unexposed
+  - 2–10 seconds; 720p / 1080p
+  - 16:9 / 9:16 / 1:1 / 4:3 / 3:4
+  - single / multi shot; no audio; MP4
+  - $0.10/output second
+- Canonical lineage:
+  - conversation asset ownership checked
+  - canonical asset/content/version resolved
+  - ephemeral signed provider URLs are not persisted as lineage
+  - exact canonical lineage is persisted with the generated video
+- Production deployment:
+  - Vercel: SUCCESS
+  - Railway backend f3997380-e4ec-4e41-82c7-4cfafed31818: SUCCESS
+  - Railway configured /readyz healthcheck: deployment PASS
+  - Railway worker 5631f803-17f2-4be8-81ee-06fccd961a0b: SUCCESS
+  - worker startup log: PASS
+  - Railway maintenance e5b5e5bb-1344-41c8-a174-08e29a4ef2ea: SUCCESS
+- Production paid-execution gates:
+  - PACK066_PAID_EXECUTION_ENABLED absent on backend/worker
+  - PACK067_I2V_PAID_EXECUTION_ENABLED absent on backend/worker
+  - PACK067_R2V_PAID_EXECUTION_ENABLED absent on backend/worker
+  - REPLICATE_API_TOKEN variable name present on backend/worker
+  - no secret value read or exposed
+- Supabase advisor review:
+  - no Pack067-specific new security finding
+  - no Pack067-specific new performance finding
+  - pre-existing project-wide advisor debt remains separate
+- Paid provider calls during verification: 0
+- Status: LOCKED_ENGINEERING_VERIFIED
+- Canonical LOCKED_VERIFIED: NO
+- Canonical reason: no paid live I2V/R2V inference, actual provider billing or paid settlement E2E was executed; production paid gates remain OFF.
+- External gate: M13_DEFERRED
+- Progression: USER_APPROVED_NO_COST_DEFERRED_GATE
+- Receipt: zuvyr-pack-evidence/pack-067/2026-09-19-no-cost-final/receipt.json
+- Receipt SHA256: 6854b025b4a673dc771d145710cb54f5e66d07b3b4d24a1bd467d7a6ae7b9022
+- Active pack after reconciliation: PACK068
+
+## PACK068 OPEN — Video Edit / Extend / VFX
+
+Canonical objective:
+Implement verified edit/extend/object/background/relight/camera/motion/lip-sync operations through capability-specific adapters. Unsupported controls remain hidden or blocked.
+
+Canonical acceptance:
+Every exposed edit must produce a new playable video version with correct source provenance and verified pricing.
+
+Pack068 must preserve:
+- PACK066 and PACK067 paid gates remain OFF unless explicitly activated.
+- Unknown, stale or ambiguous provider pricing blocks paid execution.
+- Every edit source is owner-scoped and resolved through canonical asset/content/version identity.
+- Provider-specific schemas are mapped exactly; one generic fake edit contract is not acceptable.
+- Every derived video records exact source lineage and creates a new canonical version/asset rather than mutating the source.
+- Reserve/settle/refund, retry, replay and failure-compensation invariants remain unchanged.
+- No unsupported control may be advertised as live.
+- No paid provider inference is required for engineering verification.
+
+Exactly one next step:
+Re-verify current official video edit/extend/VFX provider schemas, source-media semantics, supported operations and exact current prices; then select only the capabilities that can be represented truthfully in the existing video operation/provider/cost/canonical-lineage contracts with paid execution OFF.
+
