@@ -34,7 +34,8 @@ const {
   extractDocumentWithTools
 } = require('./documentToolExtraction');
 const {
-  readTrustedMediaDurationSeconds
+  readTrustedMediaDurationSeconds,
+  probeMediaFileDurationSeconds
 } = require('./mediaDuration');
 
 const DEFAULT_MAX_BUFFERED_BYTES =
@@ -298,6 +299,20 @@ function createAttachmentJobProcessor({
       }
       let result;
       let trustedDurationSeconds = null;
+
+      if (attachment.assetType === 'audio') {
+        try {
+          trustedDurationSeconds =
+            await probeMediaFileDurationSeconds(
+              downloaded.tempFile,
+              { assetType: attachment.assetType }
+            );
+        } catch (_) {
+          // Unsupported/corrupt audio remains ingestible, but Pack071
+          // duration-priced execution stays fail-closed.
+        }
+      }
+
       if (
         downloaded.receivedBytes <=
         maxBufferedBytes
@@ -307,6 +322,7 @@ function createAttachmentJobProcessor({
 
         try {
           trustedDurationSeconds =
+            trustedDurationSeconds ||
             readTrustedMediaDurationSeconds(buffer, {
               assetType: attachment.assetType,
               mimeType: attachment.mimeType
