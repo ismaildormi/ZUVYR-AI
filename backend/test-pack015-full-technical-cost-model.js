@@ -147,21 +147,20 @@ assert.equal(envEconomics.riskReserveBps, '500');
 assert.equal(envEconomics.infrastructureReserveMicroUsd, '2000');
 
 const generation = quoteGeneration('image', {
-  now: Date.parse('2026-09-12T00:00:00Z'),
+  now: Date.parse('2026-09-16T00:00:00Z'),
   env: {
-    FAL_KEY: 'configured',
-    FAL_IMAGE_COST_USD: '0.025'
+    FAL_KEY: 'configured'
   }
 });
 assert.equal(generation.provider, 'fal');
-assert.equal(generation.providerCostMicroUsd, '25000');
+assert.equal(generation.providerCostMicroUsd, '3000');
 assert.equal(generation.infrastructureCostMicroUsd, '2000');
-assert.equal(generation.technicalCostMicroUsd, '27000');
-assert.equal(generation.credits, 10);
-assert.equal(generation.revenueMicroUsd, '100000');
-assert.equal(generation.variableReservesMicroUsd, '21000');
-assert.equal(generation.estimatedNetProfitMicroUsd, '52000');
-assert.equal(generation.estimatedNetMarginBps, '5200');
+assert.equal(generation.technicalCostMicroUsd, '5000');
+assert.equal(generation.credits, 2);
+assert.equal(generation.revenueMicroUsd, '20000');
+assert.equal(generation.variableReservesMicroUsd, '4200');
+assert.equal(generation.estimatedNetProfitMicroUsd, '10800');
+assert.equal(generation.estimatedNetMarginBps, '5400');
 assert.equal(generation.pricingDecisionMode, 'exact_integer_micro_usd');
 
 const dynamicRaw = fs.readFileSync(
