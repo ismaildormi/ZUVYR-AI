@@ -325,6 +325,162 @@ function createCodeProjectRepository(client) {
     return Object.freeze({ archived: true, projectId });
   }
 
+  function publicAiEdit(row) {
+    if (!row) return null;
+    return Object.freeze({
+      id: row.id,
+      projectId: row.project_id,
+      requestId: row.request_id,
+      instructionSha256: row.instruction_sha256,
+      targetPaths: Array.isArray(row.target_paths) ? row.target_paths : [],
+      status: row.status,
+      model: row.model || null,
+      creditsCharged:
+        Number.isSafeInteger(Number(row.credits_charged))
+          ? Number(row.credits_charged)
+          : null,
+      result: row.result && typeof row.result === 'object' ? row.result : {},
+      errorCode: row.error_code || null,
+      createdAt: row.created_at,
+      completedAt: row.completed_at || null
+    });
+  }
+
+  async function aiEditReceipt({ ownerId, requestId } = {}) {
+    const result = await client
+      .from('code_project_ai_edits')
+      .select('id,owner_id,project_id,request_id,instruction_sha256,target_paths,status,model,credits_charged,result,error_code,created_at,completed_at')
+      .eq('owner_id', ownerId)
+      .eq('request_id', requestId)
+      .maybeSingle();
+    if (result.error) {
+      throw repositoryError('code_ai_edit_receipt_lookup_failed', result.error);
+    }
+    return publicAiEdit(result.data);
+  }
+
+  async function beginAiEdit({
+    ownerId,
+    projectId,
+    requestId,
+    instructionSha256,
+    targetPaths
+  } = {}) {
+    await requireProject(ownerId, projectId);
+    const normalizedTargets = [...new Set(
+      (Array.isArray(targetPaths) ? targetPaths : [])
+        .map(value => String(value || '').trim())
+        .filter(Boolean)
+    )];
+    const existing = await aiEditReceipt({ ownerId, requestId });
+    if (existing) {
+      const sameTargets =
+        JSON.stringify(existing.targetPaths) === JSON.stringify(normalizedTargets);
+      if (
+        existing.projectId !== projectId ||
+        existing.instructionSha256 !== instructionSha256 ||
+        !sameTargets
+      ) {
+        throw repositoryError('code_ai_edit_idempotency_scope_mismatch');
+      }
+      return Object.freeze({ replayed: true, receipt: existing });
+    }
+
+    const inserted = await client
+      .from('code_project_ai_edits')
+      .insert({
+        owner_id: ownerId,
+        project_id: projectId,
+        request_id: requestId,
+        instruction_sha256: instructionSha256,
+        target_paths: normalizedTargets,
+        status: 'processing',
+        result: {}
+      })
+      .select('id,owner_id,project_id,request_id,instruction_sha256,target_paths,status,model,credits_charged,result,error_code,created_at,completed_at')
+      .single();
+
+    if (inserted.error) {
+      if (String(inserted.error.code || '') === '23505') {
+        const raced = await aiEditReceipt({ ownerId, requestId });
+        if (
+          raced &&
+          raced.projectId === projectId &&
+          raced.instructionSha256 === instructionSha256 &&
+          JSON.stringify(raced.targetPaths) === JSON.stringify(normalizedTargets)
+        ) {
+          return Object.freeze({ replayed: true, receipt: raced });
+        }
+        throw repositoryError('code_ai_edit_idempotency_scope_mismatch', inserted.error);
+      }
+      throw repositoryError('code_ai_edit_receipt_create_failed', inserted.error);
+    }
+
+    return Object.freeze({ replayed: false, receipt: publicAiEdit(inserted.data) });
+  }
+
+  async function completeAiEdit({
+    ownerId,
+    requestId,
+    model,
+    creditsCharged,
+    result
+  } = {}) {
+    const updated = await client
+      .from('code_project_ai_edits')
+      .update({
+        status: 'succeeded',
+        model: String(model || '').slice(0, 200) || null,
+        credits_charged: Number(creditsCharged),
+        result: result && typeof result === 'object' && !Array.isArray(result)
+          ? result
+          : {},
+        error_code: null,
+        completed_at: new Date().toISOString()
+      })
+      .eq('owner_id', ownerId)
+      .eq('request_id', requestId)
+      .eq('status', 'processing')
+      .select('id,owner_id,project_id,request_id,instruction_sha256,target_paths,status,model,credits_charged,result,error_code,created_at,completed_at')
+      .maybeSingle();
+    if (updated.error) {
+      throw repositoryError('code_ai_edit_receipt_complete_failed', updated.error);
+    }
+    if (!updated.data) {
+      const existing = await aiEditReceipt({ ownerId, requestId });
+      if (existing?.status === 'succeeded') return existing;
+      throw repositoryError('code_ai_edit_receipt_state_conflict');
+    }
+    return publicAiEdit(updated.data);
+  }
+
+  async function failAiEdit({
+    ownerId,
+    requestId,
+    errorCode,
+    result = {}
+  } = {}) {
+    const updated = await client
+      .from('code_project_ai_edits')
+      .update({
+        status: 'failed',
+        error_code: String(errorCode || 'code_ai_edit_failed').slice(0, 200),
+        result: result && typeof result === 'object' && !Array.isArray(result)
+          ? result
+          : {},
+        completed_at: new Date().toISOString()
+      })
+      .eq('owner_id', ownerId)
+      .eq('request_id', requestId)
+      .eq('status', 'processing')
+      .select('id,owner_id,project_id,request_id,instruction_sha256,target_paths,status,model,credits_charged,result,error_code,created_at,completed_at')
+      .maybeSingle();
+    if (updated.error) {
+      throw repositoryError('code_ai_edit_receipt_fail_failed', updated.error);
+    }
+    return publicAiEdit(updated.data) || aiEditReceipt({ ownerId, requestId });
+  }
+
   return Object.freeze({
     list,
     get,
@@ -333,7 +489,11 @@ function createCodeProjectRepository(client) {
     createBranch,
     switchBranch,
     saveEditorState,
-    archive
+    archive,
+    aiEditReceipt,
+    beginAiEdit,
+    completeAiEdit,
+    failAiEdit
   });
 }
 
