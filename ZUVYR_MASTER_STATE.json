@@ -589,7 +589,7 @@
   "status": "PACK080_LOCKED_ENGINEERING_VERIFIED",
   "next_pack_allowed": true,
   "next_external_gate": "M17",
-  "next_pack": "083 - 3D Generation",
+  "next_pack": "094 - Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
   "pack042": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "258ce1f4df2e3a4630cfc87069668f073c0dee79",
@@ -835,7 +835,7 @@
     "previous_plan_preserved": true,
     "priority_override": "MODEL_FIRST_BYO_COMPUTE_2026_09_19"
   },
-  "active_pack": "083",
+  "active_pack": "094",
   "pack061": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
@@ -1914,6 +1914,93 @@
         "rollback/fallback"
       ],
       "primary_eval_objective": "task_success_and_total_cost_per_successful_task"
-    }
+    },
+    "current_inflight_completed": true,
+    "current_inflight_final_source_commit": "60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4",
+    "active_priority_pack": "094"
+  },
+  "pack083": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "3D Generation",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "PACK083 source, pricing/contracts, migration, CI and exact Railway production runtime are verified. Canonical paid live 3D generation/viewer/export acceptance remains deferred behind M18, LIVE_BILLING_ALLOWED, PACK083_3D_PAID_EXECUTION_ENABLED and FAL credential gates.",
+    "pull_request": 30,
+    "hotfix_pull_request": 32,
+    "original_merge_commit": "f88e297895cf4fedb9a1ffa706bf1a6526c428c8",
+    "source_commit": "60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4",
+    "github_ci_runs": {
+      "original_pr": 35464298584,
+      "hotfix_pr": 35464519934,
+      "main": 35464563066
+    },
+    "backend_quality": "PASS",
+    "release_quality": "PASS",
+    "migration": "20260919192342 pack083_3d_generation",
+    "receipt_path": "zuvyr-pack-evidence/pack-083/2026-09-19-engineering-checkpoint/receipt.json",
+    "receipt_sha256": "D2FA4D307DF214884A1A1D0880AD7C43299E83BD7F17355318411DFAFA0A6499",
+    "production": {
+      "railway": {
+        "backend": {
+          "deployment": "76a8bf1e-3927-4c13-8c7f-dc26820acc73",
+          "status": "SUCCESS"
+        },
+        "worker": {
+          "deployment": "1cbe7b84-0e72-437a-acfa-ac69ee7dc7cd",
+          "status": "SUCCESS"
+        },
+        "maintenance": {
+          "deployment": "d40ee2ef-6e91-4622-bac6-01e7e1804192",
+          "status": "SUCCESS"
+        },
+        "exact_commit": "60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4",
+        "backend_startup": "ROX AI backend listening on port 8080",
+        "worker_startup": "ROX AI worker running (concurrency: image=2, video=1, model3d=1, audio=1, attachment=1)",
+        "healthcheck_path": "/readyz"
+      },
+      "vercel": {
+        "frontend_changed": false
+      }
+    },
+    "database": {
+      "generation_jobs_model3d_columns": 8,
+      "pack083_rpc_count": 5,
+      "generation_jobs_select_policy": "auth.uid() = user_id",
+      "conversation_assets_policy": "auth.role() = service_role",
+      "rows_at_verification": {
+        "model3d_jobs": 0,
+        "model3d_assets": 0
+      }
+    },
+    "runtime": {
+      "operations": [
+        "text_to_3d",
+        "image_to_3d",
+        "multiview_to_3d"
+      ],
+      "provider": "fal",
+      "primary_format": "glb",
+      "supported_exports": [
+        "glb",
+        "obj",
+        "fbx",
+        "usdz"
+      ],
+      "feature_flag_enabled": false,
+      "live_paid_execution_default": false
+    },
+    "incident_repair": {
+      "cause": "model3dInputResolver required nonexistent ./assetStoragePolicy",
+      "repair": "Use canonical ./assetStorageContract and add direct module-load regression coverage.",
+      "production_recovered": true
+    },
+    "deferred_gates": [
+      "M18"
+    ],
+    "paid_provider_calls_during_checkpoint": 0,
+    "payment_calls_during_checkpoint": 0,
+    "live_3d_calls_during_checkpoint": 0,
+    "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+    "next_pack": "094",
+    "next_pack_title": "Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank"
   }
 }
