@@ -122,6 +122,7 @@ const { normalizeImageRequest } = require('./lib/imageRequestContract');
 const { assertImageRequestAvailable } = require('./lib/imageOperationRegistry');
 const { normalizeVideoRequest } = require('./lib/videoRequestContract');
 const { assertVideoRequestAvailable } = require('./lib/videoOperationRegistry');
+const { createVideoInputResolver } = require('./lib/videoReferenceResolver');
 const { buildVideoJobSnapshot } = require('./lib/videoJobContract');
 // New, additive-only: stub routes for every not-yet-built feature (see
 // ARCHITECTURE.md). Each route is flag-gated and returns a clear
@@ -136,6 +137,11 @@ const advisorModule = require('./src/modules/advisor');
 const optimizerModule = require('./src/modules/optimizer');
 const diskMonitorModule = require('./src/modules/diskMonitor');
 const diskMaintenanceModule = require('./src/modules/diskMonitor/maintenance');
+
+const videoInputResolver = createVideoInputResolver({
+  db: supabaseAdmin,
+  storage: supabaseAdmin.storage
+});
 
 const app = express();
 
@@ -1606,6 +1612,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
     referenceImageAssetIds = [],
     sourceImageAssetId = null,
     sourceVideoAssetId = null,
+    sourceAudioAssetId = null,
     startFrameAssetId = null,
     endFrameAssetId = null,
     videoOptions = {}
@@ -1620,6 +1627,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
         referenceImageAssetIds,
         sourceImageAssetId,
         sourceVideoAssetId,
+        sourceAudioAssetId,
         startFrameAssetId,
         endFrameAssetId,
         videoOptions
@@ -1727,6 +1735,38 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
     }
   }
 
+  let videoPricingContext = null;
+  if (
+    videoRequest &&
+    ['edit','extend','object_remove','background_remove','relight','recamera','lip_sync']
+      .includes(videoRequest.operation)
+  ) {
+    try {
+      const inspected = await videoInputResolver.inspect({
+        ownerId: userId,
+        request: videoRequest
+      });
+      videoPricingContext = Object.freeze({
+        sourceDurationSeconds: inspected.source?.durationSeconds || null,
+        sourceFileSizeBytes: inspected.source?.fileSizeBytes || null,
+        sourceMimeType: inspected.source?.mimeType || null,
+        audioDurationSeconds: inspected.audio?.durationSeconds || null,
+        audioFileSizeBytes: inspected.audio?.fileSizeBytes || null,
+        audioMimeType: inspected.audio?.mimeType || null,
+        canonicalLineage: inspected.lineage
+      });
+    } catch (error) {
+      const code = String(error.code || error.message || 'video_source_preflight_failed');
+      return res.status(
+        code.includes('not_ready') || code.includes('duration') ? 409 : 400
+      ).json({
+        status: 'error',
+        code,
+        message: 'The selected source media is not ready for this video operation.'
+      });
+    }
+  }
+
   let pricing;
   try {
     pricing = quoteGeneration(
@@ -1734,7 +1774,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
       imageRequest
         ? { imageRequest }
         : videoRequest
-          ? { videoRequest }
+          ? { videoRequest, videoPricingContext }
           : {}
     );
   } catch (err) {
@@ -1782,6 +1822,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
         imageOptions: imageRequest?.options || {},
         sourceImageAssetId: videoRequest?.sourceImageAssetId || null,
         sourceVideoAssetId: videoRequest?.sourceVideoAssetId || null,
+        sourceAudioAssetId: videoRequest?.sourceAudioAssetId || null,
         startFrameAssetId: videoRequest?.startFrameAssetId || null,
         endFrameAssetId: videoRequest?.endFrameAssetId || null,
         referenceImageAssetIds: videoRequest?.referenceImageAssetIds || [],
@@ -1828,6 +1869,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
         video_operation: videoRequest.operation,
         source_image_asset_id: videoRequest.sourceImageAssetId,
         source_video_asset_id: videoRequest.sourceVideoAssetId,
+        source_audio_asset_id: videoRequest.sourceAudioAssetId,
         start_frame_asset_id: videoRequest.startFrameAssetId,
         end_frame_asset_id: videoRequest.endFrameAssetId,
         video_reference_asset_ids: videoRequest.referenceImageAssetIds,
@@ -1886,6 +1928,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
       referenceImageAssetIds: videoRequest?.referenceImageAssetIds || [],
       sourceImageAssetId: videoRequest?.sourceImageAssetId || null,
       sourceVideoAssetId: videoRequest?.sourceVideoAssetId || null,
+      sourceAudioAssetId: videoRequest?.sourceAudioAssetId || null,
       startFrameAssetId: videoRequest?.startFrameAssetId || null,
       endFrameAssetId: videoRequest?.endFrameAssetId || null,
       videoOptions: videoRequest?.options || {}
