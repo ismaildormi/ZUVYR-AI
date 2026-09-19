@@ -1207,7 +1207,26 @@
     dirty: false,
     loading: false,
     status: '',
-    editorTimer: 0
+    editorTimer: 0,
+    validationTimer: 0,
+    capabilities: null,
+    sandboxSessionId: null,
+    previewState: 'unavailable',
+    previewTransportPath: null,
+    previewUrl: null,
+    previewViewport: 'fit',
+    previewFrameKey: 0,
+    previewTicketExpiresAt: null,
+    previewError: '',
+    currentRuntimeJob: null,
+    runtimeLogs: [],
+    runtimePollTimer: 0,
+    repairPollTimer: 0,
+    repairRunId: null,
+    runtimeBusy: false,
+    lastDiagnostic: null,
+    liveRuntimeAvailable: false,
+    livePreviewSupported: false
   };
 
   function codeApi(path, options) {
@@ -1252,6 +1271,601 @@
     state.status = String(message || '');
     var node = shell() && shell().querySelector('[data-zs-code-status]');
     if (node) node.textContent = state.status;
+  }
+
+  function requestId(prefix) {
+    var id =
+      window.crypto && typeof window.crypto.randomUUID === 'function'
+        ? window.crypto.randomUUID()
+        : Date.now() + '-' + Math.random().toString(36).slice(2);
+    return String(prefix || 'code') + '-' + id;
+  }
+
+  function codeApiBase() {
+    try {
+      if (typeof CONFIG !== 'undefined' && CONFIG && CONFIG.API_BASE) {
+        return String(CONFIG.API_BASE).replace(/\/$/, '');
+      }
+    } catch (_) {}
+    var runtimeBase = window.ROX_RUNTIME_CONFIG && window.ROX_RUNTIME_CONFIG.API_BASE;
+    return runtimeBase ? String(runtimeBase).replace(/\/$/, '') : '';
+  }
+
+  function clearRuntimeTimers() {
+    if (state.runtimePollTimer) clearTimeout(state.runtimePollTimer);
+    if (state.repairPollTimer) clearTimeout(state.repairPollTimer);
+    state.runtimePollTimer = 0;
+    state.repairPollTimer = 0;
+  }
+
+  function resetRuntimeProductState() {
+    clearRuntimeTimers();
+    state.sandboxSessionId = null;
+    state.previewState = 'unavailable';
+    state.previewTransportPath = null;
+    state.previewUrl = null;
+    state.previewTicketExpiresAt = null;
+    state.previewError = '';
+    state.currentRuntimeJob = null;
+    state.runtimeLogs = [];
+    state.repairRunId = null;
+    state.runtimeBusy = false;
+    state.lastDiagnostic = null;
+  }
+
+  function runtimeBlockers() {
+    var pack076 = state.capabilities && state.capabilities.pack076;
+    var pack077 = state.capabilities && state.capabilities.pack077;
+    var pack078 = state.capabilities && state.capabilities.pack078;
+    var blockers = [];
+    [pack076, pack077, pack078].forEach(function (pack) {
+      if (pack && Array.isArray(pack.blockers)) blockers.push.apply(blockers, pack.blockers);
+    });
+    if (pack078 && pack078.previewTransportVerified === false) {
+      blockers.push('secure_preview_transport_not_verified');
+    }
+    return Array.from(new Set(blockers.filter(Boolean)));
+  }
+
+  function loadCapabilities() {
+    return codeApi('/api/code-studio/capabilities')
+      .then(function (data) {
+        state.capabilities = data;
+        state.liveRuntimeAvailable = !!(
+          data.pack076 &&
+          data.pack076.liveProvisioning === true &&
+          data.pack077 &&
+          data.pack077.liveExecution === true
+        );
+        state.livePreviewSupported = !!(
+          state.liveRuntimeAvailable &&
+          data.pack078 &&
+          data.pack078.livePreview === true &&
+          data.pack078.previewTransportVerified === true
+        );
+        return data;
+      });
+  }
+
+  function listProjectSandboxes() {
+    if (!state.project) return Promise.resolve([]);
+    return codeApi(
+      '/api/code-studio/sandbox/sessions?projectId=' +
+      encodeURIComponent(state.project.id) +
+      '&limit=20'
+    ).then(function (data) {
+      return Array.isArray(data.sessions) ? data.sessions : [];
+    });
+  }
+
+  function refreshPreviewState() {
+    if (!state.project || !state.sandboxSessionId) {
+      state.previewState = 'unavailable';
+      return Promise.resolve(null);
+    }
+    return codeApi(
+      '/api/code-studio/projects/' + encodeURIComponent(state.project.id) +
+      '/preview/state?sandboxSessionId=' +
+      encodeURIComponent(state.sandboxSessionId)
+    ).then(function (data) {
+      var preview = data.preview || {};
+      state.previewState = preview.state || 'unavailable';
+      state.lastDiagnostic =
+        preview.diagnostic && Object.keys(preview.diagnostic).length
+          ? preview.diagnostic
+          : state.lastDiagnostic;
+      if (preview.ticketAvailable === true) {
+        return requestPreviewTicket().then(function () { return preview; });
+      }
+      state.previewTransportPath = null;
+      state.previewUrl = null;
+      return preview;
+    }).catch(function (error) {
+      state.previewState = 'unavailable';
+      state.previewError = error.message || error.code || 'Preview unavailable.';
+      return null;
+    });
+  }
+
+  function hydrateRuntimeForProject() {
+    resetRuntimeProductState();
+    if (!state.project) {
+      render();
+      return Promise.resolve();
+    }
+    return loadCapabilities()
+      .then(function () { return listProjectSandboxes(); })
+      .then(function (sessions) {
+        var running = sessions.find(function (session) {
+          return session && session.status === 'running';
+        });
+        state.sandboxSessionId = running ? running.id : null;
+        return state.sandboxSessionId ? refreshPreviewState() : null;
+      })
+      .catch(function (error) {
+        state.previewError = error.message || error.code || 'Runtime unavailable.';
+      })
+      .finally(function () {
+        render();
+      });
+  }
+
+  function ensureSandboxSession() {
+    if (!state.project) return Promise.reject(new Error('No Code Project is open.'));
+    var capabilitiesPromise = state.capabilities
+      ? Promise.resolve(state.capabilities)
+      : loadCapabilities();
+
+    return capabilitiesPromise
+      .then(function () {
+        if (state.sandboxSessionId) return state.sandboxSessionId;
+        return listProjectSandboxes().then(function (sessions) {
+          var running = sessions.find(function (session) {
+            return session && session.status === 'running';
+          });
+          if (running) {
+            state.sandboxSessionId = running.id;
+            return running.id;
+          }
+
+          if (!state.liveRuntimeAvailable) {
+            var blockers = runtimeBlockers();
+            var blocked = new Error(
+              'Runtime unavailable' +
+              (blockers.length ? ': ' + blockers.join(', ') : '.')
+            );
+            blocked.code = 'pack078_repair_runtime_unavailable';
+            throw blocked;
+          }
+
+          return codeApi('/api/code-studio/sandbox/sessions', {
+            method:'POST',
+            headers:{
+              'Content-Type':'application/json',
+              'Idempotency-Key':requestId('sandbox')
+            },
+            body:JSON.stringify({ projectId: state.project.id })
+          }).then(function (data) {
+            state.sandboxSessionId = data.session && data.session.id;
+            if (!state.sandboxSessionId) throw new Error('Sandbox session unavailable.');
+            return state.sandboxSessionId;
+          });
+        });
+      });
+  }
+
+  function requestPreviewTicket() {
+    if (!state.sandboxSessionId) {
+      return Promise.reject(new Error('Preview session unavailable.'));
+    }
+    return codeApi(
+      '/api/code-studio/sandbox/sessions/' +
+      encodeURIComponent(state.sandboxSessionId) +
+      '/preview-ticket',
+      {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ ttlSeconds: 300 })
+      }
+    ).then(function (data) {
+      var preview = data.preview || {};
+      var base = codeApiBase();
+      if (!preview.transportPath || !base) {
+        throw new Error('Preview API origin unavailable.');
+      }
+      state.previewTransportPath = preview.transportPath;
+      state.previewUrl = base + preview.transportPath;
+      state.previewTicketExpiresAt = preview.expiresAt || null;
+      state.previewError = '';
+      state.previewState = 'ready';
+      return state.previewUrl;
+    });
+  }
+
+  function loadRuntimeLogs(jobId) {
+    if (!jobId) return Promise.resolve([]);
+    return codeApi(
+      '/api/code-studio/runtime/jobs/' + encodeURIComponent(jobId) +
+      '/logs?limit=200'
+    ).then(function (data) {
+      state.runtimeLogs = Array.isArray(data.logs) ? data.logs : [];
+      return state.runtimeLogs;
+    }).catch(function () {
+      return state.runtimeLogs;
+    });
+  }
+
+  function applyRuntimeJob(job) {
+    if (!job) return;
+    state.currentRuntimeJob = job;
+    if (job.result && job.result.diagnostic) {
+      state.lastDiagnostic = job.result.diagnostic;
+    }
+    if (job.status === 'failed') {
+      if (job.operation === 'build') state.previewState = 'build_failed';
+      if (job.operation === 'run') state.previewState = 'runtime_error';
+    }
+  }
+
+  function pollRuntimeJob(jobId, operation, attempt) {
+    var count = Number(attempt || 0);
+    if (!jobId || count >= 240) {
+      state.runtimeBusy = false;
+      setStatus('Runtime polling stopped at its bounded limit.');
+      render();
+      return;
+    }
+    codeApi('/api/code-studio/runtime/jobs/' + encodeURIComponent(jobId))
+      .then(function (data) {
+        var job = data.job;
+        applyRuntimeJob(job);
+        return loadRuntimeLogs(jobId).then(function () {
+          return refreshPreviewState().then(function () { return job; });
+        });
+      })
+      .then(function (job) {
+        render();
+        if (!job) return;
+
+        if (['succeeded','failed','cancelled'].indexOf(job.status) >= 0) {
+          state.runtimeBusy = false;
+          setStatus(
+            job.status === 'succeeded'
+              ? (operation === 'build'
+                  ? 'Build passed.'
+                  : operation === 'test'
+                    ? 'Tests passed.'
+                    : 'Runtime finished.')
+              : (job.result && job.result.diagnostic && job.result.diagnostic.message) ||
+                (operation + ' failed.')
+          );
+          render();
+          return;
+        }
+
+        if (operation === 'run' && count >= 40) {
+          state.runtimeBusy = false;
+          setStatus(
+            state.previewUrl
+              ? 'Preview process is running.'
+              : 'Runtime is running; secure preview transport is not ready.'
+          );
+          render();
+          return;
+        }
+
+        state.runtimePollTimer = setTimeout(function () {
+          pollRuntimeJob(jobId, operation, count + 1);
+        }, 1500);
+      })
+      .catch(function (error) {
+        state.runtimeBusy = false;
+        state.previewError = error.message || error.code || 'Runtime polling failed.';
+        setStatus(state.previewError);
+        render();
+      });
+  }
+
+  function runRuntimeOperation(operation) {
+    if (!state.project || state.runtimeBusy) return;
+    state.runtimeBusy = true;
+    state.previewError = '';
+    if (operation === 'build') state.previewState = 'building';
+    if (operation === 'run') state.previewState = 'starting';
+    setStatus(
+      operation === 'build'
+        ? 'Building project…'
+        : operation === 'test'
+          ? 'Running tests…'
+          : 'Starting preview runtime…'
+    );
+    render();
+
+    var save = state.dirty ? saveProject() : Promise.resolve(state.project);
+    save
+      .then(function () { return ensureSandboxSession(); })
+      .then(function (sandboxSessionId) {
+        return codeApi('/api/code-studio/runtime/request', {
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json',
+            'Idempotency-Key':requestId(operation)
+          },
+          body:JSON.stringify({
+            operation:operation,
+            projectId:state.project.id,
+            sandboxSessionId:sandboxSessionId
+          })
+        });
+      })
+      .then(function (data) {
+        applyRuntimeJob(data.job);
+        render();
+        pollRuntimeJob(data.job.id, operation, 0);
+      })
+      .catch(function (error) {
+        state.runtimeBusy = false;
+        state.previewState =
+          operation === 'build' ? 'build_failed' : 'unavailable';
+        state.previewError = error.message || error.code || 'Runtime unavailable.';
+        setStatus(state.previewError);
+        render();
+      });
+  }
+
+  function schedulePostSaveValidation() {
+    clearTimeout(state.validationTimer);
+    state.validationTimer = setTimeout(function () {
+      if (
+        state.project &&
+        state.liveRuntimeAvailable &&
+        state.sandboxSessionId &&
+        !state.runtimeBusy
+      ) {
+        state.previewState = 'updating';
+        render();
+        runRuntimeOperation('build');
+      }
+    }, 650);
+  }
+
+  function pollRepair(repairRunId, attempt) {
+    var count = Number(attempt || 0);
+    if (!repairRunId || count >= 240) {
+      state.runtimeBusy = false;
+      setStatus('Repair polling stopped at its bounded limit.');
+      render();
+      return;
+    }
+    codeApi(
+      '/api/code-studio/repair/' + encodeURIComponent(repairRunId) + '/continue',
+      { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' }
+    )
+      .then(function (data) {
+        var repair = data.repair || {};
+        var run = repair.run || {};
+        state.repairRunId = run.id || repairRunId;
+        if (repair.retestJob) applyRuntimeJob(repair.retestJob);
+
+        if (['succeeded','failed','exhausted','cancelled'].indexOf(run.status) >= 0) {
+          state.runtimeBusy = false;
+          if (run.status === 'succeeded') {
+            setStatus('Repair succeeded and retest passed.');
+            return loadProject(state.project.id);
+          }
+          setStatus(
+            run.status === 'exhausted'
+              ? 'Repair stopped after the bounded two attempts.'
+              : 'Repair stopped: ' + run.status
+          );
+          render();
+          return null;
+        }
+
+        setStatus('Repair attempt ' + (run.attemptsUsed || 0) + ' of ' + (run.maxAttempts || 2) + '…');
+        render();
+        state.repairPollTimer = setTimeout(function () {
+          pollRepair(repairRunId, count + 1);
+        }, 1500);
+        return null;
+      })
+      .catch(function (error) {
+        state.runtimeBusy = false;
+        setStatus(error.message || error.code || 'Repair unavailable.');
+        render();
+      });
+  }
+
+  function startRepair() {
+    var job = state.currentRuntimeJob;
+    if (
+      !state.project ||
+      !state.sandboxSessionId ||
+      !job ||
+      job.status !== 'failed' ||
+      !state.lastDiagnostic
+    ) {
+      setStatus('A verified failed build, test, or runtime job is required for Repair.');
+      return;
+    }
+    if (state.runtimeBusy) return;
+    state.runtimeBusy = true;
+    setStatus('Starting bounded AI repair…');
+    render();
+
+    codeApi(
+      '/api/code-studio/projects/' + encodeURIComponent(state.project.id) + '/repair',
+      {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Idempotency-Key':requestId('repair')
+        },
+        body:JSON.stringify({
+          sandboxSessionId:state.sandboxSessionId,
+          sourceJobId:job.id
+        })
+      }
+    )
+      .then(function (data) {
+        var repair = data.repair || {};
+        var run = repair.run || {};
+        if (!run.id) throw new Error('Repair receipt unavailable.');
+        state.repairRunId = run.id;
+        render();
+        pollRepair(run.id, 0);
+      })
+      .catch(function (error) {
+        state.runtimeBusy = false;
+        setStatus(error.message || error.code || 'Repair unavailable.');
+        render();
+      });
+  }
+
+  function refreshPreviewFrame() {
+    if (!state.previewUrl) {
+      refreshPreviewState().then(render);
+      return;
+    }
+    state.previewFrameKey += 1;
+    render();
+  }
+
+  function openPreview() {
+    if (!state.previewUrl) {
+      setStatus('Secure preview URL is unavailable.');
+      return;
+    }
+    window.open(state.previewUrl, '_blank', 'noopener,noreferrer');
+  }
+
+  function fullscreenPreview() {
+    var frame = shell() && shell().querySelector('[data-zs-code-preview-frame]');
+    if (!frame) {
+      setStatus('Preview is not ready.');
+      return;
+    }
+    if (frame.requestFullscreen) {
+      frame.requestFullscreen().catch(function () {});
+    }
+  }
+
+  function diagnosticHtml() {
+    var d = state.lastDiagnostic;
+    if (!d || !d.kind || d.kind === 'none') return '';
+    var location =
+      d.file
+        ? escapeHtml(d.file) +
+          (d.line ? ':' + escapeHtml(d.line) : '') +
+          (d.column ? ':' + escapeHtml(d.column) : '')
+        : 'No source location';
+    var repairable =
+      state.currentRuntimeJob &&
+      state.currentRuntimeJob.status === 'failed' &&
+      ['build','test','run'].indexOf(state.currentRuntimeJob.operation) >= 0;
+    return (
+      '<div class="zs-code-diagnostic">' +
+        '<div><strong>' + escapeHtml(d.kind) + '</strong><span>' + location + '</span></div>' +
+        '<p>' + escapeHtml(d.message || 'Runtime command failed.') + '</p>' +
+        (repairable
+          ? '<button type="button" data-zs-code-repair' +
+            (state.runtimeBusy ? ' disabled' : '') +
+            '>Repair with AI</button>'
+          : '') +
+      '</div>'
+    );
+  }
+
+  function viewportWidth() {
+    if (state.previewViewport === 'desktop') return 1440;
+    if (state.previewViewport === 'tablet') return 834;
+    if (state.previewViewport === 'mobile') return 390;
+    return null;
+  }
+
+  function previewPanelHtml() {
+    var ready = state.previewState === 'ready' && !!state.previewUrl;
+    var width = viewportWidth();
+    var frameStyle = width
+      ? 'width:min(100%,' + width + 'px);'
+      : 'width:100%;';
+    var statusLabel =
+      state.previewState === 'build_failed' ? 'Build failed' :
+      state.previewState === 'runtime_error' ? 'Runtime error' :
+      state.previewState === 'building' ? 'Building' :
+      state.previewState === 'starting' ? 'Starting' :
+      state.previewState === 'updating' ? 'Updating' :
+      ready ? 'Ready' : 'Preview unavailable';
+
+    var body;
+    if (ready) {
+      body =
+        '<div class="zs-code-preview-stage">' +
+          '<iframe data-zs-code-preview-frame title="ZUVYR Code Preview" ' +
+            'sandbox="allow-scripts" referrerpolicy="no-referrer" ' +
+            'style="' + frameStyle + '" ' +
+            'src="' + escapeHtml(state.previewUrl) +
+            (state.previewUrl.indexOf('?') >= 0 ? '&' : '?') +
+            'zuvyr_refresh=' + state.previewFrameKey + '">' +
+          '</iframe>' +
+        '</div>';
+    } else {
+      var blockers = runtimeBlockers();
+      body =
+        '<div class="zs-code-preview-unavailable" data-zs-code-preview-unavailable>' +
+          '<strong>' + escapeHtml(statusLabel) + '</strong>' +
+          '<span>' +
+            escapeHtml(
+              state.previewError ||
+              (blockers.length
+                ? 'Secure live preview is gated: ' + blockers.join(', ')
+                : 'No fake preview is shown. A verified isolated runtime and protected preview route are required.')
+            ) +
+          '</span>' +
+        '</div>';
+    }
+
+    var viewports = ['fit','desktop','tablet','mobile'].map(function (name) {
+      return '<button type="button" data-zs-code-viewport="' + name + '"' +
+        (state.previewViewport === name ? ' class="is-active"' : '') +
+        '>' + name.charAt(0).toUpperCase() + name.slice(1) + '</button>';
+    }).join('');
+
+    return (
+      '<div class="zs-code-preview-toolbar zs-code-preview-toolbar-pack078">' +
+        '<div class="zs-code-preview-title"><strong>Preview</strong>' +
+          '<span class="zs-code-preview-state state-' + escapeHtml(state.previewState) + '">' +
+            escapeHtml(statusLabel) +
+          '</span></div>' +
+        '<div class="zs-code-preview-actions">' +
+          viewports +
+          '<button type="button" data-zs-code-preview-refresh>Refresh</button>' +
+          '<button type="button" data-zs-code-preview-open' + (ready ? '' : ' disabled') + '>Open Preview</button>' +
+          '<button type="button" data-zs-code-preview-fullscreen' + (ready ? '' : ' disabled') + '>Fullscreen</button>' +
+          '<button type="button" data-zs-code-toggle-preview>' +
+            (state.previewVisible ? 'Hide preview' : 'Show preview') + '</button>' +
+          '<button type="button" data-zs-code-expand>' +
+            (state.expanded ? 'Restore layout' : 'Expand editor') + '</button>' +
+        '</div>' +
+      '</div>' +
+      body +
+      diagnosticHtml()
+    );
+  }
+
+  function runtimeLogsHtml() {
+    if (!state.runtimeLogs.length) {
+      return '<div class="zs-code-logs"><strong>No runtime logs yet</strong>' +
+        '<span>Build, Test, and Run Preview logs will appear here when a verified sandbox runtime is available.</span></div>';
+    }
+    return '<div class="zs-code-logs zs-code-live-logs">' +
+      state.runtimeLogs.map(function (row) {
+        return '<div class="stream-' + escapeHtml(row.stream || 'stdout') + '">' +
+          '<span>' + escapeHtml(row.stream || 'stdout') + '</span>' +
+          '<code>' + escapeHtml(row.message || '') + '</code>' +
+        '</div>';
+      }).join('') +
+    '</div>';
   }
 
   function projectPayload() {
@@ -1364,7 +1978,7 @@
         '</div>' +
         '<div class="zs-code-empty">' +
           '<strong>' + (state.loading ? 'Loading projects…' : 'No Code Project open') + '</strong>' +
-          '<span>Create a real multi-file project. Preview remains unavailable until the isolated runtime is connected.</span>' +
+          '<span>Create a real multi-file project. Build/Test/Preview activate only through the verified isolated runtime.</span>' +
         '</div>' +
         '<div class="zs-code-status" data-zs-code-status>' + escapeHtml(state.status) + '</div>';
       return;
@@ -1376,11 +1990,13 @@
     var splitStyle = '--zs-code-editor-width:' + (state.dividerBasisPoints / 100).toFixed(2) + '%;';
     var rootClasses = [
       'zs-code-pack075',
+      'zs-code-pack078',
       state.previewVisible ? 'has-preview' : 'no-preview',
       state.logsVisible ? 'has-logs' : '',
       state.expanded ? 'is-editor-expanded' : '',
       state.mobilePane === 'preview' ? 'mobile-preview' : 'mobile-code'
     ].filter(Boolean).join(' ');
+    var runtimeDisabled = state.runtimeBusy || !state.liveRuntimeAvailable;
 
     root.className = rootClasses;
     root.innerHTML =
@@ -1398,6 +2014,18 @@
           '<button type="button" data-zs-code-new-project>New project</button>' +
           '<button type="button" class="is-primary" data-zs-code-save>' +
             (state.dirty ? 'Save changes *' : 'Save') + '</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="zs-code-runtime-toolbar">' +
+        '<div><strong>Runtime</strong><span>' +
+          (state.liveRuntimeAvailable
+            ? 'Verified sandbox runtime'
+            : 'Runtime gated — engineering layer ready, live provider acceptance deferred') +
+        '</span></div>' +
+        '<div>' +
+          '<button type="button" data-zs-code-runtime="build"' + (runtimeDisabled ? ' disabled' : '') + '>Build</button>' +
+          '<button type="button" data-zs-code-runtime="test"' + (runtimeDisabled ? ' disabled' : '') + '>Test</button>' +
+          '<button type="button" class="is-primary" data-zs-code-runtime="run"' + (runtimeDisabled ? ' disabled' : '') + '>Run Preview</button>' +
         '</div>' +
       '</div>' +
       '<div class="zs-code-mobile-switch">' +
@@ -1423,24 +2051,12 @@
           '</section>' +
           '<div class="zs-code-divider" data-zs-code-divider role="separator" aria-orientation="vertical" tabindex="0"></div>' +
           '<section class="zs-code-preview-pane">' +
-            '<div class="zs-code-preview-toolbar">' +
-              '<strong>Preview</strong>' +
-              '<div>' +
-                '<button type="button" data-zs-code-toggle-preview>' +
-                  (state.previewVisible ? 'Hide preview' : 'Show preview') + '</button>' +
-                '<button type="button" data-zs-code-expand>' +
-                  (state.expanded ? 'Restore layout' : 'Expand editor') + '</button>' +
-              '</div>' +
-            '</div>' +
-            '<div class="zs-code-preview-unavailable" data-zs-code-preview-unavailable>' +
-              '<strong>Preview unavailable</strong>' +
-              '<span>A real isolated runtime is required. PACK076–PACK078 will provide sandbox, run/build/test and browser preview. No fake iframe or screenshot is shown.</span>' +
-            '</div>' +
+            previewPanelHtml() +
           '</section>' +
         '</div>' +
       '</div>' +
       '<div class="zs-code-ai-edit">' +
-        '<div><strong>AI edit</strong><span>Edits are limited to the active file, versioned and metered through the ZUVYR Router.</span></div>' +
+        '<div><strong>AI edit</strong><span>Edits are scoped, versioned and metered through the ZUVYR Router.</span></div>' +
         '<textarea data-zs-code-ai-instruction maxlength="8000" placeholder="Describe the exact change for ' +
           escapeHtml(state.activeFile || 'the active file') + '"></textarea>' +
         '<button type="button" class="is-primary" data-zs-code-ai-apply' +
@@ -1449,9 +2065,7 @@
       '<div class="zs-code-runtime-reserved">' +
         '<button type="button" data-zs-code-toggle-logs>' +
           (state.logsVisible ? 'Hide logs / terminal' : 'Show logs / terminal') + '</button>' +
-        (state.logsVisible
-          ? '<div class="zs-code-logs"><strong>Runtime logs unavailable until PACK077</strong><span>No shell or dependency execution is active in PACK075.</span></div>'
-          : '') +
+        (state.logsVisible ? runtimeLogsHtml() : '') +
       '</div>' +
       '<div class="zs-code-status" data-zs-code-status>' + escapeHtml(state.status) + '</div>';
   }
