@@ -378,6 +378,97 @@ begin
 end;
 $pack076_touch$;
 
+create or replace function public.rotate_zuvyr_code_sandbox_preview_token_pack076(
+  p_owner_id uuid,
+  p_session_id uuid,
+  p_preview_token_hash text,
+  p_preview_expires_at timestamptz
+) returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $pack076_rotate_preview$
+declare
+  v_session public.code_sandbox_sessions%rowtype;
+  v_now timestamptz := now();
+begin
+  select *
+    into v_session
+  from public.code_sandbox_sessions
+  where id = p_session_id
+    and owner_id = p_owner_id
+  for update;
+
+  if v_session.id is null then
+    raise exception 'pack076_session_not_found';
+  end if;
+
+  if v_session.status <> 'running' then
+    raise exception 'pack076_session_not_running';
+  end if;
+
+  if v_session.preview_port is null then
+    raise exception 'pack076_preview_port_not_configured';
+  end if;
+
+  if coalesce(p_preview_token_hash,'') !~ '^[0-9a-f]{64}
+
+revoke all on function public.transition_zuvyr_code_sandbox_session_pack076(
+  uuid,uuid,text,text,integer,jsonb,text
+) from public, anon, authenticated;
+
+revoke all on function public.touch_zuvyr_code_sandbox_session_pack076(
+  uuid,uuid,timestamptz
+) from public, anon, authenticated;
+
+grant execute on function public.reserve_zuvyr_code_sandbox_session_pack076(
+  uuid,uuid,text,text,timestamptz,timestamptz,jsonb,jsonb
+) to service_role;
+
+grant execute on function public.transition_zuvyr_code_sandbox_session_pack076(
+  uuid,uuid,text,text,integer,jsonb,text
+) to service_role;
+
+grant execute on function public.touch_zuvyr_code_sandbox_session_pack076(
+  uuid,uuid,timestamptz
+) to service_role;
+
+
+revoke all on function public.rotate_zuvyr_code_sandbox_preview_token_pack076(
+  uuid,uuid,text,timestamptz
+) from public, anon, authenticated;
+
+grant execute on function public.rotate_zuvyr_code_sandbox_preview_token_pack076(
+  uuid,uuid,text,timestamptz
+) to service_role;
+
+comment on table public.code_sandbox_sessions is
+  'PACK076 server-authoritative ephemeral sandbox sessions. Stores token hashes and provider session IDs only; raw preview/provider URLs and ZUVYR secrets are intentionally absent.';
+ then
+    raise exception 'pack076_preview_token_hash_invalid';
+  end if;
+
+  if p_preview_expires_at <= v_now
+     or p_preview_expires_at > v_now + interval '15 minutes'
+     or p_preview_expires_at > v_session.expires_at then
+    raise exception 'pack076_preview_expiry_invalid';
+  end if;
+
+  update public.code_sandbox_sessions
+  set
+    preview_token_hash = p_preview_token_hash,
+    preview_expires_at = p_preview_expires_at,
+    updated_at = v_now
+  where id = p_session_id
+  returning * into v_session;
+
+  return jsonb_build_object(
+    'session_id', v_session.id,
+    'preview_expires_at', v_session.preview_expires_at
+  );
+end;
+$pack076_rotate_preview$;
+
 revoke all on function public.reserve_zuvyr_code_sandbox_session_pack076(
   uuid,uuid,text,text,timestamptz,timestamptz,jsonb,jsonb
 ) from public, anon, authenticated;
