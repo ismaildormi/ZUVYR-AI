@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('node:crypto');
 const WebSocket = require('ws');
 const {
   config,
@@ -277,6 +278,198 @@ function createCdpConnection({
     });
   }
 
+
+  function agentHandle(value) {
+    const handle=String(value || '').trim();
+    if (!/^za_[a-z0-9]{8,80}$/i.test(handle)) {
+      throw cdpError('cloud_browser_agent_handle_invalid');
+    }
+    return handle;
+  }
+
+  async function interactiveSnapshot({maxElements=200}={}) {
+    const limit=Math.max(1,Math.min(200,Number(maxElements) || 200));
+    const nonce=crypto.randomBytes(8).toString('hex');
+    const expression=[
+      '(() => {',
+      'const limit=' + JSON.stringify(limit) + ';',
+      'const prefix=' + JSON.stringify('za_' + nonce) + ';',
+      'const selectors=[\'a[href]\',\'button\',\'input\',\'textarea\',\'select\',\'[role="button"]\',\'[role="link"]\',\'[role="checkbox"]\',\'[role="radio"]\',\'[role="option"]\',\'[contenteditable="true"]\'].join(\',\');',
+      'const candidates=Array.from(document.querySelectorAll(selectors));',
+      'const items=[]; let index=0;',
+      'for (const el of candidates) {',
+      ' if (items.length>=limit) break;',
+      ' const rect=el.getBoundingClientRect(); const style=getComputedStyle(el);',
+      ' const visible=rect.width>0&&rect.height>0&&style.visibility!==\'hidden\'&&style.display!==\'none\'&&Number(style.opacity||1)>0;',
+      ' if (!visible) continue;',
+      ' const handle=prefix+(index++).toString(36); el.setAttribute(\'data-zuvyr-agent-id\',handle);',
+      ' const tag=String(el.tagName||\'\').toLowerCase(); const role=String(el.getAttribute(\'role\')||\'\').toLowerCase();',
+      ' const type=String(el.getAttribute(\'type\')||\'\').toLowerCase(); const name=String(el.getAttribute(\'name\')||\'\').toLowerCase();',
+      ' const autocomplete=String(el.getAttribute(\'autocomplete\')||\'\').toLowerCase(); const aria=String(el.getAttribute(\'aria-label\')||\'\').trim();',
+      ' const placeholder=String(el.getAttribute(\'placeholder\')||\'\').trim();',
+      ' const text=(tag===\'input\'||tag===\'textarea\'||tag===\'select\' ? (aria||placeholder||name) : (aria||String(el.innerText||el.textContent||\'\').trim())).slice(0,300);',
+      ' const sensitive=type===\'password\'||/password|passcode|otp|one-time|verification|cvv|cvc|card.?number/.test([name,autocomplete,aria,placeholder].join(\' \').toLowerCase());',
+      ' const submitLike=type===\'submit\'||(tag===\'button\'&&/submit|pay|purchase|buy|order|send|post|delete|remove|confirm|book|reserve/i.test(text));',
+      ' let href=null; try { if (tag===\'a\'&&el.href) href=String(el.href); } catch (_) {}',
+      ' items.push({handle,tag,role,type,text,sensitive,submitLike,href,disabled:!!el.disabled,x:Math.round(rect.x),y:Math.round(rect.y),width:Math.round(rect.width),height:Math.round(rect.height)});',
+      '}',
+      'const captchaDetected=!!document.querySelector(\'iframe[src*="recaptcha"],iframe[src*="hcaptcha"],iframe[src*="challenges.cloudflare.com"],[class*="captcha" i],[id*="captcha" i],[data-sitekey]\');',
+      'const authChallengeDetected=items.some(item=>item.sensitive)||/\\b(sign in|log in|verify your identity|two[- ]factor|verification code)\\b/i.test(String(document.body&&document.body.innerText||\'\').slice(0,20000));',
+      'return {href:String(location.href||\'\'),title:String(document.title||\'\').slice(0,500),captchaDetected,authChallengeDetected,items};',
+      '})()'
+    ].join('\n');
+
+    const result=await send('Runtime.evaluate',{
+      expression,
+      returnByValue:true,
+      awaitPromise:true
+    },{timeoutMs:15000});
+    const value=result?.result?.value || {};
+    let page={host:null,path:null};
+    try {
+      const normalized=normalizePublicUrl(String(value.href || ''),{allowedHosts});
+      const parsed=new URL(normalized.url);
+      page={host:normalized.host,path:parsed.pathname};
+    } catch (_) {}
+    const items=[];
+    for (const raw of Array.isArray(value.items) ? value.items : []) {
+      let link=null;
+      if (raw.href) {
+        try {
+          const normalized=normalizePublicUrl(String(raw.href),{allowedHosts});
+          const parsed=new URL(normalized.url);
+          link={host:normalized.host,path:parsed.pathname};
+        } catch (_) {}
+      }
+      items.push(Object.freeze({
+        handle:agentHandle(raw.handle),
+        tag:String(raw.tag || '').slice(0,30),
+        role:String(raw.role || '').slice(0,80),
+        type:String(raw.type || '').slice(0,40),
+        text:String(raw.text || '').slice(0,300),
+        sensitive:raw.sensitive===true,
+        submitLike:raw.submitLike===true,
+        disabled:raw.disabled===true,
+        link,
+        bounds:Object.freeze({
+          x:Number(raw.x)||0,y:Number(raw.y)||0,
+          width:Number(raw.width)||0,height:Number(raw.height)||0
+        })
+      }));
+    }
+    return Object.freeze({
+      page:Object.freeze({
+        host:page.host,
+        path:page.path,
+        title:String(value.title || '').slice(0,500)
+      }),
+      captchaDetected:value.captchaDetected===true,
+      authChallengeDetected:value.authChallengeDetected===true,
+      items:Object.freeze(items)
+    });
+  }
+
+  async function robotsStatus() {
+    const expression=[
+      '(async () => {',
+      'try {',
+      ' if (!/^https?:$/.test(location.protocol)) return {status:\'unknown\'};',
+      ' const response=await fetch(\'/robots.txt\',{method:\'GET\',credentials:\'omit\',cache:\'no-store\',redirect:\'error\'});',
+      ' if (response.status===404||response.status===410) return {status:\'allowed\'};',
+      ' if (!response.ok) return {status:\'unknown\'};',
+      ' const text=(await response.text()).slice(0,65536); const lines=text.split(/\\r?\\n/);',
+      ' let applies=false; const disallow=[];',
+      ' for (const raw of lines) { const line=raw.replace(/#.*$/,\'\').trim(); if (!line) continue; const idx=line.indexOf(\':\'); if (idx<0) continue; const key=line.slice(0,idx).trim().toLowerCase(); const value=line.slice(idx+1).trim(); if (key===\'user-agent\') { applies=value===\'*\'; continue; } if (applies&&key===\'disallow\'&&value) disallow.push(value); }',
+      ' const path=location.pathname||\'/\'; const blocked=disallow.some(rule=>rule===\'/\'||path.startsWith(rule));',
+      ' return {status:blocked?\'disallowed\':\'allowed\'};',
+      '} catch (_) { return {status:\'unknown\'}; }',
+      '})()'
+    ].join('\n');
+    const result=await send('Runtime.evaluate',{
+      expression,returnByValue:true,awaitPromise:true
+    },{timeoutMs:10000});
+    const status=String(result?.result?.value?.status || 'unknown');
+    return ['allowed','disallowed','unknown'].includes(status) ? status : 'unknown';
+  }
+
+  async function focusHandle(handle) {
+    const safe=agentHandle(handle);
+    const expression=[
+      '(() => {',
+      'const handle=' + JSON.stringify(safe) + ';',
+      'const el=document.querySelector(\'[data-zuvyr-agent-id="\'+handle+\'"]\');',
+      'if (!el) return {ok:false,error:\'not_found\'};',
+      'const type=String(el.getAttribute(\'type\')||\'\').toLowerCase(); const name=String(el.getAttribute(\'name\')||\'\').toLowerCase();',
+      'const autocomplete=String(el.getAttribute(\'autocomplete\')||\'\').toLowerCase(); const aria=String(el.getAttribute(\'aria-label\')||\'\').toLowerCase(); const placeholder=String(el.getAttribute(\'placeholder\')||\'\').toLowerCase();',
+      'const sensitive=type===\'password\'||/password|passcode|otp|one-time|verification|cvv|cvc|card.?number/.test([name,autocomplete,aria,placeholder].join(\' \'));',
+      'if (sensitive) return {ok:false,error:\'sensitive\'}; if (el.disabled) return {ok:false,error:\'disabled\'};',
+      'el.scrollIntoView({block:\'center\',inline:\'center\'}); el.focus(); return {ok:true};',
+      '})()'
+    ].join('\n');
+    const result=await send('Runtime.evaluate',{expression,returnByValue:true});
+    const value=result?.result?.value || {};
+    if (value.error==='sensitive') throw cdpError('cloud_browser_agent_sensitive_input_blocked');
+    if (!value.ok) throw cdpError('cloud_browser_agent_target_unavailable');
+    return true;
+  }
+
+  async function clickHandle(handle) {
+    const safe=agentHandle(handle);
+    const expression=[
+      '(() => {',
+      'const handle=' + JSON.stringify(safe) + ';',
+      'const el=document.querySelector(\'[data-zuvyr-agent-id="\'+handle+\'"]\');',
+      'if (!el||el.disabled) return {ok:false}; el.scrollIntoView({block:\'center\',inline:\'center\'}); el.click(); return {ok:true};',
+      '})()'
+    ].join('\n');
+    const result=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true},{timeoutMs:15000});
+    if (result?.result?.value?.ok !== true) throw cdpError('cloud_browser_agent_target_unavailable');
+    return currentPage();
+  }
+
+  async function typeHandle(handle,text) {
+    const value=String(text == null ? '' : text);
+    if (value.length>4000) throw cdpError('cloud_browser_agent_text_too_long');
+    await focusHandle(handle);
+    const safe=agentHandle(handle);
+    const clearExpression=[
+      '(() => {',
+      'const handle=' + JSON.stringify(safe) + ';',
+      'const el=document.querySelector(\'[data-zuvyr-agent-id="\'+handle+\'"]\');',
+      'if (!el) return false;',
+      'if (\'value\' in el) { const proto=Object.getPrototypeOf(el); const descriptor=Object.getOwnPropertyDescriptor(proto,\'value\'); if (descriptor&&descriptor.set) descriptor.set.call(el,\'\'); else el.value=\'\'; el.dispatchEvent(new Event(\'input\',{bubbles:true})); } else if (el.isContentEditable) { el.textContent=\'\'; el.dispatchEvent(new Event(\'input\',{bubbles:true})); }',
+      'return true;',
+      '})()'
+    ].join('\n');
+    const cleared=await send('Runtime.evaluate',{expression:clearExpression,returnByValue:true});
+    if (cleared?.result?.value !== true) throw cdpError('cloud_browser_agent_target_unavailable');
+    await send('Input.insertText',{text:value},{timeoutMs:15000});
+    return Object.freeze({typedCharacters:value.length});
+  }
+
+  async function submitHandle(handle) {
+    const safe=agentHandle(handle);
+    const expression=[
+      '(() => {',
+      'const handle=' + JSON.stringify(safe) + ';',
+      'const el=document.querySelector(\'[data-zuvyr-agent-id="\'+handle+\'"]\');',
+      'if (!el||el.disabled) return {ok:false}; el.scrollIntoView({block:\'center\',inline:\'center\'});',
+      'const form=el.form||el.closest(\'form\'); if (form&&typeof form.requestSubmit===\'function\') { if (el.tagName===\'BUTTON\'||el.type===\'submit\') form.requestSubmit(el); else form.requestSubmit(); } else { el.click(); } return {ok:true};',
+      '})()'
+    ].join('\n');
+    const result=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true},{timeoutMs:15000});
+    if (result?.result?.value?.ok !== true) throw cdpError('cloud_browser_agent_target_unavailable');
+    return currentPage();
+  }
+
+  async function scrollBy(deltaY=600) {
+    const amount=Math.max(-2000,Math.min(2000,Number(deltaY) || 0));
+    const expression='(() => { window.scrollBy({top:' + amount + ',left:0,behavior:\'instant\'}); return {x:window.scrollX,y:window.scrollY}; })()';
+    const result=await send('Runtime.evaluate',{expression,returnByValue:true});
+    const value=result?.result?.value || {};
+    return Object.freeze({x:Number(value.x)||0,y:Number(value.y)||0});
+  }
+
   async function currentPage() {
     const result=await send('Runtime.evaluate',{
       expression:'({href:location.href,title:document.title,readyState:document.readyState})',
@@ -325,6 +518,12 @@ function createCdpConnection({
     navigate,
     domSnapshot,
     screenshot,
+    interactiveSnapshot,
+    robotsStatus,
+    clickHandle,
+    typeHandle,
+    submitHandle,
+    scrollBy,
     currentPage,
     disconnect
   });
