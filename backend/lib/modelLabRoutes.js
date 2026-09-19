@@ -91,6 +91,31 @@ function createModelLabRouter({ db } = {}) {
     }
   });
 
+  router.get('/candidate-pool', async (req,res) => {
+    try {
+      return res.json({
+        status:'success',
+        candidates:await lab.listCandidatePool({
+          limit:req.query?.limit,
+          domain:req.query?.domain||null
+        })
+      });
+    } catch(error) {
+      return respondError(res,error,'model_lab_candidate_pool_failed');
+    }
+  });
+
+  router.get('/failure-bank', async (req,res) => {
+    try {
+      return res.json({
+        status:'success',
+        failures:await lab.listFailurePatterns({limit:req.query?.limit})
+      });
+    } catch(error) {
+      return respondError(res,error,'model_lab_failure_bank_failed');
+    }
+  });
+
   router.get('/datasets', async (req,res) => {
     try {
       return res.json({
