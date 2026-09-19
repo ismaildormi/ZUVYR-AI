@@ -52,6 +52,7 @@ const {
 } = require('./lib/codeRuntimeMaintenance');
 const { cleanupExpiredCloudBrowsers } = require('./lib/cloudBrowserCleanup');
 const { createCloudBrowserRouter } = require('./lib/cloudBrowserRoutes');
+const { createBrowserAgentRouter } = require('./lib/browserAgentRoutes');
 const loadGuard = require('./lib/loadGuard');
 const { CREDIT_PRICE_USD, marginUsd } = require('./lib/creditEconomics');
 const { quoteGeneration } = require('./lib/dynamicPricing');
@@ -342,6 +343,25 @@ app.use(
   createCloudBrowserRouter({
     db: supabaseAdmin,
     storage: supabaseAdmin.storage,
+    env: process.env,
+    creditApi: {
+      reserveCredits,
+      settleCredits,
+      refundCredits,
+      logCreditEvent,
+      reportRefundFailure
+    }
+  })
+);
+
+app.use(
+  '/api/browser-agent',
+  requireAuth,
+  rateLimit('chat'),
+  createBrowserAgentRouter({
+    db: supabaseAdmin,
+    storage: supabaseAdmin.storage,
+    routeRequestImpl: routeRequest,
     env: process.env,
     creditApi: {
       reserveCredits,
