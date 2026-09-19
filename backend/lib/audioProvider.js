@@ -65,10 +65,14 @@ function buildDeepgramUrl(request){
   if(request.options.diarization){
     url.searchParams.set('diarize_model','latest');
   }
-  // Pack071 intentionally pins the multilingual billing path so the
-  // provider price is known before reservation. Deepgram returns per-word
-  // languages and a channel language list for language=multi.
-  url.searchParams.set('language','multi');
+  url.searchParams.set('mip_opt_out','true');
+  if (request.language) {
+    url.searchParams.set('language', request.language);
+  } else {
+    // No explicit language uses the published Nova-3 Multilingual path.
+    // This keeps provider mode and pre-charge price identical.
+    url.searchParams.set('language','multi');
+  }
   return url.toString();
 }
 
@@ -90,7 +94,12 @@ async function transcribeAudio(request,{source,env=process.env,fetchImpl=globalT
   }).catch(error=>{throw providerError('deepgram_transcription_failed',502,error);});
   if(!response?.ok) throw providerError('deepgram_transcription_failed',502);
   const payload=await response.json().catch(error=>{throw providerError('deepgram_transcription_invalid_json',502,error);});
-  return normalizeDeepgramResponse(payload);
+  const normalized = normalizeDeepgramResponse(payload);
+  const language = normalized.language || request.language || normalized.languages[0] || null;
+  const languages = normalized.languages.length
+    ? normalized.languages
+    : (language ? Object.freeze([language]) : Object.freeze([]));
+  return Object.freeze({ ...normalized, language, languages });
 }
 
 module.exports={DEEPGRAM_MODEL,ENDPOINT,buildDeepgramUrl,normalizeDeepgramResponse,transcribeAudio};
