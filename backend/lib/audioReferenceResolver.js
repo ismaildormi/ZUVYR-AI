@@ -2,6 +2,7 @@
 
 const { createAssetStorageKernel } = require('./assetStorageKernel');
 const { assertOwnedStoragePath, CONFIG } = require('./assetStorageContract');
+const { config: audioConfig } = require('./audioOperationRegistry');
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const AUDIO_MIME=new Set([
@@ -60,6 +61,9 @@ function createAudioInputResolver({db,storage}={}){
       throw resolverError('audio_source_format_unsupported');
     }
     if(!durationSeconds) throw resolverError('audio_source_duration_unavailable');
+    if(durationSeconds > audioConfig.requestLimits.maxDurationSeconds) {
+      throw resolverError('audio_source_duration_too_long');
+    }
     const source=Object.freeze({
       conversationAssetId:row.id,
       assetId:canonical.assetId,
