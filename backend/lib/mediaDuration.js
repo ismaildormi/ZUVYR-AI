@@ -43,11 +43,12 @@ function readWavDurationSeconds(buffer) {
   }
 
   if (!byteRate || !dataBytes) throw durationError('media_duration_wav_missing');
-  const duration = dataBytes / byteRate;
-  if (!Number.isFinite(duration) || duration <= 0) {
+  const milliseconds =
+    (BigInt(dataBytes) * 1000n) / BigInt(byteRate);
+  if (milliseconds <= 0n || milliseconds > BigInt(Number.MAX_SAFE_INTEGER)) {
     throw durationError('media_duration_wav_invalid');
   }
-  return duration;
+  return Number(milliseconds) / 1000;
 }
 
 function readTrustedMediaDurationSeconds(buffer, {
