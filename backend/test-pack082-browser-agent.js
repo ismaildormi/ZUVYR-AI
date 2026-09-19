@@ -129,8 +129,8 @@ assert(owned82.includes("p_resource_namespace = 'workspace_project'"));
 assert(owned82.includes("p_resource_namespace = 'code_project'"));
 assert(owned82.includes("p_resource_namespace = 'browser_session'"));
 assert(owned82.includes('from public.browser_sessions'));
-assert(owned82.includes('s.owner_id=p_owner_id'));
-assert(owned82.includes("s.status in ('running','detached')"));
+assert(/s\.owner_id\s*=\s*p_owner_id/i.test(owned82));
+assert(/s\.status\s+in\s*\(\s*'running'\s*,\s*'detached'\s*\)/i.test(owned82));
 
 const grant79 = functionBody(
   permission79,
