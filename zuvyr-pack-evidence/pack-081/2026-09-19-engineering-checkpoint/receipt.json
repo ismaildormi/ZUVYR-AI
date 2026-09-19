@@ -1,0 +1,114 @@
+{
+  "pack": "081",
+  "title": "Cloud Browser Runtime",
+  "date": "2026-09-19",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonicalLockedVerified": false,
+  "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+  "baseline": {
+    "baseMainCommit": "a56c1ca9a174ab6bab507aa7ab148471a7da0803",
+    "pullRequest": 26,
+    "ciHead": "fc749cb0b0377f3b0f7b82195af7695e58d0c023",
+    "prCiRun": 35457685381,
+    "backendQuality": "PASS",
+    "releaseQuality": "PASS",
+    "mergeCommit": "d7b0592cf3b12c8e65168036d1b2ba9c9998d43c",
+    "mainCiRun": 35457790389,
+    "mainBackendQuality": "PASS",
+    "mainReleaseQuality": "PASS"
+  },
+  "database": {
+    "migration": "20260919171945 pack081_cloud_browser_runtime",
+    "tables": {
+      "browser_sessions": {
+        "exists": true,
+        "rls": true,
+        "rowsAtVerification": 0
+      },
+      "browser_session_artifacts": {
+        "exists": true,
+        "rls": true,
+        "rowsAtVerification": 0
+      }
+    },
+    "directPolicies": 0,
+    "serviceRoleMutationAuthority": true,
+    "rpcCount": 4,
+    "rpcSecurityDefiner": true
+  },
+  "productionEvidence": {
+    "railway": {
+      "exactCommit": "d7b0592cf3b12c8e65168036d1b2ba9c9998d43c",
+      "backend": {
+        "deployment": "35bd3a58-48d9-4ded-ac46-c3d95dab185a",
+        "status": "SUCCESS",
+        "startup": "ROX AI backend listening on port 8080",
+        "healthcheckPath": "/readyz"
+      },
+      "worker": {
+        "deployment": "8365646a-7d79-4833-835c-3d48da9e496f",
+        "status": "SUCCESS",
+        "startup": "ROX AI worker running (concurrency: image=2, video=1, audio=1, attachment=1)"
+      },
+      "maintenance": {
+        "deployment": "2c821f9c-c88a-40cf-9c7a-630125ac70c9",
+        "status": "SUCCESS"
+      }
+    },
+    "vercel": {
+      "frontendFilesChangedByPack081": false,
+      "unchangedProductionDeployment": "dpl_3VLpyDnEWwNP2y9ck6ZnpNfbnR3h",
+      "unchangedProductionCommit": "ac644e6dd6fe88ff836257c7b7baab6e86f41cc5",
+      "pack081PreviewDeployment": "dpl_D6WNb9kPDfqr1QXLFCTPAbbJaHw5",
+      "pack081PreviewHead": "fc749cb0b0377f3b0f7b82195af7695e58d0c023",
+      "pack081PreviewStatus": "READY",
+      "note": "PACK081 changed backend/config/runtime only; no frontend production promotion is required to prove the PACK081 source/runtime change."
+    }
+  },
+  "runtimeProof": {
+    "provider": "browserbase",
+    "liveSessionCreation": false,
+    "ownerScopedSessions": true,
+    "resumeCloseLifecycle": true,
+    "navigate": true,
+    "screenshot": true,
+    "domSnapshot": true,
+    "ownedUpload": true,
+    "downloadCapture": true,
+    "canonicalArtifactLineage": true,
+    "serverBillingAuthority": true,
+    "usageKind": "browser_runtime",
+    "feature": "ip",
+    "rawProviderConnectUrlReturned": false
+  },
+  "securityProof": {
+    "allowedHostScopeRequired": true,
+    "privateNetworkBlocked": true,
+    "credentialBearingUrlsRejected": true,
+    "rawCredentialInputAllowed": false,
+    "backendEnvironmentInjected": false,
+    "providerApiKeyPersisted": false,
+    "connectUrlPersisted": false,
+    "cookiesPersisted": false,
+    "passwordsPersisted": false
+  },
+  "deferredGates": [
+    {
+      "id": "M17",
+      "reason": "Production has no Browserbase credential/pricing/M17 gate variables. No live Browserbase session can be truthfully accepted until provider credentials, effective account pricing and M17 approval are present."
+    }
+  ],
+  "noCostVerification": {
+    "paidProviderCalls": 0,
+    "paymentCalls": 0,
+    "liveBrowserbaseCalls": 0,
+    "liveBillingAllowed": false
+  },
+  "omissions": [
+    "No live Browserbase session was created because M17/provider credentials/effective pricing are absent.",
+    "No paid provider or payment call was made.",
+    "PACK082 multi-step Browser Agent act/verify acceptance is not claimed by PACK081."
+  ],
+  "nextPack": "082",
+  "nextPackTitle": "Browser Agent"
+}
