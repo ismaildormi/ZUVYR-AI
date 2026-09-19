@@ -47,6 +47,9 @@ const { register, setQueueDepth, recordCost, recordMargin, recordLoadLevel, reco
 const { createHeaderSecretGuard } = require('./lib/operatorAuth');
 const { runMaintenanceOnce, requireMaintenanceStrategy } = require('./lib/maintenanceCoordinator');
 const { cleanupExpiredCodeSandboxes } = require('./lib/codeSandboxCleanup');
+const {
+  reconcileActiveCodeRuntimeJobs
+} = require('./lib/codeRuntimeMaintenance');
 const loadGuard = require('./lib/loadGuard');
 const { CREDIT_PRICE_USD, marginUsd } = require('./lib/creditEconomics');
 const { quoteGeneration } = require('./lib/dynamicPricing');
@@ -419,6 +422,20 @@ app.post(
         redis: queueConnection,
         supabaseAdmin,
         codeSandboxCleanup: cleanupExpiredCodeSandboxes,
+        codeRuntimeReconcile: ({ db, logger }) =>
+          reconcileActiveCodeRuntimeJobs({
+            db,
+            provider: codeSandboxProvider,
+            env: process.env,
+            logger,
+            creditApi: {
+              reserveCredits,
+              settleCredits,
+              refundCredits,
+              logCreditEvent,
+              reportRefundFailure
+            }
+          }),
       });
 
       if (result.status === 'success' || result.duplicate) {

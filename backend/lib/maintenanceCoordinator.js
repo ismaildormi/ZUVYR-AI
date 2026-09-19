@@ -53,6 +53,7 @@ async function runMaintenanceOnce({
   redis,
   supabaseAdmin,
   codeSandboxCleanup = null,
+  codeRuntimeReconcile = null,
   nowMs = Date.now(),
   logger = console,
 }) {
@@ -101,6 +102,7 @@ async function runMaintenanceOnce({
     newAlertsRaised: null,
     accountsReset: null,
     codeSandboxes: null,
+    codeRuntime: null,
     errors: [],
   };
 
@@ -166,6 +168,37 @@ async function runMaintenanceOnce({
       }
     }
 
+    if (typeof codeRuntimeReconcile === 'function') {
+      try {
+        receipt.codeRuntime = await codeRuntimeReconcile({
+          db: supabaseAdmin,
+          nowMs,
+          logger
+        });
+        if (
+          Array.isArray(receipt.codeRuntime?.failures) &&
+          receipt.codeRuntime.failures.length > 0
+        ) {
+          receipt.errors.push({
+            step: 'code_runtime_reconcile',
+            message:
+              'Runtime reconciliation deferred for ' +
+              receipt.codeRuntime.failures.length +
+              ' job(s).'
+          });
+        }
+      } catch (error) {
+        receipt.errors.push({
+          step: 'code_runtime_reconcile',
+          message: safeError(error)
+        });
+        logger.error(
+          '[maintenance] code runtime reconciliation failed:',
+          safeError(error)
+        );
+      }
+    }
+
     receipt.finishedAt = new Date().toISOString();
 
     if (receipt.errors.length === 0) {
@@ -177,6 +210,7 @@ async function runMaintenanceOnce({
         newAlertsRaised: receipt.newAlertsRaised,
         accountsReset: receipt.accountsReset,
         codeSandboxes: receipt.codeSandboxes,
+        codeRuntime: receipt.codeRuntime,
       }));
       return { status: 'success', duplicate: false, receipt };
     }
@@ -185,6 +219,7 @@ async function runMaintenanceOnce({
       receipt.newAlertsRaised !== null,
       receipt.accountsReset !== null,
       codeSandboxCleanup === null || receipt.codeSandboxes !== null,
+      codeRuntimeReconcile === null || receipt.codeRuntime !== null,
     ].filter(Boolean).length;
     receipt.status = successfulSteps > 0 ? 'partial' : 'failed';
     await writeReceipt(redis, receipt);

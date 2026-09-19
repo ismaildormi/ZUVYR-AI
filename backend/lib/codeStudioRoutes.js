@@ -31,6 +31,13 @@ const {
   createVercelSandboxProvider
 } = require('./codeVercelSandboxProvider');
 const {
+  createCodeRuntimeExecutor
+} = require('./codeRuntimeExecutor');
+const {
+  runtimePricingStatus
+} = require('./codeRuntimePricing');
+const runtimeConfig = require('../config/code-runtime.v1.json');
+const {
   canonicalPlanIdFromProfile,
   isPaidPlan,
   planHasFeature
@@ -45,7 +52,11 @@ const MAX_AI_EDIT_CONTEXT_CHARS = 160000;
 
 function failureStatus(error) {
   const code = String(error?.code || '');
-  if (code === 'code_project_not_found' || code === 'pack076_session_not_found') return 404;
+  if (
+    code === 'code_project_not_found' ||
+    code === 'pack076_session_not_found' ||
+    code === 'pack077_job_not_found'
+  ) return 404;
   if (
     code === 'pack075_revision_conflict' ||
     code === 'pack075_branch_exists' ||
@@ -56,9 +67,19 @@ function failureStatus(error) {
     code === 'pack076_active_session_exists' ||
     code === 'pack076_idempotency_scope_mismatch' ||
     code === 'code_sandbox_session_in_progress' ||
-    code === 'code_sandbox_previous_terminal'
+    code === 'code_sandbox_previous_terminal' ||
+    code === 'pack077_active_job_exists' ||
+    code === 'pack077_idempotency_scope_mismatch' ||
+    code === 'pack077_job_not_claimable' ||
+    code === 'pack077_terminal_job'
   ) return 409;
-  if (code === 'code_requires_plan') return 403;
+  if (
+    code === 'code_requires_plan' ||
+    code === 'permission_required' ||
+    code === 'permission_request_replayed' ||
+    code === 'permission_request_scope_mismatch' ||
+    code === 'pack077_dependency_registry_permission_required'
+  ) return 403;
   if (code === 'insufficient_credits') return 402;
   if (
     code === 'code_ai_edit_provider_failed' ||
@@ -68,7 +89,9 @@ function failureStatus(error) {
   ) return 502;
   if (
     code === 'code_sandbox_live_gate_closed' ||
-    code === 'code_sandbox_provider_credentials_unavailable'
+    code === 'code_sandbox_provider_credentials_unavailable' ||
+    code === 'code_runtime_pricing_gate_closed' ||
+    code === 'code_runtime_pricing_snapshot_changed'
   ) return 503;
   if (
     code.includes('disabled') ||
@@ -301,6 +324,15 @@ function createCodeStudioRouter({
   const sandbox =
     sandboxProvider ||
     createVercelSandboxProvider({ env: sandboxEnv });
+  const runtimeExecutor =
+    db
+      ? createCodeRuntimeExecutor({
+          db,
+          creditApi: creditApi || {},
+          provider: sandbox,
+          env: sandboxEnv
+        })
+      : null;
   const routeCodeRequest =
     typeof routeRequestImpl === 'function'
       ? routeRequestImpl
@@ -322,6 +354,15 @@ function createCodeStudioRouter({
       throw error;
     }
     return sandboxes;
+  };
+
+  const runtimeExecution = () => {
+    if (!runtimeExecutor) {
+      const error = new Error('code_runtime_executor_unavailable');
+      error.code = 'code_runtime_executor_unavailable';
+      throw error;
+    }
+    return runtimeExecutor;
   };
 
   router.get(
@@ -349,6 +390,27 @@ function createCodeStudioRouter({
           networkDefault: sandboxConfig.network.defaultMode,
           rawPublicPorts: false,
           previewTransport: 'authenticated_time_bounded_proxy'
+        },
+        pack077: {
+          terminalDependenciesRunFoundation: true,
+          operations: runtimeConfig.operations,
+          liveExecution:
+            runtimePricingStatus({ env: sandboxEnv }).live &&
+            sandboxAvailability(sandboxEnv).live,
+          blockers: [
+            ...new Set([
+              ...runtimePricingStatus({ env: sandboxEnv }).blockers,
+              ...sandboxAvailability(sandboxEnv).blockers,
+              'pack077_raw_preview_port_protection_unverified'
+            ])
+          ],
+          dependencyNetwork:
+            runtimeConfig.dependencies.networkPolicy.allowedDomains,
+          shellExecution: false,
+          sudo: false,
+          previewActivation: false,
+          previewStatus:
+            'deferred_until_private_or_provider-protected_port_route_is_verified'
         }
       })
   );
@@ -1085,27 +1147,106 @@ function createCodeStudioRouter({
     }
   });
 
-  router.post('/runtime/request', (req, res) => {
+  router.get('/runtime/jobs', async (req, res) => {
     try {
-      assertRuntimeRequestAllowed(req.body);
+      const projectId = req.query?.projectId || null;
+      if (projectId && !uuid(projectId)) {
+        const error = new Error('pack077_project_id_invalid');
+        error.code = 'pack077_project_id_invalid';
+        throw error;
+      }
+      const jobs = await runtimeExecution().listJobs({
+        ownerId: req.userId,
+        projectId,
+        limit: req.query?.limit
+      });
+      return res.json({ status: 'success', jobs });
+    } catch (error) {
+      return errorResponse(res, error, 'code_runtime_jobs_read_failed');
+    }
+  });
+
+  router.post('/runtime/request', async (req, res) => {
+    try {
+      const planId = await ownerPlan(db, req.userId);
+      if (!planHasFeature(planId, 'code')) {
+        const error = new Error('code_requires_plan');
+        error.code = 'code_requires_plan';
+        throw error;
+      }
+
       const metering = usageBridge.status();
       if (!metering.reserve || !metering.settle || !metering.refund) {
-        return res.status(503).json({
-          status: 'error',
-          code: 'code_usage_ledger_unavailable'
-        });
+        const error = new Error('code_usage_ledger_unavailable');
+        error.code = 'code_usage_ledger_unavailable';
+        throw error;
       }
-      return res.status(501).json({
-        status: 'error',
-        code: 'code_runtime_executor_unavailable'
+
+      const result = await runtimeExecution().start({
+        ownerId: req.userId,
+        body: req.body,
+        idempotencyKey: req.headers['idempotency-key'] || null
+      });
+
+      return res.status(result.replayed ? 200 : 202).json({
+        status: 'success',
+        ...result
       });
     } catch (error) {
-      return res.status(failureStatus(error)).json({
-        status: 'error',
-        code: error.code || 'code_runtime_disabled',
-        operation: error.operation,
-        message: 'Code execution is not enabled.'
+      return errorResponse(res, error, 'code_runtime_request_failed');
+    }
+  });
+
+  router.get('/runtime/jobs/:jobId', async (req, res) => {
+    try {
+      if (!uuid(req.params.jobId)) {
+        const error = new Error('pack077_job_id_invalid');
+        error.code = 'pack077_job_id_invalid';
+        throw error;
+      }
+      const job = await runtimeExecution().refresh({
+        ownerId: req.userId,
+        jobId: req.params.jobId
       });
+      return res.json({ status: 'success', job });
+    } catch (error) {
+      return errorResponse(res, error, 'code_runtime_job_read_failed');
+    }
+  });
+
+  router.get('/runtime/jobs/:jobId/logs', async (req, res) => {
+    try {
+      if (!uuid(req.params.jobId)) {
+        const error = new Error('pack077_job_id_invalid');
+        error.code = 'pack077_job_id_invalid';
+        throw error;
+      }
+      const logs = await runtimeExecution().logs({
+        ownerId: req.userId,
+        jobId: req.params.jobId,
+        after: req.query?.after,
+        limit: req.query?.limit
+      });
+      return res.json({ status: 'success', logs });
+    } catch (error) {
+      return errorResponse(res, error, 'code_runtime_logs_read_failed');
+    }
+  });
+
+  router.post('/runtime/jobs/:jobId/cancel', async (req, res) => {
+    try {
+      if (!uuid(req.params.jobId)) {
+        const error = new Error('pack077_job_id_invalid');
+        error.code = 'pack077_job_id_invalid';
+        throw error;
+      }
+      const job = await runtimeExecution().cancel({
+        ownerId: req.userId,
+        jobId: req.params.jobId
+      });
+      return res.json({ status: 'success', job });
+    } catch (error) {
+      return errorResponse(res, error, 'code_runtime_cancel_failed');
     }
   });
 
