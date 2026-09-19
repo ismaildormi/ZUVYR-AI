@@ -4,6 +4,7 @@ const {
   config,
   sandboxError,
   assertLiveAvailable,
+  assertProviderCredentials,
   buildProviderCreateBody,
   assertNoSecretInjection
 } = require('./codeSandboxPolicy');
@@ -48,8 +49,9 @@ function createVercelSandboxProvider({
     return url.toString();
   }
 
-  async function request(path, options = {}) {
-    assertLiveAvailable(env);
+  async function request(path, options = {}, { requireLiveGate = false } = {}) {
+    if (requireLiveGate) assertLiveAvailable(env);
+    else assertProviderCredentials(env);
 
     const token = String(env.VERCEL_TOKEN || '').trim();
     if (!token) throw providerError('pack076_missing_vercel_token');
@@ -102,7 +104,7 @@ function createVercelSandboxProvider({
     const result = await request('/v3/sandboxes', {
       method: 'POST',
       body: JSON.stringify(body)
-    });
+    }, { requireLiveGate: true });
 
     const providerSessionId = String(result?.session?.id || '').trim();
     if (!/^sbx_[A-Za-z0-9_-]{6,}$/.test(providerSessionId)) {
