@@ -43,7 +43,7 @@ const {
 } = require('./lib/aiPreferences');
 const { createLanguageContextMiddleware } = require('./lib/languageMiddleware');
 const { supabaseAdmin } = require('./lib/supabaseAdmin');
-const { register, setQueueDepth, recordCost, recordMargin, recordLoadLevel } = require('./lib/metrics');
+const { register, setQueueDepth, recordCost, recordMargin, recordLoadLevel, recordRefund } = require('./lib/metrics');
 const { createHeaderSecretGuard } = require('./lib/operatorAuth');
 const { runMaintenanceOnce, requireMaintenanceStrategy } = require('./lib/maintenanceCoordinator');
 const loadGuard = require('./lib/loadGuard');
