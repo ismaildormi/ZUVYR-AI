@@ -60,6 +60,7 @@ function normalizeVideoRequest(body = {}) {
     throw requestError('unsupported_video_option');
   }
 
+  // Pack066 provider-safe defaults mirror the verified Wan 2.2 Fast contract.
   const durationSeconds = options.durationSeconds === undefined
     ? 5
     : Number(options.durationSeconds);
