@@ -583,13 +583,13 @@
     "live_billing_allowed": false,
     "next_pack": "042"
   },
-  "generated_at": "2026-09-19T17:39:00+01:00",
-  "pack_id": "094",
-  "pack_title": "Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
-  "status": "PACK094_OPEN",
+  "generated_at": "2026-09-19T21:32:00+01:00",
+  "pack_id": "095",
+  "pack_title": "ZUVYR Model Lab",
+  "status": "PACK095_OPEN",
   "next_pack_allowed": true,
   "next_external_gate": null,
-  "next_pack": "094 - Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
+  "next_pack": "095 - ZUVYR Model Lab",
   "pack042": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "258ce1f4df2e3a4630cfc87069668f073c0dee79",
@@ -835,7 +835,7 @@
     "previous_plan_preserved": true,
     "priority_override": "MODEL_FIRST_BYO_COMPUTE_2026_09_19"
   },
-  "active_pack": "094",
+  "active_pack": "095",
   "pack061": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
@@ -1842,7 +1842,7 @@
     "effective_date": "2026-09-19",
     "current_inflight_pack": null,
     "current_inflight_may_finish": false,
-    "next_pack_after_current_inflight": "094",
+    "next_pack_after_current_inflight": "095",
     "priority_sequence": [
       "094 - Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
       "095 - ZUVYR Model Lab",
@@ -1916,7 +1916,10 @@
       "primary_eval_objective": "task_success_and_total_cost_per_successful_task"
     },
     "completed_inflight_pack": "083",
-    "active_priority_pack": "094"
+    "active_priority_pack": "095",
+    "completed_priority_packs": [
+      "094"
+    ]
   },
   "pack083": {
     "status": "LOCKED_ENGINEERING_VERIFIED",
@@ -1968,5 +1971,88 @@
     "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
     "next_pack": "094",
     "next_pack_title": "Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank"
+  },
+  "pack094": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "PACK094 source, CI, Supabase authority, production DB consent/history flow and exact Railway production deployment are verified. Canonical Vercel production remains stale, so the final Training & Data Rights frontend and authenticated production UI acceptance remain deferred.",
+    "implementation_merge_commit": "33fba100352ea8c721cc93c63010738ecab9b3de",
+    "consent_authority_finalizer_pr": 37,
+    "final_main_commit": "13b677a1d70bc541766b4f26c84ce381a054d999",
+    "github_ci_runs": [
+      35466508486,
+      35467897069,
+      35467958076
+    ],
+    "backend_quality": "PASS",
+    "release_quality": "PASS",
+    "migrations": [
+      "20260919200545 pack094_learning_pipeline",
+      "20260919200635 pack094_learning_pipeline",
+      "20260919200826 pack094_learning_pipeline_fix1"
+    ],
+    "migration_note": "The pack094_learning_pipeline name appears twice in migration history from repeated idempotent application; final table/function/trigger authority is singleton and verified.",
+    "consent_authority": {
+      "current": "zuvyr_user_preferences.training_consent",
+      "default_opt_in": false,
+      "canonical_browser_mutation_endpoint": "PATCH /api/workspace/memory/preferences",
+      "learning_put_consent": "COMPATIBILITY_ALIAS_TO_CANONICAL_WRITER",
+      "history_trigger": "trg_pack094_training_consent_history",
+      "memory_permission_independent": true
+    },
+    "database": {
+      "learning_tables_rls": true,
+      "direct_browser_policy_count": 0,
+      "production_consent_smoke": {
+        "history_events_created": 3,
+        "latest_opt_in": false,
+        "previous_opt_in": true,
+        "source": "preference",
+        "policy_version": "pack094-v1",
+        "memory_still_enabled": true,
+        "residue": 0,
+        "auth_account_created": false
+      }
+    },
+    "production": {
+      "railway": {
+        "exact_commit": "13b677a1d70bc541766b4f26c84ce381a054d999",
+        "backend": {
+          "deployment": "144c40e7-d1f5-47e9-bb78-b69e74d88894",
+          "status": "SUCCESS"
+        },
+        "worker": {
+          "deployment": "e95f74af-cc00-44aa-a365-51de2b2aa7f6",
+          "status": "SUCCESS"
+        },
+        "maintenance": {
+          "deployment": "212fcfa6-410d-4f79-be83-5a49e5eaeb01",
+          "status": "SUCCESS"
+        }
+      },
+      "vercel": {
+        "production_deployment": "dpl_5LyUdRjpxQNMjTB8BBN8nt4CvwtZ",
+        "production_status": "READY_BUT_STALE",
+        "production_commit": "60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4",
+        "newest_pack094_preview": "dpl_G6QGccjkV2CBVLTTHgDG1QZGvrE8",
+        "newest_pack094_preview_status": "READY",
+        "newest_pack094_preview_commit": "7d86986af09416ea6d9c5608080ca09f0a461f6e",
+        "final_frontend_live": false,
+        "deploy_fallback": "TOOL_ADVERTISED_BUT_RUNTIME_NOT_FOUND"
+      }
+    },
+    "deferred_gates": [
+      "DEFERRED_PRODUCTION_FRONTEND_GATE",
+      "PACK094_AUTHENTICATED_PRODUCTION_DATA_RIGHTS_UI_ACCEPTANCE"
+    ],
+    "paid_provider_calls_during_verification": 0,
+    "payment_calls_during_verification": 0,
+    "live_billing_allowed": false,
+    "receipt_path": "zuvyr-pack-evidence/pack-094/2026-09-19-engineering-checkpoint/receipt.json",
+    "receipt_git_blob": "a14a37f7e7d1da33c012816d47b3ba4562e6088b",
+    "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+    "next_pack": "095",
+    "next_pack_title": "ZUVYR Model Lab"
   }
 }
