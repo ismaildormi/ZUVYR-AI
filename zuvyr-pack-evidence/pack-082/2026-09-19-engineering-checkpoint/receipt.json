@@ -1,0 +1,126 @@
+{
+  "pack": "082",
+  "title": "Browser Agent",
+  "date": "2026-09-19",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonicalLockedVerified": false,
+  "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+  "baseline": {
+    "baseMainCommit": "b7c1ceefc6639f738446d7797373628a26cf906f",
+    "pullRequest": 28,
+    "ciHead": "6a75167d572f93bb80a770027f5c7d59f15eeba2",
+    "prCiRun": 35460385234,
+    "backendQuality": "PASS",
+    "releaseQuality": "PASS",
+    "mergeCommit": "77627619a88f005bb27b67140e8835f22d1df188",
+    "mainCiRun": 35460492715,
+    "mainBackendQuality": "PASS",
+    "mainReleaseQuality": "PASS"
+  },
+  "database": {
+    "migrations": [
+      "20260919181201 pack082_browser_agent",
+      "20260919181205 pack082_browser_agent"
+    ],
+    "migrationNote": "Two idempotent migration-history records exist from the final execution retry. Production objects are unique and verified; no third replay is required.",
+    "tables": {
+      "browser_agent_runs": {
+        "exists": true,
+        "rls": true,
+        "rowsAtVerification": 0
+      },
+      "browser_agent_actions": {
+        "exists": true,
+        "rls": true,
+        "rowsAtVerification": 0
+      },
+      "browser_agent_reasoning_turns": {
+        "exists": true,
+        "rls": true,
+        "rowsAtVerification": 0
+      }
+    },
+    "directPolicies": 0,
+    "serviceRoleMutationAuthority": true,
+    "rpcCount": 7,
+    "rpcSecurityDefiner": true
+  },
+  "productionEvidence": {
+    "railway": {
+      "exactCommit": "77627619a88f005bb27b67140e8835f22d1df188",
+      "backend": {
+        "deployment": "6397dcef-90c3-4153-b99b-39003d330e9a",
+        "status": "SUCCESS",
+        "healthcheckPath": "/readyz"
+      },
+      "worker": {
+        "deployment": "60250032-99aa-44fa-bc7d-eb884ee08665",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deployment": "8d9572cc-5dca-43a6-8fb1-e840927a5807",
+        "status": "SUCCESS"
+      }
+    },
+    "vercel": {
+      "frontendFilesChangedByPack082": false,
+      "unchangedProductionDeployment": "dpl_3VLpyDnEWwNP2y9ck6ZnpNfbnR3h",
+      "unchangedProductionCommit": "ac644e6dd6fe88ff836257c7b7baab6e86f41cc5",
+      "branchPreviewRequired": false,
+      "note": "PACK082 changed backend/config/runtime only. Vercel production identity is unchanged and is not a blocker for PACK082 backend runtime evidence."
+    }
+  },
+  "runtimeProof": {
+    "canonicalPlanner": "zuvyr.brain.planner.v1",
+    "capability": "browser.agent.run",
+    "planObserveActVerifyLoop": true,
+    "scopedAllowedHosts": true,
+    "permittedLowRiskObserveNavigateScrollWaitVerify": true,
+    "clickRequiresPermission": true,
+    "typeRequiresPermission": true,
+    "submitRequiresExactAllowOnceApproval": true,
+    "uploadRequiresExactApproval": true,
+    "captchaEncounterPausesForUser": true,
+    "authChallengePausesForUser": true,
+    "passwordEntryByAgent": false,
+    "otpEntryByAgent": false,
+    "paymentCardEntryByAgent": false,
+    "globalStop": true,
+    "noNextActionAfterStop": true,
+    "uncertainExternalOutcomeNeverBlindRetry": true,
+    "beforeAfterEvidence": true,
+    "canonicalScreenshotOrDomEvidence": true,
+    "durableDeferralAndResume": true,
+    "rawSecretsInEvidence": false
+  },
+  "securityProof": {
+    "ownerScopedRunsActionsReasoning": true,
+    "privateNetworkBlocked": true,
+    "credentialBearingUrlsBlocked": true,
+    "robotsBoundary": "respect",
+    "ambiguousActionRequiresApproval": true,
+    "consequenceBearingActionRequiresAllowOnce": true,
+    "credentialValuesPersisted": false,
+    "credentialValuesModelVisible": false
+  },
+  "deferredGates": [
+    {
+      "id": "M17",
+      "inheritedFromPack": "081",
+      "reason": "Real Browser Agent execution depends on the PACK081 Browserbase runtime. Production currently has no Browserbase credentials, M17 verification variable or verified browser-runtime pricing gate, so live multi-step Browserbase acceptance cannot be truthfully claimed."
+    }
+  ],
+  "noCostVerification": {
+    "paidProviderCalls": 0,
+    "paymentCalls": 0,
+    "liveBrowserbaseCalls": 0,
+    "liveBillingAllowed": false
+  },
+  "omissions": [
+    "No live Browserbase session was created because inherited M17/provider credential/pricing gates remain absent.",
+    "No paid provider or payment call was made.",
+    "Canonical roadmap acceptance requiring a real permitted multi-step Browser Agent task remains deferred until M17 is satisfied."
+  ],
+  "nextPack": "083",
+  "nextPackTitle": "3D Generation"
+}
