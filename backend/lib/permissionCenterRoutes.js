@@ -9,6 +9,7 @@ const {
   createPermissionCenterStore,
   getDefaultPermissionCenterStore
 } = require('./permissionCenterRepository');
+const { createVoiceRightsStore } = require('./voiceRightsRepository');
 
 function statusFor(error) {
   const code = String(error?.code || '');
@@ -20,6 +21,7 @@ function statusFor(error) {
 function createPermissionCenterRouter({ db = null, store = null } = {}) {
   const router = express.Router();
   const permissions = store || (db ? createPermissionCenterStore(db) : getDefaultPermissionCenterStore());
+  const voiceRights = db ? createVoiceRightsStore(db) : null;
 
   router.get('/policy', (_req, res) => {
     res.set('Cache-Control', 'no-store');
@@ -148,6 +150,60 @@ function createPermissionCenterRouter({ db = null, store = null } = {}) {
       return res.status(statusFor(error)).json({
         status: 'error',
         code: error.code || 'permission_audit_read_failed'
+      });
+    }
+  });
+
+
+  router.get('/voice-rights', async (req, res) => {
+    if (!voiceRights) return res.status(503).json({ status: 'error', code: 'voice_rights_store_unavailable' });
+    try {
+      const rights = await voiceRights.list(req.userId, {
+        limit: req.query?.limit,
+        activeOnly: String(req.query?.active || '').toLowerCase() === 'true'
+      });
+      res.set('Cache-Control', 'no-store');
+      return res.json({ status: 'success', rights });
+    } catch (error) {
+      return res.status(statusFor(error)).json({
+        status: 'error',
+        code: error.code || 'voice_rights_read_failed'
+      });
+    }
+  });
+
+  router.post('/voice-rights', async (req, res) => {
+    if (!voiceRights) return res.status(503).json({ status: 'error', code: 'voice_rights_store_unavailable' });
+    try {
+      const right = await voiceRights.create({
+        ownerId: req.userId,
+        sourceAudioAssetId: req.body?.sourceAudioAssetId,
+        scope: req.body?.scope,
+        rightsBasis: req.body?.rightsBasis,
+        evidenceReference: req.body?.evidenceReference,
+        explicitConsent: req.body?.explicitConsent === true
+      });
+      res.set('Cache-Control', 'no-store');
+      return res.status(201).json({ status: 'success', right });
+    } catch (error) {
+      return res.status(statusFor(error)).json({
+        status: 'error',
+        code: error.code || 'voice_rights_create_failed',
+        message: 'Voice-use consent could not be recorded.'
+      });
+    }
+  });
+
+  router.post('/voice-rights/:id/revoke', async (req, res) => {
+    if (!voiceRights) return res.status(503).json({ status: 'error', code: 'voice_rights_store_unavailable' });
+    try {
+      const result = await voiceRights.revoke({ ownerId: req.userId, id: req.params.id });
+      res.set('Cache-Control', 'no-store');
+      return res.json({ status: 'success', result });
+    } catch (error) {
+      return res.status(statusFor(error)).json({
+        status: 'error',
+        code: error.code || 'voice_rights_revoke_failed'
       });
     }
   });
