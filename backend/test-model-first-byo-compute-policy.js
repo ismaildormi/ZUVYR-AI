@@ -17,6 +17,9 @@ const continueHere = fs.readFileSync(
 );
 
 assert.equal(policy.status, 'CANONICAL_MODEL_FIRST_PRIORITY');
+assert.equal(policy.execution_priority.completed_inflight_pack, '083');
+assert.equal(policy.execution_priority.active_priority_pack, '094');
+assert.deepEqual(policy.execution_priority.immediate_sequence, ['094','095','096']);
 assert.equal(policy.commercial_model.zuvyr_api_software_fee_usd, 0);
 assert.equal(policy.commercial_model.zuvyr_owned_model_usage_fee_usd, 0);
 assert.equal(policy.commercial_model.zuvyr_inference_markup_usd, 0);
@@ -30,7 +33,7 @@ assert.equal(policy.learning_flywheel.global_training_content_default, 'opt_in_o
 assert.equal(policy.learning_flywheel.memory_permission_separate_from_training_permission, true);
 assert.equal(policy.owned_model_rollout.automatic_rollback_required, true);
 
-assert.equal(roadmap.active_pack, '083');
+assert.equal(roadmap.active_pack, '094');
 
 const expectedPackIds = Array.from(
   { length: 150 },
@@ -49,6 +52,8 @@ assert.equal(markdownPackIds.length, 150);
 assert.equal(new Set(markdownPackIds).size, 150);
 assert.deepEqual(markdownPackIds, expectedPackIds);
 
+assert.equal(roadmap.priority_override.completed_inflight_pack, '083');
+assert.equal(roadmap.priority_override.active_priority_pack, '094');
 assert.deepEqual(
   roadmap.priority_override.execute_next,
   ['094', '095', '096']
@@ -78,8 +83,12 @@ assert(pack('096').scope.includes('BYOC'));
 assert(pack('096').scope.includes('usage fee $0'));
 assert(pack('096').acceptance.includes('user/org-funded BYOC'));
 
-assert.equal(state.active_pack, '083');
+assert.equal(state.active_pack, '094');
 assert.equal(state.model_first_priority_override.status, 'CANONICAL');
+assert.equal(state.model_first_priority_override.current_inflight_pack, null);
+assert.equal(state.model_first_priority_override.current_inflight_may_finish, false);
+assert.equal(state.model_first_priority_override.completed_inflight_pack, '083');
+assert.equal(state.model_first_priority_override.active_priority_pack, '094');
 assert.equal(
   state.model_first_priority_override.next_pack_after_current_inflight,
   '094'
@@ -105,11 +114,14 @@ assert(roadmapMd.includes('MODEL-FIRST PRIORITY OVERRIDE — 2026-09-19'));
 assert(roadmapMd.includes('PACK094 → PACK095 → PACK096 before PACK084–PACK093'));
 assert(roadmapMd.includes('ZUVYR-owned model usage fee: $0'));
 assert(continueHere.includes('LATEST CANONICAL OVERRIDE — MODEL-FIRST + BYO COMPUTE — 2026-09-19'));
-assert(continueHere.includes('Do not start PACK084 after PACK083'));
+assert(continueHere.includes('PACK094 — Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank is the active Pack'));
+assert(continueHere.includes('Do not start PACK084 now'));
+assert(continueHere.includes('PACK150 is the final V1 release/recovery gate'));
 
 console.log('PASS: Model-First priority is canonical across policy, roadmap, state and continuation files');
 console.log('PASS: ZUVYR-owned model API/software fee = $0 and model usage fee = $0');
 console.log('PASS: BYOC user/org-funded compute is the default serving model');
-console.log('PASS: PACK094 → PACK095 → PACK096 precede PACK084–PACK093 after the current PACK083');
+console.log('PASS: PACK083 is finalized and PACK094 is the active model-first Pack');
+console.log('PASS: PACK094 → PACK095 → PACK096 precede PACK084–PACK093');
 console.log('PASS: V1 coverage guard preserves every canonical PACK001–PACK150 in Markdown + JSON');
 console.log('PASS: PACK084–PACK093 are deferred, never cancelled; PACK150 remains the final V1 release gate');

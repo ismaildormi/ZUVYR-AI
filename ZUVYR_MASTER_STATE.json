@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "source_fix": "005-FIX6",
   "selected_strategy": "railway_internal_route",
-  "previous_pack": "082",
+  "previous_pack": "083",
   "tests": {
     "maintenance": "PASS",
     "runtime_safety": "PASS",
@@ -584,12 +584,12 @@
     "next_pack": "042"
   },
   "generated_at": "2026-09-19T17:39:00+01:00",
-  "pack_id": "050",
-  "pack_title": "Knowledge / Context Graph",
-  "status": "PACK080_LOCKED_ENGINEERING_VERIFIED",
+  "pack_id": "094",
+  "pack_title": "Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
+  "status": "PACK094_OPEN",
   "next_pack_allowed": true,
-  "next_external_gate": "M17",
-  "next_pack": "083 - 3D Generation",
+  "next_external_gate": null,
+  "next_pack": "094 - Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
   "pack042": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "258ce1f4df2e3a4630cfc87069668f073c0dee79",
@@ -835,7 +835,7 @@
     "previous_plan_preserved": true,
     "priority_override": "MODEL_FIRST_BYO_COMPUTE_2026_09_19"
   },
-  "active_pack": "083",
+  "active_pack": "094",
   "pack061": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
@@ -1840,8 +1840,8 @@
   "model_first_priority_override": {
     "status": "CANONICAL",
     "effective_date": "2026-09-19",
-    "current_inflight_pack": "083",
-    "current_inflight_may_finish": true,
+    "current_inflight_pack": null,
+    "current_inflight_may_finish": false,
     "next_pack_after_current_inflight": "094",
     "priority_sequence": [
       "094 - Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
@@ -1914,6 +1914,59 @@
         "rollback/fallback"
       ],
       "primary_eval_objective": "task_success_and_total_cost_per_successful_task"
-    }
+    },
+    "completed_inflight_pack": "083",
+    "active_priority_pack": "094"
+  },
+  "pack083": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "3D Generation",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "Engineering, database, CI and exact Railway production runtime are verified. Live paid 3D provider acceptance remains deferred behind M18 and explicit live-billing/paid-execution gates.",
+    "pull_request": 30,
+    "implementation_merge_commit": "f88e297895cf4fedb9a1ffa706bf1a6526c428c8",
+    "production_hotfix_commit": "60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4",
+    "github_ci_runs": [
+      35464298584,
+      35464342204,
+      35464563066
+    ],
+    "migration": {
+      "version": "20260919192342",
+      "name": "pack083_3d_generation",
+      "status": "APPLIED_VERIFIED"
+    },
+    "railway": {
+      "exact_commit": "60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4",
+      "backend": {
+        "deployment": "76a8bf1e-3927-4c13-8c7f-dc26820acc73",
+        "status": "SUCCESS"
+      },
+      "worker": {
+        "deployment": "1cbe7b84-0e72-437a-acfa-ac69ee7dc7cd",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deployment": "d40ee2ef-6e91-4622-bac6-01e7e1804192",
+        "status": "SUCCESS"
+      }
+    },
+    "database": {
+      "generation_jobs_rls": true,
+      "conversation_assets_rls": true,
+      "pack083_columns": 8,
+      "security_definer_rpcs": 5,
+      "model3d_jobs_at_verification": 0
+    },
+    "deferred_gates": [
+      "M18"
+    ],
+    "live_execution_default": false,
+    "paid_provider_calls_during_verification": 0,
+    "payment_calls_during_verification": 0,
+    "receipt_path": "zuvyr-pack-evidence/pack-083/2026-09-19-engineering-checkpoint/receipt.json",
+    "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+    "next_pack": "094",
+    "next_pack_title": "Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank"
   }
 }

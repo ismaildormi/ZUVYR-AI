@@ -4,18 +4,19 @@
   "status": "CANONICAL_MODEL_FIRST_PRIORITY",
   "scope": "ZUVYR-owned model serving, self-hosting API/runtime, learning/evaluation pipeline and rollout economics",
   "execution_priority": {
-    "current_inflight_pack_may_finish": "083",
-    "immediate_sequence_after_current_inflight": [
-      "094",
-      "095",
-      "096"
-    ],
     "resume_original_sequence_at": "084",
     "do_not_renumber_existing_packs": true,
     "pack094_no_longer_depends_on": [
       "091",
       "092",
       "093"
+    ],
+    "completed_inflight_pack": "083",
+    "active_priority_pack": "094",
+    "immediate_sequence": [
+      "094",
+      "095",
+      "096"
     ]
   },
   "commercial_model": {
