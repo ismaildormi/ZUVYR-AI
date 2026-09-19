@@ -2,6 +2,7 @@
 
 const express = require('express');
 const { createLearningPipelineRepository } = require('./learningPipelineRepository');
+const { createWorkspaceMemoryStore } = require('./workspaceMemoryRepository');
 const learningConfig = require('../config/learning-pipeline.v1.json');
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -67,6 +68,7 @@ function createLearningPipelineRouter({ db } = {}) {
   const router = express.Router();
   if (!db) throw routeError('pack094_repository_unavailable', 503);
   const learning = createLearningPipelineRepository(db);
+  const preferences = createWorkspaceMemoryStore(db);
 
   router.get('/policy', (_req, res) => res.json({
     status: 'success',
@@ -120,18 +122,22 @@ function createLearningPipelineRouter({ db } = {}) {
     }
   });
 
+  // Compatibility alias only. The canonical mutation authority is the
+  // existing workspace preference writer; PACK094 does not own a second
+  // browser-facing consent source.
   router.put('/consent', async (req, res) => {
     try {
       if (typeof req.body?.globalTrainingOptIn !== 'boolean') {
         throw routeError('pack094_consent_boolean_required');
       }
-      const consent = await learning.setConsent({
-        ownerId: req.userId,
-        globalTrainingOptIn: req.body.globalTrainingOptIn,
-        policyVersion: boundedText(req.body?.policyVersion || 'pack094-v1', 80, { nullable: false }),
-        source: 'user'
+      await preferences.updatePreferences(req.userId, {
+        trainingConsent: req.body.globalTrainingOptIn
       });
-      return res.json({ status: 'success', consent });
+      return res.json({
+        status: 'success',
+        canonicalMutationEndpoint: '/api/workspace/memory/preferences',
+        consent: await learning.getConsent(req.userId)
+      });
     } catch (error) {
       return respondError(res, error, 'pack094_consent_update_failed');
     }
