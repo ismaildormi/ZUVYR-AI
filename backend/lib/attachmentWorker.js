@@ -34,9 +34,8 @@ const {
   extractDocumentWithTools
 } = require('./documentToolExtraction');
 const {
-  isMp4,
-  readMp4DurationSeconds
-} = require('./videoGenerationRepository');
+  readTrustedMediaDurationSeconds
+} = require('./mediaDuration');
 
 const DEFAULT_MAX_BUFFERED_BYTES =
   96 * 1024 * 1024;
@@ -306,14 +305,15 @@ function createAttachmentJobProcessor({
         const buffer =
           await fsp.readFile(downloaded.tempFile);
 
-        if (attachment.assetType === 'video' && isMp4(buffer)) {
-          try {
-            trustedDurationSeconds =
-              readMp4DurationSeconds(buffer);
-          } catch (_) {
-            // Missing/unsupported duration metadata leaves per-second
-            // Pack068 operations fail-closed without failing ingestion.
-          }
+        try {
+          trustedDurationSeconds =
+            readTrustedMediaDurationSeconds(buffer, {
+              assetType: attachment.assetType,
+              mimeType: attachment.mimeType
+            });
+        } catch (_) {
+          // Missing/unsupported duration metadata leaves Pack068
+          // duration-based operations fail-closed without failing ingestion.
         }
 
         result = await extractAttachment({
