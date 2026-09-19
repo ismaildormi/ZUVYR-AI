@@ -837,3 +837,70 @@ Pack066 must preserve:
 - unsupported options hidden/blocked
 - reserve/settle/refund accounting
 - owner-scoped canonical storage and history
+
+
+## PACK066 NO-COST FINAL RECONCILIATION — 2026-09-19
+
+- Baseline commit: ab73229270e46c1d9bb35780e56347442839bd3c
+- Source commit: 232159246aee95f77d06cb9232f417a5813bc7cf
+- Validation branch head: 28b9180286a6c0ee6beb57aa0c87342cde116ef8
+- Validation PR: #2
+- Validation GitHub Actions run: 35408908128 — SUCCESS
+- Main push GitHub Actions run: 35408952326 — SUCCESS
+- Release Quality: PASS
+- Backend Quality: PASS
+- Verified provider/model contract:
+  - provider: Replicate
+  - model: wan-video/wan-2.2-t2v-fast
+  - duration: 5 / 6 / 7 seconds
+  - aspect ratios: 16:9 / 9:16
+  - resolution: 480p / 720p
+  - FPS: 16
+  - audio: unsupported / blocked
+  - export: MP4
+- Verified fixed provider prices:
+  - 480p: $0.05 per output video
+  - 720p: $0.10 per output video
+- Canonical persistence: implemented with MP4 validation, measured MP4 duration, canonical content/version/asset linkage and replay-safe existing-asset lookup.
+- Reserve/settle identity: pricingVersion + quoted provider cost preserved through the generation job; settlement path verified by no-network regression.
+- Vercel commit context: SUCCESS
+- Railway backend deployment: a1e1cbb3-8db4-4cb3-af4b-a1feee297877 — SUCCESS
+- Railway worker deployment: 595fa16f-5d04-433b-91d3-6a764bcec5ee — SUCCESS
+- Railway maintenance deployment: 7879f3fc-90a5-48ca-9ec6-1e3e37b7433d — SUCCESS
+- Railway backend /readyz healthcheck: PASS
+- Railway worker runtime startup: PASS
+- Production paid-execution gate:
+  - PACK066_PAID_EXECUTION_ENABLED absent on backend
+  - PACK066_PAID_EXECUTION_ENABLED absent on worker
+  - REPLICATE_API_TOKEN present by variable name on backend/worker
+  - no secret value read or exposed
+- No schema migration required.
+- Paid provider calls during verification: 0
+- M13 paid live text-to-video E2E: DEFERRED
+- Status: LOCKED_ENGINEERING_VERIFIED
+- Canonical LOCKED_VERIFIED: NO
+- Canonical reason: paid live text-to-video generation, actual provider billing and end-to-end settlement were not executed because M13 provider account/billing/API activation and explicit paid execution remain deferred.
+- Receipt: zuvyr-pack-evidence/pack-066/2026-09-19-no-cost-final/receipt.json
+- Receipt SHA256: 4f678bac92a431c1ae9ac9353da21ffdb1d535a58b621c9c8bafff817f6644b1
+- User-approved no-cost progression: YES
+- Active pack after reconciliation: PACK067
+
+## PACK067 OPEN — Image/Reference-to-Video
+
+Canonical objective:
+Implement source image, start/end frame and reference lineage with owner authorization and provider-specific capability guards.
+
+Canonical acceptance:
+An Image→Video production result must prove the owned source/reference input was actually consumed by the selected provider; merely persisting an asset ID or showing a control is not completion.
+
+Pack067 must preserve:
+- PACK066 paid execution remains OFF until M13 is explicitly activated.
+- Unknown or expired provider price blocks paid execution.
+- Source/reference assets must be owner-scoped and resolved through canonical asset/storage contracts.
+- Provider inputs must contain the real resolved source/reference media supported by that provider; unsupported start/end/reference modes stay blocked/hidden.
+- Lineage must bind the generated video to the exact source content/version/asset.
+- Reserve/settle/refund and retry/idempotency invariants remain unchanged.
+- No fabricated live-E2E claim while M13 remains deferred.
+
+Exactly one next step:
+Re-verify current official Image/Reference-to-Video provider schemas, supported source/start/end/reference semantics and exact prices; then map only those proven capabilities into the existing video request/provider/cost/canonical-asset contracts without paid inference.

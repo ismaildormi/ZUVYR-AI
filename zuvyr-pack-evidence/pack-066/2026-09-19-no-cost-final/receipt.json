@@ -1,0 +1,81 @@
+{
+  "pack": "066",
+  "title": "Text-to-Video",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonicalLockedVerified": false,
+  "baselineCommit": "ab73229270e46c1d9bb35780e56347442839bd3c",
+  "sourceCommit": "232159246aee95f77d06cb9232f417a5813bc7cf",
+  "validation": {
+    "branchHead": "28b9180286a6c0ee6beb57aa0c87342cde116ef8",
+    "pullRequest": 2,
+    "validationRun": 35408908128,
+    "validationRunStatus": "SUCCESS",
+    "mainPushRun": 35408952326,
+    "mainPushRunStatus": "SUCCESS",
+    "releaseQuality": "PASS",
+    "backendQuality": "PASS"
+  },
+  "providerContract": {
+    "provider": "replicate",
+    "model": "wan-video/wan-2.2-t2v-fast",
+    "durationsSeconds": [
+      5,
+      6,
+      7
+    ],
+    "ratios": [
+      "16:9",
+      "9:16"
+    ],
+    "resolutions": [
+      "480p",
+      "720p"
+    ],
+    "fps": [
+      16
+    ],
+    "audioSupported": false,
+    "exportFormat": "mp4",
+    "pricing": {
+      "480pMicroUsdPerOutputVideo": 50000,
+      "720pMicroUsdPerOutputVideo": 100000
+    }
+  },
+  "deployment": {
+    "githubCommitStatus": "SUCCESS",
+    "vercel": {
+      "status": "SUCCESS"
+    },
+    "backend": {
+      "deploymentId": "a1e1cbb3-8db4-4cb3-af4b-a1feee297877",
+      "status": "SUCCESS",
+      "commit": "232159246aee95f77d06cb9232f417a5813bc7cf",
+      "readyz": "PASS"
+    },
+    "worker": {
+      "deploymentId": "595fa16f-5d04-433b-91d3-6a764bcec5ee",
+      "status": "SUCCESS",
+      "commit": "232159246aee95f77d06cb9232f417a5813bc7cf",
+      "runtimeStartup": "PASS"
+    },
+    "maintenance": {
+      "deploymentId": "7879f3fc-90a5-48ca-9ec6-1e3e37b7433d",
+      "status": "SUCCESS",
+      "commit": "232159246aee95f77d06cb9232f417a5813bc7cf"
+    }
+  },
+  "productionGate": {
+    "pack066PaidExecutionEnvironmentDefinedBackend": false,
+    "pack066PaidExecutionEnvironmentDefinedWorker": false,
+    "replicateCredentialNamePresentBackend": true,
+    "replicateCredentialNamePresentWorker": true,
+    "secretValuesReadOrExposed": false,
+    "paidProviderCallsDuringVerification": 0,
+    "schemaMigrationRequired": false
+  },
+  "canonicalGateReason": "Paid live text-to-video generation, actual provider billing and end-to-end settlement were not executed because M13 provider account/billing/API activation and explicit paid execution remain deferred.",
+  "externalGate": "M13_DEFERRED",
+  "progression": "USER_APPROVED_NO_COST_DEFERRED_GATE",
+  "nextPack": "067",
+  "nextStep": "Open PACK067 Image/Reference-to-Video by re-verifying an official provider/model that genuinely consumes owner-scoped image/start/end/reference inputs, with exact current pricing; keep paid execution OFF until M13 is explicitly activated."
+}
