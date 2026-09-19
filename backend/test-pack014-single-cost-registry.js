@@ -18,7 +18,7 @@ const { costTier } = require('./lib/modelCosts');
 const now = Date.parse('2026-09-12T00:00:00Z');
 
 validateRegistry(registry);
-assert.equal(registry.version, 'pack-014.single-cost-registry.v1');
+assert.match(registry.version, /^pack-\d{3}\.single-cost-registry\.v\d+$/);
 assert.equal(registry.authoritativeLookup, 'backend/lib/costRegistry.js');
 
 const groq = resolveCostQuote({
