@@ -81,6 +81,7 @@ function createLearningPipelineRouter({ db } = {}) {
         learningConfig.training.memoryPermissionSeparate === true,
       automaticConversationContentTraining: false,
       currentConsentAuthority: learningConfig.training.currentConsentAuthority,
+      consentPolicyVersion: learningConfig.training.consentPolicyVersion,
       optOutExcludesExistingCandidates:
         learningConfig.training.optOutBehavior ===
         'exclude_existing_candidates_and_block_future_admission',
