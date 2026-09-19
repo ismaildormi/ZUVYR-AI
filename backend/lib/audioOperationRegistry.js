@@ -17,7 +17,7 @@ function normalizeAudioOperation(value) {
   return operation;
 }
 
-function assertAudioOperationAvailable(value) {
+function assertAudioOperationAvailable(value, { env = process.env } = {}) {
   const operation = normalizeAudioOperation(value);
   const definition = config.operations[operation];
   if (definition.status === 'blocked_unpriced') {
@@ -25,6 +25,10 @@ function assertAudioOperationAvailable(value) {
   }
   if (definition.enabledByDefault !== true) {
     throw audioOperationError('audio_operation_disabled', operation);
+  }
+  const gate = definition.paidExecutionEnvironment;
+  if (gate && String(env[gate] || '').toLowerCase() !== 'true') {
+    throw audioOperationError('audio_operation_paid_execution_disabled', operation);
   }
   return Object.freeze({ operation, ...definition });
 }
