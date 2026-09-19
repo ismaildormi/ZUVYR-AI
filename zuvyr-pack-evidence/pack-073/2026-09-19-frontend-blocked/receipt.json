@@ -1,0 +1,62 @@
+{
+  "pack": "073",
+  "title": "Realtime Voice",
+  "date": "2026-09-19",
+  "status": "PRODUCTION_BACKEND_VERIFIED_FRONTEND_BLOCKED",
+  "lockedVerified": false,
+  "sourceCommit": "7dd046c53d551dfcc415c3d0231241fa96565d20",
+  "pr": 13,
+  "ci": {
+    "run": 35420226728,
+    "backendQuality": "PASS",
+    "releaseQuality": "PASS"
+  },
+  "implementation": {
+    "provider": "browser",
+    "transport": "web_speech_api",
+    "rawAudioStoredByZuvyr": false,
+    "retention": [
+      "transcript_only",
+      "none"
+    ],
+    "bargeIn": true,
+    "globalStop": true,
+    "paidRealtimeProviderExecution": false,
+    "providerCostMicroUsd": "0"
+  },
+  "supabase": {
+    "migration": "pack073_realtime_voice",
+    "status": "APPLIED_VERIFIED",
+    "turnsTableExists": true,
+    "turnsRls": true,
+    "directAuthenticatedPolicyCount": 0,
+    "voiceSessionsRows": 0,
+    "voiceTurnsRows": 0
+  },
+  "railway": {
+    "backend": "9118f589-af84-4767-8f05-04cab8f4a293",
+    "worker": "64a8f4ef-b196-493b-84d9-bb980b392912",
+    "maintenance": "230a89f9-fd8e-4633-a3f0-2651277996ff",
+    "exactCommit": "7dd046c53d551dfcc415c3d0231241fa96565d20",
+    "status": "SUCCESS"
+  },
+  "vercel": {
+    "productionDeployment": "dpl_FR1Wq7T4u1rsStzoqVhJkUwAS9TK",
+    "productionCommit": "d309b822757096dd9d57879c4247084bc6d5c3f8",
+    "partialPreviewDeployment": "dpl_8q58geg83oftMM7zzAoWQQBhLhxS",
+    "partialPreviewCommit": "4ae19dc51e0f4222cada94c52903f501020c4913",
+    "publishedAssetHttpStatus": 200,
+    "publishedPack073Controller": false,
+    "blocker": "build-rate-limit",
+    "retryCommit": "af4bdd5ec2c9da3d5ff6745d35532928cc41fda7"
+  },
+  "billing": {
+    "liveBillingAllowed": false,
+    "providerCalls": 0,
+    "paymentCalls": 0
+  },
+  "nextPack": "074",
+  "nextPackAllowed": false,
+  "nextPackTitle": "Music / SFX / Remix / Stems / Dubbing",
+  "blocker": "Frontend production deployment and live browser voice acceptance remain required."
+}

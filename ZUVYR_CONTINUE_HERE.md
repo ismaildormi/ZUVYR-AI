@@ -1299,3 +1299,43 @@ Hard rules:
 Exactly one next step:
 Audit the existing voice-session contract/routes, browser microphone/speech UI, queue/websocket/runtime primitives, provider/model/cost registries, transcript persistence, STOP/cancel paths and production feature flags; then choose the smallest verified realtime architecture that preserves PACK071/PACK072 privacy, consent, billing and canonical transcript rules with all paid realtime gates OFF.
 
+## PACK073 CURRENT CHECKPOINT — Realtime Voice — 2026-09-19
+
+- Status: **PRODUCTION_BACKEND_VERIFIED_FRONTEND_BLOCKED**
+- PACK073 remains the active pack. PACK074 is **not** opened yet.
+- Implementation source merged in PR #13.
+- Runtime source commit: `7dd046c53d551dfcc415c3d0231241fa96565d20`
+- Final candidate CI run `35420226728`: Backend Quality PASS / Release Quality PASS.
+- Supabase migration `pack073_realtime_voice`: APPLIED_VERIFIED.
+- Production DB proof:
+  - `voice_session_turns` exists and RLS is ON.
+  - direct authenticated policy count = 0; service-role API only.
+  - transition + idempotent turn-record RPCs exist.
+  - voice session rows at verification = 0; turn rows = 0.
+- Verified architecture:
+  - browser Web Speech API for recognition/synthesis;
+  - authenticated owner-scoped backend session authority;
+  - visible listening/speaking status;
+  - barge-in cancels active browser speech;
+  - global STOP terminates the session;
+  - `storeRawAudio:false`;
+  - retention = `transcript_only` or `none`;
+  - no paid realtime provider execution;
+  - browser provider cost to ZUVYR = zero, while client duration is not trusted as paid-provider billing authority.
+- Railway exact commit `7dd046c53d551dfcc415c3d0231241fa96565d20`:
+  - backend `9118f589-af84-4767-8f05-04cab8f4a293` — SUCCESS;
+  - worker `64a8f4ef-b196-493b-84d9-bb980b392912` — SUCCESS;
+  - maintenance `230a89f9-fd8e-4633-a3f0-2651277996ff` — SUCCESS;
+  - backend startup: `ROX AI backend listening on port 8080`;
+  - worker startup: `ROX AI worker running (concurrency: image=2, video=1, audio=1, attachment=1)`.
+- Vercel blocker:
+  - production remains `dpl_FR1Wq7T4u1rsStzoqVhJkUwAS9TK` at old commit `d309b822757096dd9d57879c4247084bc6d5c3f8`;
+  - Pack073 preview `dpl_8q58geg83oftMM7zzAoWQQBhLhxS` is only first branch commit `4ae19dc51e0f4222cada94c52903f501020c4913`;
+  - live fetch of both published `/zuvyr-chat-workspace-v1.js` assets returned HTTP 200 but neither contains `ZUVYR PACK073 REALTIME VOICE CONTROLLER` or the voice-session request marker;
+  - Git deployment retrigger `af4bdd5ec2c9da3d5ff6745d35532928cc41fda7` was rejected immediately by Vercel `build-rate-limit`;
+  - connected Vercel deploy action is unavailable at runtime and no promote/create action is exposed.
+- LIVE_BILLING_ALLOWED=false. Paid realtime provider/payment calls during verification: 0.
+- Pack073 cannot be marked LOCKED_VERIFIED until the frontend is READY in production and authenticated realtime start → interruption/barge-in → STOP live acceptance passes.
+
+Exactly one next step:
+When Vercel build capacity is available, deploy current `main`, verify published `zuvyr-chat-workspace-v1.js` contains the Pack073 controller, then run the authenticated realtime voice live acceptance. Only after that open **PACK074 — Music / SFX / Remix / Stems / Dubbing**.

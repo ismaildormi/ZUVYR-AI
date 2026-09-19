@@ -883,9 +883,9 @@
     "final_no_cost_receipt": "zuvyr-pack-evidence/pack-062/2026-09-18-no-cost-final/receipt.json"
   },
   "continuation_reconciliation": {
-    "date": "2026-09-19T03:52:00Z",
+    "date": "2026-09-19T04:14:00Z",
     "legacy_current_fields_preserved": true,
-    "note": "Older top-level current fields reflect historical PACK050 state. Fresh continuation truth: PACK072 is LOCKED_ENGINEERING_VERIFIED under the user-approved no-cost deferred-live policy; active_pack=073. PACK061–072 evidence lives in their pack fields/receipts."
+    "note": "Fresh continuation truth: PACK073 implementation/CI/Supabase/Railway are verified, but the frontend production artifact is still old because Vercel Git builds are blocked by account build-rate-limit. PACK073 stays active and NOT LOCKED; PACK074 must not start until a READY production frontend contains the Pack073 controller and live voice acceptance is completed."
   },
   "pack063": {
     "status": "LOCKED_ENGINEERING_VERIFIED",
@@ -1373,9 +1373,9 @@
     "next_pack": "073"
   },
   "pack073": {
-    "status": "OPEN",
+    "status": "PRODUCTION_BACKEND_VERIFIED_FRONTEND_BLOCKED",
     "title": "Realtime Voice",
-    "external_gate": "NONE",
+    "external_gate": "VERCEL_BUILD_RATE_LIMIT_FRONTEND_PRODUCTION",
     "dependencies": [
       "047",
       "071",
@@ -1392,6 +1392,80 @@
       "Realtime transcript and usage remain owner-scoped and follow configured retention policy.",
       "Unknown realtime provider pricing or session accounting blocks paid execution.",
       "Training permission remains independent from microphone/session and transcript permissions."
-    ]
+    ],
+    "implementation": {
+      "architecture": "browser Web Speech API + authenticated backend session authority",
+      "provider": "browser",
+      "transport": "web_speech_api",
+      "paidRealtimeProviderExecution": false,
+      "rawAudioStoredByZuvyr": false,
+      "transcriptRetentionModes": [
+        "transcript_only",
+        "none"
+      ],
+      "bargeIn": true,
+      "globalStop": true,
+      "providerCostMicroUsdPerMeasuredAudioUnit": "0",
+      "providerBillingAuthority": false
+    },
+    "source": {
+      "pullRequest": 13,
+      "candidateHead": "972fc54c4a3f77346431df65ea5e1b0a5c74a78a",
+      "mergedRuntimeCommit": "7dd046c53d551dfcc415c3d0231241fa96565d20",
+      "retryCheckpointCommit": "af4bdd5ec2c9da3d5ff6745d35532928cc41fda7"
+    },
+    "validation": {
+      "workflowRun": 35420226728,
+      "backendQuality": "PASS",
+      "releaseQuality": "PASS",
+      "livePaidProviderCalls": 0,
+      "paymentCalls": 0
+    },
+    "database": {
+      "migration": "pack073_realtime_voice",
+      "status": "APPLIED_VERIFIED",
+      "turnsTableExists": true,
+      "turnsRls": true,
+      "directAuthenticatedPolicyCount": 0,
+      "voiceSessionsRowsAtVerification": 0,
+      "voiceTurnRowsAtVerification": 0,
+      "transitionFunctionExists": true,
+      "recordTurnFunctionExists": true
+    },
+    "railway": {
+      "exactCommit": "7dd046c53d551dfcc415c3d0231241fa96565d20",
+      "backend": {
+        "deploymentId": "9118f589-af84-4767-8f05-04cab8f4a293",
+        "status": "SUCCESS"
+      },
+      "worker": {
+        "deploymentId": "64a8f4ef-b196-493b-84d9-bb980b392912",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deploymentId": "230a89f9-fd8e-4633-a3f0-2651277996ff",
+        "status": "SUCCESS"
+      },
+      "backendStartup": "ROX AI backend listening on port 8080",
+      "workerStartup": "ROX AI worker running (concurrency: image=2, video=1, audio=1, attachment=1)"
+    },
+    "vercel": {
+      "projectId": "prj_P6VddfynJKniiK29clC6Epr9byPk",
+      "productionHost": "rox-ai-sepia.vercel.app",
+      "currentProductionDeployment": "dpl_FR1Wq7T4u1rsStzoqVhJkUwAS9TK",
+      "currentProductionCommit": "d309b822757096dd9d57879c4247084bc6d5c3f8",
+      "partialPack073Preview": "dpl_8q58geg83oftMM7zzAoWQQBhLhxS",
+      "partialPreviewCommit": "4ae19dc51e0f4222cada94c52903f501020c4913",
+      "productionAssetHttpStatus": 200,
+      "productionHasPack073Controller": false,
+      "productionHasVoiceSessionRouteMarker": false,
+      "partialPreviewHasPack073Controller": false,
+      "blocker": "build-rate-limit",
+      "deployConnectorStatus": "Vercel deploy_to_vercel action advertised but unavailable at runtime; no promote/create deployment action exposed"
+    },
+    "canonical_locked_verified": false,
+    "blocking_reason": "Pack073 changed frontend files. Vercel account build-rate-limit prevents a READY production deployment of the full Pack073 source, so live microphone/barge-in/STOP acceptance cannot yet be truthfully completed.",
+    "receipt_path": "zuvyr-pack-evidence/pack-073/2026-09-19-frontend-blocked/receipt.json",
+    "exactly_one_next_step": "When Vercel build capacity becomes available, deploy current main, verify the published zuvyr-chat-workspace-v1.js contains the Pack073 controller, then run authenticated realtime voice start/barge-in/STOP live acceptance and only then lock Pack073/open Pack074."
   }
 }
