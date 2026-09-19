@@ -148,12 +148,10 @@ assert.deepEqual(
   ]
 );
 
-const workDefault = plan(fixture('work'));
-assert.deepEqual(
-  workDefault.steps.map(step => step.capability),
-  ['browser.agent.run']
+assert.throws(
+  () => plan(fixture('work')),
+  error => error.code === 'BRAIN_PLANNER_EXPLICIT_OUTPUT_REQUIRED'
 );
-assert.equal(workDefault.acyclic, true);
 
 const contextInput = fixture('work', {
   outputs: { requested: ['research'] },
