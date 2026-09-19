@@ -131,6 +131,58 @@ function providerQuote(feature, {
   imageRequest = null,
   videoRequest = null
 } = {}) {
+  if (feature === 'video' && videoRequest?.operation === 'image_to_video') {
+    if (String(env.PACK067_I2V_PAID_EXECUTION_ENABLED || '').toLowerCase() !== 'true') {
+      throw pricingError('pack067_i2v_paid_execution_disabled');
+    }
+    if (!env.REPLICATE_API_TOKEN) {
+      throw pricingError('no_configured_video_provider');
+    }
+    const resolution = String(videoRequest.options?.resolution || '').toLowerCase();
+    if (!['480p', '720p'].includes(resolution)) {
+      throw pricingError('pack067_i2v_resolution_unpriced');
+    }
+    const entry = resolveCostEntry({
+      provider: 'replicate',
+      modelToolId: 'wan-video/wan-2.2-i2v-fast',
+      capability: 'video',
+      operationType: 'image_to_video_' + resolution
+    }, { env, now });
+    return Object.freeze({
+      provider: 'replicate',
+      providerCostMicroUsd: estimateProviderCostMicroUsd(entry),
+      pricingVersion: entry.registryVersion,
+      costEntryId: entry.id
+    });
+  }
+
+  if (feature === 'video' && videoRequest?.operation === 'reference_to_video') {
+    if (String(env.PACK067_R2V_PAID_EXECUTION_ENABLED || '').toLowerCase() !== 'true') {
+      throw pricingError('pack067_r2v_paid_execution_disabled');
+    }
+    if (!env.REPLICATE_API_TOKEN) {
+      throw pricingError('no_configured_video_provider');
+    }
+    const durationSeconds = Number(videoRequest.options?.durationSeconds);
+    if (!Number.isSafeInteger(durationSeconds) || durationSeconds < 2 || durationSeconds > 10) {
+      throw pricingError('pack067_r2v_duration_unpriced');
+    }
+    const entry = resolveCostEntry({
+      provider: 'replicate',
+      modelToolId: 'wan-video/wan-2.7-r2v',
+      capability: 'video',
+      operationType: 'reference_to_video_seconds'
+    }, { env, now });
+    return Object.freeze({
+      provider: 'replicate',
+      providerCostMicroUsd: estimateProviderCostMicroUsd(entry, {
+        outputUnits: durationSeconds
+      }),
+      pricingVersion: entry.registryVersion,
+      costEntryId: entry.id
+    });
+  }
+
   if (feature === 'video' && videoRequest?.operation === 'text_to_video') {
     if (String(env.PACK066_PAID_EXECUTION_ENABLED || '').toLowerCase() !== 'true') {
       throw pricingError('pack066_paid_execution_disabled');
