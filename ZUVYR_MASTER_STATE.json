@@ -1099,31 +1099,105 @@
     "next_pack": "066"
   },
   "pack066": {
-    "status": "OPEN",
+    "status": "LOCKED_ENGINEERING_VERIFIED",
     "title": "Text-to-Video",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "Paid live text-to-video generation, actual provider billing and end-to-end settlement remain deferred under M13.",
+    "runtime_commit": "232159246aee95f77d06cb9232f417a5813bc7cf",
+    "final_no_cost_receipt": "zuvyr-pack-evidence/pack-066/2026-09-19-no-cost-final/receipt.json",
+    "paid_execution_default": false,
+    "advance_exception": "USER_APPROVED_NO_COST_DEFERRED_GATE",
+    "next_pack": "067"
+  },
+  "pack067": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "Image/Reference-to-Video",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "Owner-scoped I2V/R2V mappings, lineage, pricing and deployment are verified; paid live I2V/R2V inference and actual provider billing remain deferred.",
+    "runtime_commit": "43547de7c90cebdf3fb02933657ddfe49f057f76",
+    "migration": {
+      "version": "20260919004354",
+      "name": "pack067_video_reference_foundation",
+      "status": "APPLIED_VERIFIED"
+    },
+    "final_no_cost_receipt": "zuvyr-pack-evidence/pack-067/2026-09-19-no-cost-final/receipt.json",
+    "paid_execution_default": false,
+    "production_jobs_at_verification": 0,
+    "advance_exception": "USER_APPROVED_NO_COST_DEFERRED_GATE",
+    "next_pack": "068"
+  },
+  "pack068": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "Video Edit / Extend / VFX",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "Engineering adapters, exact pre-charge pricing, owner-scoped source resolution, lineage, migrations and production deployment are verified; paid live edit/VFX output remains deferred.",
+    "runtime_commit": "eab3210a4060362d2277e9ef45f724a437e9105f",
+    "migrations": [
+      {
+        "version": "20260919011619",
+        "name": "pack068_video_edit_vfx_foundation",
+        "status": "APPLIED_VERIFIED"
+      },
+      {
+        "version": "20260919011745",
+        "name": "pack068_source_audio_fk_index",
+        "status": "APPLIED_VERIFIED"
+      }
+    ],
+    "final_no_cost_receipt": "zuvyr-pack-evidence/pack-068/2026-09-19-no-cost-final/receipt.json",
+    "paid_execution_default": false,
+    "production_jobs_at_verification": 0,
+    "advance_exception": "USER_APPROVED_NO_COST_DEFERRED_GATE",
+    "next_pack": "069"
+  },
+  "pack069": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "Subtitles / Dubbing / Enhance / Export + Cancel",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "Provider-gated subtitle/dubbing/enhance live inference remains deferred; local export/cancel, SRT/VTT, lineage, pricing and production worker codecs are verified.",
+    "runtime_commit": "f40565d16085aa614e3b1407be5b553b1c9167b1",
+    "migration": {
+      "version": "20260919015713",
+      "name": "pack069_subtitles_dubbing_enhance_export_cancel",
+      "status": "APPLIED_VERIFIED"
+    },
+    "final_no_cost_receipt": "zuvyr-pack-evidence/pack-069/2026-09-19-no-cost-final/receipt.json",
+    "production": {
+      "backend": "21150f3b-6496-4666-8d92-0ac3c0b6f6e2",
+      "worker": "d978cd22-e088-41e3-943c-6cc59869564b",
+      "maintenance": "fea455bc-6a37-48a9-ba66-70c40bfd2393"
+    },
+    "local_export_formats": [
+      "mp4",
+      "webm",
+      "mov"
+    ],
+    "paid_execution_default": false,
+    "production_jobs_at_verification": 0,
+    "advance_exception": "USER_APPROVED_NO_COST_DEFERRED_GATE",
+    "next_pack": "070"
+  },
+  "pack070": {
+    "status": "OPEN",
+    "title": "Media Checkpoint G",
     "dependencies": [
-      "020",
-      "023",
-      "029",
-      "037",
-      "038",
-      "039",
-      "041",
-      "042",
-      "047",
-      "049",
-      "050",
-      "065"
+      "061",
+      "062",
+      "063",
+      "064",
+      "065",
+      "066",
+      "067",
+      "068",
+      "069"
     ],
-    "scope": [
-      "verified_video_provider_binding",
-      "duration_resolution_aspect_fps_audio_mapping",
-      "async_progress",
-      "actual_duration_cost_settlement",
-      "canonical_storage"
+    "objective": "Freeze the integrated Image/Video media baseline across canonical content/assets, usage, Library/Projects, Send-To, failure/fallback, export/cancel and truthful evidence claims.",
+    "acceptance": "Advertised Image/Video capabilities match their authoritative receipts; Packs061–069 regressions pass together; unified usage and canonical lineage are preserved.",
+    "receipt_authority_order": [
+      "dated_final_receipt",
+      "canonical_master_state",
+      "continue_handoff_notes"
     ],
-    "acceptance": "Playable text-to-video matches supported settings and settles using actual billable units.",
-    "external_gate": "M13",
     "paid_execution_allowed": false,
     "next_pack_allowed": false
   }
