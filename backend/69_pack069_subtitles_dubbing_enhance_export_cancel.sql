@@ -193,7 +193,7 @@ begin
       'terminal',true,
       'status',v_job.status,
       'stage',v_job.job_stage,
-      'refundRequired',false
+      'refundRequired',v_job.status='cancelled'
     );
   end if;
 
