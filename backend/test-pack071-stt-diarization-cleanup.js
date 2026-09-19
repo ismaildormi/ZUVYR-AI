@@ -165,6 +165,13 @@ async function run(){
   const resolved=await resolver.resolve({ownerId:OWNER,request,requestId:'pack071-test'});
   assert.equal(resolved.source.url,'https://fixture.invalid/signed.wav');
 
+  rows.get(CONVERSATION_ASSET).duration_seconds=601;
+  await assert.rejects(
+    ()=>resolver.inspect({ownerId:OWNER,request}),
+    e=>e.code==='audio_source_duration_too_long'
+  );
+  rows.get(CONVERSATION_ASSET).duration_seconds=14.2;
+
   const now=Date.parse('2026-09-19T12:00:00Z');
   const sttQuote=quoteGeneration('audio',{
     audioRequest:request,
@@ -273,6 +280,9 @@ async function run(){
   ]) assert(worker.includes(marker),marker);
 
   assert(repository.includes("kind:'text'"));
+  assert(repository.includes("['transcription',source.assetId,provider,model,'multi','diarize']"));
+  assert(repository.includes("['cleanup',source.assetId,format,strength]"));
+  assert(!repository.includes('transcriptTextAssetId'));
   assert(repository.includes("relationType:'extracted_from'"));
   assert(repository.includes("relationType:'edited_from'"));
   assert(attachmentWorker.includes('probeMediaFileDurationSeconds'));
