@@ -97,7 +97,7 @@ function createCloudBrowserArtifactRepository({
       title: safeName(title, artifactKind),
       sourceKind: 'cloud_browser_artifact',
       sourceSystem: 'cloud_browser',
-      sourceId: [artifactKind, mimeType || 'none', sha256].join(':'),
+      sourceId: [mimeType || 'none', sha256].join(':'),
       sourceVersionKey: sha256,
       metadata: {
         cloudBrowser: true,
