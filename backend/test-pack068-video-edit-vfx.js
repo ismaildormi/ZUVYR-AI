@@ -365,30 +365,16 @@ async function run(){
   for(const marker of ['duration_seconds','source_audio_asset_id',"'object_remove'","'lip_sync'"]){
     assert(migration.includes(marker),marker);
   }
-  assert.equal((migration.match(/\\bbegin;/g)||[]).length,1,'migration must contain one transaction begin');
-  assert.equal((migration.match(/\\bcommit;/g)||[]).length,1,'migration must contain one transaction commit');
-  assert(migration.includes("~ '^[0-9]+([.][0-9]{1,3})?
-  for(const marker of [
-    'videoInputResolver.inspect({',
-    'videoPricingContext',
-    'source_audio_asset_id: videoRequest.sourceAudioAssetId'
-  ]) assert(server.includes(marker),marker);
-  for(const marker of [
-    "videoRequest.operation !== 'text_to_video'",
-    'sourceAudioAssetId: videoRequest.sourceAudioAssetId',
-    'lineage: resolvedInputs?.lineage || {}'
-  ]) assert(worker.includes(marker),marker);
-
-  assert(fixture.calls.some(x=>x.name==='record_zuvyr_asset_egress'));
-  console.log('PASS: PACK068 owner-scoped canonical video/audio inputs are resolved and mapped into exact fal provider schemas');
-  console.log('PASS: PACK068 retake/extend/Bria/Kling pre-charge pricing is exact and LightX output-second billing stays fail-closed');
-  console.log('PASS: PACK068 trusted duration evidence is persisted/measured without trusting client-supplied billing duration');
-  console.log('LIVE PROVIDER / PAYMENT / PRODUCTION DATABASE / NETWORK CALLS: NONE');
-}
-
-run().catch(error=>{console.error(error);process.exit(1);});
-"),'duration backfill regex must be intact');
-  assert(migration.includes("add column if not exists source_audio_asset_id uuid"),'source audio column declaration must be intact');
+  assert.equal((migration.match(/\bbegin;/g)||[]).length,1,'migration must contain one transaction begin');
+  assert.equal((migration.match(/\bcommit;/g)||[]).length,1,'migration must contain one transaction commit');
+  assert(
+    migration.includes("actualDurationSeconds')::numeric"),
+    'duration backfill expression must be intact'
+  );
+  assert(
+    migration.includes("add column if not exists source_audio_asset_id uuid"),
+    'source audio column declaration must be intact'
+  );
   for(const marker of [
     'videoInputResolver.inspect({',
     'videoPricingContext',
