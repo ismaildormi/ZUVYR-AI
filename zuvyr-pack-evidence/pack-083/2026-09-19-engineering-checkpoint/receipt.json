@@ -1,0 +1,91 @@
+{
+  "pack": "083",
+  "title": "3D Generation",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonicalLockedVerified": false,
+  "canonicalGateReason": "PACK083 source, pricing/contracts, migration, CI and exact Railway production runtime are verified. Canonical paid live 3D generation/viewer/export acceptance remains deferred behind M18, LIVE_BILLING_ALLOWED, PACK083_3D_PAID_EXECUTION_ENABLED and FAL credential gates.",
+  "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+  "externalGate": "M18_DEFERRED",
+  "originalPullRequest": 30,
+  "originalHead": "d3b3a29a9329a20ca762258c4c5d3bfe759d24ae",
+  "originalMergeCommit": "f88e297895cf4fedb9a1ffa706bf1a6526c428c8",
+  "hotfixPullRequest": 32,
+  "hotfixHead": "169753af9864411f3673936478fb899026d22265",
+  "finalSourceCommit": "60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4",
+  "ci": {
+    "originalPrRun": 35464298584,
+    "originalPrResult": "PASS",
+    "hotfixPrRun": 35464519934,
+    "hotfixPrResult": "PASS",
+    "mainRun": 35464563066,
+    "mainResult": "PASS"
+  },
+  "migration": "20260919192342 pack083_3d_generation",
+  "production": {
+    "railway": {
+      "backend": {
+        "deployment": "76a8bf1e-3927-4c13-8c7f-dc26820acc73",
+        "status": "SUCCESS",
+        "startup": "ROX AI backend listening on port 8080"
+      },
+      "worker": {
+        "deployment": "1cbe7b84-0e72-437a-acfa-ac69ee7dc7cd",
+        "status": "SUCCESS",
+        "startup": "ROX AI worker running (concurrency: image=2, video=1, model3d=1, audio=1, attachment=1)"
+      },
+      "maintenance": {
+        "deployment": "d40ee2ef-6e91-4622-bac6-01e7e1804192",
+        "status": "SUCCESS"
+      },
+      "exactCommit": "60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4",
+      "healthcheckPath": "/readyz"
+    },
+    "frontendChanged": false
+  },
+  "database": {
+    "generationJobsModel3dColumns": 8,
+    "serviceRoleRpcCount": 5,
+    "generationJobsSelectPolicy": "auth.uid() = user_id",
+    "conversationAssetsPolicy": "auth.role() = service_role",
+    "rowsAtVerification": {
+      "model3dJobs": 0,
+      "model3dAssets": 0
+    }
+  },
+  "runtime": {
+    "operations": [
+      "text_to_3d",
+      "image_to_3d",
+      "multiview_to_3d"
+    ],
+    "provider": "fal",
+    "primaryFormat": "glb",
+    "supportedExports": [
+      "glb",
+      "obj",
+      "fbx",
+      "usdz"
+    ],
+    "featureFlagEnabled": false,
+    "status": "implemented_pack083_live_deferred_m18",
+    "livePaidExecutionDefault": false
+  },
+  "incidentRepair": {
+    "cause": "model3dInputResolver required nonexistent ./assetStoragePolicy",
+    "repair": "Use canonical ./assetStorageContract and add direct module-load regression coverage.",
+    "productionRecovered": true
+  },
+  "noCostVerification": {
+    "paidProviderCalls": 0,
+    "paymentCalls": 0,
+    "live3dCalls": 0
+  },
+  "omissions": [
+    "No paid live 3D generation was executed while M18 and paid execution gates remain closed.",
+    "No claim is made that a generated production GLB/viewer/export flow was accepted live.",
+    "Canonical LOCKED_VERIFIED remains open until the dated live user-flow gate is satisfied."
+  ],
+  "nextPack": "094",
+  "nextPackTitle": "Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
+  "priorityOverride": "After PACK083, execute PACK094 -> PACK095 -> PACK096 before resuming PACK084."
+}
