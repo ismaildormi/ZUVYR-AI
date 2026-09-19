@@ -130,17 +130,21 @@ function withOwnedFallback(external, deployment, failureCode) {
 }
 
 function createOwnedModelRuntime({
-  db,
+  db = null,
+  repository: repositoryImpl = null,
   env = process.env,
   externalRoute,
   invokeOwned = invokeOpenAiCompatible,
   logger = console
 } = {}) {
-  if (!db) throw runtimeError('pack096_db_unavailable', 503);
+  if (!repositoryImpl && !db) {
+    throw runtimeError('pack096_db_unavailable', 503);
+  }
   if (typeof externalRoute !== 'function') {
     throw runtimeError('pack096_external_fallback_unavailable', 503);
   }
-  const repository = createOwnedModelRuntimeRepository(db);
+  const repository =
+    repositoryImpl || createOwnedModelRuntimeRepository(db);
 
   async function safeRecord(ownerId, body) {
     try {
