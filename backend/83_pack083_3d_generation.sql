@@ -145,7 +145,7 @@ begin
     raise exception 'pack083_model3d_job_not_found';
   end if;
 
-  if v_job.status in ('completed','failed','cancelled') then
+  if v_job.status in ('done','failed','cancelled') then
     return jsonb_build_object(
       'accepted',false,
       'terminal',true,
@@ -232,7 +232,7 @@ begin
   if v_job.model3d_execution_claimed_at is null then
     raise exception 'pack083_model3d_execution_not_claimed';
   end if;
-  if v_job.status in ('completed','failed','cancelled') then
+  if v_job.status in ('done','failed','cancelled') then
     raise exception 'pack083_model3d_job_terminal';
   end if;
   if v_job.model3d_provider_request_id is not null then
@@ -332,7 +332,7 @@ begin
   if v_job.model3d_provider_result is not null then
     return jsonb_build_object('replayed',true);
   end if;
-  if v_job.status in ('completed','failed','cancelled') then
+  if v_job.status in ('done','failed','cancelled') then
     raise exception 'pack083_model3d_job_terminal';
   end if;
 
@@ -374,7 +374,7 @@ begin
     );
   end if;
 
-  if v_job.status in ('completed','failed') then
+  if v_job.status in ('done','failed') then
     return jsonb_build_object(
       'accepted',false,'status',v_job.status,'terminal',true
     );
