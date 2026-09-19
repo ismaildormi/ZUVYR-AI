@@ -41,7 +41,7 @@ for (const marker of [
 
 assert(migration.includes('for update'));
 assert(migration.includes('pack075_revision_conflict'));
-assert(migration.includes('unique(owner_id,request_id)'));
+assert(/unique\s*\(\s*owner_id\s*,\s*request_id\s*\)/i.test(migration));
 assert(!/grant\s+(?:select|insert|update|delete)[^;]*\s+to\s+(?:anon|authenticated)/i.test(migration));
 
 assert.equal(config.version, 'pack-075.code-studio.v1');
