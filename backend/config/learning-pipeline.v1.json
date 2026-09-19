@@ -45,7 +45,8 @@
     ],
     "optOutBehavior": "exclude_existing_candidates_and_block_future_admission",
     "reOptInBehavior": "does_not_reinclude_previously_excluded_candidates",
-    "dataDeleteBehavior": "exclude_existing_training_candidates_immediately"
+    "dataDeleteBehavior": "exclude_existing_training_candidates_immediately",
+    "consentPolicyVersion": "pack094-v1"
   },
   "privacy": {
     "rawSourceDuplicatedIntoLearningEvents": false,
