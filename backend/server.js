@@ -1986,6 +1986,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
       requestId,
       feature,
       creditsConsumed,
+      usageKind: feature === '3d' ? 'generation' : null,
       pricingVersion: pricing.pricingVersion
     });
   } catch (err) {
