@@ -19,9 +19,6 @@ const {
   createCodeProjectRepository
 } = require('./codeProjectRepository');
 const {
-  routeRequest: defaultRouteRequest
-} = require('../aiRouter');
-const {
   canonicalPlanIdFromProfile,
   isPaidPlan,
   planHasFeature
@@ -271,11 +268,15 @@ function finalCodeCredits(providerCostUsd) {
 function createCodeStudioRouter({
   creditApi = null,
   db = null,
-  routeRequestImpl = defaultRouteRequest
+  routeRequestImpl = null
 } = {}) {
   const router = express.Router();
   const usageBridge = createCodeStudioUsageBridge(creditApi || {});
   const projects = db ? createCodeProjectRepository(db) : null;
+  const routeCodeRequest =
+    typeof routeRequestImpl === 'function'
+      ? routeRequestImpl
+      : (...args) => require('../aiRouter').routeRequest(...args);
 
   const projectRepository = () => {
     if (!projects) {
@@ -626,7 +627,7 @@ function createCodeStudioRouter({
 
       let modelResult;
       try {
-        modelResult = await routeRequestImpl('code', messages, {
+        modelResult = await routeCodeRequest('code', messages, {
           requestId,
           isPro: isPaidPlan(planId),
           loadLevel: 'normal'
