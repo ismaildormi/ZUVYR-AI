@@ -437,40 +437,7 @@ begin
     raise exception 'pack076_preview_port_not_configured';
   end if;
 
-  if coalesce(p_preview_token_hash,'') !~ '^[0-9a-f]{64}
-
-revoke all on function public.transition_zuvyr_code_sandbox_session_pack076(
-  uuid,uuid,text,text,integer,jsonb,text
-) from public, anon, authenticated;
-
-revoke all on function public.touch_zuvyr_code_sandbox_session_pack076(
-  uuid,uuid,timestamptz
-) from public, anon, authenticated;
-
-grant execute on function public.reserve_zuvyr_code_sandbox_session_pack076(
-  uuid,uuid,text,text,timestamptz,timestamptz,jsonb,jsonb
-) to service_role;
-
-grant execute on function public.transition_zuvyr_code_sandbox_session_pack076(
-  uuid,uuid,text,text,integer,jsonb,text
-) to service_role;
-
-grant execute on function public.touch_zuvyr_code_sandbox_session_pack076(
-  uuid,uuid,timestamptz
-) to service_role;
-
-
-revoke all on function public.rotate_zuvyr_code_sandbox_preview_token_pack076(
-  uuid,uuid,text,timestamptz
-) from public, anon, authenticated;
-
-grant execute on function public.rotate_zuvyr_code_sandbox_preview_token_pack076(
-  uuid,uuid,text,timestamptz
-) to service_role;
-
-comment on table public.code_sandbox_sessions is
-  'PACK076 server-authoritative ephemeral sandbox sessions. Stores token hashes and provider session IDs only; raw preview/provider URLs and ZUVYR secrets are intentionally absent.';
- then
+  if coalesce(p_preview_token_hash,'') !~ '^[0-9a-f]{64}$' then
     raise exception 'pack076_preview_token_hash_invalid';
   end if;
 
@@ -507,6 +474,10 @@ revoke all on function public.touch_zuvyr_code_sandbox_session_pack076(
   uuid,uuid,timestamptz
 ) from public, anon, authenticated;
 
+revoke all on function public.rotate_zuvyr_code_sandbox_preview_token_pack076(
+  uuid,uuid,text,timestamptz
+) from public, anon, authenticated;
+
 grant execute on function public.reserve_zuvyr_code_sandbox_session_pack076(
   uuid,uuid,text,text,timestamptz,timestamptz,jsonb,jsonb
 ) to service_role;
@@ -517,6 +488,10 @@ grant execute on function public.transition_zuvyr_code_sandbox_session_pack076(
 
 grant execute on function public.touch_zuvyr_code_sandbox_session_pack076(
   uuid,uuid,timestamptz
+) to service_role;
+
+grant execute on function public.rotate_zuvyr_code_sandbox_preview_token_pack076(
+  uuid,uuid,text,timestamptz
 ) to service_role;
 
 comment on table public.code_sandbox_sessions is
