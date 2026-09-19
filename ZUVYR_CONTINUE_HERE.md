@@ -1339,3 +1339,55 @@ Audit the existing voice-session contract/routes, browser microphone/speech UI, 
 
 Exactly one next step:
 When Vercel build capacity is available, deploy current `main`, verify published `zuvyr-chat-workspace-v1.js` contains the Pack073 controller, then run the authenticated realtime voice live acceptance. Only after that open **PACK074 — Music / SFX / Remix / Stems / Dubbing**.
+
+## PACK073 FINAL SOURCE CHECKPOINT — FIX3 — 2026-09-19
+
+- Active pack: **073 — Realtime Voice**
+- Status: **PRODUCTION_BACKEND_VERIFIED_FRONTEND_QUOTA_BLOCKED**
+- LOCKED_VERIFIED: **NO**
+- Final source commit: `78a001f74a05ea1d5f68d3096b53b34cf45abcaa`
+- Base PR #13 + hardening PRs #14 / #15 / #16.
+- FIX1 CI `35420852564`: Backend PASS / Release PASS.
+- FIX2 CI `35420997577`: Backend PASS / Release PASS.
+- FIX3 CI `35421097795`: Backend PASS / Release PASS.
+- FIX1 migration `pack073_realtime_voice_fix1`: APPLIED_VERIFIED.
+- Supabase final object proof:
+  - one `voice_sessions` table;
+  - one `voice_session_turns` table;
+  - one transition RPC signature;
+  - one record-turn RPC signature;
+  - RLS ON;
+  - direct policy count 0;
+  - session rows 0 / turn rows 0.
+- Final source behavior:
+  - browser Web Speech API;
+  - owner-scoped authenticated session authority;
+  - dictated suffix only;
+  - request-bound processing;
+  - final-only assistant speech;
+  - barge-in;
+  - visible Global STOP for active session;
+  - local expiry from server `expiresAt`;
+  - mic fail-closed on session-create errors;
+  - STOP local-first;
+  - server STOP failure preserves session ID and exposes Retry STOP;
+  - no raw microphone audio stored by ZUVYR;
+  - paid realtime provider execution OFF; LIVE_BILLING_ALLOWED=false.
+- Railway exact final commit `78a001f74a05ea1d5f68d3096b53b34cf45abcaa`:
+  - backend `b013e892-637a-46c3-a584-7125d6bab703` — SUCCESS;
+  - worker `24b6c774-9bdc-46e7-ab13-a3489829c9b2` — SUCCESS;
+  - maintenance `f118c76f-3645-42b3-892c-e4bf0fdecc86` — SUCCESS.
+- Railway deployment-churn reduction:
+  - `watchPatterns=["backend/**"]` accepted by update API for backend/worker/maintenance;
+  - current read-back endpoint does not echo this field, so evidence is limited to the successful update acknowledgements.
+- Vercel:
+  - rolling 24h measured deployments = 109;
+  - 10 old deployments must expire to guarantee a new slot;
+  - first calculated safe retry = `2026-09-20T00:19:59.447Z` (~01:20 Africa/Casablanca);
+  - automated condition watch begins at 01:22 local and checks hourly;
+  - do not spam retriggers before capacity exists.
+- Current production frontend remains older than PACK073. Therefore production mic/barge-in/STOP acceptance is still outstanding.
+- PACK074 **must not start** yet.
+
+Exactly one next step:
+After Vercel rolling capacity opens, trigger one production deploy of current main, verify `/zuvyr-chat-workspace-v1.js` contains FIX3 markers, then perform authenticated realtime start → dictation → send/processing → final speech → barge-in → STOP acceptance. Only then lock PACK073 and open PACK074.

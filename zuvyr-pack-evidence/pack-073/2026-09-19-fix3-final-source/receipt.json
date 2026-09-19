@@ -1,0 +1,81 @@
+{
+  "pack": "073",
+  "title": "Realtime Voice",
+  "date": "2026-09-19",
+  "status": "PRODUCTION_BACKEND_VERIFIED_FRONTEND_QUOTA_BLOCKED",
+  "lockedVerified": false,
+  "runtimeSourceCommit": "78a001f74a05ea1d5f68d3096b53b34cf45abcaa",
+  "prs": [
+    13,
+    14,
+    15,
+    16
+  ],
+  "ci": [
+    {
+      "run": 35420226728,
+      "scope": "BASE",
+      "backend": "PASS",
+      "release": "PASS"
+    },
+    {
+      "run": 35420852564,
+      "scope": "FIX1",
+      "backend": "PASS",
+      "release": "PASS"
+    },
+    {
+      "run": 35420997577,
+      "scope": "FIX2",
+      "backend": "PASS",
+      "release": "PASS"
+    },
+    {
+      "run": 35421097795,
+      "scope": "FIX3",
+      "backend": "PASS",
+      "release": "PASS"
+    }
+  ],
+  "supabase": {
+    "migrations": [
+      "pack073_realtime_voice",
+      "pack073_realtime_voice_fix1"
+    ],
+    "tables": {
+      "voice_sessions": 1,
+      "voice_session_turns": 1
+    },
+    "rpcSignatures": {
+      "transition_zuvyr_voice_session": 1,
+      "record_zuvyr_voice_turn": 1
+    },
+    "rls": true,
+    "directPolicies": 0,
+    "sessionRows": 0,
+    "turnRows": 0
+  },
+  "railway": {
+    "exactCommit": "78a001f74a05ea1d5f68d3096b53b34cf45abcaa",
+    "backend": "b013e892-637a-46c3-a584-7125d6bab703",
+    "worker": "24b6c774-9bdc-46e7-ab13-a3489829c9b2",
+    "maintenance": "f118c76f-3645-42b3-892c-e4bf0fdecc86",
+    "statuses": "SUCCESS",
+    "backendWatchPatternUpdate": "ACCEPTED",
+    "workerWatchPatternUpdate": "ACCEPTED",
+    "maintenanceWatchPatternUpdate": "ACCEPTED"
+  },
+  "vercel": {
+    "blocker": "build-rate-limit",
+    "rolling24hCount": 109,
+    "mustExpire": 10,
+    "firstSafeRetryUtc": "2026-09-20T00:19:59.447Z",
+    "automatedWatchLocal": "2026-09-20T01:22:00+01:00",
+    "currentProductionCommit": "d309b822757096dd9d57879c4247084bc6d5c3f8",
+    "finalPack073FrontendPublished": false
+  },
+  "paidProviderCalls": 0,
+  "paymentCalls": 0,
+  "nextPack": "074",
+  "nextPackAllowed": false
+}

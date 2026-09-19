@@ -883,9 +883,9 @@
     "final_no_cost_receipt": "zuvyr-pack-evidence/pack-062/2026-09-18-no-cost-final/receipt.json"
   },
   "continuation_reconciliation": {
-    "date": "2026-09-19T04:14:00Z",
+    "date": "2026-09-19T04:31:00Z",
     "legacy_current_fields_preserved": true,
-    "note": "Fresh continuation truth: PACK073 implementation/CI/Supabase/Railway are verified, but the frontend production artifact is still old because Vercel Git builds are blocked by account build-rate-limit. PACK073 stays active and NOT LOCKED; PACK074 must not start until a READY production frontend contains the Pack073 controller and live voice acceptance is completed."
+    "note": "Fresh continuation truth: PACK073 source, CI, Supabase and Railway are verified through FIX3. Frontend production remains externally blocked by Vercel rolling deployment-creation quota. PACK073 remains active/not locked; PACK074 must not start until production frontend source and authenticated realtime voice acceptance are truthfully completed."
   },
   "pack063": {
     "status": "LOCKED_ENGINEERING_VERIFIED",
@@ -1373,7 +1373,7 @@
     "next_pack": "073"
   },
   "pack073": {
-    "status": "PRODUCTION_BACKEND_VERIFIED_FRONTEND_BLOCKED",
+    "status": "PRODUCTION_BACKEND_VERIFIED_FRONTEND_QUOTA_BLOCKED",
     "title": "Realtime Voice",
     "external_gate": "VERCEL_BUILD_RATE_LIMIT_FRONTEND_PRODUCTION",
     "dependencies": [
@@ -1394,19 +1394,25 @@
       "Training permission remains independent from microphone/session and transcript permissions."
     ],
     "implementation": {
-      "architecture": "browser Web Speech API + authenticated backend session authority",
+      "architecture": "browser Web Speech API + authenticated owner-scoped backend session authority",
       "provider": "browser",
       "transport": "web_speech_api",
-      "paidRealtimeProviderExecution": false,
-      "rawAudioStoredByZuvyr": false,
-      "transcriptRetentionModes": [
+      "paid_realtime_provider_execution": false,
+      "live_billing_allowed": false,
+      "provider_cost_micro_usd_per_measured_audio_unit": "0",
+      "provider_billing_authority": false,
+      "raw_audio_stored_by_zuvyr": false,
+      "retention_modes": [
         "transcript_only",
         "none"
       ],
-      "bargeIn": true,
-      "globalStop": true,
-      "providerCostMicroUsdPerMeasuredAudioUnit": "0",
-      "providerBillingAuthority": false
+      "visible_recording_indicator": true,
+      "barge_in": true,
+      "global_stop": true,
+      "local_expiry_enforced": true,
+      "final_only_assistant_speech": true,
+      "stop_local_first": true,
+      "stop_retry_safe": true
     },
     "source": {
       "pullRequest": 13,
@@ -1422,50 +1428,99 @@
       "paymentCalls": 0
     },
     "database": {
-      "migration": "pack073_realtime_voice",
-      "status": "APPLIED_VERIFIED",
-      "turnsTableExists": true,
-      "turnsRls": true,
-      "directAuthenticatedPolicyCount": 0,
-      "voiceSessionsRowsAtVerification": 0,
-      "voiceTurnRowsAtVerification": 0,
-      "transitionFunctionExists": true,
-      "recordTurnFunctionExists": true
+      "project_ref": "tqoqsgaymygmqrzddvtu",
+      "migrations": [
+        "pack073_realtime_voice",
+        "pack073_realtime_voice_fix1"
+      ],
+      "object_verification": {
+        "voice_sessions_table_count": 1,
+        "voice_session_turns_table_count": 1,
+        "transition_rpc_signature_count": 1,
+        "record_turn_rpc_signature_count": 1,
+        "voice_session_turns_rls": true,
+        "direct_policy_count": 0,
+        "voice_sessions_rows_at_verification": 0,
+        "voice_turn_rows_at_verification": 0
+      }
     },
     "railway": {
-      "exactCommit": "7dd046c53d551dfcc415c3d0231241fa96565d20",
+      "exact_commit": "78a001f74a05ea1d5f68d3096b53b34cf45abcaa",
       "backend": {
-        "deploymentId": "9118f589-af84-4767-8f05-04cab8f4a293",
+        "deployment_id": "b013e892-637a-46c3-a584-7125d6bab703",
         "status": "SUCCESS"
       },
       "worker": {
-        "deploymentId": "64a8f4ef-b196-493b-84d9-bb980b392912",
+        "deployment_id": "24b6c774-9bdc-46e7-ab13-a3489829c9b2",
         "status": "SUCCESS"
       },
       "maintenance": {
-        "deploymentId": "230a89f9-fd8e-4633-a3f0-2651277996ff",
+        "deployment_id": "f118c76f-3645-42b3-892c-e4bf0fdecc86",
         "status": "SUCCESS"
       },
-      "backendStartup": "ROX AI backend listening on port 8080",
-      "workerStartup": "ROX AI worker running (concurrency: image=2, video=1, audio=1, attachment=1)"
+      "watch_pattern_update": {
+        "requested": "backend/**",
+        "backend": "ACCEPTED_BY_RAILWAY_UPDATE_API",
+        "worker": "ACCEPTED_BY_RAILWAY_UPDATE_API",
+        "maintenance": "ACCEPTED_BY_RAILWAY_UPDATE_API",
+        "readback_limitation": "get_service_config does not expose watchPatterns field; do not claim stronger verification."
+      }
     },
     "vercel": {
-      "projectId": "prj_P6VddfynJKniiK29clC6Epr9byPk",
-      "productionHost": "rox-ai-sepia.vercel.app",
-      "currentProductionDeployment": "dpl_FR1Wq7T4u1rsStzoqVhJkUwAS9TK",
-      "currentProductionCommit": "d309b822757096dd9d57879c4247084bc6d5c3f8",
-      "partialPack073Preview": "dpl_8q58geg83oftMM7zzAoWQQBhLhxS",
-      "partialPreviewCommit": "4ae19dc51e0f4222cada94c52903f501020c4913",
-      "productionAssetHttpStatus": 200,
-      "productionHasPack073Controller": false,
-      "productionHasVoiceSessionRouteMarker": false,
-      "partialPreviewHasPack073Controller": false,
+      "project_id": "prj_P6VddfynJKniiK29clC6Epr9byPk",
+      "team_id": "team_3PYlTi0Euf7SDg7T2NRzGx3q",
+      "production_host": "rox-ai-sepia.vercel.app",
+      "current_production_deployment": "dpl_FR1Wq7T4u1rsStzoqVhJkUwAS9TK",
+      "current_production_commit": "d309b822757096dd9d57879c4247084bc6d5c3f8",
+      "latest_known_pack073_preview": "dpl_2xnWy5EGFFeXzVEuHkt49X8nCakk",
+      "latest_known_preview_commit": "8f5a6262e15b26fdd17453bc1438d769cecdce0d",
       "blocker": "build-rate-limit",
-      "deployConnectorStatus": "Vercel deploy_to_vercel action advertised but unavailable at runtime; no promote/create deployment action exposed"
+      "rolling_24h_count_at_measurement": 109,
+      "slots_needed_to_expire": 10,
+      "first_calculated_safe_retry_utc": "2026-09-20T00:19:59.447Z",
+      "automated_watch_start_local": "2026-09-20T01:22:00+01:00",
+      "connector_limitations": [
+        "deploy_to_vercel advertised but unavailable at runtime",
+        "get_project schema/runtime mismatch",
+        "get_deployment_build_logs advertised but unavailable at runtime"
+      ]
     },
     "canonical_locked_verified": false,
-    "blocking_reason": "Pack073 changed frontend files. Vercel account build-rate-limit prevents a READY production deployment of the full Pack073 source, so live microphone/barge-in/STOP acceptance cannot yet be truthfully completed.",
+    "blocking_reason": "PACK073 changed frontend code. The final frontend source has not reached production because Vercel deployment creation is rate-limited. Live microphone/barge-in/STOP acceptance cannot be truthfully completed on the production host yet.",
     "receipt_path": "zuvyr-pack-evidence/pack-073/2026-09-19-frontend-blocked/receipt.json",
-    "exactly_one_next_step": "When Vercel build capacity becomes available, deploy current main, verify the published zuvyr-chat-workspace-v1.js contains the Pack073 controller, then run authenticated realtime voice start/barge-in/STOP live acceptance and only then lock Pack073/open Pack074."
+    "exactly_one_next_step": "At or after the calculated Vercel rolling-window slot, deploy/retrigger current main exactly once, verify the published Pack073 frontend markers, then complete authenticated start→dictation→send/processing→speech→barge-in→STOP live acceptance. Only then lock Pack073 and open Pack074.",
+    "runtime_source_commit": "78a001f74a05ea1d5f68d3096b53b34cf45abcaa",
+    "base_pr": 13,
+    "fixes": [
+      {
+        "id": "FIX1",
+        "pr": 14,
+        "merge_commit": "f0aec035a9d3dec4b2a4278365b744a449259fb0",
+        "ci_run": 35420852564,
+        "backend_quality": "PASS",
+        "release_quality": "PASS",
+        "summary": "Align dictation with real chat request lifecycle, serialize transitions, record dictated suffix, dedupe final assistant speech, preserve voice/rate settings."
+      },
+      {
+        "id": "FIX2",
+        "pr": 15,
+        "merge_commit": "6ff3e066d3a1ebb2ff209367dcbf7b5228e79fb2",
+        "ci_run": 35420997577,
+        "backend_quality": "PASS",
+        "release_quality": "PASS",
+        "summary": "Keep Global STOP visible for active sessions, fail mic capture closed on session-create errors, enforce local expiry, block partial streaming speech."
+      },
+      {
+        "id": "FIX3",
+        "pr": 16,
+        "merge_commit": "78a001f74a05ea1d5f68d3096b53b34cf45abcaa",
+        "ci_run": 35421097795,
+        "backend_quality": "PASS",
+        "release_quality": "PASS",
+        "summary": "Make STOP local-first and retry-safe; preserve authoritative session identity if server STOP fails."
+      }
+    ],
+    "next_pack": "074",
+    "next_pack_title": "Music / SFX / Remix / Stems / Dubbing"
   }
 }
