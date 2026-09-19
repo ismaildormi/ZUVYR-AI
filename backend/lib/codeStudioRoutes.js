@@ -46,6 +46,12 @@ const {
 const {
   runtimePricingStatus
 } = require('./codeRuntimePricing');
+const {
+  createCodeReleaseRouter
+} = require('./codeReleaseRoutes');
+const {
+  deploymentAvailability
+} = require('./codeVercelDeploymentProvider');
 const runtimeConfig = require('../config/code-runtime.v1.json');
 const {
   canonicalPlanIdFromProfile,
@@ -335,7 +341,9 @@ function createCodeStudioRouter({
   db = null,
   routeRequestImpl = null,
   sandboxProvider = null,
-  sandboxEnv = process.env
+  sandboxEnv = process.env,
+  deploymentProvider = null,
+  permissionApi = null
 } = {}) {
   const router = express.Router();
   const usageBridge = createCodeStudioUsageBridge(creditApi || {});
@@ -1036,6 +1044,20 @@ function createCodeStudioRouter({
           previewStatus:
             'deferred_raw_provider_port_protection_unverified',
           fakePreviewFallback: false
+        },
+        pack079: {
+          realZip: true,
+          exactSavedVersion: true,
+          referencedAssetsIncluded: true,
+          deterministicArchiveVerification: true,
+          deploymentProvider: 'vercel',
+          liveDeployment: deploymentAvailability(sandboxEnv).live,
+          externalGate: deploymentAvailability(sandboxEnv).externalGate,
+          blockers: deploymentAvailability(sandboxEnv).blockers,
+          previewDistinctFromProduction: true,
+          explicitDeployPermission: 'deploy.execute',
+          explicitRollbackPermission: 'deploy.rollback',
+          rollbackServerAuthoritative: true
         }
       })
   );
@@ -1781,6 +1803,17 @@ function createCodeStudioRouter({
       return errorResponse(res, error, 'code_runtime_cancel_failed');
     }
   });
+
+  if (db) {
+    router.use(
+      createCodeReleaseRouter({
+        db,
+        deploymentProvider,
+        permissionApi,
+        env: sandboxEnv
+      })
+    );
+  }
 
   router.post('/deploy/request', (req, res) => {
     try {

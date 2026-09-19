@@ -73,6 +73,15 @@ const ACTIONS = Object.freeze({
     maxGrantSeconds: 600,
     modes: Object.freeze(['allow_once']),
     scopes: Object.freeze(['project_session']),
+    namespaces: Object.freeze(['code_project']),
+  }),
+  'deploy.rollback': Object.freeze({
+    risk: 'critical',
+    consequenceId: 'permission.deploy.rollback.v1',
+    consequence: 'Allow one rollback attempt for this owned Code Studio project and deployment.',
+    maxGrantSeconds: 600,
+    modes: Object.freeze(['allow_once']),
+    scopes: Object.freeze(['project_session']),
     namespaces: Object.freeze(['code_project'])
   })
 });
@@ -133,12 +142,56 @@ function normalizeConstraints(action, value) {
   if (!constraints || typeof constraints !== 'object' || Array.isArray(constraints)) {
     throw permissionError('invalid_permission_constraints');
   }
-  if (action !== 'network.egress') return Object.freeze({});
-  if (!Array.isArray(constraints.allowedHosts) || constraints.allowedHosts.length < 1 || constraints.allowedHosts.length > 32) {
-    throw permissionError('permission_network_hosts_required');
+
+  if (action === 'network.egress') {
+    if (!Array.isArray(constraints.allowedHosts) || constraints.allowedHosts.length < 1 || constraints.allowedHosts.length > 32) {
+      throw permissionError('permission_network_hosts_required');
+    }
+    const allowedHosts = [...new Set(constraints.allowedHosts.map(normalizeHost))].sort();
+    return Object.freeze({ allowedHosts: Object.freeze(allowedHosts) });
   }
-  const allowedHosts = [...new Set(constraints.allowedHosts.map(normalizeHost))].sort();
-  return Object.freeze({ allowedHosts: Object.freeze(allowedHosts) });
+
+  if (action === 'deploy.execute') {
+    const releaseArtifactId = text(
+      constraints.releaseArtifactId,
+      'permission_deploy_artifact_required',
+      200
+    ).toLowerCase();
+    const deploymentTargetId = text(
+      constraints.deploymentTargetId,
+      'permission_deploy_target_required',
+      200
+    ).toLowerCase();
+    const target = String(constraints.target || '').trim().toLowerCase();
+    if (!UUID_RE.test(releaseArtifactId)) {
+      throw permissionError('permission_deploy_artifact_invalid');
+    }
+    if (!UUID_RE.test(deploymentTargetId)) {
+      throw permissionError('permission_deploy_target_invalid');
+    }
+    if (!['preview','production'].includes(target)) {
+      throw permissionError('permission_deploy_environment_invalid');
+    }
+    return Object.freeze({
+      releaseArtifactId,
+      deploymentTargetId,
+      target
+    });
+  }
+
+  if (action === 'deploy.rollback') {
+    const deployRequestId = text(
+      constraints.deployRequestId,
+      'permission_rollback_deploy_request_required',
+      200
+    ).toLowerCase();
+    if (!UUID_RE.test(deployRequestId)) {
+      throw permissionError('permission_rollback_deploy_request_invalid');
+    }
+    return Object.freeze({ deployRequestId });
+  }
+
+  return Object.freeze({});
 }
 
 function normalizePermissionRequest(value, { ownerId, now = Date.now() } = {}) {

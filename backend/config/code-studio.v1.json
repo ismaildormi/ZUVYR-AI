@@ -1,5 +1,5 @@
 {
-  "version": "pack-078.code-studio.v1",
+  "version": "pack-079.code-studio.v1",
   "capabilities": {
     "assistant": {
       "enabledByDefault": true,
@@ -26,10 +26,10 @@
       "requiresConfirmation": false
     },
     "export_zip": {
-      "enabledByDefault": false,
-      "status": "blocked_until_pack079",
+      "enabledByDefault": true,
+      "status": "implemented_pack079",
       "requiresSandbox": false,
-      "requiresConfirmation": true
+      "requiresConfirmation": false
     },
     "history": {
       "enabledByDefault": true,
@@ -69,7 +69,7 @@
     },
     "deploy": {
       "enabledByDefault": false,
-      "status": "blocked_explicit_confirmation",
+      "status": "pack079_implemented_live_deferred_m16",
       "requiresSandbox": true,
       "requiresConfirmation": true
     }
