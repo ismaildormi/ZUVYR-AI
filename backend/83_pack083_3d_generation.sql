@@ -36,7 +36,7 @@ begin
       add constraint generation_jobs_model3d_views_object
       check (
         jsonb_typeof(model3d_input_views)='object'
-        and jsonb_object_length(model3d_input_views) <= 8
+        and jsonb_array_length(jsonb_path_query_array(model3d_input_views, '$.keyvalue()')) <= 8
       );
   end if;
 
