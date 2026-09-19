@@ -167,7 +167,13 @@ async function generateVideo(request, {
   }
   const gate = executionGateForOperation(request.operation);
   if (String(env[gate] || '').toLowerCase() !== 'true') {
-    throw providerError('video_paid_execution_disabled');
+    const code =
+      request.operation === 'text_to_video'
+        ? 'pack066_paid_execution_disabled'
+        : request.operation === 'image_to_video'
+          ? 'pack067_i2v_paid_execution_disabled'
+          : 'pack067_r2v_paid_execution_disabled';
+    throw providerError(code);
   }
   if (!env.REPLICATE_API_TOKEN) throw providerError('replicate_video_provider_not_configured');
 
