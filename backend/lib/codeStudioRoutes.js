@@ -488,6 +488,7 @@ function createCodeStudioRouter({
   router.post('/projects/:projectId/ai-edit', async (req, res) => {
     let requestId = '';
     let receiptStarted = false;
+    let receiptOwned = false;
     let reservationStarted = false;
     let settlementDone = false;
 
@@ -545,6 +546,7 @@ function createCodeStudioRouter({
         targetPaths: targets
       });
       receiptStarted = true;
+      receiptOwned = started.replayed !== true;
 
       if (started.replayed) {
         if (started.receipt.status === 'succeeded') {
@@ -714,7 +716,7 @@ function createCodeStudioRouter({
         }
       }
 
-      if (receiptStarted && requestId) {
+      if (receiptStarted && receiptOwned && requestId) {
         await projects.failAiEdit({
           ownerId: req.userId,
           requestId,
