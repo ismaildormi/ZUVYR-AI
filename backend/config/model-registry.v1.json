@@ -1064,6 +1064,51 @@
         "state": "active",
         "replacedBy": null
       }
+    },
+    {
+      "id": "browser:audio.voice_chat:web-speech-api",
+      "providerId": "browser",
+      "modelId": "web-speech-api",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "audio.voice_chat.browser"
+      ],
+      "modalities": {
+        "input": [
+          "audio",
+          "text"
+        ],
+        "output": [
+          "text",
+          "audio"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "user_agent_managed",
+      "qualityTier": "browser_managed",
+      "latencyClass": "client_realtime",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Pack073 client-browser runtime invokes no metered ZUVYR provider endpoint; capability availability is user-agent dependent."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "browser-web-speech-realtime-voice"
+        ],
+        "verification": "verified"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
     }
   ]
 }

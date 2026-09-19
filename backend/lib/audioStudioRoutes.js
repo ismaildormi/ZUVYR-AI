@@ -7,6 +7,7 @@ const { normalizeAudioRequest } = require('./audioRequestContract');
 const { resolveTtsModel } = require('./audioProvider');
 const { buildAudioJobSnapshot } = require('./audioJobContract');
 const { normalizeVoiceSessionRequest } = require('./voiceSessionContract');
+const { createVoiceSessionRepository } = require('./voiceSessionRepository');
 const { quoteGeneration } = require('./dynamicPricing');
 
 function statusFor(error) {
@@ -32,6 +33,7 @@ function createAudioStudioRouter({
   env = process.env
 } = {}) {
   const router = express.Router();
+  const voiceSessions = db ? createVoiceSessionRepository(db) : null;
 
   router.get('/capabilities', (_req, res) =>
     res.json({ status: 'success', ...publicInventory() })
@@ -406,21 +408,123 @@ function createAudioStudioRouter({
     });
   });
 
-  router.post('/voice/sessions/request', (req, res) => {
+  router.post('/voice/sessions/request', async (req, res) => {
+    if (!voiceSessions) {
+      return res.status(503).json({ status: 'error', code: 'voice_runtime_dependencies_unavailable' });
+    }
     try {
-      const session = normalizeVoiceSessionRequest(req.body);
+      const sessionRequest = normalizeVoiceSessionRequest(req.body);
       assertAudioOperationAvailable('voice_chat', { env });
-      return res.status(501).json({
-        status: 'error',
-        code: 'voice_provider_unavailable',
-        session
+      const session = await voiceSessions.create({
+        ownerId: req.userId,
+        conversationId: sessionRequest.conversationId,
+        maxSeconds: sessionRequest.maxSeconds,
+        retentionMode: sessionRequest.retentionMode
+      });
+      res.set('Cache-Control','no-store');
+      return res.status(201).json({
+        status: 'success',
+        session: {
+          id: session.id,
+          state: session.state,
+          provider: session.provider,
+          transport: session.transport,
+          retentionMode: session.retention_mode,
+          maxSeconds: session.max_seconds,
+          expiresAt: session.expires_at,
+          visibleRecordingIndicator: true,
+          stopControl: true,
+          bargeInEnabled: true,
+          autoSpeak: sessionRequest.autoSpeak,
+          rawAudioStoredByZuvyr: false
+        }
       });
     } catch (error) {
       return res.status(statusFor(error)).json({
         status: 'error',
-        code: error.code || 'voice_chat_disabled',
-        message: 'Voice Chat is not enabled.'
+        code: error.code || 'voice_session_create_failed',
+        message: 'Realtime voice session could not be created.'
       });
+    }
+  });
+
+  router.get('/voice/sessions/:sessionId', async (req, res) => {
+    if (!voiceSessions) {
+      return res.status(503).json({ status: 'error', code: 'voice_runtime_dependencies_unavailable' });
+    }
+    try {
+      const session = await voiceSessions.get({
+        ownerId: req.userId,
+        sessionId: req.params.sessionId,
+        includeTurns: true
+      });
+      res.set('Cache-Control','no-store');
+      return res.json({ status: 'success', session });
+    } catch (error) {
+      const code=error.code||'voice_session_lookup_failed';
+      return res.status(code==='voice_session_not_found'?404:400).json({ status:'error', code });
+    }
+  });
+
+  router.post('/voice/sessions/:sessionId/state', async (req, res) => {
+    if (!voiceSessions) {
+      return res.status(503).json({ status: 'error', code: 'voice_runtime_dependencies_unavailable' });
+    }
+    try {
+      const state = await voiceSessions.transition({
+        ownerId: req.userId,
+        sessionId: req.params.sessionId,
+        state: req.body?.state,
+        reason: req.body?.reason
+      });
+      res.set('Cache-Control','no-store');
+      return res.json({ status: 'success', session: state });
+    } catch (error) {
+      const code=error.code||'voice_session_transition_failed';
+      const http=code==='voice_session_not_found'?404:(code==='voice_session_transition_invalid'?409:400);
+      return res.status(http).json({ status:'error', code });
+    }
+  });
+
+  router.post('/voice/sessions/:sessionId/turns', async (req, res) => {
+    if (!voiceSessions) {
+      return res.status(503).json({ status: 'error', code: 'voice_runtime_dependencies_unavailable' });
+    }
+    try {
+      const result = await voiceSessions.recordTurn({
+        ownerId: req.userId,
+        sessionId: req.params.sessionId,
+        clientTurnId: req.body?.clientTurnId,
+        turnIndex: req.body?.turnIndex,
+        role: req.body?.role,
+        text: req.body?.text,
+        interrupted: req.body?.interrupted === true,
+        metadata: req.body?.metadata
+      });
+      res.set('Cache-Control','no-store');
+      return res.status(result.replayed===true?200:201).json({ status:'success', turn:result });
+    } catch (error) {
+      const code=error.code||'voice_turn_record_failed';
+      const http=code==='voice_session_not_found'?404:(code.includes('terminal')||code.includes('expired')?409:400);
+      return res.status(http).json({ status:'error', code });
+    }
+  });
+
+  router.post('/voice/sessions/:sessionId/stop', async (req, res) => {
+    if (!voiceSessions) {
+      return res.status(503).json({ status: 'error', code: 'voice_runtime_dependencies_unavailable' });
+    }
+    try {
+      const state = await voiceSessions.stop({
+        ownerId: req.userId,
+        sessionId: req.params.sessionId,
+        reason: req.body?.reason || 'user_stop'
+      });
+      res.set('Cache-Control','no-store');
+      return res.json({ status:'success', session:state });
+    } catch (error) {
+      const code=error.code||'voice_session_stop_failed';
+      return res.status(code==='voice_session_not_found'?404:400).json({ status:'error', code });
     }
   });
 

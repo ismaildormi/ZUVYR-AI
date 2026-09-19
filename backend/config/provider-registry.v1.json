@@ -766,6 +766,33 @@
           }
         }
       ]
+    },
+    "browser": {
+      "credentialEnvironment": [],
+      "regions": [
+        "client_browser"
+      ],
+      "quotaType": "user_agent_managed",
+      "termsLicenseNotes": "Pack073 uses browser-provided Web Speech APIs only. No ZUVYR provider credential or metered provider endpoint is invoked; availability/privacy behavior depends on the user agent. Paid realtime provider execution remains disabled.",
+      "adapter": "frontend/zuvyr-chat-workspace-v1.js",
+      "capabilities": [
+        {
+          "id": "audio.voice_chat.browser",
+          "verification": "verified_repository_runtime",
+          "model": "web-speech-api",
+          "routing": {
+            "mode": "client_browser",
+            "authority": "frontend/zuvyr-chat-workspace-v1.js"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "browser-web-speech-realtime-voice"
+            ]
+          }
+        }
+      ]
     }
   }
 }
