@@ -44,11 +44,38 @@ create table if not exists public.code_release_artifacts (
 create index if not exists code_release_artifacts_project_idx
   on public.code_release_artifacts(owner_id, project_id, created_at desc);
 
+create table if not exists public.code_deployment_targets (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references public.profiles(id) on delete cascade,
+  project_id uuid not null references public.code_projects(id) on delete cascade,
+  provider text not null default 'vercel' check (provider='vercel'),
+  provider_project_id text not null check (char_length(provider_project_id) between 3 and 240),
+  display_name text not null check (char_length(display_name) between 1 and 120),
+  allowed_targets jsonb not null default '["preview"]'::jsonb
+    check (
+      jsonb_typeof(allowed_targets)='array'
+      and jsonb_array_length(allowed_targets) between 1 and 2
+      and not exists (
+        select 1 from jsonb_array_elements_text(allowed_targets) t(value)
+        where value not in ('preview','production')
+      )
+    ),
+  status text not null default 'active' check (status in ('active','disabled')),
+  metadata jsonb not null default '{}'::jsonb check (jsonb_typeof(metadata)='object'),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique(owner_id, project_id, provider, provider_project_id)
+);
+
+create index if not exists code_deployment_targets_project_idx
+  on public.code_deployment_targets(owner_id, project_id, status, created_at desc);
+
 alter table public.code_deploy_requests
   add column if not exists request_id text,
   add column if not exists project_version_id uuid references public.code_project_versions(id) on delete restrict,
   add column if not exists validation_id uuid references public.code_release_validations(id) on delete restrict,
   add column if not exists release_artifact_id uuid references public.code_release_artifacts(id) on delete restrict,
+  add column if not exists deployment_target_id uuid references public.code_deployment_targets(id) on delete restrict,
   add column if not exists provider text,
   add column if not exists provider_project_id text,
   add column if not exists provider_deployment_id text,
@@ -154,15 +181,18 @@ create index if not exists code_deployment_rollbacks_project_idx
 
 alter table public.code_release_validations enable row level security;
 alter table public.code_release_artifacts enable row level security;
+alter table public.code_deployment_targets enable row level security;
 alter table public.code_deployment_rollbacks enable row level security;
 
 revoke all on public.code_release_validations from public, anon, authenticated;
 revoke all on public.code_release_artifacts from public, anon, authenticated;
+revoke all on public.code_deployment_targets from public, anon, authenticated;
 revoke all on public.code_deploy_requests from public, anon, authenticated;
 revoke all on public.code_deployment_rollbacks from public, anon, authenticated;
 
 grant select, insert, update, delete on public.code_release_validations to service_role;
 grant select, insert, update, delete on public.code_release_artifacts to service_role;
+grant select, insert, update, delete on public.code_deployment_targets to service_role;
 grant select, insert, update, delete on public.code_deploy_requests to service_role;
 grant select, insert, update, delete on public.code_deployment_rollbacks to service_role;
 
@@ -399,7 +429,7 @@ create or replace function public.reserve_zuvyr_code_deploy_request_pack079(
   p_release_artifact_id uuid,
   p_request_id text,
   p_target text,
-  p_provider_project_id text,
+  p_deployment_target_id uuid,
   p_approval_receipt jsonb
 ) returns jsonb
 language plpgsql
@@ -408,8 +438,9 @@ set search_path=public,pg_temp
 as $pack079_deploy_reserve$
 declare
   v_request text := btrim(coalesce(p_request_id,''));
-  v_target text := lower(btrim(coalesce(p_target,'')));
+  v_target_name text := lower(btrim(coalesce(p_target,'')));
   v_artifact public.code_release_artifacts%rowtype;
+  v_target public.code_deployment_targets%rowtype;
   v_existing public.code_deploy_requests%rowtype;
   v_id uuid;
 begin
@@ -417,12 +448,8 @@ begin
     raise exception 'pack079_deploy_request_id_invalid';
   end if;
 
-  if v_target not in ('preview','production') then
+  if v_target_name not in ('preview','production') then
     raise exception 'pack079_deploy_target_invalid';
-  end if;
-
-  if char_length(btrim(coalesce(p_provider_project_id,''))) not between 3 and 240 then
-    raise exception 'pack079_provider_project_invalid';
   end if;
 
   if jsonb_typeof(coalesce(p_approval_receipt,'{}'::jsonb)) <> 'object'
@@ -435,6 +462,26 @@ begin
     where id=p_project_id and owner_id=p_owner_id and status='active'
   ) then
     raise exception 'pack079_project_not_found';
+  end if;
+
+  select * into v_target
+  from public.code_deployment_targets
+  where id=p_deployment_target_id
+    and owner_id=p_owner_id
+    and project_id=p_project_id
+    and provider='vercel'
+    and status='active';
+
+  if v_target.id is null then
+    raise exception 'pack079_deployment_target_not_found';
+  end if;
+
+  if not exists (
+    select 1
+    from jsonb_array_elements_text(v_target.allowed_targets) t(value)
+    where t.value=v_target_name
+  ) then
+    raise exception 'pack079_deployment_target_scope_denied';
   end if;
 
   select * into v_artifact
@@ -458,8 +505,8 @@ begin
     if v_existing.project_id<>p_project_id
        or v_existing.project_version_id is distinct from p_project_version_id
        or v_existing.release_artifact_id is distinct from p_release_artifact_id
-       or coalesce(v_existing.target,'')<>v_target
-       or coalesce(v_existing.provider_project_id,'')<>btrim(p_provider_project_id) then
+       or v_existing.deployment_target_id is distinct from p_deployment_target_id
+       or coalesce(v_existing.target,'')<>v_target_name then
       raise exception 'pack079_deploy_idempotency_scope_mismatch';
     end if;
 
@@ -473,12 +520,13 @@ begin
   insert into public.code_deploy_requests(
     owner_id,project_id,status,target,confirmed_at,
     request_id,project_version_id,validation_id,release_artifact_id,
-    provider,provider_project_id,artifact_sha256,approval_receipt,updated_at
+    deployment_target_id,provider,provider_project_id,
+    artifact_sha256,approval_receipt,updated_at
   ) values (
-    p_owner_id,p_project_id,'confirmed',v_target,now(),
+    p_owner_id,p_project_id,'confirmed',v_target_name,now(),
     v_request,p_project_version_id,p_validation_id,p_release_artifact_id,
-    'vercel',btrim(p_provider_project_id),v_artifact.archive_sha256,
-    p_approval_receipt,now()
+    v_target.id,'vercel',v_target.provider_project_id,
+    v_artifact.archive_sha256,p_approval_receipt,now()
   ) returning id into v_id;
 
   return jsonb_build_object(
@@ -594,7 +642,6 @@ create or replace function public.reserve_zuvyr_code_deployment_rollback_pack079
   p_project_id uuid,
   p_deploy_request_id uuid,
   p_request_id text,
-  p_rollback_to_provider_deployment_id text,
   p_approval_receipt jsonb
 ) returns jsonb
 language plpgsql
@@ -609,10 +656,6 @@ declare
 begin
   if char_length(v_request) not between 1 and 200 then
     raise exception 'pack079_rollback_request_id_invalid';
-  end if;
-
-  if char_length(btrim(coalesce(p_rollback_to_provider_deployment_id,''))) not between 4 and 240 then
-    raise exception 'pack079_rollback_target_invalid';
   end if;
 
   if jsonb_typeof(coalesce(p_approval_receipt,'{}'::jsonb)) <> 'object'
@@ -634,13 +677,18 @@ begin
     raise exception 'pack079_deploy_not_in_production';
   end if;
 
+  if char_length(coalesce(v_deploy.previous_production_deployment_id,'')) < 4 then
+    raise exception 'pack079_previous_production_missing';
+  end if;
+
   select * into v_existing
   from public.code_deployment_rollbacks
   where owner_id=p_owner_id and request_id=v_request;
 
   if v_existing.id is not null then
     if v_existing.deploy_request_id<>p_deploy_request_id
-       or v_existing.rollback_to_provider_deployment_id<>btrim(p_rollback_to_provider_deployment_id) then
+       or v_existing.rollback_to_provider_deployment_id
+          <>v_deploy.previous_production_deployment_id then
       raise exception 'pack079_rollback_idempotency_scope_mismatch';
     end if;
     return jsonb_build_object(
@@ -654,7 +702,7 @@ begin
     rollback_to_provider_deployment_id,status,approval_receipt
   ) values (
     p_owner_id,p_project_id,p_deploy_request_id,v_request,
-    btrim(p_rollback_to_provider_deployment_id),'confirmed',p_approval_receipt
+    v_deploy.previous_production_deployment_id,'confirmed',p_approval_receipt
   ) returning id into v_id;
 
   return jsonb_build_object(
@@ -740,13 +788,13 @@ revoke all on function public.record_zuvyr_code_release_artifact_pack079(
   uuid,uuid,uuid,uuid,text,text,text,integer,integer,bigint,jsonb,boolean
 ) from public,anon,authenticated;
 revoke all on function public.reserve_zuvyr_code_deploy_request_pack079(
-  uuid,uuid,uuid,uuid,uuid,text,text,text,jsonb
+  uuid,uuid,uuid,uuid,uuid,text,text,uuid,jsonb
 ) from public,anon,authenticated;
 revoke all on function public.transition_zuvyr_code_deploy_request_pack079(
   uuid,uuid,text,text,text,text,jsonb,text
 ) from public,anon,authenticated;
 revoke all on function public.reserve_zuvyr_code_deployment_rollback_pack079(
-  uuid,uuid,uuid,text,text,jsonb
+  uuid,uuid,uuid,text,jsonb
 ) from public,anon,authenticated;
 revoke all on function public.transition_zuvyr_code_deployment_rollback_pack079(
   uuid,uuid,text,jsonb,text
@@ -758,13 +806,13 @@ grant execute on function public.record_zuvyr_code_release_artifact_pack079(
   uuid,uuid,uuid,uuid,text,text,text,integer,integer,bigint,jsonb,boolean
 ) to service_role;
 grant execute on function public.reserve_zuvyr_code_deploy_request_pack079(
-  uuid,uuid,uuid,uuid,uuid,text,text,text,jsonb
+  uuid,uuid,uuid,uuid,uuid,text,text,uuid,jsonb
 ) to service_role;
 grant execute on function public.transition_zuvyr_code_deploy_request_pack079(
   uuid,uuid,text,text,text,text,jsonb,text
 ) to service_role;
 grant execute on function public.reserve_zuvyr_code_deployment_rollback_pack079(
-  uuid,uuid,uuid,text,text,jsonb
+  uuid,uuid,uuid,text,jsonb
 ) to service_role;
 grant execute on function public.transition_zuvyr_code_deployment_rollback_pack079(
   uuid,uuid,text,jsonb,text
@@ -947,6 +995,9 @@ comment on table public.code_deployment_rollbacks is
   return jsonb_build_object('success',true,'grant_id',v_id,'expires_at',p_expires_at,'action_class',v_action);
 end;
 $;
+
+comment on table public.code_deployment_targets is
+  'PACK079 server-approved deployment destinations. Client requests reference this ID; provider project identifiers are never trusted from client input.';
 
 comment on table public.code_release_validations is
   'PACK079 immutable proof that an exact saved Code Project version matched a verified build/test/preview runtime state.';
