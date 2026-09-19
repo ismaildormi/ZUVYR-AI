@@ -1186,3 +1186,722 @@
   if(typeof supa!=='undefined'&&supa.auth&&supa.auth.onAuthStateChange)supa.auth.onAuthStateChange(function(event){clearUsage();if(event!=='SIGNED_OUT')setTimeout(refreshVisibleUsage,0);});
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&suite.dataset.open==='true'){e.preventDefault();close(true,true);}});
 })();
+
+
+/* ZUVYR PACK075 CODE STUDIO */
+(function () {
+  'use strict';
+  if (window.__zuvyrPack075CodeStudio) return;
+  window.__zuvyrPack075CodeStudio = true;
+
+  var state = {
+    projects: [],
+    project: null,
+    openFiles: [],
+    activeFile: null,
+    dividerBasisPoints: 6000,
+    previewVisible: true,
+    mobilePane: 'code',
+    logsVisible: false,
+    expanded: false,
+    dirty: false,
+    loading: false,
+    status: '',
+    editorTimer: 0
+  };
+
+  function codeApi(path, options) {
+    if (typeof window.authFetch !== 'function') {
+      return Promise.reject(new Error('Code Studio authentication unavailable.'));
+    }
+    return window.authFetch(path, options || {}).then(function (response) {
+      return response.json().catch(function () { return {}; }).then(function (data) {
+        if (!response.ok || data.status !== 'success') {
+          var error = new Error(data.message || data.code || ('HTTP ' + response.status));
+          error.code = data.code || 'code_studio_request_failed';
+          error.status = response.status;
+          throw error;
+        }
+        return data;
+      });
+    });
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char];
+    });
+  }
+
+  function codeScreen() {
+    return document.getElementById('feature-code');
+  }
+
+  function shell() {
+    return codeScreen() && codeScreen().querySelector('[data-zuvyr-code-studio-pack075]');
+  }
+
+  function currentFile() {
+    if (!state.project || !state.activeFile) return null;
+    return state.project.files.find(function (file) {
+      return file.path === state.activeFile;
+    }) || null;
+  }
+
+  function setStatus(message) {
+    state.status = String(message || '');
+    var node = shell() && shell().querySelector('[data-zs-code-status]');
+    if (node) node.textContent = state.status;
+  }
+
+  function projectPayload() {
+    return {
+      name: state.project.name,
+      entryFile: state.project.entryFile,
+      files: state.project.files.map(function (file) {
+        return {
+          path: file.path,
+          content: file.content,
+          language: file.language || null
+        };
+      })
+    };
+  }
+
+  function ensureOpenFile(path) {
+    if (!path) return;
+    if (state.openFiles.indexOf(path) < 0) state.openFiles.push(path);
+    state.openFiles = state.openFiles.filter(function (value) {
+      return state.project.files.some(function (file) { return file.path === value; });
+    }).slice(-20);
+    state.activeFile = path;
+  }
+
+  function applyProject(project) {
+    state.project = project || null;
+    state.dirty = false;
+    if (!project) {
+      state.openFiles = [];
+      state.activeFile = null;
+      return;
+    }
+
+    var editor = project.editorState || {};
+    state.openFiles = Array.isArray(editor.openFiles)
+      ? editor.openFiles.filter(function (path) {
+          return project.files.some(function (file) { return file.path === path; });
+        })
+      : [];
+    state.activeFile =
+      editor.activeFile &&
+      project.files.some(function (file) { return file.path === editor.activeFile; })
+        ? editor.activeFile
+        : null;
+    state.dividerBasisPoints = Number(editor.dividerBasisPoints || 6000);
+    state.previewVisible = editor.previewVisible !== false;
+    state.mobilePane = editor.mobilePane === 'preview' ? 'preview' : 'code';
+    state.logsVisible = editor.logsVisible === true;
+
+    if (!state.activeFile) {
+      ensureOpenFile(project.entryFile || (project.files[0] && project.files[0].path));
+    } else {
+      ensureOpenFile(state.activeFile);
+    }
+  }
+
+  function projectOptions() {
+    if (!state.projects.length) return '<option value="">No projects yet</option>';
+    return state.projects.map(function (project) {
+      return '<option value="' + escapeHtml(project.id) + '"' +
+        (state.project && state.project.id === project.id ? ' selected' : '') +
+        '>' + escapeHtml(project.name) + '</option>';
+    }).join('');
+  }
+
+  function fileTreeHtml() {
+    if (!state.project) return '';
+    return state.project.files.map(function (file) {
+      var active = file.path === state.activeFile;
+      return '<button type="button" class="zs-code-file' + (active ? ' is-active' : '') +
+        '" data-zs-code-open-file="' + escapeHtml(file.path) + '">' +
+        '<span>⌁</span><span>' + escapeHtml(file.path) + '</span></button>';
+    }).join('');
+  }
+
+  function tabsHtml() {
+    if (!state.project) return '';
+    return state.openFiles.map(function (path) {
+      var active = path === state.activeFile;
+      return '<button type="button" class="zs-code-tab' + (active ? ' is-active' : '') +
+        '" data-zs-code-open-file="' + escapeHtml(path) + '">' +
+        '<span>' + escapeHtml(path) + '</span>' +
+        '<i data-zs-code-close-tab="' + escapeHtml(path) + '" aria-label="Close tab">×</i>' +
+        '</button>';
+    }).join('');
+  }
+
+  function branchesHtml() {
+    if (!state.project || !Array.isArray(state.project.branches)) return '';
+    return state.project.branches.map(function (branch) {
+      return '<option value="' + escapeHtml(branch.name) + '"' +
+        (branch.name === state.project.currentBranch ? ' selected' : '') +
+        '>' + escapeHtml(branch.name) + '</option>';
+    }).join('');
+  }
+
+  function render() {
+    var root = shell();
+    if (!root) return;
+
+    if (!state.project) {
+      root.innerHTML =
+        '<div class="zs-code-pack075-toolbar">' +
+          '<div><strong>Code Projects</strong><span>Durable multi-file workspace</span></div>' +
+          '<div class="zs-code-pack075-actions">' +
+            '<select data-zs-code-project-select>' + projectOptions() + '</select>' +
+            '<button type="button" data-zs-code-new-project>New project</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="zs-code-empty">' +
+          '<strong>' + (state.loading ? 'Loading projects…' : 'No Code Project open') + '</strong>' +
+          '<span>Create a real multi-file project. Preview remains unavailable until the isolated runtime is connected.</span>' +
+        '</div>' +
+        '<div class="zs-code-status" data-zs-code-status>' + escapeHtml(state.status) + '</div>';
+      return;
+    }
+
+    var file = currentFile();
+    var versionCount = Array.isArray(state.project.versions) ? state.project.versions.length : 0;
+    var assetCount = Array.isArray(state.project.assetBindings) ? state.project.assetBindings.length : 0;
+    var splitStyle = '--zs-code-editor-width:' + (state.dividerBasisPoints / 100).toFixed(2) + '%;';
+    var rootClasses = [
+      'zs-code-pack075',
+      state.previewVisible ? 'has-preview' : 'no-preview',
+      state.logsVisible ? 'has-logs' : '',
+      state.expanded ? 'is-editor-expanded' : '',
+      state.mobilePane === 'preview' ? 'mobile-preview' : 'mobile-code'
+    ].filter(Boolean).join(' ');
+
+    root.className = rootClasses;
+    root.innerHTML =
+      '<div class="zs-code-pack075-toolbar">' +
+        '<div class="zs-code-pack075-project-meta">' +
+          '<strong>' + escapeHtml(state.project.name) + '</strong>' +
+          '<span>' + escapeHtml(state.project.currentBranch) + ' · revision ' +
+            escapeHtml(state.project.revision) + ' · ' + versionCount + ' versions · ' +
+            assetCount + ' linked assets</span>' +
+        '</div>' +
+        '<div class="zs-code-pack075-actions">' +
+          '<select data-zs-code-project-select aria-label="Code project">' + projectOptions() + '</select>' +
+          '<select data-zs-code-branch-select aria-label="Code branch">' + branchesHtml() + '</select>' +
+          '<button type="button" data-zs-code-new-branch>New branch</button>' +
+          '<button type="button" data-zs-code-new-project>New project</button>' +
+          '<button type="button" class="is-primary" data-zs-code-save>' +
+            (state.dirty ? 'Save changes *' : 'Save') + '</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="zs-code-mobile-switch">' +
+        '<button type="button" data-zs-code-mobile-pane="code"' +
+          (state.mobilePane === 'code' ? ' class="is-active"' : '') + '>Code</button>' +
+        '<button type="button" data-zs-code-mobile-pane="preview"' +
+          (state.mobilePane === 'preview' ? ' class="is-active"' : '') + '>Preview</button>' +
+      '</div>' +
+      '<div class="zs-code-workspace">' +
+        '<aside class="zs-code-files">' +
+          '<div class="zs-code-pane-head"><strong>Files</strong><button type="button" data-zs-code-add-file>＋</button></div>' +
+          '<div class="zs-code-file-list">' + fileTreeHtml() + '</div>' +
+          '<div class="zs-code-file-actions">' +
+            '<button type="button" data-zs-code-rename-file>Rename</button>' +
+            '<button type="button" data-zs-code-delete-file>Delete</button>' +
+          '</div>' +
+        '</aside>' +
+        '<div class="zs-code-split" style="' + splitStyle + '">' +
+          '<section class="zs-code-editor-pane">' +
+            '<div class="zs-code-tabs">' + tabsHtml() + '</div>' +
+            '<textarea data-zs-code-editor spellcheck="false" aria-label="Code editor"' +
+              (file ? '' : ' disabled') + '>' + escapeHtml(file ? file.content : '') + '</textarea>' +
+          '</section>' +
+          '<div class="zs-code-divider" data-zs-code-divider role="separator" aria-orientation="vertical" tabindex="0"></div>' +
+          '<section class="zs-code-preview-pane">' +
+            '<div class="zs-code-preview-toolbar">' +
+              '<strong>Preview</strong>' +
+              '<div>' +
+                '<button type="button" data-zs-code-toggle-preview>' +
+                  (state.previewVisible ? 'Hide preview' : 'Show preview') + '</button>' +
+                '<button type="button" data-zs-code-expand>' +
+                  (state.expanded ? 'Restore layout' : 'Expand editor') + '</button>' +
+              '</div>' +
+            '</div>' +
+            '<div class="zs-code-preview-unavailable" data-zs-code-preview-unavailable>' +
+              '<strong>Preview unavailable</strong>' +
+              '<span>A real isolated runtime is required. PACK076–PACK078 will provide sandbox, run/build/test and browser preview. No fake iframe or screenshot is shown.</span>' +
+            '</div>' +
+          '</section>' +
+        '</div>' +
+      '</div>' +
+      '<div class="zs-code-ai-edit">' +
+        '<div><strong>AI edit</strong><span>Edits are limited to the active file, versioned and metered through the ZUVYR Router.</span></div>' +
+        '<textarea data-zs-code-ai-instruction maxlength="8000" placeholder="Describe the exact change for ' +
+          escapeHtml(state.activeFile || 'the active file') + '"></textarea>' +
+        '<button type="button" class="is-primary" data-zs-code-ai-apply' +
+          (!file ? ' disabled' : '') + '>Apply to active file</button>' +
+      '</div>' +
+      '<div class="zs-code-runtime-reserved">' +
+        '<button type="button" data-zs-code-toggle-logs>' +
+          (state.logsVisible ? 'Hide logs / terminal' : 'Show logs / terminal') + '</button>' +
+        (state.logsVisible
+          ? '<div class="zs-code-logs"><strong>Runtime logs unavailable until PACK077</strong><span>No shell or dependency execution is active in PACK075.</span></div>'
+          : '') +
+      '</div>' +
+      '<div class="zs-code-status" data-zs-code-status>' + escapeHtml(state.status) + '</div>';
+  }
+
+  function saveEditorStateSoon() {
+    clearTimeout(state.editorTimer);
+    state.editorTimer = setTimeout(function () {
+      if (!state.project) return;
+      codeApi(
+        '/api/code-studio/projects/' + encodeURIComponent(state.project.id) + '/editor-state',
+        {
+          method: 'PATCH',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            openFiles: state.openFiles,
+            activeFile: state.activeFile,
+            dividerBasisPoints: state.dividerBasisPoints,
+            previewVisible: state.previewVisible,
+            mobilePane: state.mobilePane,
+            logsVisible: state.logsVisible
+          })
+        }
+      ).catch(function () {});
+    }, 350);
+  }
+
+  function loadProject(projectId) {
+    if (!projectId) {
+      applyProject(null);
+      render();
+      return Promise.resolve();
+    }
+    state.loading = true;
+    setStatus('Loading project…');
+    return codeApi('/api/code-studio/projects/' + encodeURIComponent(projectId))
+      .then(function (data) {
+        applyProject(data.project);
+        setStatus('Project loaded.');
+        render();
+      })
+      .catch(function (error) {
+        setStatus(error.message);
+        render();
+      })
+      .finally(function () {
+        state.loading = false;
+      });
+  }
+
+  function loadProjects(force) {
+    if (state.loading && !force) return Promise.resolve();
+    state.loading = true;
+    render();
+    return codeApi('/api/code-studio/projects?limit=100')
+      .then(function (data) {
+        state.projects = Array.isArray(data.projects) ? data.projects : [];
+        var preferred =
+          state.project && state.projects.some(function (item) { return item.id === state.project.id; })
+            ? state.project.id
+            : (state.projects[0] && state.projects[0].id);
+        if (preferred) return loadProject(preferred);
+        applyProject(null);
+        setStatus('Create your first Code Project.');
+        render();
+      })
+      .catch(function (error) {
+        setStatus(error.message);
+        render();
+      })
+      .finally(function () {
+        state.loading = false;
+      });
+  }
+
+  function createProject() {
+    var name = window.prompt ? window.prompt('Project name', 'New Code Project') : 'New Code Project';
+    if (!name || !String(name).trim()) return;
+    setStatus('Creating project…');
+    codeApi('/api/code-studio/projects', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        project: {
+          name: String(name).trim(),
+          entryFile: 'index.js',
+          files: [{
+            path: 'index.js',
+            language: 'javascript',
+            content: '// ' + String(name).trim() + '\n'
+          }]
+        }
+      })
+    }).then(function (data) {
+      applyProject(data.project);
+      return codeApi('/api/code-studio/projects?limit=100');
+    }).then(function (data) {
+      state.projects = Array.isArray(data.projects) ? data.projects : [];
+      setStatus('Project created.');
+      render();
+    }).catch(function (error) {
+      setStatus(error.message);
+    });
+  }
+
+  function saveProject() {
+    if (!state.project || !state.dirty) {
+      saveEditorStateSoon();
+      setStatus('Project is already saved.');
+      return Promise.resolve(state.project);
+    }
+    setStatus('Saving version…');
+    return codeApi(
+      '/api/code-studio/projects/' + encodeURIComponent(state.project.id),
+      {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          project: projectPayload(),
+          expectedRevision: state.project.revision,
+          branchName: state.project.currentBranch,
+          reason: 'manual_save'
+        })
+      }
+    ).then(function (data) {
+      applyProject(data.project);
+      setStatus('Saved as a new immutable version.');
+      render();
+      saveEditorStateSoon();
+      return state.project;
+    }).catch(function (error) {
+      setStatus(error.code === 'pack075_revision_conflict'
+        ? 'Project changed elsewhere. Reload before saving.'
+        : error.message);
+      throw error;
+    });
+  }
+
+  function addFile() {
+    if (!state.project) return;
+    var path = window.prompt ? window.prompt('New file path', 'src/new-file.js') : '';
+    path = String(path || '').trim().replace(/\\/g, '/');
+    if (!path) return;
+    if (state.project.files.some(function (file) { return file.path.toLowerCase() === path.toLowerCase(); })) {
+      setStatus('A file with that path already exists.');
+      return;
+    }
+    state.project.files.push({path:path,content:'',language:null,sha256:''});
+    ensureOpenFile(path);
+    state.dirty = true;
+    setStatus('New file added locally. Save to create a version.');
+    render();
+    saveEditorStateSoon();
+  }
+
+  function renameFile() {
+    var file = currentFile();
+    if (!file) return;
+    var next = window.prompt ? window.prompt('Rename file', file.path) : file.path;
+    next = String(next || '').trim().replace(/\\/g, '/');
+    if (!next || next === file.path) return;
+    if (state.project.files.some(function (item) {
+      return item !== file && item.path.toLowerCase() === next.toLowerCase();
+    })) {
+      setStatus('A file with that path already exists.');
+      return;
+    }
+    var old = file.path;
+    file.path = next;
+    if (state.project.entryFile === old) state.project.entryFile = next;
+    state.openFiles = state.openFiles.map(function (value) { return value === old ? next : value; });
+    state.activeFile = next;
+    state.dirty = true;
+    setStatus('File renamed locally. Save to create a version.');
+    render();
+    saveEditorStateSoon();
+  }
+
+  function deleteFile() {
+    var file = currentFile();
+    if (!file || !state.project) return;
+    if (state.project.files.length <= 1) {
+      setStatus('A project must keep at least one file.');
+      return;
+    }
+    if (window.confirm && !window.confirm('Delete ' + file.path + '?')) return;
+    state.project.files = state.project.files.filter(function (item) { return item.path !== file.path; });
+    state.openFiles = state.openFiles.filter(function (path) { return path !== file.path; });
+    if (state.project.entryFile === file.path) {
+      state.project.entryFile = state.project.files[0].path;
+    }
+    state.activeFile = state.openFiles[state.openFiles.length - 1] || state.project.entryFile || state.project.files[0].path;
+    ensureOpenFile(state.activeFile);
+    state.dirty = true;
+    setStatus('File deleted locally. Save to create a version.');
+    render();
+    saveEditorStateSoon();
+  }
+
+  function createBranch() {
+    if (!state.project) return;
+    var name = window.prompt ? window.prompt('New branch name', 'feature') : '';
+    name = String(name || '').trim();
+    if (!name) return;
+    setStatus('Creating branch…');
+    codeApi('/api/code-studio/projects/' + encodeURIComponent(state.project.id) + '/branches', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({name:name})
+    }).then(function (data) {
+      applyProject(data.project);
+      setStatus('Branch created at the current version.');
+      render();
+    }).catch(function (error) {
+      setStatus(error.message);
+    });
+  }
+
+  function switchBranch(name) {
+    if (!state.project || !name || name === state.project.currentBranch) return;
+    if (state.dirty) {
+      setStatus('Save or discard local edits before switching branch.');
+      render();
+      return;
+    }
+    setStatus('Switching branch…');
+    codeApi(
+      '/api/code-studio/projects/' + encodeURIComponent(state.project.id) +
+      '/branches/' + encodeURIComponent(name) + '/switch',
+      {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({expectedRevision:state.project.revision})
+      }
+    ).then(function (data) {
+      applyProject(data.project);
+      setStatus('Switched to ' + name + '.');
+      render();
+      saveEditorStateSoon();
+    }).catch(function (error) {
+      setStatus(error.message);
+    });
+  }
+
+  function applyAiEdit() {
+    var root = shell();
+    var field = root && root.querySelector('[data-zs-code-ai-instruction]');
+    var instruction = String(field && field.value || '').trim();
+    var file = currentFile();
+    if (!state.project || !file || !instruction) {
+      setStatus('Describe the edit first.');
+      return;
+    }
+
+    var run = state.dirty ? saveProject() : Promise.resolve(state.project);
+    run.then(function () {
+      setStatus('AI edit is running through the ZUVYR Router…');
+      var requestId =
+        window.crypto && typeof window.crypto.randomUUID === 'function'
+          ? window.crypto.randomUUID()
+          : 'code-edit-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+      return codeApi(
+        '/api/code-studio/projects/' + encodeURIComponent(state.project.id) + '/ai-edit',
+        {
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json',
+            'Idempotency-Key':requestId
+          },
+          body:JSON.stringify({
+            instruction:instruction,
+            targetPaths:[state.activeFile],
+            expectedRevision:state.project.revision
+          })
+        }
+      );
+    }).then(function (data) {
+      if (data.project) applyProject(data.project);
+      return data.project ? Promise.resolve() : loadProject(state.project.id);
+    }).then(function () {
+      if (field) field.value = '';
+      setStatus('AI edit applied, metered and saved as a version.');
+      render();
+    }).catch(function (error) {
+      setStatus(error.message);
+    });
+  }
+
+  function bindShell(root) {
+    if (!root || root.dataset.bound === 'true') return;
+    root.dataset.bound = 'true';
+
+    root.addEventListener('click', function (event) {
+      var close = event.target.closest('[data-zs-code-close-tab]');
+      if (close) {
+        event.preventDefault();
+        event.stopPropagation();
+        var path = close.getAttribute('data-zs-code-close-tab');
+        state.openFiles = state.openFiles.filter(function (value) { return value !== path; });
+        if (state.activeFile === path) {
+          state.activeFile = state.openFiles[state.openFiles.length - 1] || null;
+        }
+        if (!state.activeFile && state.project && state.project.files.length) {
+          ensureOpenFile(state.project.entryFile || state.project.files[0].path);
+        }
+        render();
+        saveEditorStateSoon();
+        return;
+      }
+
+      var open = event.target.closest('[data-zs-code-open-file]');
+      if (open) {
+        ensureOpenFile(open.getAttribute('data-zs-code-open-file'));
+        render();
+        saveEditorStateSoon();
+        return;
+      }
+
+      var pane = event.target.closest('[data-zs-code-mobile-pane]');
+      if (pane) {
+        state.mobilePane = pane.getAttribute('data-zs-code-mobile-pane') === 'preview' ? 'preview' : 'code';
+        render();
+        saveEditorStateSoon();
+        return;
+      }
+
+      if (event.target.closest('[data-zs-code-new-project]')) return createProject();
+      if (event.target.closest('[data-zs-code-save]')) return void saveProject();
+      if (event.target.closest('[data-zs-code-add-file]')) return addFile();
+      if (event.target.closest('[data-zs-code-rename-file]')) return renameFile();
+      if (event.target.closest('[data-zs-code-delete-file]')) return deleteFile();
+      if (event.target.closest('[data-zs-code-new-branch]')) return createBranch();
+      if (event.target.closest('[data-zs-code-ai-apply]')) return applyAiEdit();
+
+      if (event.target.closest('[data-zs-code-toggle-preview]')) {
+        state.previewVisible = !state.previewVisible;
+        render();
+        saveEditorStateSoon();
+        return;
+      }
+
+      if (event.target.closest('[data-zs-code-expand]')) {
+        state.expanded = !state.expanded;
+        render();
+        return;
+      }
+
+      if (event.target.closest('[data-zs-code-toggle-logs]')) {
+        state.logsVisible = !state.logsVisible;
+        render();
+        saveEditorStateSoon();
+      }
+    });
+
+    root.addEventListener('change', function (event) {
+      if (event.target.matches('[data-zs-code-project-select]')) {
+        if (state.dirty) {
+          setStatus('Save local edits before opening another project.');
+          render();
+          return;
+        }
+        loadProject(event.target.value);
+      }
+      if (event.target.matches('[data-zs-code-branch-select]')) {
+        switchBranch(event.target.value);
+      }
+    });
+
+    root.addEventListener('input', function (event) {
+      if (!event.target.matches('[data-zs-code-editor]')) return;
+      var file = currentFile();
+      if (!file) return;
+      file.content = event.target.value;
+      state.dirty = true;
+      var button = root.querySelector('[data-zs-code-save]');
+      if (button) button.textContent = 'Save changes *';
+      setStatus('Unsaved local edits.');
+    });
+
+    root.addEventListener('pointerdown', function (event) {
+      var divider = event.target.closest('[data-zs-code-divider]');
+      if (!divider || window.matchMedia('(max-width: 820px)').matches) return;
+      event.preventDefault();
+      var split = divider.closest('.zs-code-split');
+      if (!split) return;
+
+      function move(moveEvent) {
+        var rect = split.getBoundingClientRect();
+        if (!rect.width) return;
+        var ratio = (moveEvent.clientX - rect.left) / rect.width;
+        state.dividerBasisPoints = Math.round(Math.max(0.25, Math.min(0.80, ratio)) * 10000);
+        split.style.setProperty('--zs-code-editor-width', (state.dividerBasisPoints / 100).toFixed(2) + '%');
+      }
+
+      function up() {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        saveEditorStateSoon();
+      }
+
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    });
+  }
+
+  function ensureCodeStudio() {
+    var screen = codeScreen();
+    if (!screen) return;
+
+    var root = screen.querySelector('[data-zuvyr-code-studio-pack075]');
+    if (!root) {
+      root = document.createElement('section');
+      root.setAttribute('data-zuvyr-code-studio-pack075', 'true');
+      root.className = 'zs-code-pack075';
+      var messages = screen.querySelector('#msgs-code');
+      if (messages) {
+        messages.parentNode.insertBefore(root, messages);
+        messages.classList.add('zs-code-assistant-history');
+      } else {
+        screen.appendChild(root);
+      }
+      bindShell(root);
+      render();
+    }
+
+    if (screen.classList.contains('active') && !root.dataset.loaded) {
+      root.dataset.loaded = 'true';
+      loadProjects(false);
+    }
+  }
+
+  function boot() {
+    ensureCodeStudio();
+    var screen = codeScreen();
+    if (screen) {
+      new MutationObserver(ensureCodeStudio).observe(screen, {
+        attributes:true,
+        attributeFilter:['class'],
+        childList:true,
+        subtree:false
+      });
+    }
+    new MutationObserver(ensureCodeStudio).observe(document.documentElement, {
+      childList:true,
+      subtree:true
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, {once:true});
+  } else {
+    boot();
+  }
+})();
