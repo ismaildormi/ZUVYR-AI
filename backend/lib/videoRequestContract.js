@@ -64,8 +64,8 @@ function normalizeVideoRequest(body = {}) {
     ? 5
     : Number(options.durationSeconds);
   const ratio = String(options.ratio || '16:9');
-  const resolution = String(options.resolution || '720p').toLowerCase();
-  const fps = options.fps === undefined ? 24 : Number(options.fps);
+  const resolution = String(options.resolution || '480p').toLowerCase();
+  const fps = options.fps === undefined ? 16 : Number(options.fps);
   const audio = options.audio === undefined ? false : options.audio;
   const seed = options.seed === undefined || options.seed === null
     ? null

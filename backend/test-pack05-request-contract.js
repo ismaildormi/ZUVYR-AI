@@ -21,7 +21,7 @@ const image = normalizeVideoRequest({
 });
 assert.equal(image.startFrameAssetId, IMAGE);
 assert.equal(image.endFrameAssetId, END);
-assert.equal(image.options.durationSeconds, 8);
+assert.equal(image.options.durationSeconds, 6);
 
 const edit = normalizeVideoRequest({ videoOperation: 'edit', sourceVideoAssetId: VIDEO });
 assert.equal(edit.prompt, '');
