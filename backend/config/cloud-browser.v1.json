@@ -7,7 +7,9 @@
     "createPath": "/v1/sessions",
     "requiredEnvironment": [
       "BROWSERBASE_API_KEY",
-      "BROWSERBASE_PROJECT_ID"
+      "BROWSERBASE_PROJECT_ID",
+      "BROWSERBASE_BROWSER_HOUR_PRICE_MICRO_USD",
+      "BROWSERBASE_PRICING_VERSION"
     ],
     "liveGateEnvironment": [
       "ZUVYR_M17_VERIFIED",
@@ -17,7 +19,7 @@
     "liveEnabledByDefault": false
   },
   "pricing": {
-    "verificationStatus": "account_plan_unverified",
+    "verificationStatus": "operator_verification_required",
     "billingAuthority": false,
     "unitType": "browser_seconds",
     "publishedReference": {
@@ -27,7 +29,11 @@
       "sourceUrl": "https://www.browserbase.com/pricing",
       "checkedAt": "2026-09-19"
     },
-    "rule": "Published plan prices are reference evidence only. ZUVYR paid execution stays blocked until the connected account plan and effective billing basis are verified."
+    "rule": "Published plan prices are reference evidence only. ZUVYR paid execution stays blocked until the connected account plan and effective billing basis are verified.",
+    "accountPriceEnvironment": "BROWSERBASE_BROWSER_HOUR_PRICE_MICRO_USD",
+    "pricingVersionEnvironment": "BROWSERBASE_PRICING_VERSION",
+    "targetGrossMarginBps": 5000,
+    "maxAcceptedBrowserHourPriceMicroUsd": 10000000
   },
   "session": {
     "maxConcurrentPerOwner": 1,
@@ -38,7 +44,8 @@
     "persistContext": false,
     "recordSession": false,
     "proxies": false,
-    "captchaSolving": false
+    "captchaSolving": false,
+    "logSession": false
   },
   "network": {
     "mode": "public-web-only",
@@ -55,7 +62,9 @@
       ".local",
       ".internal"
     ],
-    "rawCdpUrlReturnedToClient": false
+    "rawCdpUrlReturnedToClient": false,
+    "allowedHostsRequired": true,
+    "maxAllowedHosts": 32
   },
   "secrets": {
     "injectBackendEnvironment": false,
@@ -86,11 +95,14 @@
     "operationType": "browser_runtime",
     "unitType": "browser_seconds",
     "exactProviderUsageRequiredBeforeSettlement": true,
-    "reserveWhilePricingUnknown": false
+    "reserveWhilePricingUnknown": false,
+    "pricingSource": "connected_account_verified_snapshot",
+    "reserveBasis": "requested_session_ttl",
+    "settleBasis": "provider_started_ended_duration"
   },
   "gates": {
-    "canCreateLiveSession": false,
-    "reason": "M17, Browserbase credentials and exact connected-account pricing are not all verified.",
+    "canCreateLiveSession": true,
+    "reason": "Implementation is ready; live execution requires M17, Browserbase credentials and operator-verified connected-account price/version.",
     "noProviderCallsInPack081Verification": true
   }
 }
