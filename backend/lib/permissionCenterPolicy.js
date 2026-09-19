@@ -82,7 +82,8 @@ const ACTIONS = Object.freeze({
     maxGrantSeconds: 600,
     modes: Object.freeze(['allow_once']),
     scopes: Object.freeze(['project_session']),
-    namespaces: Object.freeze(['code_project']),
+    namespaces: Object.freeze(['code_project'])
+  }),
   'browser.interact': Object.freeze({
     risk: 'medium',
     consequenceId: 'permission.browser.interact.v1',
