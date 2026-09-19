@@ -1,7 +1,7 @@
 'use strict';
 
 const crypto = require('crypto');
-const { cleanupStaleCodeSandboxes } = require('./codeSandboxCleanup');
+const { cleanupExpiredCodeSandboxes } = require('./codeSandboxCleanup');
 
 const STRATEGY = 'railway_internal_route';
 const LOCK_KEY = 'zuvyr:maintenance:lock';
@@ -53,7 +53,7 @@ async function releaseLock(redis, token) {
 async function runMaintenanceOnce({
   redis,
   supabaseAdmin,
-  codeSandboxCleanup = cleanupStaleCodeSandboxes,
+  codeSandboxCleanup = cleanupExpiredCodeSandboxes,
   nowMs = Date.now(),
   logger = console,
 }) {
