@@ -465,6 +465,132 @@
     )).join('');
   }
 
+  function candidateRows() {
+    if (!state.candidates.length) {
+      return '<div class="zuvyr-pack095-empty">No eligible PACK094 training candidates.</div>';
+    }
+    return state.candidates.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.domain || item.payloadKind || 'Candidate') + '</strong>' +
+          '<span>Candidate ' + esc(shortId(item.id)) +
+          ' · content ' + esc(shortId(item.contentId)) +
+          ' · rights ' + esc(shortId(item.rightsId)) + '</span>' +
+          '<small>Consent v' + esc(item.consentVersion) +
+          ' · quality ' + esc(item.qualityScore == null ? '—' : item.qualityScore) +
+          ' · learning value ' + esc(item.learningValueScore || 0) +
+          ' · source owner ' + esc(shortId(item.sourceOwnerId)) + '</small>' +
+        '</div>' +
+        badge('ELIGIBLE METADATA','good') +
+      '</article>'
+    )).join('');
+  }
+
+  function failureRows() {
+    if (!state.failures.length) {
+      return '<div class="zuvyr-pack095-empty">Failure Bank has no open patterns.</div>';
+    }
+    return state.failures.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.failureCategory || 'Failure pattern') + '</strong>' +
+          '<span>' + esc(item.capability || 'unknown capability') +
+          ' · ' + esc(item.provider || item.modelTool || 'unassigned') + '</span>' +
+          '<small>' + esc(item.occurrences || 0) + ' occurrences · domain ' +
+          esc(item.domain || '—') + ' · last seen ' + esc(dateText(item.lastSeenAt)) + '</small>' +
+        '</div>' +
+        badge('OPEN','warn') +
+      '</article>'
+    )).join('');
+  }
+
+  function skillRows() {
+    if (!state.skills.length) {
+      return '<div class="zuvyr-pack095-empty">No Model Lab skills defined.</div>';
+    }
+    return state.skills.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.name || 'Skill') + '</strong>' +
+          '<span>' + esc(item.capability || 'No capability label') + '</span>' +
+          '<small>' + esc(item.description || 'No description') + '</small>' +
+        '</div>' +
+        badge(String(item.status || 'active').toUpperCase(), 'neutral') +
+      '</article>'
+    )).join('');
+  }
+
+  function curriculumRows() {
+    if (!state.curricula.length) {
+      return '<div class="zuvyr-pack095-empty">No curricula defined.</div>';
+    }
+    return state.curricula.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.name || 'Curriculum') + '</strong>' +
+          '<span>' + esc(item.description || 'No description') + '</span>' +
+          '<small>Curriculum ' + esc(shortId(item.id)) + '</small>' +
+        '</div>' +
+        badge(String(item.status || 'active').toUpperCase(), 'neutral') +
+      '</article>'
+    )).join('');
+  }
+
+  function benchmarkRows() {
+    if (!state.benchmarks.length) {
+      return '<div class="zuvyr-pack095-empty">No independent benchmarks defined.</div>';
+    }
+    return state.benchmarks.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.name || 'Benchmark') + ' · ' + esc(item.version || '') + '</strong>' +
+          '<span>Dataset version ' + esc(shortId(item.dataset_version_id)) + '</span>' +
+          '<small>Benchmark ' + esc(shortId(item.id)) + '</small>' +
+        '</div>' +
+        badge(String(item.status || 'active').toUpperCase(), 'neutral') +
+      '</article>'
+    )).join('');
+  }
+
+  function evaluationRows() {
+    if (!state.evaluations.length) {
+      return '<div class="zuvyr-pack095-empty">No independent evaluations recorded.</div>';
+    }
+    return state.evaluations.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>Checkpoint ' + esc(shortId(item.checkpoint_id)) + '</strong>' +
+          '<span>Benchmark ' + esc(shortId(item.benchmark_id)) +
+          ' · regression ' + esc(item.regression_status || 'unknown') + '</span>' +
+          '<small>Task success ' +
+          esc(item.task_success_bps == null ? '—' : (Number(item.task_success_bps) / 100).toFixed(2) + '%') +
+          ' · cost/success ' +
+          esc(item.total_cost_per_successful_task_microusd == null ? 'unknown' : item.total_cost_per_successful_task_microusd + ' µUSD') +
+          ' · independent ' + (item.independent === false ? 'no' : 'yes') + '</small>' +
+        '</div>' +
+        badge(String(item.status || 'planned').toUpperCase(), item.status === 'passed' ? 'good' : 'neutral') +
+      '</article>'
+    )).join('');
+  }
+
+  function syntheticRows() {
+    if (!state.syntheticJobs.length) {
+      return '<div class="zuvyr-pack095-empty">No synthetic-data plans recorded.</div>';
+    }
+    return state.syntheticJobs.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>Synthetic plan ' + esc(shortId(item.id)) + '</strong>' +
+          '<span>Dataset ' + esc(shortId(item.target_dataset_id)) +
+          ' · skill ' + esc(shortId(item.skill_id)) + '</span>' +
+          '<small>Teacher source ' + esc(item.teacher_source || 'owner-created / unspecified') +
+          ' · rights basis ' + esc(item.rights_basis || 'owner_created') + '</small>' +
+        '</div>' +
+        badge(String(item.status || 'planned').toUpperCase(), 'neutral') +
+      '</article>'
+    )).join('');
+  }
+
   function render() {
     const root = panel();
     if (!root) return;
@@ -656,6 +782,21 @@
     if (memory) memory.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
 
+  async function rollbackCheckpoint(id) {
+    const reason=String(window.prompt?.(
+      'Rollback reason (recorded in immutable rollout lineage):',
+      'Manual Model Lab rollback'
+    )||'').trim();
+    if(!reason) return;
+    await api('/api/model-lab/checkpoints/'+encodeURIComponent(id)+'/rollback',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({targetStage:'LAB',reason})
+    });
+    state.notice='Checkpoint rolled back to LAB; planned later stages were cancelled in lineage.';
+    await refresh();
+  }
+
   function bind() {
     const root = panel();
     if (!root) return;
@@ -731,5 +872,815 @@
     document.addEventListener('DOMContentLoaded', boot, { once: true });
   } else {
     boot();
+  }
+})();
+
+
+/* ZUVYR PACK095 MODEL LAB */
+(() => {
+  'use strict';
+
+  const PACK = '095';
+  const state = {
+    installed: false,
+    loading: false,
+    denied: false,
+    error: '',
+    summary: null,
+    datasets: [],
+    connectors: [],
+    trainingRuns: [],
+    checkpoints: [],
+    benchmarks: [],
+    evaluations: [],
+    syntheticJobs: [],
+    candidates: [],
+    failures: [],
+    skills: [],
+    curricula: [],
+    selectedDataset: '',
+    selectedConnector: '',
+    notice: ''
+  };
+
+  function esc(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    })[ch]);
+  }
+
+  async function api(path, options = {}) {
+    if (typeof window.authFetch !== 'function') {
+      const error = new Error('auth_unavailable');
+      error.code = 'auth_unavailable';
+      throw error;
+    }
+    const response = await window.authFetch(path, options);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.status !== 'success') {
+      const error = new Error(data.message || data.code || 'Model Lab request failed.');
+      error.code = data.code || 'model_lab_ui_request_failed';
+      error.status = response.status;
+      throw error;
+    }
+    return data;
+  }
+
+  function settingsScreen() {
+    return document.querySelector('#feature-settings .feature-screen');
+  }
+
+  function panel() {
+    return document.querySelector('[data-zuvyr-pack095-model-lab]');
+  }
+
+  function dateText(value) {
+    if (!value) return '—';
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
+  }
+
+  function shortId(value) {
+    const text = String(value || '');
+    return text.length > 20 ? text.slice(0,8) + '…' + text.slice(-6) : text;
+  }
+
+  function badge(label, tone = 'neutral') {
+    return '<span class="zuvyr-pack095-badge" data-tone="' +
+      esc(tone) + '">' + esc(label) + '</span>';
+  }
+
+  function count(key) {
+    const value = state.summary?.counts?.[key];
+    return Number.isFinite(Number(value)) ? Number(value) : 0;
+  }
+
+  function notice(message) {
+    state.notice = String(message || '');
+    const node = panel()?.querySelector('[data-zuvyr-pack095-notice]');
+    if (node) node.textContent = state.notice;
+  }
+
+  function selectOptions(items, valueKey, labeler, selected, emptyLabel) {
+    const rows = [
+      '<option value="">' + esc(emptyLabel) + '</option>'
+    ];
+    for (const item of items) {
+      const value = item?.[valueKey] || '';
+      rows.push(
+        '<option value="' + esc(value) + '"' +
+        (String(value) === String(selected || '') ? ' selected' : '') +
+        '>' + esc(labeler(item)) + '</option>'
+      );
+    }
+    return rows.join('');
+  }
+
+  function datasetRows() {
+    if (!state.datasets.length) {
+      return '<div class="zuvyr-pack095-empty">No Model Lab datasets yet.</div>';
+    }
+    return state.datasets.slice(0,20).map(item => {
+      const active = item.status === 'active';
+      return '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.name || 'Dataset') + '</strong>' +
+          '<span>' + esc(item.purpose || 'No purpose set') + '</span>' +
+          '<small>Current version ' + esc(shortId(item.currentVersionId)) +
+          ' · ' + esc(dateText(item.updatedAt || item.updated_at)) + '</small>' +
+        '</div>' +
+        '<div class="zuvyr-pack095-row-actions">' +
+          badge(active ? 'ACTIVE' : String(item.status || 'unknown').toUpperCase(), active ? 'good' : 'neutral') +
+          '<button type="button" data-zuvyr-pack095-select-dataset="' + esc(item.id) + '">Open</button>' +
+          '<button type="button" data-zuvyr-pack095-clone-dataset="' + esc(item.id) + '">New version</button>' +
+        '</div>' +
+      '</article>';
+    }).join('');
+  }
+
+  function connectorRows() {
+    if (!state.connectors.length) {
+      return '<div class="zuvyr-pack095-empty">No BYOC compute connector registered.</div>';
+    }
+    return state.connectors.slice(0,20).map(item => {
+      const qualified = item.qualificationStatus === 'qualified';
+      const ownership = Boolean(item.ownershipVerifiedAt);
+      return '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.ownershipSubject || item.connectorKind || 'Compute target') + '</strong>' +
+          '<span>' + esc(item.connectorKind || '') + ' · ' +
+          esc(item.endpointUrl || 'Relay target') + '</span>' +
+          '<small>Ownership ' + (ownership ? 'verified' : 'pending') +
+          ' · health ' + esc(item.healthStatus || 'unknown') +
+          ' · credential ' + (item.credentialConfigured ? 'configured' : 'not configured') +
+          ' · customer compute cost ' + (item.costKnown ? 'known' : 'unknown') + '</small>' +
+        '</div>' +
+        '<div class="zuvyr-pack095-row-actions">' +
+          badge(qualified ? 'QUALIFIED' : String(item.qualificationStatus || 'REGISTERED').toUpperCase(), qualified ? 'good' : 'warn') +
+          '<button type="button" data-zuvyr-pack095-connector-secret="' + esc(item.id) + '">Credential</button>' +
+          '<button type="button" data-zuvyr-pack095-verify-connector="' + esc(item.id) + '"' +
+            (ownership ? ' disabled' : '') + '>Verify</button>' +
+          '<button type="button" data-zuvyr-pack095-health-connector="' + esc(item.id) + '"' +
+            (!ownership ? ' disabled' : '') + '>Health</button>' +
+        '</div>' +
+      '</article>';
+    }).join('');
+  }
+
+  function runRows() {
+    if (!state.trainingRuns.length) {
+      return '<div class="zuvyr-pack095-empty">No training/R&D run plans yet.</div>';
+    }
+    return state.trainingRuns.slice(0,20).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.base_model_ref || 'Training run') + '</strong>' +
+          '<span>Dataset ' + esc(shortId(item.dataset_version_id)) +
+          ' · connector ' + esc(shortId(item.compute_connector_id)) + '</span>' +
+          '<small>Customer compute: ' +
+          (item.customer_compute_cost_microusd == null ? 'unknown' : esc(item.customer_compute_cost_microusd) + ' µUSD') +
+          ' · ZUVYR control-plane: ' + esc(item.zuvyr_control_plane_cost_microusd || 0) + ' µUSD</small>' +
+        '</div>' +
+        badge(String(item.status || 'planned').toUpperCase(), item.status === 'succeeded' ? 'good' : 'neutral') +
+      '</article>'
+    )).join('');
+  }
+
+  function checkpointRows() {
+    if (!state.checkpoints.length) {
+      return '<div class="zuvyr-pack095-empty">No owned-model checkpoints recorded yet.</div>';
+    }
+    return state.checkpoints.slice(0,20).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.name || 'Checkpoint') + '</strong>' +
+          '<span>' + esc(item.base_model_ref || '') + ' · artifact ' + esc(shortId(item.artifact_sha256)) + '</span>' +
+          '<small>Exact training run ' + esc(shortId(item.training_run_id)) +
+          ' · stage ' + esc(item.current_stage || 'LAB') + '</small>' +
+        '</div>' +
+        '<div class="zuvyr-pack095-row-actions">' +
+          badge(String(item.current_stage || 'LAB'), item.current_stage === 'PRIMARY' ? 'good' : 'neutral') +
+          '<button type="button" data-zuvyr-pack095-promote="' + esc(item.id) + '">Stage</button>' +
+          ((item.current_stage === 'EVAL' || item.current_stage === 'LAB')
+            ? '<button type="button" data-zuvyr-pack095-rollback="' + esc(item.id) + '">Rollback</button>'
+            : '') +
+        '</div>' +
+      '</article>'
+    )).join('');
+  }
+
+  function render() {
+    const root = panel();
+    if (!root) return;
+
+    if (state.loading) {
+      root.innerHTML =
+        '<div class="zuvyr-pack095-head"><div><span>PACK095 · MODEL LAB</span><h3>ZUVYR Model Lab</h3></div></div>' +
+        '<div class="zuvyr-pack095-loading">Loading Model Lab control-plane…</div>';
+      return;
+    }
+
+    if (state.error) {
+      root.innerHTML =
+        '<div class="zuvyr-pack095-head"><div><span>PACK095 · MODEL LAB</span><h3>ZUVYR Model Lab</h3></div>' +
+        '<button type="button" data-zuvyr-pack095-refresh>Retry</button></div>' +
+        '<div class="zuvyr-pack095-error">' + esc(state.error) + '</div>';
+      bind();
+      return;
+    }
+
+    root.innerHTML =
+      '<div class="zuvyr-pack095-head">' +
+        '<div><span>PACK095 · OWNER / ADMIN</span><h3>ZUVYR Model Lab</h3>' +
+        '<p>Govern datasets, licenses, skills, curricula, BYOC compute, training plans, evaluations, checkpoints and rollout lineage. Credentials never return to the browser.</p></div>' +
+        '<button type="button" data-zuvyr-pack095-refresh>Refresh</button>' +
+      '</div>' +
+
+      '<div class="zuvyr-pack095-lock-banner">' +
+        '<div><strong>PACK096 execution boundary</strong>' +
+        '<span>Live training and Router activation are intentionally OFF here. PACK095 prepares and qualifies the control-plane only.</span></div>' +
+        badge('LIVE EXECUTION OFF','warn') +
+      '</div>' +
+
+      '<div class="zuvyr-pack095-metrics">' +
+        [
+          ['datasets','Datasets'],
+          ['datasetVersions','Dataset versions'],
+          ['qualifiedConnectors','Qualified compute'],
+          ['trainingRuns','Training plans'],
+          ['checkpoints','Checkpoints'],
+          ['evaluations','Evaluations']
+        ].map(([key,label]) =>
+          '<article><b>' + esc(count(key)) + '</b><span>' + esc(label) + '</span></article>'
+        ).join('') +
+      '</div>' +
+
+      '<details class="zuvyr-pack095-section" open>' +
+        '<summary>Datasets & lineage</summary>' +
+        '<form class="zuvyr-pack095-form" data-zuvyr-pack095-dataset-form>' +
+          '<input name="name" maxlength="160" required placeholder="Dataset name">' +
+          '<input name="purpose" maxlength="500" placeholder="Purpose">' +
+          '<button class="zuvyr-pack095-primary" type="submit">Create dataset</button>' +
+        '</form>' +
+        '<div class="zuvyr-pack095-list">' + datasetRows() + '</div>' +
+        '<div class="zuvyr-pack095-inline-tool">' +
+          '<input data-zuvyr-pack095-candidate-id placeholder="PACK094 candidate UUID">' +
+          '<button type="button" data-zuvyr-pack095-add-candidate>Add candidate to current version</button>' +
+          '<button type="button" data-zuvyr-pack095-freeze-dataset>Freeze selected version</button>' +
+        '</div>' +
+      '</details>' +
+
+      '<details class="zuvyr-pack095-section" open>' +
+        '<summary>BYOC Compute Connectors</summary>' +
+        '<form class="zuvyr-pack095-form is-grid" data-zuvyr-pack095-connector-form>' +
+          '<select name="ownershipKind"><option value="user">User-owned</option><option value="organization">Organization-owned</option></select>' +
+          '<input name="ownershipSubject" maxlength="240" required placeholder="Owner / organization label">' +
+          '<select name="connectorKind"><option value="openai_compatible_https">OpenAI-compatible HTTPS</option><option value="custom_https">Custom HTTPS</option><option value="zuvyr_compute_relay">ZUVYR Compute Relay (PACK096)</option></select>' +
+          '<input name="endpointUrl" placeholder="https://gpu.example.com">' +
+          '<input name="healthPath" placeholder="/v1/models or /health">' +
+          '<button class="zuvyr-pack095-primary" type="submit">Register connector</button>' +
+        '</form>' +
+        '<div class="zuvyr-pack095-list">' + connectorRows() + '</div>' +
+      '</details>' +
+
+      '<details class="zuvyr-pack095-section">' +
+        '<summary>Training plans & checkpoints</summary>' +
+        '<form class="zuvyr-pack095-form is-grid" data-zuvyr-pack095-training-form>' +
+          '<select name="datasetVersionId" required>' +
+            selectOptions(state.datasets, 'currentVersionId', x => x.name + ' · current version', '', 'Dataset version') +
+          '</select>' +
+          '<select name="computeConnectorId" required>' +
+            selectOptions(state.connectors.filter(x => x.qualificationStatus === 'qualified'), 'id', x => x.ownershipSubject + ' · ' + x.connectorKind, '', 'Qualified compute') +
+          '</select>' +
+          '<input name="baseModelRef" required maxlength="400" placeholder="Base model reference">' +
+          '<input name="baseModelLicenseReference" required maxlength="600" placeholder="Base-model license reference">' +
+          '<button class="zuvyr-pack095-primary" type="submit">Create run plan</button>' +
+        '</form>' +
+        '<div class="zuvyr-pack095-list">' + runRows() + '</div>' +
+        '<div class="zuvyr-pack095-list">' + checkpointRows() + '</div>' +
+      '</details>' +
+
+      '<details class="zuvyr-pack095-section">' +
+        '<summary>Learning inputs · Candidate Pool & Failure Bank</summary>' +
+        '<div class="zuvyr-pack095-note">Metadata only. Training payload content is not rendered here; PACK094 rights, consent, privacy and provenance remain the admission authority.</div>' +
+        '<div class="zuvyr-pack095-two-col">' +
+          '<div><h4>Eligible candidates</h4><div class="zuvyr-pack095-list">' + candidateRows() + '</div></div>' +
+          '<div><h4>Failure Bank</h4><div class="zuvyr-pack095-list">' + failureRows() + '</div></div>' +
+        '</div>' +
+      '</details>' +
+
+      '<details class="zuvyr-pack095-section">' +
+        '<summary>Skills & curricula</summary>' +
+        '<div class="zuvyr-pack095-two-col">' +
+          '<div>' +
+            '<form class="zuvyr-pack095-form" data-zuvyr-pack095-skill-form>' +
+              '<input name="name" maxlength="120" required placeholder="Skill name">' +
+              '<input name="capability" maxlength="160" placeholder="Capability">' +
+              '<input name="description" maxlength="4000" placeholder="Description">' +
+              '<button class="zuvyr-pack095-primary" type="submit">Create skill</button>' +
+              '<button type="reset">Cancel</button>' +
+            '</form>' +
+            '<div class="zuvyr-pack095-list">' + skillRows() + '</div>' +
+          '</div>' +
+          '<div>' +
+            '<form class="zuvyr-pack095-form" data-zuvyr-pack095-curriculum-form>' +
+              '<input name="name" maxlength="160" required placeholder="Curriculum name">' +
+              '<input name="description" maxlength="4000" placeholder="Description">' +
+              '<button class="zuvyr-pack095-primary" type="submit">Create curriculum</button>' +
+              '<button type="reset">Cancel</button>' +
+            '</form>' +
+            '<div class="zuvyr-pack095-list">' + curriculumRows() + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<form class="zuvyr-pack095-form is-grid" data-zuvyr-pack095-curriculum-link-form>' +
+          '<select name="curriculumId" required>' +
+            selectOptions(state.curricula, 'id', x => x.name, '', 'Curriculum') +
+          '</select>' +
+          '<select name="skillId" required>' +
+            selectOptions(state.skills, 'id', x => x.name, '', 'Skill') +
+          '</select>' +
+          '<select name="datasetVersionId" required>' +
+            selectOptions(state.datasets, 'currentVersionId', x => x.name + ' · current version (must be frozen)', '', 'Frozen dataset version') +
+          '</select>' +
+          '<input name="weightBps" type="number" min="1" max="10000" value="10000" aria-label="Weight basis points">' +
+          '<input name="sequenceNo" type="number" min="1" value="1" aria-label="Sequence number">' +
+          '<button class="zuvyr-pack095-primary" type="submit">Link skill</button>' +
+          '<button type="reset">Cancel</button>' +
+        '</form>' +
+      '</details>' +
+
+      '<details class="zuvyr-pack095-section">' +
+        '<summary>Benchmarks & independent evaluations</summary>' +
+        '<div class="zuvyr-pack095-two-col">' +
+          '<div>' +
+            '<form class="zuvyr-pack095-form" data-zuvyr-pack095-benchmark-form>' +
+              '<input name="name" maxlength="160" required placeholder="Benchmark name">' +
+              '<input name="version" maxlength="80" required placeholder="Version">' +
+              '<select name="datasetVersionId">' +
+                selectOptions(state.datasets, 'currentVersionId', x => x.name + ' · current version', '', 'Optional dataset version') +
+              '</select>' +
+              '<button class="zuvyr-pack095-primary" type="submit">Create benchmark</button>' +
+              '<button type="reset">Cancel</button>' +
+            '</form>' +
+            '<div class="zuvyr-pack095-list">' + benchmarkRows() + '</div>' +
+          '</div>' +
+          '<div>' +
+            '<form class="zuvyr-pack095-form" data-zuvyr-pack095-evaluation-form>' +
+              '<select name="checkpointId" required>' +
+                selectOptions(state.checkpoints, 'id', x => (x.name || 'Checkpoint') + ' · ' + (x.current_stage || 'LAB'), '', 'Checkpoint') +
+              '</select>' +
+              '<select name="benchmarkId" required>' +
+                selectOptions(state.benchmarks, 'id', x => (x.name || 'Benchmark') + ' · ' + (x.version || ''), '', 'Benchmark') +
+              '</select>' +
+              '<select name="status"><option value="planned">Planned</option><option value="running">Running</option><option value="passed">Passed</option><option value="failed">Failed</option><option value="cancelled">Cancelled</option></select>' +
+              '<select name="regressionStatus"><option value="unknown">Regression unknown</option><option value="pass">Regression pass</option><option value="fail">Regression fail</option></select>' +
+              '<input name="taskSuccessBps" type="number" min="0" max="10000" placeholder="Task success bps">' +
+              '<input name="totalCostPerSuccessfulTaskMicrousd" type="number" min="0" placeholder="Cost / successful task µUSD">' +
+              '<button class="zuvyr-pack095-primary" type="submit">Record evaluation</button>' +
+              '<button type="reset">Cancel</button>' +
+            '</form>' +
+            '<div class="zuvyr-pack095-list">' + evaluationRows() + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</details>' +
+
+      '<details class="zuvyr-pack095-section">' +
+        '<summary>Synthetic-data plans</summary>' +
+        '<form class="zuvyr-pack095-form is-grid" data-zuvyr-pack095-synthetic-form>' +
+          '<select name="targetDatasetId" required>' +
+            selectOptions(state.datasets, 'id', x => x.name, '', 'Target dataset') +
+          '</select>' +
+          '<select name="skillId">' +
+            selectOptions(state.skills, 'id', x => x.name, '', 'Optional skill') +
+          '</select>' +
+          '<input name="teacherSource" maxlength="240" placeholder="Teacher source / policy reference">' +
+          '<button class="zuvyr-pack095-primary" type="submit">Create planned job</button>' +
+          '<button type="reset">Cancel</button>' +
+        '</form>' +
+        '<div class="zuvyr-pack095-note">Planning only. Synthetic generation and live model training remain disabled until the owning packs activate verified execution.</div>' +
+        '<div class="zuvyr-pack095-list">' + syntheticRows() + '</div>' +
+      '</details>' +
+
+      '<div class="zuvyr-pack095-notice" data-zuvyr-pack095-notice role="status" aria-live="polite">' +
+        esc(state.notice) +
+      '</div>';
+
+    bind();
+  }
+
+  async function refresh() {
+    const root = panel();
+    if (!root || state.loading) return;
+    state.loading = true;
+    state.error = '';
+    render();
+    try {
+      const [
+        summary,datasets,connectors,runs,checkpoints,benchmarks,evaluations,
+        syntheticJobs,candidates,failures,skills,curricula
+      ] = await Promise.all([
+        api('/api/model-lab/summary'),
+        api('/api/model-lab/datasets'),
+        api('/api/model-lab/connectors'),
+        api('/api/model-lab/training-runs'),
+        api('/api/model-lab/checkpoints'),
+        api('/api/model-lab/benchmarks'),
+        api('/api/model-lab/evaluations'),
+        api('/api/model-lab/synthetic-jobs'),
+        api('/api/model-lab/candidate-pool?limit=50'),
+        api('/api/model-lab/failure-bank?limit=50'),
+        api('/api/model-lab/skills'),
+        api('/api/model-lab/curricula')
+      ]);
+      state.summary = summary.summary || {};
+      state.datasets = Array.isArray(datasets.datasets) ? datasets.datasets : [];
+      state.connectors = Array.isArray(connectors.connectors) ? connectors.connectors : [];
+      state.trainingRuns = Array.isArray(runs.trainingRuns) ? runs.trainingRuns : [];
+      state.checkpoints = Array.isArray(checkpoints.checkpoints) ? checkpoints.checkpoints : [];
+      state.benchmarks = Array.isArray(benchmarks.benchmarks) ? benchmarks.benchmarks : [];
+      state.evaluations = Array.isArray(evaluations.evaluations) ? evaluations.evaluations : [];
+      state.syntheticJobs = Array.isArray(syntheticJobs.syntheticJobs) ? syntheticJobs.syntheticJobs : [];
+      state.candidates = Array.isArray(candidates.candidates) ? candidates.candidates : [];
+      state.failures = Array.isArray(failures.failures) ? failures.failures : [];
+      state.skills = Array.isArray(skills.skills) ? skills.skills : [];
+      state.curricula = Array.isArray(curricula.curricula) ? curricula.curricula : [];
+      if (!state.selectedDataset && state.datasets[0]) state.selectedDataset = state.datasets[0].id;
+      state.notice = 'Model Lab state refreshed.';
+    } catch (error) {
+      if (error.status === 403 || error.code === 'admin_required') {
+        state.denied = true;
+        root.remove();
+        return;
+      }
+      state.error = error.message || error.code || 'Model Lab could not load.';
+    } finally {
+      state.loading = false;
+      if (!state.denied && panel()) render();
+    }
+  }
+
+  async function currentDatasetDetail() {
+    if (!state.selectedDataset) throw new Error('Select a dataset first.');
+    const data = await api('/api/model-lab/datasets/' + encodeURIComponent(state.selectedDataset));
+    return data.dataset;
+  }
+
+  async function submitDataset(form) {
+    const fd = new FormData(form);
+    await api('/api/model-lab/datasets', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name:String(fd.get('name') || '').trim(),
+        purpose:String(fd.get('purpose') || '').trim() || null
+      })
+    });
+    state.notice='Dataset created.';
+    await refresh();
+  }
+
+  async function submitConnector(form) {
+    const fd = new FormData(form);
+    const connectorKind=String(fd.get('connectorKind') || '');
+    const payload={
+      ownershipKind:String(fd.get('ownershipKind') || ''),
+      ownershipSubject:String(fd.get('ownershipSubject') || '').trim(),
+      connectorKind,
+      endpointUrl:String(fd.get('endpointUrl') || '').trim() || null,
+      healthPath:String(fd.get('healthPath') || '').trim() || undefined
+    };
+    const data=await api('/api/model-lab/connectors',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    const c=data.ownershipChallenge;
+    if(c?.token){
+      window.prompt?.(
+        'One-time ownership challenge. Publish this exact token at ' + c.path +
+        ' before it expires. It will not be shown again.',
+        c.token
+      );
+    }
+    state.notice='Compute connector registered.';
+    await refresh();
+  }
+
+  async function submitTraining(form) {
+    const fd=new FormData(form);
+    await api('/api/model-lab/training-runs',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        datasetVersionId:String(fd.get('datasetVersionId')||''),
+        computeConnectorId:String(fd.get('computeConnectorId')||''),
+        baseModelRef:String(fd.get('baseModelRef')||'').trim(),
+        baseModelLicenseReference:String(fd.get('baseModelLicenseReference')||'').trim(),
+        trainingConfig:{}
+      })
+    });
+    state.notice='Training plan recorded. Live execution remains owned by PACK096.';
+    await refresh();
+  }
+
+  async function submitSkill(form) {
+    const fd=new FormData(form);
+    await api('/api/model-lab/skills',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name:String(fd.get('name')||'').trim(),
+        capability:String(fd.get('capability')||'').trim()||null,
+        description:String(fd.get('description')||'').trim()||null
+      })
+    });
+    form.reset();
+    state.notice='Skill created.';
+    await refresh();
+  }
+
+  async function submitCurriculum(form) {
+    const fd=new FormData(form);
+    await api('/api/model-lab/curricula',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name:String(fd.get('name')||'').trim(),
+        description:String(fd.get('description')||'').trim()||null
+      })
+    });
+    form.reset();
+    state.notice='Curriculum created.';
+    await refresh();
+  }
+
+  async function linkCurriculumSkill(form) {
+    const fd=new FormData(form);
+    const curriculumId=String(fd.get('curriculumId')||'').trim();
+    if(!curriculumId) throw new Error('Select a curriculum.');
+    await api('/api/model-lab/curricula/'+encodeURIComponent(curriculumId)+'/skills',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        skillId:String(fd.get('skillId')||'').trim(),
+        datasetVersionId:String(fd.get('datasetVersionId')||'').trim(),
+        weightBps:Number(fd.get('weightBps')||10000),
+        sequenceNo:Number(fd.get('sequenceNo')||1)
+      })
+    });
+    state.notice='Skill linked to frozen dataset lineage.';
+    await refresh();
+  }
+
+  async function submitBenchmark(form) {
+    const fd=new FormData(form);
+    await api('/api/model-lab/benchmarks',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name:String(fd.get('name')||'').trim(),
+        version:String(fd.get('version')||'').trim(),
+        datasetVersionId:String(fd.get('datasetVersionId')||'').trim()||null,
+        definition:{source:'pack095_admin_ui'}
+      })
+    });
+    form.reset();
+    state.notice='Benchmark recorded.';
+    await refresh();
+  }
+
+  async function submitEvaluation(form) {
+    const fd=new FormData(form);
+    const taskSuccessRaw=String(fd.get('taskSuccessBps')||'').trim();
+    const costRaw=String(fd.get('totalCostPerSuccessfulTaskMicrousd')||'').trim();
+    await api('/api/model-lab/evaluations',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        checkpointId:String(fd.get('checkpointId')||'').trim(),
+        benchmarkId:String(fd.get('benchmarkId')||'').trim(),
+        independent:true,
+        status:String(fd.get('status')||'planned'),
+        regressionStatus:String(fd.get('regressionStatus')||'unknown'),
+        taskSuccessBps:taskSuccessRaw===''?null:Number(taskSuccessRaw),
+        totalCostPerSuccessfulTaskMicrousd:costRaw===''?null:Number(costRaw),
+        metrics:{source:'pack095_admin_ui'}
+      })
+    });
+    state.notice='Independent evaluation record saved.';
+    await refresh();
+  }
+
+  async function submitSynthetic(form) {
+    const fd=new FormData(form);
+    await api('/api/model-lab/synthetic-jobs',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        targetDatasetId:String(fd.get('targetDatasetId')||'').trim(),
+        skillId:String(fd.get('skillId')||'').trim()||null,
+        teacherSource:String(fd.get('teacherSource')||'').trim()||null,
+        generationPolicy:{executionOwner:'PACK096',liveExecution:false}
+      })
+    });
+    form.reset();
+    state.notice='Synthetic-data job planned. No generation executed.';
+    await refresh();
+  }
+
+  async function addCandidate() {
+    const dataset=await currentDatasetDetail();
+    const versionId=dataset?.currentVersionId || dataset?.versions?.[0]?.id;
+    if(!versionId) throw new Error('Current dataset version is unavailable.');
+    const candidateId=String(panel()?.querySelector('[data-zuvyr-pack095-candidate-id]')?.value||'').trim();
+    if(!candidateId) throw new Error('Enter a PACK094 candidate UUID.');
+    await api('/api/model-lab/dataset-versions/'+encodeURIComponent(versionId)+'/candidates',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({candidateId})
+    });
+    state.notice='Eligible PACK094 candidate added.';
+    await refresh();
+  }
+
+  async function freezeSelected() {
+    const dataset=await currentDatasetDetail();
+    const versionId=dataset?.currentVersionId || dataset?.versions?.[0]?.id;
+    if(!versionId) throw new Error('Current dataset version is unavailable.');
+    await api('/api/model-lab/dataset-versions/'+encodeURIComponent(versionId)+'/freeze',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:'{}'
+    });
+    state.notice='Dataset version frozen with exact rights/license lineage.';
+    await refresh();
+  }
+
+  async function connectorSecret(id) {
+    const credential=window.prompt?.('Compute credential. It is stored server-side in Supabase Vault and is never returned to the browser.','');
+    if(!credential) return;
+    await api('/api/model-lab/connectors/'+encodeURIComponent(id)+'/credential',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({credential})
+    });
+    state.notice='Credential stored in server-side Vault.';
+    await refresh();
+  }
+
+  async function verifyConnector(id) {
+    const challengeToken=window.prompt?.('Paste the one-time ownership challenge that is currently published by the compute endpoint.','');
+    if(!challengeToken) return;
+    await api('/api/model-lab/connectors/'+encodeURIComponent(id)+'/verify-ownership',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({challengeToken})
+    });
+    state.notice='Compute endpoint ownership verified.';
+    await refresh();
+  }
+
+  async function healthConnector(id) {
+    await api('/api/model-lab/connectors/'+encodeURIComponent(id)+'/health-check',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:'{}'
+    });
+    state.notice='Health/capability attestation recorded.';
+    await refresh();
+  }
+
+  async function cloneDataset(id) {
+    await api('/api/model-lab/datasets/'+encodeURIComponent(id)+'/versions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:'{}'
+    });
+    state.selectedDataset=id;
+    state.notice='New draft dataset version created.';
+    await refresh();
+  }
+
+  async function promoteCheckpoint(id) {
+    const stage=String(window.prompt?.(
+      'Target adjacent stage: LAB, EVAL, SHADOW, CANARY, SECONDARY, PRIMARY',
+      'EVAL'
+    )||'').trim().toUpperCase();
+    if(!stage) return;
+    let evaluationId=null;
+    if(!['LAB','EVAL'].includes(stage)){
+      evaluationId=String(window.prompt?.('Independent passing evaluation UUID required for this stage.','')||'').trim()||null;
+    }
+    await api('/api/model-lab/checkpoints/'+encodeURIComponent(id)+'/promote',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({targetStage:stage,evaluationId})
+    });
+    state.notice='Checkpoint stage updated with audit evidence.';
+    await refresh();
+  }
+
+  function bind() {
+    const root=panel();
+    if(!root) return;
+    root.querySelector('[data-zuvyr-pack095-refresh]')?.addEventListener('click',()=>void refresh());
+
+    root.querySelector('[data-zuvyr-pack095-dataset-form]')?.addEventListener('submit',event=>{
+      event.preventDefault();
+      void submitDataset(event.currentTarget).catch(error=>notice(error.message));
+    });
+    root.querySelector('[data-zuvyr-pack095-connector-form]')?.addEventListener('submit',event=>{
+      event.preventDefault();
+      void submitConnector(event.currentTarget).catch(error=>notice(error.message));
+    });
+    root.querySelector('[data-zuvyr-pack095-training-form]')?.addEventListener('submit',event=>{
+      event.preventDefault();
+      void submitTraining(event.currentTarget).catch(error=>notice(error.message));
+    });
+
+    root.querySelector('[data-zuvyr-pack095-skill-form]')?.addEventListener('submit',event=>{
+      event.preventDefault();
+      void submitSkill(event.currentTarget).catch(error=>notice(error.message));
+    });
+    root.querySelector('[data-zuvyr-pack095-curriculum-form]')?.addEventListener('submit',event=>{
+      event.preventDefault();
+      void submitCurriculum(event.currentTarget).catch(error=>notice(error.message));
+    });
+    root.querySelector('[data-zuvyr-pack095-curriculum-link-form]')?.addEventListener('submit',event=>{
+      event.preventDefault();
+      void linkCurriculumSkill(event.currentTarget).catch(error=>notice(error.message));
+    });
+    root.querySelector('[data-zuvyr-pack095-benchmark-form]')?.addEventListener('submit',event=>{
+      event.preventDefault();
+      void submitBenchmark(event.currentTarget).catch(error=>notice(error.message));
+    });
+    root.querySelector('[data-zuvyr-pack095-evaluation-form]')?.addEventListener('submit',event=>{
+      event.preventDefault();
+      void submitEvaluation(event.currentTarget).catch(error=>notice(error.message));
+    });
+    root.querySelector('[data-zuvyr-pack095-synthetic-form]')?.addEventListener('submit',event=>{
+      event.preventDefault();
+      void submitSynthetic(event.currentTarget).catch(error=>notice(error.message));
+    });
+
+    root.querySelectorAll('[data-zuvyr-pack095-select-dataset]').forEach(button=>{
+      button.addEventListener('click',()=>{
+        state.selectedDataset=button.dataset.zuvyrPack095SelectDataset;
+        notice('Dataset selected.');
+      });
+    });
+    root.querySelectorAll('[data-zuvyr-pack095-clone-dataset]').forEach(button=>{
+      button.addEventListener('click',()=>void cloneDataset(button.dataset.zuvyrPack095CloneDataset).catch(error=>notice(error.message)));
+    });
+    root.querySelector('[data-zuvyr-pack095-add-candidate]')?.addEventListener('click',()=>void addCandidate().catch(error=>notice(error.message)));
+    root.querySelector('[data-zuvyr-pack095-freeze-dataset]')?.addEventListener('click',()=>void freezeSelected().catch(error=>notice(error.message)));
+
+    root.querySelectorAll('[data-zuvyr-pack095-connector-secret]').forEach(button=>{
+      button.addEventListener('click',()=>void connectorSecret(button.dataset.zuvyrPack095ConnectorSecret).catch(error=>notice(error.message)));
+    });
+    root.querySelectorAll('[data-zuvyr-pack095-verify-connector]').forEach(button=>{
+      button.addEventListener('click',()=>void verifyConnector(button.dataset.zuvyrPack095VerifyConnector).catch(error=>notice(error.message)));
+    });
+    root.querySelectorAll('[data-zuvyr-pack095-health-connector]').forEach(button=>{
+      button.addEventListener('click',()=>void healthConnector(button.dataset.zuvyrPack095HealthConnector).catch(error=>notice(error.message)));
+    });
+    root.querySelectorAll('[data-zuvyr-pack095-promote]').forEach(button=>{
+      button.addEventListener('click',()=>void promoteCheckpoint(button.dataset.zuvyrPack095Promote).catch(error=>notice(error.message)));
+    });
+    root.querySelectorAll('[data-zuvyr-pack095-rollback]').forEach(button=>{
+      button.addEventListener('click',()=>void rollbackCheckpoint(button.dataset.zuvyrPack095Rollback).catch(error=>notice(error.message)));
+    });
+  }
+
+  function install() {
+    if(state.installed || state.denied) return;
+    const screen=settingsScreen();
+    if(!screen) return;
+    if(panel()){state.installed=true;return;}
+
+    const root=document.createElement('section');
+    root.className='zuvyr-pack095-model-lab';
+    root.setAttribute('data-zuvyr-pack095-model-lab','true');
+    root.innerHTML='<div class="zuvyr-pack095-loading">Loading Model Lab…</div>';
+
+    const pack094=screen.querySelector('[data-zuvyr-pack094-data-rights]');
+    if(pack094?.nextSibling){
+      pack094.parentNode.insertBefore(root,pack094.nextSibling);
+    }else{
+      screen.appendChild(root);
+    }
+    state.installed=true;
+    void refresh();
+  }
+
+  const observer=new MutationObserver(()=>install());
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',()=>{
+      install();
+      observer.observe(document.documentElement,{childList:true,subtree:true});
+    },{once:true});
+  }else{
+    install();
+    observer.observe(document.documentElement,{childList:true,subtree:true});
   }
 })();

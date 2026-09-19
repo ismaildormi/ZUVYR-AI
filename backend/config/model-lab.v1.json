@@ -1,0 +1,79 @@
+{
+  "version": "pack-095.model-lab.v1",
+  "status": "engineering_candidate",
+  "access": {
+    "launchMode": "owner_admin_only",
+    "authority": "profiles.is_admin",
+    "multiTenantReady": true,
+    "currentOrganizationMembershipAuthority": false
+  },
+  "datasets": {
+    "sourceAuthority": "PACK094",
+    "candidateTable": "zuvyr_training_candidates",
+    "currentConsentAuthority": "zuvyr_user_preferences.training_consent",
+    "requireActiveRights": true,
+    "requirePrivacyProcessed": true,
+    "requireVerifiedProvenance": true,
+    "revalidateOnFreeze": true,
+    "revalidateOnTrainingRunCreate": true
+  },
+  "computeConnectors": {
+    "ownershipKinds": [
+      "user",
+      "organization"
+    ],
+    "directKinds": [
+      "openai_compatible_https",
+      "custom_https"
+    ],
+    "relayKind": "zuvyr_compute_relay",
+    "directHttpsOnly": true,
+    "privateIpDirectFetch": false,
+    "redirectFollowing": false,
+    "credentialStorage": "supabase_vault_reference",
+    "credentialReturnedToBrowser": false,
+    "ownershipChallengeTtlSeconds": 900,
+    "healthResponseMaxBytes": 1048576,
+    "requestTimeoutMs": 8000,
+    "qualificationRequires": [
+      "ownership_verified",
+      "healthy",
+      "capability_attestation"
+    ],
+    "costSeparation": {
+      "customerCompute": "direct_user_or_org_cost",
+      "zuvyrControlPlane": "zuvyr_control_plane_cost",
+      "combinedFieldForbidden": true
+    }
+  },
+  "training": {
+    "liveExecutionEnabled": false,
+    "executionOwner": "PACK096",
+    "plannedRunsAllowed": true,
+    "unknownCostBlocksLiveExecution": true
+  },
+  "rollout": {
+    "stages": [
+      "LAB",
+      "EVAL",
+      "SHADOW",
+      "CANARY",
+      "SECONDARY",
+      "PRIMARY"
+    ],
+    "liveRouterActivationOwner": "PACK096",
+    "liveRouterActivationEnabled": false,
+    "independentEvalRequiredBeyondEval": true,
+    "rollbackRequired": true
+  },
+  "economics": {
+    "zuvyrOwnedModelApiFeeUsd": 0,
+    "zuvyrOwnedModelUsageFeeUsd": 0,
+    "inferenceMarkupUsd": 0,
+    "customerComputeBilledByZuvyr": false
+  },
+  "externalGates": {
+    "ownerAdminAccountConfigured": false,
+    "realByocTargetConfigured": false
+  }
+}
