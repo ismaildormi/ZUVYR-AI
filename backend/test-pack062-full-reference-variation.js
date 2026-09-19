@@ -278,7 +278,7 @@ async function run() {
 
   assert.match(
     server,
-    /quoteGeneration\(\s*feature,\s*imageRequest\s*\?\s*\{\s*imageRequest\s*\}\s*:\s*\{\s*\}\s*\)/
+    /quoteGeneration\(\s*feature,[\s\S]*?imageRequest\s*\?\s*\{\s*imageRequest\s*\}[\s\S]*?videoRequest\s*\?\s*\{\s*videoRequest,\s*videoPricingContext\s*\}[\s\S]*?:\s*\{\s*\}[\s\S]*?\)/
   );
   assert.match(
     worker,
