@@ -154,7 +154,7 @@ function providerQuote(feature, {
     }, { env, now });
     return Object.freeze({
       provider: 'replicate',
-      providerCostMicroUsd: estimateProviderCostMicroUsd(entry, { units: 1 }),
+      providerCostMicroUsd: estimateProviderCostMicroUsd(entry),
       pricingVersion: entry.registryVersion,
       costEntryId: entry.id
     });
