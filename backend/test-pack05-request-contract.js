@@ -53,10 +53,12 @@ assert.equal(edit.options.durationSeconds, 5);
 const extend = normalizeVideoRequest({
   videoOperation: 'extend',
   sourceVideoAssetId: VIDEO,
-  videoOptions: { durationSeconds: 8, extendMode: 'start', contextSeconds: 3 }
+  videoOptions: { durationSeconds: 8.125, extendMode: 'start', contextSeconds: 3.25 }
 });
 assert.equal(extend.prompt, '');
 assert.equal(extend.options.extendMode, 'start');
+assert.equal(extend.options.durationSeconds, 8.125);
+assert.equal(extend.options.contextSeconds, 3.25);
 
 const lipsync = normalizeVideoRequest({
   videoOperation: 'lip_sync',
@@ -85,7 +87,8 @@ for (const [body, code] of [
   [{ videoOperation: 'image_to_video', prompt: 'x', sourceImageAssetId: IMAGE, videoOptions: { ratio: '9:16' } }, 'unsupported_video_option'],
   [{ videoOperation: 'reference_to_video', prompt: 'x', referenceImageAssetIds: [REF], sourceImageAssetId: IMAGE }, 'video_reference_source_conflict'],
   [{ videoOperation: 'background_remove', sourceVideoAssetId: VIDEO, sourceAudioAssetId: AUDIO }, 'video_source_audio_not_supported'],
-  [{ videoOperation: 'recamera', sourceVideoAssetId: VIDEO, videoOptions: { cameraMode:'target' } }, 'invalid_video_target_pose']
+  [{ videoOperation: 'recamera', sourceVideoAssetId: VIDEO, videoOptions: { cameraMode:'target' } }, 'invalid_video_target_pose'],
+  [{ videoOperation: 'extend', sourceVideoAssetId: VIDEO, videoOptions: { durationSeconds: 8.1234 } }, 'invalid_video_duration']
 ]) assert.throws(() => normalizeVideoRequest(body), error => error.code === code, code);
 
 console.log('PASS: Pack05/067/068 request contracts remain bounded and operation-specific');
