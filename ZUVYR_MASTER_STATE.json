@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "source_fix": "005-FIX6",
   "selected_strategy": "railway_internal_route",
-  "previous_pack": "080",
+  "previous_pack": "082",
   "tests": {
     "maintenance": "PASS",
     "runtime_safety": "PASS",
@@ -828,11 +828,12 @@
     "finalized_at": "2026-09-14T22:35:02.169Z"
   },
   "roadmap": {
-    "version": "150-pack-v1-2026-09-17",
+    "version": "150-pack-v1-model-first-2026-09-19",
     "total_packs": 150,
     "path": "docs/zuvyr/roadmap-150.json",
     "final_release_pack": "150",
-    "previous_plan_preserved": true
+    "previous_plan_preserved": true,
+    "priority_override": "MODEL_FIRST_BYO_COMPUTE_2026_09_19"
   },
   "active_pack": "083",
   "pack061": {
@@ -1835,5 +1836,84 @@
     "next_pack": "083",
     "next_pack_title": "3D Generation",
     "next_pack_external_gate": "M18"
+  },
+  "model_first_priority_override": {
+    "status": "CANONICAL",
+    "effective_date": "2026-09-19",
+    "current_inflight_pack": "083",
+    "current_inflight_may_finish": true,
+    "next_pack_after_current_inflight": "094",
+    "priority_sequence": [
+      "094 - Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
+      "095 - ZUVYR Model Lab",
+      "096 - ZUVYR 7 Manager / Operator - V1 Production Model + V2 Bridge"
+    ],
+    "resume_original_sequence_at": "084",
+    "deferred_not_cancelled": [
+      "084",
+      "085",
+      "086",
+      "087",
+      "088",
+      "089",
+      "090",
+      "091",
+      "092",
+      "093"
+    ],
+    "do_not_renumber_existing_packs": true,
+    "pack094_dependencies": [
+      "045",
+      "047"
+    ],
+    "former_pack094_dependencies_now_downstream": [
+      "091",
+      "092",
+      "093"
+    ],
+    "machine_policy": "backend/config/zuvyr-owned-model-runtime-policy.v1.json",
+    "economics": {
+      "zuvyr_api_self_hosting_software_fee_usd": 0,
+      "zuvyr_owned_model_usage_fee_usd": 0,
+      "zuvyr_inference_markup_usd": 0,
+      "default_compute_payer": "user_or_organization",
+      "default_compute_billing": "direct_to_user_or_org",
+      "zuvyr_paid_inference_gpu_default": false,
+      "target_zuvyr_variable_gpu_inference_cost_usd_per_owned_model_request": 0,
+      "control_plane_storage_egress_observability_costs_separate": true,
+      "training_r_and_d_compute_separate": true,
+      "external_paid_fallback_separately_accounted": true
+    },
+    "serving": {
+      "default_mode": "bring_your_own_compute",
+      "compute_connector_required": true,
+      "preferred_runtime_contract": "openai_compatible_or_zuvyr_compute_connector",
+      "credential_storage": "server_side_encrypted_reference",
+      "browser_secret_exposure": false,
+      "router_health_capability_attestation": true,
+      "shadow_canary_rollback_required": true
+    },
+    "learning": {
+      "continuous_learning_system": true,
+      "non_content_aggregate_signals_from_eligible_sessions": true,
+      "global_training_content_opt_in_default": false,
+      "memory_permission_separate_from_training_permission": true,
+      "content_training_requires_rights_consent_privacy_provenance": true,
+      "required_pipeline": [
+        "Learning Pipeline",
+        "Failure Bank",
+        "training-rights matrix",
+        "privacy/dedupe",
+        "dataset/license/checkpoint lineage",
+        "Teacher Gateway where permitted",
+        "train/fine-tune",
+        "independent eval",
+        "registry",
+        "shadow",
+        "canary",
+        "rollback/fallback"
+      ],
+      "primary_eval_objective": "task_success_and_total_cost_per_successful_task"
+    }
   }
 }

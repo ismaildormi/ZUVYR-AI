@@ -1,0 +1,111 @@
+{
+  "version": "zuvyr-owned-model-runtime-policy.v1",
+  "effective_date": "2026-09-19",
+  "status": "CANONICAL_MODEL_FIRST_PRIORITY",
+  "scope": "ZUVYR-owned model serving, self-hosting API/runtime, learning/evaluation pipeline and rollout economics",
+  "execution_priority": {
+    "current_inflight_pack_may_finish": "083",
+    "immediate_sequence_after_current_inflight": [
+      "094",
+      "095",
+      "096"
+    ],
+    "resume_original_sequence_at": "084",
+    "do_not_renumber_existing_packs": true,
+    "pack094_no_longer_depends_on": [
+      "091",
+      "092",
+      "093"
+    ]
+  },
+  "commercial_model": {
+    "zuvyr_api_software_fee_usd": 0,
+    "zuvyr_owned_model_usage_fee_usd": 0,
+    "zuvyr_inference_markup_usd": 0,
+    "default_compute_payer": "user_or_organization",
+    "default_compute_billing_relationship": "direct_between_user_or_org_and_compute_provider",
+    "zuvyr_paid_inference_gpu_default": false,
+    "target_zuvyr_variable_inference_cost_usd_per_owned_model_request": 0,
+    "external_provider_fallback_is_not_free_by_definition": true,
+    "control_plane_storage_egress_and_observability_costs_are_separate": true,
+    "model_training_and_r_and_d_compute_are_separate_from_end_user_inference": true
+  },
+  "serving_architecture": {
+    "mode": "bring_your_own_compute",
+    "api_software": "free",
+    "preferred_runtime_contract": "openai_compatible_or_zuvyr_compute_connector",
+    "supported_compute_ownership": [
+      "user_local_gpu",
+      "user_remote_gpu_server",
+      "organization_cloud_gpu",
+      "user_account_at_compute_provider"
+    ],
+    "endpoint_registration_required": true,
+    "endpoint_health_and_capability_attestation_required": true,
+    "encrypted_server_side_credential_reference_required": true,
+    "user_compute_credentials_must_not_be_exposed_to_browser": true,
+    "router_treats_owned_model_compute_as_provider_endpoint": true,
+    "automatic_external_fallback_allowed_when_policy_permits": true,
+    "fallback_cost_must_be_explicit_and_separately_accounted": true
+  },
+  "learning_flywheel": {
+    "every_session_can_contribute_non_content_aggregate_signals": true,
+    "aggregate_signal_examples": [
+      "task_success",
+      "tool_success",
+      "latency",
+      "retry_count",
+      "provider_or_model_outcome",
+      "cost_per_successful_task",
+      "failure_category",
+      "rollback_or_repair_outcome"
+    ],
+    "global_training_content_default": "opt_in_off",
+    "memory_permission_separate_from_training_permission": true,
+    "content_or_trace_training_requires": [
+      "explicit_eligibility",
+      "rights_or_license",
+      "consent_when_required",
+      "privacy_processing",
+      "provenance",
+      "revocation_or_exclusion_support"
+    ],
+    "required_pipeline": [
+      "Learning Pipeline",
+      "Failure Bank",
+      "training-rights matrix",
+      "dataset/license/checkpoint lineage",
+      "quality/difficulty/domain labeling",
+      "dedupe/redaction",
+      "Teacher Gateway",
+      "independent evaluation",
+      "shadow",
+      "canary",
+      "rollback"
+    ],
+    "primary_eval_objective": "task_success_and_total_cost_per_successful_task"
+  },
+  "owned_model_rollout": {
+    "stages": [
+      "LAB",
+      "EVAL",
+      "SHADOW",
+      "CANARY",
+      "SECONDARY",
+      "PRIMARY"
+    ],
+    "production_entry_requires_independent_eval": true,
+    "no_unacceptable_regression": true,
+    "automatic_rollback_required": true,
+    "external_model_fallback_required_until_owned_model_meets_quality_thresholds": true,
+    "frontier_superiority_not_required_for_v1": true
+  },
+  "accounting": {
+    "owned_model_provider_cost_to_zuvyr_usd": 0,
+    "customer_compute_cost_is_informational_not_zuvyr_model_usage_revenue": true,
+    "measure_customer_compute_cost_when_available": true,
+    "measure_zuvyr_control_plane_cost_separately": true,
+    "do_not_charge_credits_for_owned_model_usage_fee": true,
+    "external_fallback_usage_uses_existing_verified_economics": true
+  }
+}

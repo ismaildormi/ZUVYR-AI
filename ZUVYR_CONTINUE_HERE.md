@@ -31,6 +31,58 @@ Fresh evidence overrides older text.
 
 ---
 
+## LATEST CANONICAL OVERRIDE — MODEL-FIRST + BYO COMPUTE — 2026-09-19
+
+This section overrides older active-pack / next-pack text later in this file.
+
+Current production/source truth at the time of this override:
+
+- `main`: PACK082 finalized; **PACK083 — 3D Generation is the current in-flight Pack**.
+- Open implementation work for PACK083 must be reconciled/finished; do not discard or duplicate it.
+- **Do not start PACK084 after PACK083.**
+- Canonical priority after the current in-flight Pack is:
+  `PACK094 → PACK095 → PACK096`
+- After PACK096 is truthfully gated, resume the original sequence at PACK084. PACK084–PACK093 are deferred, not cancelled.
+- Existing Pack numbers remain unchanged. Do not renumber historical work.
+
+### Canonical owned-model economics
+
+- ZUVYR API/self-hosting software fee = **$0**.
+- ZUVYR-owned model usage fee = **$0**.
+- ZUVYR inference markup = **$0**.
+- GPU/server/compute = **paid directly by the user or organization**.
+- Default serving = **Bring Your Own Compute (BYOC)**: local GPU, remote GPU server, organization cloud GPU, or user-owned compute-provider account.
+- Normal ZUVYR-owned-model inference must not require a ZUVYR-paid GPU; target ZUVYR variable GPU inference cost per owned-model request is approximately $0.
+- Do not misstate this as total company cost = $0: control-plane, storage, network/egress, observability/support and model-training/R&D costs remain separately measurable.
+- Paid external model fallback/teacher usage is not automatically free and keeps separate verified economics.
+
+Machine-readable authority:
+
+`backend/config/zuvyr-owned-model-runtime-policy.v1.json`
+
+### Continuous-learning requirement
+
+ZUVYR V1 must prepare a continuously improving system, not a static model:
+
+- eligible non-content aggregate task/outcome/failure/cost signals can improve product/routing/evals;
+- Memory permission and model-training permission remain separate;
+- global-training content opt-in remains OFF by default;
+- training content/traces require eligibility + rights/license + consent when required + privacy processing + provenance + revocation/exclusion support;
+- canonical pipeline:
+  `Learning Pipeline → Failure Bank → rights matrix → privacy/dedupe → dataset lineage → Teacher Gateway where permitted → train/fine-tune → independent eval → registry → shadow → canary → rollback/fallback`;
+- primary model decision objective:
+  `task success + quality + latency + total cost per successful task`.
+
+### Model-First Pack interpretation
+
+- **PACK094** no longer depends on 091/092/093; dependencies are 045 + 047. 091–093 become downstream consumers.
+- **PACK095** must include the ZUVYR Compute Connector registry, ownership, health/capability attestation and encrypted credential references.
+- **PACK096** must prove at least one real ZUVYR-owned checkpoint serving a bounded production workload on user/org-funded BYOC with $0 ZUVYR API/model usage fee, plus the complete rights-approved learning loop and fallback/rollback.
+
+Do not proceed from PACK083 to PACK084 by habit. Follow the priority sequence above unless a later explicit user instruction overrides it.
+
+---
+
 ## CURRENT SOURCE IDENTITY
 
 Last production-runtime-verified source:
