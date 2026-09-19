@@ -115,7 +115,7 @@ function createBrowserAgentBrainPlan({
     plan,
     goalRedacted: redactedGoal,
     goalSha256,
-    planVersion: plan.version,
+    planVersion: plan.planFingerprint,
     intentFingerprint: intentLock.intentFingerprint
   });
 }
