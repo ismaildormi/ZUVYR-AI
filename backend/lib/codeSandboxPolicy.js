@@ -159,10 +159,24 @@ function buildProviderCreateBody({ localSessionId, env = process.env } = {}) {
 }
 
 function assertNoSecretInjection(body) {
-  const serialized = JSON.stringify(body || {}).toUpperCase();
-  for (const pattern of config.secrets.forbiddenNamePatterns) {
-    if (serialized.includes(String(pattern).toUpperCase())) {
-      throw sandboxError('code_sandbox_secret_injection_blocked');
+  const forbidden = config.secrets.forbiddenNamePatterns
+    .map(value => String(value || '').trim().toUpperCase())
+    .filter(Boolean);
+
+  const stack = [body || {}];
+  while (stack.length) {
+    const current = stack.pop();
+    if (!current || typeof current !== 'object') continue;
+    if (Array.isArray(current)) {
+      for (const value of current) stack.push(value);
+      continue;
+    }
+    for (const [key, value] of Object.entries(current)) {
+      const normalizedKey = String(key || '').toUpperCase();
+      if (forbidden.some(pattern => normalizedKey.includes(pattern))) {
+        throw sandboxError('code_sandbox_secret_injection_blocked');
+      }
+      if (value && typeof value === 'object') stack.push(value);
     }
   }
 
