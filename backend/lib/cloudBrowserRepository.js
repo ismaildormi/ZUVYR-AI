@@ -88,10 +88,10 @@ function createCloudBrowserRepository({db,storage}={}) {
 
   async function reserve({
     ownerId,conversationId=null,taskRunId=null,projectId=null,
-    requestId,billingRequestId,expiresAt,idleExpiresAt,
+    requestId,billingRequestId,expiresAt,idleExpiresAt,allowedHosts,
     pricingVersion,browserHourPriceMicroUsd,reservedCredits
   }={}) {
-    const policies=sessionPolicies();
+    const policies=sessionPolicies({allowedHosts});
     const result=await db.rpc('reserve_zuvyr_browser_session_pack081',{
       p_owner_id:ownerId,
       p_conversation_id:conversationId,
@@ -257,6 +257,59 @@ function createCloudBrowserRepository({db,storage}={}) {
     });
   }
 
+  async function recordOwnedUpload({
+    ownerId,sessionId,assetId,providerArtifactId=null,fileName=null
+  }={}) {
+    await internal({ownerId,sessionId});
+    const asset=await resolveOwnedAsset({ownerId,assetId});
+    if (!asset?.assetId) throw repoError('cloud_browser_upload_asset_not_found');
+
+    const canonicalContentId=
+      asset.canonicalContentId || asset.canonical_content_id || null;
+    const canonicalVersionId=
+      asset.canonicalVersionId || asset.canonical_version_id || null;
+    if (!canonicalContentId || !canonicalVersionId) {
+      throw repoError('cloud_browser_upload_asset_not_canonical');
+    }
+
+    const row=await db.from('browser_session_artifacts').insert({
+      owner_id:ownerId,
+      session_id:sessionId,
+      artifact_kind:'upload',
+      canonical_content_id:canonicalContentId,
+      canonical_version_id:canonicalVersionId,
+      asset_id:asset.assetId,
+      provider_artifact_id:providerArtifactId,
+      file_name:safeFileName(fileName || asset.metadata?.fileName || 'upload.bin','upload.bin'),
+      mime_type:asset.mimeType || asset.mime_type || 'application/octet-stream',
+      file_size_bytes:Number(asset.fileSizeBytes || asset.file_size_bytes || 0),
+      sha256:asset.sha256 || null,
+      metadata:{pack:81,direction:'upload'}
+    }).select('id').single();
+    if (row.error) throw repoError('cloud_browser_upload_artifact_row_failed',row.error);
+    return Object.freeze({
+      id:row.data.id,
+      kind:'upload',
+      assetId:asset.assetId,
+      providerArtifactId
+    });
+  }
+
+  async function signedArtifactDownload({ownerId,artifactId,requestId}={}) {
+    const row=await db.from('browser_session_artifacts')
+      .select('id,asset_id')
+      .eq('id',artifactId)
+      .eq('owner_id',ownerId)
+      .maybeSingle();
+    if (row.error) throw repoError('cloud_browser_artifact_lookup_failed',row.error);
+    if (!row.data?.asset_id) throw repoError('cloud_browser_artifact_download_unavailable');
+    return assets.createSignedDownload({
+      ownerId,
+      assetId:row.data.asset_id,
+      requestId
+    });
+  }
+
   async function artifacts({ownerId,sessionId,limit=100}) {
     await internal({ownerId,sessionId});
     const result=await db.from('browser_session_artifacts')
@@ -283,7 +336,8 @@ function createCloudBrowserRepository({db,storage}={}) {
 
   return Object.freeze({
     internal,get,byRequest,list,reserve,transition,billing,touch,
-    uploadCanonical,resolveOwnedAsset,downloadOwnedAssetBuffer,artifacts,stale
+    uploadCanonical,resolveOwnedAsset,downloadOwnedAssetBuffer,
+    recordOwnedUpload,signedArtifactDownload,artifacts,stale
   });
 }
 
