@@ -9,6 +9,7 @@ const {
   resolveCostEntry,
   estimateProviderCostMicroUsd
 } = require('./costRegistry');
+const { assertModel3dLiveAvailable } = require('./model3dPolicy');
 const {
   BPS_SCALE,
   integer,
@@ -159,12 +160,9 @@ function providerQuote(feature, {
   model3dRequest = null
 } = {}) {
   if (feature === '3d' && model3dRequest) {
-    if (String(env.PACK083_3D_PAID_EXECUTION_ENABLED || '').toLowerCase() !== 'true') {
-      throw pricingError('pack083_3d_paid_execution_disabled');
-    }
-    if (!env.FAL_KEY) {
-      throw pricingError('no_configured_pack083_3d_provider');
-    }
+    // Single source of truth for all paid PACK083 gates. This executes
+    // before any cost/provider work and matches the provider adapter gate.
+    assertModel3dLiveAvailable(env);
 
     const query = operationType => resolveCostEntry({
       provider: 'fal',
