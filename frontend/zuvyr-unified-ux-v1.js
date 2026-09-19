@@ -465,6 +465,132 @@
     )).join('');
   }
 
+  function candidateRows() {
+    if (!state.candidates.length) {
+      return '<div class="zuvyr-pack095-empty">No eligible PACK094 training candidates.</div>';
+    }
+    return state.candidates.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.domain || item.payloadKind || 'Candidate') + '</strong>' +
+          '<span>Candidate ' + esc(shortId(item.id)) +
+          ' · content ' + esc(shortId(item.contentId)) +
+          ' · rights ' + esc(shortId(item.rightsId)) + '</span>' +
+          '<small>Consent v' + esc(item.consentVersion) +
+          ' · quality ' + esc(item.qualityScore == null ? '—' : item.qualityScore) +
+          ' · learning value ' + esc(item.learningValueScore || 0) +
+          ' · source owner ' + esc(shortId(item.sourceOwnerId)) + '</small>' +
+        '</div>' +
+        badge('ELIGIBLE METADATA','good') +
+      '</article>'
+    )).join('');
+  }
+
+  function failureRows() {
+    if (!state.failures.length) {
+      return '<div class="zuvyr-pack095-empty">Failure Bank has no open patterns.</div>';
+    }
+    return state.failures.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.failureCategory || 'Failure pattern') + '</strong>' +
+          '<span>' + esc(item.capability || 'unknown capability') +
+          ' · ' + esc(item.provider || item.modelTool || 'unassigned') + '</span>' +
+          '<small>' + esc(item.occurrences || 0) + ' occurrences · domain ' +
+          esc(item.domain || '—') + ' · last seen ' + esc(dateText(item.lastSeenAt)) + '</small>' +
+        '</div>' +
+        badge('OPEN','warn') +
+      '</article>'
+    )).join('');
+  }
+
+  function skillRows() {
+    if (!state.skills.length) {
+      return '<div class="zuvyr-pack095-empty">No Model Lab skills defined.</div>';
+    }
+    return state.skills.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.name || 'Skill') + '</strong>' +
+          '<span>' + esc(item.capability || 'No capability label') + '</span>' +
+          '<small>' + esc(item.description || 'No description') + '</small>' +
+        '</div>' +
+        badge(String(item.status || 'active').toUpperCase(), 'neutral') +
+      '</article>'
+    )).join('');
+  }
+
+  function curriculumRows() {
+    if (!state.curricula.length) {
+      return '<div class="zuvyr-pack095-empty">No curricula defined.</div>';
+    }
+    return state.curricula.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.name || 'Curriculum') + '</strong>' +
+          '<span>' + esc(item.description || 'No description') + '</span>' +
+          '<small>Curriculum ' + esc(shortId(item.id)) + '</small>' +
+        '</div>' +
+        badge(String(item.status || 'active').toUpperCase(), 'neutral') +
+      '</article>'
+    )).join('');
+  }
+
+  function benchmarkRows() {
+    if (!state.benchmarks.length) {
+      return '<div class="zuvyr-pack095-empty">No independent benchmarks defined.</div>';
+    }
+    return state.benchmarks.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.name || 'Benchmark') + ' · ' + esc(item.version || '') + '</strong>' +
+          '<span>Dataset version ' + esc(shortId(item.dataset_version_id)) + '</span>' +
+          '<small>Benchmark ' + esc(shortId(item.id)) + '</small>' +
+        '</div>' +
+        badge(String(item.status || 'active').toUpperCase(), 'neutral') +
+      '</article>'
+    )).join('');
+  }
+
+  function evaluationRows() {
+    if (!state.evaluations.length) {
+      return '<div class="zuvyr-pack095-empty">No independent evaluations recorded.</div>';
+    }
+    return state.evaluations.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>Checkpoint ' + esc(shortId(item.checkpoint_id)) + '</strong>' +
+          '<span>Benchmark ' + esc(shortId(item.benchmark_id)) +
+          ' · regression ' + esc(item.regression_status || 'unknown') + '</span>' +
+          '<small>Task success ' +
+          esc(item.task_success_bps == null ? '—' : (Number(item.task_success_bps) / 100).toFixed(2) + '%') +
+          ' · cost/success ' +
+          esc(item.total_cost_per_successful_task_microusd == null ? 'unknown' : item.total_cost_per_successful_task_microusd + ' µUSD') +
+          ' · independent ' + (item.independent === false ? 'no' : 'yes') + '</small>' +
+        '</div>' +
+        badge(String(item.status || 'planned').toUpperCase(), item.status === 'passed' ? 'good' : 'neutral') +
+      '</article>'
+    )).join('');
+  }
+
+  function syntheticRows() {
+    if (!state.syntheticJobs.length) {
+      return '<div class="zuvyr-pack095-empty">No synthetic-data plans recorded.</div>';
+    }
+    return state.syntheticJobs.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>Synthetic plan ' + esc(shortId(item.id)) + '</strong>' +
+          '<span>Dataset ' + esc(shortId(item.target_dataset_id)) +
+          ' · skill ' + esc(shortId(item.skill_id)) + '</span>' +
+          '<small>Teacher source ' + esc(item.teacher_source || 'owner-created / unspecified') +
+          ' · rights basis ' + esc(item.rights_basis || 'owner_created') + '</small>' +
+        '</div>' +
+        badge(String(item.status || 'planned').toUpperCase(), 'neutral') +
+      '</article>'
+    )).join('');
+  }
+
   function render() {
     const root = panel();
     if (!root) return;
@@ -656,6 +782,21 @@
     if (memory) memory.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
 
+  async function rollbackCheckpoint(id) {
+    const reason=String(window.prompt?.(
+      'Rollback reason (recorded in immutable rollout lineage):',
+      'Manual Model Lab rollback'
+    )||'').trim();
+    if(!reason) return;
+    await api('/api/model-lab/checkpoints/'+encodeURIComponent(id)+'/rollback',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({targetStage:'LAB',reason})
+    });
+    state.notice='Checkpoint rolled back to LAB; planned later stages were cancelled in lineage.';
+    await refresh();
+  }
+
   function bind() {
     const root = panel();
     if (!root) return;
@@ -753,6 +894,10 @@
     benchmarks: [],
     evaluations: [],
     syntheticJobs: [],
+    candidates: [],
+    failures: [],
+    skills: [],
+    curricula: [],
     selectedDataset: '',
     selectedConnector: '',
     notice: ''
@@ -916,6 +1061,9 @@
         '<div class="zuvyr-pack095-row-actions">' +
           badge(String(item.current_stage || 'LAB'), item.current_stage === 'PRIMARY' ? 'good' : 'neutral') +
           '<button type="button" data-zuvyr-pack095-promote="' + esc(item.id) + '">Stage</button>' +
+          ((item.current_stage === 'EVAL' || item.current_stage === 'LAB')
+            ? '<button type="button" data-zuvyr-pack095-rollback="' + esc(item.id) + '">Rollback</button>'
+            : '') +
         '</div>' +
       '</article>'
     )).join('');
@@ -1013,8 +1161,104 @@
       '</details>' +
 
       '<details class="zuvyr-pack095-section">' +
-        '<summary>Skills, curricula, synthetic data & evaluation</summary>' +
-        '<div class="zuvyr-pack095-note">Control-plane APIs are active for skills, curricula, planned synthetic jobs, benchmarks and independent evaluations. Synthetic generation and live model training remain disabled until the owning packs activate verified execution.</div>' +
+        '<summary>Learning inputs · Candidate Pool & Failure Bank</summary>' +
+        '<div class="zuvyr-pack095-note">Metadata only. Training payload content is not rendered here; PACK094 rights, consent, privacy and provenance remain the admission authority.</div>' +
+        '<div class="zuvyr-pack095-two-col">' +
+          '<div><h4>Eligible candidates</h4><div class="zuvyr-pack095-list">' + candidateRows() + '</div></div>' +
+          '<div><h4>Failure Bank</h4><div class="zuvyr-pack095-list">' + failureRows() + '</div></div>' +
+        '</div>' +
+      '</details>' +
+
+      '<details class="zuvyr-pack095-section">' +
+        '<summary>Skills & curricula</summary>' +
+        '<div class="zuvyr-pack095-two-col">' +
+          '<div>' +
+            '<form class="zuvyr-pack095-form" data-zuvyr-pack095-skill-form>' +
+              '<input name="name" maxlength="120" required placeholder="Skill name">' +
+              '<input name="capability" maxlength="160" placeholder="Capability">' +
+              '<input name="description" maxlength="4000" placeholder="Description">' +
+              '<button class="zuvyr-pack095-primary" type="submit">Create skill</button>' +
+              '<button type="reset">Cancel</button>' +
+            '</form>' +
+            '<div class="zuvyr-pack095-list">' + skillRows() + '</div>' +
+          '</div>' +
+          '<div>' +
+            '<form class="zuvyr-pack095-form" data-zuvyr-pack095-curriculum-form>' +
+              '<input name="name" maxlength="160" required placeholder="Curriculum name">' +
+              '<input name="description" maxlength="4000" placeholder="Description">' +
+              '<button class="zuvyr-pack095-primary" type="submit">Create curriculum</button>' +
+              '<button type="reset">Cancel</button>' +
+            '</form>' +
+            '<div class="zuvyr-pack095-list">' + curriculumRows() + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<form class="zuvyr-pack095-form is-grid" data-zuvyr-pack095-curriculum-link-form>' +
+          '<select name="curriculumId" required>' +
+            selectOptions(state.curricula, 'id', x => x.name, '', 'Curriculum') +
+          '</select>' +
+          '<select name="skillId" required>' +
+            selectOptions(state.skills, 'id', x => x.name, '', 'Skill') +
+          '</select>' +
+          '<select name="datasetVersionId" required>' +
+            selectOptions(state.datasets, 'currentVersionId', x => x.name + ' · current version (must be frozen)', '', 'Frozen dataset version') +
+          '</select>' +
+          '<input name="weightBps" type="number" min="1" max="10000" value="10000" aria-label="Weight basis points">' +
+          '<input name="sequenceNo" type="number" min="1" value="1" aria-label="Sequence number">' +
+          '<button class="zuvyr-pack095-primary" type="submit">Link skill</button>' +
+          '<button type="reset">Cancel</button>' +
+        '</form>' +
+      '</details>' +
+
+      '<details class="zuvyr-pack095-section">' +
+        '<summary>Benchmarks & independent evaluations</summary>' +
+        '<div class="zuvyr-pack095-two-col">' +
+          '<div>' +
+            '<form class="zuvyr-pack095-form" data-zuvyr-pack095-benchmark-form>' +
+              '<input name="name" maxlength="160" required placeholder="Benchmark name">' +
+              '<input name="version" maxlength="80" required placeholder="Version">' +
+              '<select name="datasetVersionId">' +
+                selectOptions(state.datasets, 'currentVersionId', x => x.name + ' · current version', '', 'Optional dataset version') +
+              '</select>' +
+              '<button class="zuvyr-pack095-primary" type="submit">Create benchmark</button>' +
+              '<button type="reset">Cancel</button>' +
+            '</form>' +
+            '<div class="zuvyr-pack095-list">' + benchmarkRows() + '</div>' +
+          '</div>' +
+          '<div>' +
+            '<form class="zuvyr-pack095-form" data-zuvyr-pack095-evaluation-form>' +
+              '<select name="checkpointId" required>' +
+                selectOptions(state.checkpoints, 'id', x => (x.name || 'Checkpoint') + ' · ' + (x.current_stage || 'LAB'), '', 'Checkpoint') +
+              '</select>' +
+              '<select name="benchmarkId" required>' +
+                selectOptions(state.benchmarks, 'id', x => (x.name || 'Benchmark') + ' · ' + (x.version || ''), '', 'Benchmark') +
+              '</select>' +
+              '<select name="status"><option value="planned">Planned</option><option value="running">Running</option><option value="passed">Passed</option><option value="failed">Failed</option><option value="cancelled">Cancelled</option></select>' +
+              '<select name="regressionStatus"><option value="unknown">Regression unknown</option><option value="pass">Regression pass</option><option value="fail">Regression fail</option></select>' +
+              '<input name="taskSuccessBps" type="number" min="0" max="10000" placeholder="Task success bps">' +
+              '<input name="totalCostPerSuccessfulTaskMicrousd" type="number" min="0" placeholder="Cost / successful task µUSD">' +
+              '<button class="zuvyr-pack095-primary" type="submit">Record evaluation</button>' +
+              '<button type="reset">Cancel</button>' +
+            '</form>' +
+            '<div class="zuvyr-pack095-list">' + evaluationRows() + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</details>' +
+
+      '<details class="zuvyr-pack095-section">' +
+        '<summary>Synthetic-data plans</summary>' +
+        '<form class="zuvyr-pack095-form is-grid" data-zuvyr-pack095-synthetic-form>' +
+          '<select name="targetDatasetId" required>' +
+            selectOptions(state.datasets, 'id', x => x.name, '', 'Target dataset') +
+          '</select>' +
+          '<select name="skillId">' +
+            selectOptions(state.skills, 'id', x => x.name, '', 'Optional skill') +
+          '</select>' +
+          '<input name="teacherSource" maxlength="240" placeholder="Teacher source / policy reference">' +
+          '<button class="zuvyr-pack095-primary" type="submit">Create planned job</button>' +
+          '<button type="reset">Cancel</button>' +
+        '</form>' +
+        '<div class="zuvyr-pack095-note">Planning only. Synthetic generation and live model training remain disabled until the owning packs activate verified execution.</div>' +
+        '<div class="zuvyr-pack095-list">' + syntheticRows() + '</div>' +
       '</details>' +
 
       '<div class="zuvyr-pack095-notice" data-zuvyr-pack095-notice role="status" aria-live="polite">' +
@@ -1031,17 +1275,23 @@
     state.error = '';
     render();
     try {
-      const [summary,datasets,connectors,runs,checkpoints,benchmarks,evaluations,syntheticJobs] =
-        await Promise.all([
-          api('/api/model-lab/summary'),
-          api('/api/model-lab/datasets'),
-          api('/api/model-lab/connectors'),
-          api('/api/model-lab/training-runs'),
-          api('/api/model-lab/checkpoints'),
-          api('/api/model-lab/benchmarks'),
-          api('/api/model-lab/evaluations'),
-          api('/api/model-lab/synthetic-jobs')
-        ]);
+      const [
+        summary,datasets,connectors,runs,checkpoints,benchmarks,evaluations,
+        syntheticJobs,candidates,failures,skills,curricula
+      ] = await Promise.all([
+        api('/api/model-lab/summary'),
+        api('/api/model-lab/datasets'),
+        api('/api/model-lab/connectors'),
+        api('/api/model-lab/training-runs'),
+        api('/api/model-lab/checkpoints'),
+        api('/api/model-lab/benchmarks'),
+        api('/api/model-lab/evaluations'),
+        api('/api/model-lab/synthetic-jobs'),
+        api('/api/model-lab/candidate-pool?limit=50'),
+        api('/api/model-lab/failure-bank?limit=50'),
+        api('/api/model-lab/skills'),
+        api('/api/model-lab/curricula')
+      ]);
       state.summary = summary.summary || {};
       state.datasets = Array.isArray(datasets.datasets) ? datasets.datasets : [];
       state.connectors = Array.isArray(connectors.connectors) ? connectors.connectors : [];
@@ -1050,6 +1300,10 @@
       state.benchmarks = Array.isArray(benchmarks.benchmarks) ? benchmarks.benchmarks : [];
       state.evaluations = Array.isArray(evaluations.evaluations) ? evaluations.evaluations : [];
       state.syntheticJobs = Array.isArray(syntheticJobs.syntheticJobs) ? syntheticJobs.syntheticJobs : [];
+      state.candidates = Array.isArray(candidates.candidates) ? candidates.candidates : [];
+      state.failures = Array.isArray(failures.failures) ? failures.failures : [];
+      state.skills = Array.isArray(skills.skills) ? skills.skills : [];
+      state.curricula = Array.isArray(curricula.curricula) ? curricula.curricula : [];
       if (!state.selectedDataset && state.datasets[0]) state.selectedDataset = state.datasets[0].id;
       state.notice = 'Model Lab state refreshed.';
     } catch (error) {
@@ -1126,6 +1380,111 @@
       })
     });
     state.notice='Training plan recorded. Live execution remains owned by PACK096.';
+    await refresh();
+  }
+
+  async function submitSkill(form) {
+    const fd=new FormData(form);
+    await api('/api/model-lab/skills',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name:String(fd.get('name')||'').trim(),
+        capability:String(fd.get('capability')||'').trim()||null,
+        description:String(fd.get('description')||'').trim()||null
+      })
+    });
+    form.reset();
+    state.notice='Skill created.';
+    await refresh();
+  }
+
+  async function submitCurriculum(form) {
+    const fd=new FormData(form);
+    await api('/api/model-lab/curricula',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name:String(fd.get('name')||'').trim(),
+        description:String(fd.get('description')||'').trim()||null
+      })
+    });
+    form.reset();
+    state.notice='Curriculum created.';
+    await refresh();
+  }
+
+  async function linkCurriculumSkill(form) {
+    const fd=new FormData(form);
+    const curriculumId=String(fd.get('curriculumId')||'').trim();
+    if(!curriculumId) throw new Error('Select a curriculum.');
+    await api('/api/model-lab/curricula/'+encodeURIComponent(curriculumId)+'/skills',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        skillId:String(fd.get('skillId')||'').trim(),
+        datasetVersionId:String(fd.get('datasetVersionId')||'').trim(),
+        weightBps:Number(fd.get('weightBps')||10000),
+        sequenceNo:Number(fd.get('sequenceNo')||1)
+      })
+    });
+    state.notice='Skill linked to frozen dataset lineage.';
+    await refresh();
+  }
+
+  async function submitBenchmark(form) {
+    const fd=new FormData(form);
+    await api('/api/model-lab/benchmarks',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name:String(fd.get('name')||'').trim(),
+        version:String(fd.get('version')||'').trim(),
+        datasetVersionId:String(fd.get('datasetVersionId')||'').trim()||null,
+        definition:{source:'pack095_admin_ui'}
+      })
+    });
+    form.reset();
+    state.notice='Benchmark recorded.';
+    await refresh();
+  }
+
+  async function submitEvaluation(form) {
+    const fd=new FormData(form);
+    const taskSuccessRaw=String(fd.get('taskSuccessBps')||'').trim();
+    const costRaw=String(fd.get('totalCostPerSuccessfulTaskMicrousd')||'').trim();
+    await api('/api/model-lab/evaluations',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        checkpointId:String(fd.get('checkpointId')||'').trim(),
+        benchmarkId:String(fd.get('benchmarkId')||'').trim(),
+        independent:true,
+        status:String(fd.get('status')||'planned'),
+        regressionStatus:String(fd.get('regressionStatus')||'unknown'),
+        taskSuccessBps:taskSuccessRaw===''?null:Number(taskSuccessRaw),
+        totalCostPerSuccessfulTaskMicrousd:costRaw===''?null:Number(costRaw),
+        metrics:{source:'pack095_admin_ui'}
+      })
+    });
+    state.notice='Independent evaluation record saved.';
+    await refresh();
+  }
+
+  async function submitSynthetic(form) {
+    const fd=new FormData(form);
+    await api('/api/model-lab/synthetic-jobs',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        targetDatasetId:String(fd.get('targetDatasetId')||'').trim(),
+        skillId:String(fd.get('skillId')||'').trim()||null,
+        teacherSource:String(fd.get('teacherSource')||'').trim()||null,
+        generationPolicy:{executionOwner:'PACK096',liveExecution:false}
+      })
+    });
+    form.reset();
+    state.notice='Synthetic-data job planned. No generation executed.';
     await refresh();
   }
 
@@ -1239,6 +1598,31 @@
       void submitTraining(event.currentTarget).catch(error=>notice(error.message));
     });
 
+    root.querySelector('[data-zuvyr-pack095-skill-form]')?.addEventListener('submit',event=>{
+      event.preventDefault();
+      void submitSkill(event.currentTarget).catch(error=>notice(error.message));
+    });
+    root.querySelector('[data-zuvyr-pack095-curriculum-form]')?.addEventListener('submit',event=>{
+      event.preventDefault();
+      void submitCurriculum(event.currentTarget).catch(error=>notice(error.message));
+    });
+    root.querySelector('[data-zuvyr-pack095-curriculum-link-form]')?.addEventListener('submit',event=>{
+      event.preventDefault();
+      void linkCurriculumSkill(event.currentTarget).catch(error=>notice(error.message));
+    });
+    root.querySelector('[data-zuvyr-pack095-benchmark-form]')?.addEventListener('submit',event=>{
+      event.preventDefault();
+      void submitBenchmark(event.currentTarget).catch(error=>notice(error.message));
+    });
+    root.querySelector('[data-zuvyr-pack095-evaluation-form]')?.addEventListener('submit',event=>{
+      event.preventDefault();
+      void submitEvaluation(event.currentTarget).catch(error=>notice(error.message));
+    });
+    root.querySelector('[data-zuvyr-pack095-synthetic-form]')?.addEventListener('submit',event=>{
+      event.preventDefault();
+      void submitSynthetic(event.currentTarget).catch(error=>notice(error.message));
+    });
+
     root.querySelectorAll('[data-zuvyr-pack095-select-dataset]').forEach(button=>{
       button.addEventListener('click',()=>{
         state.selectedDataset=button.dataset.zuvyrPack095SelectDataset;
@@ -1262,6 +1646,9 @@
     });
     root.querySelectorAll('[data-zuvyr-pack095-promote]').forEach(button=>{
       button.addEventListener('click',()=>void promoteCheckpoint(button.dataset.zuvyrPack095Promote).catch(error=>notice(error.message)));
+    });
+    root.querySelectorAll('[data-zuvyr-pack095-rollback]').forEach(button=>{
+      button.addEventListener('click',()=>void rollbackCheckpoint(button.dataset.zuvyrPack095Rollback).catch(error=>notice(error.message)));
     });
   }
 
