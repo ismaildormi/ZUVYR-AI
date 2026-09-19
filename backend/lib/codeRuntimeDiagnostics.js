@@ -9,11 +9,21 @@ const MAX_STACK_LINES = 24;
 function redact(value) {
   return String(value || '')
     .replace(
-      /\b(?:api[_-]?key|token|secret|password|authorization)\s*[:=]\s*['"]?[^\s'",;]+/gi,
+      /\bAuthorization\s*[:=]\s*Bearer\s+[A-Za-z0-9._~+\/-]{8,}/gi,
+      'Authorization: Bearer [redacted]'
+    )
+    .replace(
+      /\bBearer\s+[A-Za-z0-9._~+\/-]{12,}/gi,
+      'Bearer [redacted]'
+    )
+    .replace(
+      /\b(?:api[_-]?key|token|secret|password)\s*[:=]\s*['"]?[^\s'",;]+/gi,
       match => match.replace(/([:=]\s*['"]?).*$/,'$1[redacted]')
     )
-    .replace(/Bearer\s+[A-Za-z0-9._~+\/-]{12,}/gi, 'Bearer [redacted]')
-    .replace(/\b(?:sk|pk|vcp|sbp)_[A-Za-z0-9_-]{12,}\b/g, '[redacted]');
+    .replace(
+      /\b(?:sk|pk|vcp|sbp)_[A-Za-z0-9_-]{12,}\b/g,
+      '[redacted]'
+    );
 }
 
 function safePath(value) {
