@@ -1,0 +1,120 @@
+{
+  "version": "pack-070.media-checkpoint-g.v1",
+  "dependencies": [
+    "042",
+    "044",
+    "049",
+    "061",
+    "062",
+    "063",
+    "064",
+    "065",
+    "066",
+    "067",
+    "068",
+    "069"
+  ],
+  "rule": "No media capability may be presented as live unless its current production evidence supports that exact claim. Paid-provider paths remain engineering-ready but non-live while execution gates are OFF.",
+  "canonicalSystems": {
+    "usageLedger": "public.zuvyr_usage_records",
+    "contentObjects": "public.zuvyr_content_objects",
+    "contentVersions": "public.zuvyr_content_versions",
+    "assets": "public.zuvyr_assets",
+    "assetLineage": "public.zuvyr_asset_lineage",
+    "projects": "public.workspace_projects",
+    "library": "canonical content + asset repositories",
+    "handoff": "Pack049 universal actions / canonical content-version IDs"
+  },
+  "image": {
+    "generate": {
+      "engineering": "implemented",
+      "liveClaim": "deferred_m12",
+      "uiTruth": "paid_live_proof_deferred"
+    },
+    "referenceVariations": {
+      "engineering": "implemented",
+      "liveClaim": "deferred_paid_gate"
+    },
+    "editInpaintExpand": {
+      "engineering": "implemented",
+      "liveClaim": "deferred_paid_gate"
+    },
+    "removeBackgroundRelight": {
+      "engineering": "implemented",
+      "liveClaim": "deferred_paid_gate"
+    },
+    "upscale": {
+      "engineering": "blocked_exact_precharge_output_megapixel_quote",
+      "liveClaim": "blocked"
+    },
+    "localUtilities": {
+      "operations": [
+        "crop",
+        "resize",
+        "canvas",
+        "layers",
+        "text",
+        "batch"
+      ],
+      "engineering": "verified_local",
+      "providerCalls": 0
+    },
+    "historyReopenDownloadSendToVersionRollback": {
+      "engineering": "verified_owner_scoped",
+      "providerCalls": 0
+    }
+  },
+  "video": {
+    "textToVideo": {
+      "engineering": "implemented",
+      "liveClaim": "deferred_paid_gate"
+    },
+    "imageToVideoReference": {
+      "engineering": "implemented",
+      "liveClaim": "deferred_paid_gate"
+    },
+    "editExtendVfx": {
+      "engineering": "implemented",
+      "liveClaim": "deferred_paid_gate"
+    },
+    "subtitlesDubEnhance": {
+      "engineering": "implemented",
+      "liveClaim": "deferred_paid_gate"
+    },
+    "localExport": {
+      "engineering": "production_worker_verified",
+      "formats": [
+        "mp4",
+        "webm",
+        "mov"
+      ],
+      "providerCalls": 0
+    },
+    "cancel": {
+      "engineering": "production_verified_db_authoritative",
+      "providerCalls": 0
+    }
+  },
+  "advertisedLiveRule": {
+    "allowedWithoutExternalPaidGate": [
+      "image.history",
+      "image.reopen",
+      "image.download",
+      "image.send_to",
+      "image.version_compare_restore",
+      "image.rollback",
+      "video.export.local",
+      "video.cancel"
+    ],
+    "providerPaidCapabilitiesMustNotClaimLive": true
+  },
+  "checkpoint": {
+    "paidProviderCallsRequired": false,
+    "externalGates": [
+      "M12",
+      "M13"
+    ],
+    "progressionWhenPaidGatesDeferred": "LOCKED_ENGINEERING_VERIFIED",
+    "canonicalLockedVerifiedRequiresPaidLiveEvidence": true
+  }
+}
