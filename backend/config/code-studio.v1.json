@@ -1,5 +1,5 @@
 {
-  "version": "pack-075.code-studio.v1",
+  "version": "pack-078.code-studio.v1",
   "capabilities": {
     "assistant": {
       "enabledByDefault": true,
@@ -20,8 +20,8 @@
       "requiresConfirmation": false
     },
     "preview": {
-      "enabledByDefault": false,
-      "status": "preview_unavailable_until_pack078",
+      "enabledByDefault": true,
+      "status": "pack078_product_layer_live_deferred",
       "requiresSandbox": true,
       "requiresConfirmation": false
     },
@@ -57,13 +57,13 @@
     },
     "build": {
       "enabledByDefault": false,
-      "status": "blocked_no_sandbox",
+      "status": "pack078_implemented_live_deferred",
       "requiresSandbox": true,
       "requiresConfirmation": true
     },
     "test": {
       "enabledByDefault": false,
-      "status": "blocked_no_sandbox",
+      "status": "pack078_implemented_live_deferred",
       "requiresSandbox": true,
       "requiresConfirmation": true
     },
