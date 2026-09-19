@@ -142,6 +142,8 @@ function requestPinned({
   endpointUrl,
   path,
   credential = null,
+  method = 'GET',
+  jsonBody = null,
   timeoutMs = config.computeConnectors.requestTimeoutMs,
   maxBytes = config.computeConnectors.healthResponseMaxBytes
 } = {}) {
@@ -151,11 +153,41 @@ function requestPinned({
       endpoint = new URL(normalizeEndpointUrl(endpointUrl));
       const answers = await resolvePublicHost(endpoint.hostname);
       const selected = answers[0];
-      const targetPath = path || '/';
+      const requestMethod = String(method || 'GET').toUpperCase();
+      if (!['GET','POST'].includes(requestMethod)) {
+        throw connectorError('model_lab_connector_method_not_allowed', 400);
+      }
+      const targetPath = String(path || '/');
+      if (
+        !targetPath.startsWith('/') ||
+        targetPath.startsWith('//') ||
+        targetPath.length > 500 ||
+        /\s/.test(targetPath) ||
+        targetPath.includes('..')
+      ) {
+        throw connectorError('model_lab_connector_request_path_invalid', 400);
+      }
+
+      let bodyBuffer = null;
+      if (jsonBody !== null && jsonBody !== undefined) {
+        if (requestMethod !== 'POST') {
+          throw connectorError('model_lab_connector_body_not_allowed', 400);
+        }
+        const encoded = JSON.stringify(jsonBody);
+        bodyBuffer = Buffer.from(encoded, 'utf8');
+        if (bodyBuffer.length > 1024 * 1024) {
+          throw connectorError('model_lab_connector_request_too_large', 413);
+        }
+      }
+
       const headers = {
         Host: endpoint.host,
-        Accept: 'application/json, text/plain;q=0.8'
+        Accept: 'application/json'
       };
+      if (bodyBuffer) {
+        headers['Content-Type'] = 'application/json';
+        headers['Content-Length'] = String(bodyBuffer.length);
+      }
       if (credential) headers.Authorization = 'Bearer ' + String(credential);
 
       const req = https.request({
@@ -164,7 +196,7 @@ function requestPinned({
         family: selected.family,
         port: endpoint.port ? Number(endpoint.port) : 443,
         servername: endpoint.hostname,
-        method: 'GET',
+        method: requestMethod,
         path: targetPath,
         headers,
         timeout: Math.max(1000, Math.min(15000, Number(timeoutMs) || 8000)),
@@ -207,6 +239,7 @@ function requestPinned({
         }
         reject(connectorError('model_lab_connector_unreachable', 502, cause));
       });
+      if (bodyBuffer) req.write(bodyBuffer);
       req.end();
     } catch (error) {
       reject(error);
@@ -317,6 +350,96 @@ async function healthCheck({
   return publicAttestation(connectorKind, response, Date.now() - started);
 }
 
+
+function normalizeInferenceMessages(messages) {
+  if (!Array.isArray(messages) || messages.length < 1 || messages.length > 128) {
+    throw connectorError('owned_model_messages_invalid', 400);
+  }
+  const normalized = messages.map(message => {
+    const role = String(message?.role || '').trim();
+    if (!['system','user','assistant','tool'].includes(role)) {
+      throw connectorError('owned_model_message_role_invalid', 400);
+    }
+    if (typeof message?.content !== 'string') {
+      throw connectorError('owned_model_text_only_required', 400);
+    }
+    const content = message.content;
+    if (content.length > 200000) {
+      throw connectorError('owned_model_message_too_large', 413);
+    }
+    return { role, content };
+  });
+  if (Buffer.byteLength(JSON.stringify(normalized),'utf8') > 900000) {
+    throw connectorError('owned_model_messages_too_large', 413);
+  }
+  return Object.freeze(normalized.map(item => Object.freeze(item)));
+}
+
+async function invokeOpenAiCompatible({
+  endpointUrl,
+  credential = null,
+  model,
+  messages,
+  maxOutputTokens = 4096,
+  timeoutMs = 30000
+} = {}) {
+  const modelId = String(model || '').trim();
+  if (!modelId || modelId.length > 240) {
+    throw connectorError('owned_model_endpoint_model_invalid', 400);
+  }
+  const normalizedMessages = normalizeInferenceMessages(messages);
+  const tokens = Math.max(1, Math.min(16384, Number(maxOutputTokens) || 4096));
+  const startedAt = Date.now();
+
+  const response = await requestPinned({
+    endpointUrl,
+    path: '/v1/chat/completions',
+    credential,
+    method: 'POST',
+    jsonBody: {
+      model: modelId,
+      messages: normalizedMessages,
+      max_tokens: tokens,
+      stream: false
+    },
+    timeoutMs: Math.max(1000, Math.min(60000, Number(timeoutMs) || 30000)),
+    maxBytes: 4 * 1024 * 1024
+  });
+
+  if (response.status < 200 || response.status >= 300) {
+    const error = connectorError('owned_model_provider_rejected', 502);
+    error.providerStatus = response.status;
+    throw error;
+  }
+
+  const parsed = parseJsonMaybe(response.body);
+  const choice = Array.isArray(parsed?.choices) ? parsed.choices[0] : null;
+  const text = choice?.message?.content;
+  if (typeof text !== 'string' || !text.trim()) {
+    throw connectorError('owned_model_provider_output_invalid', 502);
+  }
+
+  const usage = parsed?.usage && typeof parsed.usage === 'object'
+    ? {
+        prompt_tokens: Number(parsed.usage.prompt_tokens || 0),
+        completion_tokens: Number(parsed.usage.completion_tokens || 0),
+        total_tokens: Number(parsed.usage.total_tokens || 0)
+      }
+    : {};
+
+  return Object.freeze({
+    text,
+    model: modelId,
+    provider: 'zuvyr_owned_byoc',
+    usage: Object.freeze(usage),
+    latencyMs: Date.now() - startedAt,
+    providerCostUsd: 0,
+    zuvyrOwnedModelUsageFeeUsd: 0,
+    zuvyrApiSoftwareFeeUsd: 0,
+    inferenceMarkupUsd: 0
+  });
+}
+
 module.exports = {
   connectorError,
   isBlockedIpv4,
@@ -330,5 +453,7 @@ module.exports = {
   requestPinned,
   publicAttestation,
   verifyOwnership,
-  healthCheck
+  healthCheck,
+  normalizeInferenceMessages,
+  invokeOpenAiCompatible
 };
