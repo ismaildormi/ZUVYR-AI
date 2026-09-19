@@ -1905,3 +1905,710 @@
     boot();
   }
 })();
+
+
+/* ZUVYR PACK078 BUILD TEST BROWSER PREVIEW REPAIR */
+(function () {
+  'use strict';
+  if (window.__zuvyrPack078CodeRuntimeUi) return;
+  window.__zuvyrPack078CodeRuntimeUi = true;
+
+  var runtime = {
+    projectId: null,
+    sessionId: null,
+    capabilities: null,
+    preview: {
+      state: 'unavailable',
+      transportStatus: 'blocked',
+      diagnostic: {},
+      repairSourceJobId: null,
+      ticketAvailable: false,
+      updatedAt: null
+    },
+    previewUrl: null,
+    previewExpiresAt: null,
+    viewport: 'fit',
+    busyOperation: null,
+    activeJobId: null,
+    logs: [],
+    repairRunId: null,
+    repairStatus: null,
+    message: '',
+    refreshTimer: 0,
+    saveTimer: 0
+  };
+
+  function api(path, options) {
+    if (typeof window.authFetch !== 'function') {
+      return Promise.reject(new Error('Code Studio authentication unavailable.'));
+    }
+    return window.authFetch(path, options || {}).then(function (response) {
+      return response.json().catch(function () { return {}; }).then(function (data) {
+        if (!response.ok || data.status !== 'success') {
+          var error = new Error(data.message || data.code || ('HTTP ' + response.status));
+          error.code = data.code || 'code_runtime_request_failed';
+          error.status = response.status;
+          error.payload = data;
+          throw error;
+        }
+        return data;
+      });
+    });
+  }
+
+  function apiBase() {
+    var configured =
+      window.ROX_RUNTIME_CONFIG &&
+      typeof window.ROX_RUNTIME_CONFIG.API_BASE === 'string'
+        ? window.ROX_RUNTIME_CONFIG.API_BASE.trim()
+        : '';
+    return (configured || 'https://rox-ai-production.up.railway.app').replace(/\/+$/, '');
+  }
+
+  function randomId(prefix) {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+      return (prefix || 'req') + '-' + window.crypto.randomUUID();
+    }
+    return (prefix || 'req') + '-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+  }
+
+  function root() {
+    return document.querySelector('#feature-code [data-zuvyr-code-studio-pack075]');
+  }
+
+  function currentProjectId() {
+    var select = root() && root().querySelector('[data-zs-code-project-select]');
+    return select && select.value ? String(select.value) : null;
+  }
+
+  function stateLabel(value) {
+    return ({
+      unavailable: 'Preview unavailable',
+      starting: 'Starting',
+      building: 'Building',
+      ready: 'Ready',
+      updating: 'Updating',
+      build_failed: 'Build failed',
+      runtime_error: 'Runtime error'
+    })[String(value || '')] || 'Preview unavailable';
+  }
+
+  function runtimeEnabled() {
+    return runtime.capabilities &&
+      runtime.capabilities.pack077 &&
+      runtime.capabilities.pack077.liveExecution === true;
+  }
+
+  function livePreviewVerified() {
+    return runtime.capabilities &&
+      runtime.capabilities.pack078 &&
+      runtime.capabilities.pack078.previewTransportVerified === true;
+  }
+
+  function blockerText() {
+    if (runtimeEnabled()) return '';
+    var blockers =
+      runtime.capabilities &&
+      runtime.capabilities.pack077 &&
+      Array.isArray(runtime.capabilities.pack077.blockers)
+        ? runtime.capabilities.pack077.blockers
+        : [];
+    return blockers.length
+      ? 'Runtime deferred: ' + blockers.join(', ')
+      : 'Runtime unavailable until the secure sandbox gate and verified pricing are enabled.';
+  }
+
+  function viewportSize() {
+    if (runtime.viewport === 'desktop') return { width: 1440, height: 900 };
+    if (runtime.viewport === 'tablet') return { width: 834, height: 1112 };
+    if (runtime.viewport === 'mobile') return { width: 390, height: 844 };
+    return null;
+  }
+
+  function diagnosticHtml() {
+    var d = runtime.preview && runtime.preview.diagnostic;
+    if (!d || !d.fingerprint) return '';
+    var location = d.file
+      ? String(d.file) +
+        (d.line ? ':' + String(d.line) : '') +
+        (d.column ? ':' + String(d.column) : '')
+      : '';
+    return (
+      '<div class="zs-code-pack078-diagnostic">' +
+        '<div><strong>' + escapeText(d.kind || 'Runtime failure') + '</strong>' +
+          (location ? '<code>' + escapeText(location) + '</code>' : '') +
+        '</div>' +
+        '<p>' + escapeText(d.message || 'The sandbox command failed.') + '</p>' +
+        (runtime.preview.repairSourceJobId
+          ? '<button type="button" data-zs-pack078-repair>Repair with AI</button>'
+          : '') +
+      '</div>'
+    );
+  }
+
+  function escapeText(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char];
+    });
+  }
+
+  function previewBodyHtml() {
+    var preview = runtime.preview || {};
+    var size = viewportSize();
+    var iframeStyle = size
+      ? 'width:' + size.width + 'px;height:' + size.height + 'px;'
+      : 'width:100%;height:100%;';
+
+    if (
+      preview.state === 'ready' &&
+      preview.ticketAvailable === true &&
+      runtime.previewUrl
+    ) {
+      return (
+        '<div class="zs-code-pack078-frame-stage" data-zs-pack078-frame-stage>' +
+          '<iframe ' +
+            'data-zs-pack078-preview-frame ' +
+            'title="ZUVYR Code Preview" ' +
+            'sandbox="allow-scripts allow-forms allow-modals allow-popups" ' +
+            'referrerpolicy="no-referrer" ' +
+            'src="' + escapeText(runtime.previewUrl) + '" ' +
+            'style="' + iframeStyle + '">' +
+          '</iframe>' +
+        '</div>'
+      );
+    }
+
+    var message =
+      preview.state === 'build_failed'
+        ? 'The latest build failed. Review the structured error or run bounded AI repair.'
+        : preview.state === 'runtime_error'
+          ? 'The sandbox runtime failed. Review the structured error before retrying.'
+          : preview.state === 'starting'
+            ? 'The sandbox development server is starting.'
+            : preview.state === 'building'
+              ? 'The saved project is building in the isolated sandbox.'
+              : preview.state === 'updating'
+                ? 'Applying the saved project update.'
+                : preview.state === 'ready' && !preview.ticketAvailable
+                  ? 'The app is ready inside the sandbox, but secure preview transport is not verified. ZUVYR will not expose the raw provider port.'
+                  : blockerText() || 'No verified sandbox preview is active for this project.';
+
+    return (
+      '<div class="zs-code-preview-unavailable zs-code-pack078-state" data-zs-pack078-state="' +
+        escapeText(preview.state || 'unavailable') + '">' +
+        '<strong>' + escapeText(stateLabel(preview.state)) + '</strong>' +
+        '<span>' + escapeText(message) + '</span>' +
+        diagnosticHtml() +
+      '</div>'
+    );
+  }
+
+  function previewToolbarHtml() {
+    var previewReady =
+      runtime.preview &&
+      runtime.preview.state === 'ready' &&
+      runtime.preview.ticketAvailable === true &&
+      !!runtime.previewUrl;
+    var disabled = previewReady ? '' : ' disabled';
+    return (
+      '<div class="zs-code-pack078-preview-tools" data-zs-pack078-tools>' +
+        '<button type="button" data-zs-pack078-refresh>Refresh</button>' +
+        ['desktop','tablet','mobile','fit'].map(function (viewport) {
+          var label = viewport.charAt(0).toUpperCase() + viewport.slice(1);
+          return '<button type="button" data-zs-pack078-viewport="' + viewport + '"' +
+            (runtime.viewport === viewport ? ' class="is-active"' : '') + '>' +
+            label + '</button>';
+        }).join('') +
+        '<button type="button" data-zs-pack078-open' + disabled + '>Open Preview</button>' +
+        '<button type="button" data-zs-pack078-fullscreen' + disabled + '>Fullscreen</button>' +
+      '</div>'
+    );
+  }
+
+  function runtimePanelHtml() {
+    var disabled = runtimeEnabled() && !runtime.busyOperation ? '' : ' disabled';
+    var active = runtime.busyOperation
+      ? '<span class="zs-code-pack078-running">Running ' + escapeText(runtime.busyOperation) + '…</span>'
+      : '';
+    var logs = runtime.logs.length
+      ? '<pre class="zs-code-pack078-logs">' +
+          escapeText(runtime.logs.slice(-80).map(function (item) {
+            return item.message || item.text || '';
+          }).join('\n')) +
+        '</pre>'
+      : '';
+
+    return (
+      '<div class="zs-code-pack078-runtime" data-zs-pack078-runtime>' +
+        '<div class="zs-code-pack078-runtime-actions">' +
+          '<strong>Sandbox runtime</strong>' +
+          '<button type="button" data-zs-pack078-run' + disabled + '>Run</button>' +
+          '<button type="button" data-zs-pack078-build' + disabled + '>Build</button>' +
+          '<button type="button" data-zs-pack078-test' + disabled + '>Test</button>' +
+          active +
+        '</div>' +
+        (!runtimeEnabled()
+          ? '<span class="zs-code-pack078-blocker">' + escapeText(blockerText()) + '</span>'
+          : '') +
+        logs +
+      '</div>'
+    );
+  }
+
+  function enhanceDom() {
+    var container = root();
+    if (!container) return;
+
+    var projectId = currentProjectId();
+    if (projectId !== runtime.projectId) {
+      runtime.projectId = projectId;
+      runtime.sessionId = null;
+      runtime.previewUrl = null;
+      runtime.previewExpiresAt = null;
+      runtime.preview = {
+        state: 'unavailable',
+        transportStatus: 'blocked',
+        diagnostic: {},
+        repairSourceJobId: null,
+        ticketAvailable: false,
+        updatedAt: null
+      };
+      runtime.logs = [];
+      runtime.repairRunId = null;
+      runtime.repairStatus = null;
+      if (projectId) scheduleRefresh(0);
+    }
+
+    var toolbar = container.querySelector('.zs-code-preview-toolbar');
+    if (toolbar && !toolbar.querySelector('[data-zs-pack078-tools]')) {
+      var existingActions = toolbar.querySelector('div');
+      if (existingActions) existingActions.insertAdjacentHTML('beforebegin', previewToolbarHtml());
+      else toolbar.insertAdjacentHTML('beforeend', previewToolbarHtml());
+    }
+
+    var pane = container.querySelector('.zs-code-preview-pane');
+    if (pane) {
+      var legacy = pane.querySelector('[data-zs-code-preview-unavailable]');
+      var current = pane.querySelector('[data-zs-pack078-frame-stage], [data-zs-pack078-state]');
+      if (!current && legacy) {
+        legacy.outerHTML = previewBodyHtml();
+      }
+    }
+
+    var reserved = container.querySelector('.zs-code-runtime-reserved');
+    if (reserved && !reserved.querySelector('[data-zs-pack078-runtime]')) {
+      reserved.innerHTML = runtimePanelHtml();
+    }
+  }
+
+  function rerenderEnhancement() {
+    var container = root();
+    if (!container) return;
+
+    var toolbar = container.querySelector('[data-zs-pack078-tools]');
+    if (toolbar) toolbar.outerHTML = previewToolbarHtml();
+
+    var pane = container.querySelector('.zs-code-preview-pane');
+    if (pane) {
+      var body = pane.querySelector(
+        '[data-zs-pack078-frame-stage], [data-zs-pack078-state], [data-zs-code-preview-unavailable]'
+      );
+      if (body) body.outerHTML = previewBodyHtml();
+    }
+
+    var reserved = container.querySelector('.zs-code-runtime-reserved');
+    if (reserved) reserved.innerHTML = runtimePanelHtml();
+  }
+
+  function loadCapabilities() {
+    if (runtime.capabilities) return Promise.resolve(runtime.capabilities);
+    return api('/api/code-studio/capabilities').then(function (data) {
+      runtime.capabilities = data;
+      rerenderEnhancement();
+      return data;
+    });
+  }
+
+  function loadRunningSession() {
+    if (!runtime.projectId) return Promise.resolve(null);
+    return api(
+      '/api/code-studio/sandbox/sessions?projectId=' +
+      encodeURIComponent(runtime.projectId) +
+      '&limit=20'
+    ).then(function (data) {
+      var sessions = Array.isArray(data.sessions) ? data.sessions : [];
+      var running = sessions.find(function (item) { return item.status === 'running'; }) || null;
+      runtime.sessionId = running ? running.id : null;
+      return running;
+    });
+  }
+
+  function loadPreviewState() {
+    if (!runtime.projectId || !runtime.sessionId) {
+      runtime.preview = {
+        state: 'unavailable',
+        transportStatus: 'blocked',
+        diagnostic: {},
+        repairSourceJobId: null,
+        ticketAvailable: false,
+        updatedAt: null
+      };
+      runtime.previewUrl = null;
+      rerenderEnhancement();
+      return Promise.resolve(runtime.preview);
+    }
+    return api(
+      '/api/code-studio/projects/' + encodeURIComponent(runtime.projectId) +
+      '/preview/state?sandboxSessionId=' + encodeURIComponent(runtime.sessionId)
+    ).then(function (data) {
+      runtime.preview = data.preview || runtime.preview;
+      if (runtime.preview.ticketAvailable !== true) runtime.previewUrl = null;
+      rerenderEnhancement();
+      return runtime.preview;
+    });
+  }
+
+  function refreshAll(options) {
+    options = options || {};
+    if (!runtime.projectId) return Promise.resolve();
+    return loadCapabilities()
+      .then(loadRunningSession)
+      .then(loadPreviewState)
+      .then(function () {
+        if (options.ticket === true && runtime.preview.ticketAvailable === true) {
+          return requestPreviewTicket();
+        }
+      })
+      .catch(function (error) {
+        runtime.message = error.code || error.message;
+        rerenderEnhancement();
+      });
+  }
+
+  function scheduleRefresh(delay) {
+    clearTimeout(runtime.refreshTimer);
+    runtime.refreshTimer = setTimeout(function () {
+      refreshAll({ ticket: false });
+    }, Math.max(0, Number(delay) || 0));
+  }
+
+  function requestPreviewTicket() {
+    if (!runtime.sessionId || runtime.preview.ticketAvailable !== true) {
+      return Promise.resolve(null);
+    }
+    return api(
+      '/api/code-studio/sandbox/sessions/' +
+      encodeURIComponent(runtime.sessionId) +
+      '/preview-ticket',
+      {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ ttlSeconds: 300 })
+      }
+    ).then(function (data) {
+      var ticket = data.preview || {};
+      if (!ticket.transportPath) throw new Error('code_preview_ticket_missing');
+      runtime.previewUrl =
+        apiBase() + String(ticket.transportPath);
+      runtime.previewExpiresAt = ticket.expiresAt || null;
+      rerenderEnhancement();
+      return runtime.previewUrl;
+    });
+  }
+
+  function ensureRunningSession(createIfMissing) {
+    return loadCapabilities()
+      .then(loadRunningSession)
+      .then(function (session) {
+        if (session) return session;
+        if (!createIfMissing) return null;
+        if (!runtimeEnabled()) {
+          var blocked = new Error(blockerText());
+          blocked.code = 'code_runtime_live_gate_closed';
+          throw blocked;
+        }
+        return api('/api/code-studio/sandbox/sessions', {
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json',
+            'Idempotency-Key':randomId('sandbox')
+          },
+          body:JSON.stringify({ projectId: runtime.projectId })
+        }).then(function (data) {
+          runtime.sessionId = data.session && data.session.id;
+          return data.session || null;
+        });
+      });
+  }
+
+  function loadJobLogs(jobId) {
+    if (!jobId) return Promise.resolve([]);
+    return api(
+      '/api/code-studio/runtime/jobs/' + encodeURIComponent(jobId) + '/logs?limit=200'
+    ).then(function (data) {
+      runtime.logs = Array.isArray(data.logs) ? data.logs : [];
+      rerenderEnhancement();
+      return runtime.logs;
+    }).catch(function () { return []; });
+  }
+
+  function pollJob(jobId, attempts) {
+    attempts = Number(attempts || 0);
+    if (!jobId || attempts > 360) {
+      runtime.busyOperation = null;
+      rerenderEnhancement();
+      return Promise.resolve(null);
+    }
+    return api('/api/code-studio/runtime/jobs/' + encodeURIComponent(jobId))
+      .then(function (data) {
+        var job = data.job || {};
+        runtime.activeJobId = job.id || jobId;
+        return loadJobLogs(jobId).then(function () {
+          if (['succeeded','failed','cancelled'].includes(job.status)) {
+            runtime.busyOperation = null;
+            runtime.activeJobId = null;
+            return refreshAll({ ticket: job.status === 'succeeded' }).then(function () {
+              if (job.status === 'failed') {
+                runtime.message =
+                  (job.result && job.result.diagnostic && job.result.diagnostic.message) ||
+                  'Runtime operation failed.';
+              }
+              rerenderEnhancement();
+              return job;
+            });
+          }
+          return new Promise(function (resolve) {
+            setTimeout(resolve, 1000);
+          }).then(function () {
+            return pollJob(jobId, attempts + 1);
+          });
+        });
+      })
+      .catch(function (error) {
+        runtime.busyOperation = null;
+        runtime.message = error.code || error.message;
+        rerenderEnhancement();
+        throw error;
+      });
+  }
+
+  function startRuntime(operation, options) {
+    options = options || {};
+    if (!runtime.projectId || runtime.busyOperation) return Promise.resolve(null);
+    runtime.busyOperation = operation;
+    runtime.message = '';
+    rerenderEnhancement();
+
+    return ensureRunningSession(options.createSession === true)
+      .then(function (session) {
+        if (!session || !session.id) {
+          var unavailable = new Error('No active sandbox session.');
+          unavailable.code = 'code_sandbox_session_unavailable';
+          throw unavailable;
+        }
+        runtime.sessionId = session.id;
+        return api('/api/code-studio/runtime/request', {
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json',
+            'Idempotency-Key':randomId('runtime-' + operation)
+          },
+          body:JSON.stringify({
+            operation:operation,
+            projectId:runtime.projectId,
+            sandboxSessionId:runtime.sessionId
+          })
+        });
+      })
+      .then(function (data) {
+        var job = data.job || {};
+        runtime.activeJobId = job.id || null;
+        if (!job.id) throw new Error('code_runtime_job_missing');
+        return pollJob(job.id, 0);
+      })
+      .catch(function (error) {
+        runtime.busyOperation = null;
+        runtime.message = error.code || error.message;
+        rerenderEnhancement();
+        return null;
+      });
+  }
+
+  function scheduleSavedProjectValidation() {
+    clearTimeout(runtime.saveTimer);
+    runtime.saveTimer = setTimeout(function () {
+      if (
+        runtime.projectId &&
+        runtime.sessionId &&
+        runtimeEnabled() &&
+        !runtime.busyOperation
+      ) {
+        runtime.preview.state = 'updating';
+        rerenderEnhancement();
+        startRuntime('build', { createSession:false });
+      } else {
+        scheduleRefresh(0);
+      }
+    }, 700);
+  }
+
+  function repairFailure() {
+    if (
+      !runtime.projectId ||
+      !runtime.sessionId ||
+      !runtime.preview.repairSourceJobId ||
+      runtime.busyOperation
+    ) return;
+
+    runtime.busyOperation = 'repair';
+    runtime.message = '';
+    rerenderEnhancement();
+
+    api(
+      '/api/code-studio/projects/' + encodeURIComponent(runtime.projectId) + '/repair',
+      {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Idempotency-Key':randomId('repair')
+        },
+        body:JSON.stringify({
+          sandboxSessionId:runtime.sessionId,
+          sourceJobId:runtime.preview.repairSourceJobId
+        })
+      }
+    ).then(function (data) {
+      runtime.repairRunId =
+        data.repair && data.repair.run && data.repair.run.id;
+      if (!runtime.repairRunId) throw new Error('code_repair_run_missing');
+      return continueRepair(0);
+    }).catch(function (error) {
+      runtime.busyOperation = null;
+      runtime.message = error.code || error.message;
+      rerenderEnhancement();
+    });
+  }
+
+  function continueRepair(attempts) {
+    attempts = Number(attempts || 0);
+    if (!runtime.repairRunId || attempts > 180) {
+      runtime.busyOperation = null;
+      runtime.message = 'Repair polling stopped safely.';
+      rerenderEnhancement();
+      return Promise.resolve();
+    }
+    return api(
+      '/api/code-studio/repair/' +
+      encodeURIComponent(runtime.repairRunId) +
+      '/continue',
+      {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:'{}'
+      }
+    ).then(function (data) {
+      var bundle = data.repair || {};
+      var run = bundle.run || {};
+      runtime.repairStatus = run.status || null;
+      if (['succeeded','failed','exhausted','cancelled'].includes(run.status)) {
+        runtime.busyOperation = null;
+        runtime.message =
+          run.status === 'succeeded'
+            ? 'AI repair passed the bounded retest.'
+            : 'AI repair stopped with status: ' + String(run.status || 'failed');
+        var select = root() && root().querySelector('[data-zs-code-project-select]');
+        if (select) select.dispatchEvent(new Event('change', { bubbles:true }));
+        return refreshAll({ ticket: run.status === 'succeeded' });
+      }
+      return new Promise(function (resolve) {
+        setTimeout(resolve, 1200);
+      }).then(function () {
+        return continueRepair(attempts + 1);
+      });
+    }).catch(function (error) {
+      runtime.busyOperation = null;
+      runtime.message = error.code || error.message;
+      rerenderEnhancement();
+    });
+  }
+
+  function openPreview() {
+    if (!runtime.previewUrl) return;
+    window.open(runtime.previewUrl, '_blank', 'noopener,noreferrer');
+  }
+
+  function fullscreenPreview() {
+    var frame =
+      root() && root().querySelector('[data-zs-pack078-frame-stage]');
+    if (!frame || typeof frame.requestFullscreen !== 'function') return;
+    frame.requestFullscreen().catch(function () {});
+  }
+
+  function handleClick(event) {
+    if (!root() || !root().contains(event.target)) return;
+
+    var viewport = event.target.closest('[data-zs-pack078-viewport]');
+    if (viewport) {
+      runtime.viewport = viewport.getAttribute('data-zs-pack078-viewport') || 'fit';
+      rerenderEnhancement();
+      return;
+    }
+
+    if (event.target.closest('[data-zs-pack078-refresh]')) {
+      refreshAll({ ticket:true });
+      return;
+    }
+    if (event.target.closest('[data-zs-pack078-open]')) {
+      openPreview();
+      return;
+    }
+    if (event.target.closest('[data-zs-pack078-fullscreen]')) {
+      fullscreenPreview();
+      return;
+    }
+    if (event.target.closest('[data-zs-pack078-run]')) {
+      startRuntime('run', { createSession:true });
+      return;
+    }
+    if (event.target.closest('[data-zs-pack078-build]')) {
+      startRuntime('build', { createSession:true });
+      return;
+    }
+    if (event.target.closest('[data-zs-pack078-test]')) {
+      startRuntime('test', { createSession:true });
+      return;
+    }
+    if (event.target.closest('[data-zs-pack078-repair]')) {
+      repairFailure();
+      return;
+    }
+
+    if (
+      event.target.closest('[data-zs-code-save]') ||
+      event.target.closest('[data-zs-code-ai-apply]')
+    ) {
+      scheduleSavedProjectValidation();
+    }
+  }
+
+  document.addEventListener('click', handleClick, true);
+
+  var observer = new MutationObserver(function () {
+    enhanceDom();
+  });
+
+  function boot() {
+    observer.observe(document.documentElement, {
+      childList:true,
+      subtree:true
+    });
+    loadCapabilities().catch(function () {});
+    enhanceDom();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, {once:true});
+  } else {
+    boot();
+  }
+})();
