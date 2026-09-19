@@ -679,3 +679,33 @@ html[dir="rtl"] .zuvyr-pack095-head>div{
     justify-content:flex-start;
   }
 }
+
+
+/* ZUVYR PACK095 MODEL LAB — learning/evaluation completion */
+.zuvyr-pack095-two-col{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:12px;
+  align-items:start;
+}
+.zuvyr-pack095-two-col>div{
+  min-width:0;
+}
+.zuvyr-pack095-two-col h4{
+  margin:0 0 8px;
+  font-size:12px;
+  font-weight:700;
+  color:var(--text,#f7f7f7);
+  letter-spacing:.02em;
+}
+.zuvyr-pack095-section input[type="number"]{
+  min-width:0;
+}
+.zuvyr-pack095-row-actions button[data-zuvyr-pack095-rollback]{
+  border-color:rgba(255,170,80,.3);
+}
+@media (max-width:820px){
+  .zuvyr-pack095-two-col{
+    grid-template-columns:1fr;
+  }
+}
