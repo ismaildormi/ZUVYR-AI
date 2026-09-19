@@ -35,7 +35,7 @@ const { validateChatBody, validatePromptBody, validateImageBody, validateVideoBo
 const { normalizeSurfaceRequest } = require('./lib/universalRequest');
 const { loadRoxUserMiddleware, gatekeeperMiddleware, reserveCredits, refundCredits, settleCredits, logCreditEvent, reportRefundFailure } = require('./gatekeeper');
 const { routeRequest } = require('./aiRouter');
-const { imageQueue, videoQueue, defaultJobOptions, connection: queueConnection } = require('./lib/queue');
+const { imageQueue, videoQueue, audioQueue, defaultJobOptions, connection: queueConnection } = require('./lib/queue');
 const {
   normalizeAiPreferences,
   buildTextPreferencePrompt,
@@ -123,6 +123,7 @@ const { assertImageRequestAvailable } = require('./lib/imageOperationRegistry');
 const { normalizeVideoRequest } = require('./lib/videoRequestContract');
 const { assertVideoRequestAvailable } = require('./lib/videoOperationRegistry');
 const { createVideoInputResolver } = require('./lib/videoReferenceResolver');
+const { createAudioInputResolver } = require('./lib/audioReferenceResolver');
 const { createAssetStorageKernel } = require('./lib/assetStorageKernel');
 const { buildVideoJobSnapshot } = require('./lib/videoJobContract');
 // New, additive-only: stub routes for every not-yet-built feature (see
@@ -140,6 +141,10 @@ const diskMonitorModule = require('./src/modules/diskMonitor');
 const diskMaintenanceModule = require('./src/modules/diskMonitor/maintenance');
 
 const videoInputResolver = createVideoInputResolver({
+  db: supabaseAdmin,
+  storage: supabaseAdmin.storage
+});
+const audioInputResolver = createAudioInputResolver({
   db: supabaseAdmin,
   storage: supabaseAdmin.storage
 });
@@ -327,7 +332,18 @@ app.use(
   '/api/audio-studio',
   requireAuth,
   rateLimit('chat'),
-  createAudioStudioRouter()
+  createAudioStudioRouter({
+    db: supabaseAdmin,
+    queue: audioQueue,
+    creditApi: {
+      reserveCredits,
+      settleCredits,
+      refundCredits,
+      reportRefundFailure
+    },
+    audioInputResolver,
+    assetKernel: assetStorageKernel
+  })
 );
 app.use(
   '/api/workspace',
