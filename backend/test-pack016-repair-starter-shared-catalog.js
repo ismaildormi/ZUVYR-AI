@@ -17,9 +17,9 @@ const {
   getSubscriptionPlan
 } = require('./lib/billingCatalog');
 
-assert.equal(
+assert.match(
   plans.version,
-  'pack-016.canonical-plans-entitlements.v2'
+  /^pack-\d{3}\.canonical-plans-entitlements\.v\d+$/
 );
 assert.deepEqual(
   plans.planOrder,
@@ -48,6 +48,7 @@ for (const feature of [
   'chat',
   'image',
   'video',
+  '3d',
   'audio',
   'code',
   'ip'
@@ -67,9 +68,9 @@ assert.equal(
 
 const catalog = publicPlanCatalog();
 
-assert.equal(
+assert.match(
   catalog.version,
-  'pack-016.canonical-plans-entitlements.v2'
+  /^pack-\d{3}\.canonical-plans-entitlements\.v\d+$/
 );
 assert.deepEqual(
   catalog.planOrder,

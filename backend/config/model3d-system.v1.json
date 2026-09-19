@@ -1,0 +1,91 @@
+{
+  "version": "pack-083.model3d.v1",
+  "pack": 83,
+  "title": "3D Generation",
+  "status": "implemented_live_deferred_m18",
+  "operations": {
+    "text_to_3d": {
+      "enabled": true,
+      "provider": "fal",
+      "model": "fal-ai/hunyuan-3d/v3.1/pro/text-to-3d"
+    },
+    "image_to_3d": {
+      "enabled": true,
+      "provider": "fal",
+      "model": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d"
+    },
+    "multiview_to_3d": {
+      "enabled": true,
+      "provider": "fal",
+      "model": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d"
+    }
+  },
+  "input": {
+    "maxPromptUtf8Bytes": 1024,
+    "imageMimeTypes": [
+      "image/jpeg",
+      "image/png",
+      "image/webp"
+    ],
+    "maxImageBytes": 8388608,
+    "minImageDimension": 128,
+    "maxImageDimension": 5000,
+    "viewRoles": [
+      "front",
+      "back",
+      "left",
+      "right",
+      "top",
+      "bottom",
+      "leftFront",
+      "rightFront"
+    ],
+    "maxViews": 8
+  },
+  "options": {
+    "generateTypes": [
+      "Normal",
+      "Geometry"
+    ],
+    "defaultGenerateType": "Normal",
+    "defaultEnablePbr": false,
+    "defaultFaceCount": 500000,
+    "minFaceCount": 40000,
+    "maxFaceCount": 1500000
+  },
+  "output": {
+    "primaryFormat": "glb",
+    "primaryMimeType": "model/gltf-binary",
+    "supportedExportFormats": [
+      "glb",
+      "obj",
+      "fbx",
+      "usdz"
+    ],
+    "previewMimeTypes": [
+      "image/png",
+      "image/jpeg",
+      "image/webp"
+    ],
+    "maxModelBytes": 629145600,
+    "maxPreviewBytes": 26214400
+  },
+  "pricing": {
+    "provider": "fal",
+    "baseCostMicroUsd": "375000",
+    "pbrAddonMicroUsd": "150000",
+    "multiviewAddonMicroUsd": "150000",
+    "customFaceCountAddonMicroUsd": "150000",
+    "authority": "backend/config/cost-registry.v1.json",
+    "effectiveDate": "2026-09-19",
+    "source": "fal official Hunyuan 3D v3.1 Pro model/API pages"
+  },
+  "gates": {
+    "externalGate": "M18",
+    "liveBillingEnvironment": "LIVE_BILLING_ALLOWED",
+    "m18Environment": "ZUVYR_M18_VERIFIED",
+    "paidExecutionEnvironment": "PACK083_3D_PAID_EXECUTION_ENABLED",
+    "credentialEnvironment": "FAL_KEY",
+    "liveEnabledByDefault": false
+  }
+}
