@@ -375,6 +375,44 @@ function createAudioStudioRouter({
           .order('segment_index', { ascending: true })
       : { data: [], error: null };
 
+    let artifacts = [];
+    if (completed) {
+      const rows = await db.from('audio_artifacts')
+        .select('id,asset_type,mime_type,duration_seconds,metadata,canonical_content_id,canonical_asset_id')
+        .eq('owner_id', req.userId)
+        .eq('job_id', jobId)
+        .order('created_at', { ascending: true });
+      if (!rows.error) {
+        artifacts = await Promise.all((rows.data || []).map(async item => {
+          let artifactDownloadUrl = null;
+          if (item.canonical_asset_id && assetKernel) {
+            try {
+              const signed = await assetKernel.createSignedDownload({
+                ownerId:req.userId,
+                assetId:item.canonical_asset_id,
+                requestId:'audio-job:' + jobId + ':artifact:' + item.id,
+                expiresIn:3600
+              });
+              artifactDownloadUrl = signed.signedUrl;
+            } catch (_) {
+              artifactDownloadUrl = null;
+            }
+          }
+          return {
+            id:item.id,
+            role:item.metadata?.role || 'primary',
+            assetType:item.asset_type,
+            mimeType:item.mime_type,
+            durationSeconds:item.duration_seconds,
+            canonicalContentId:item.canonical_content_id,
+            canonicalAssetId:item.canonical_asset_id,
+            downloadUrl:artifactDownloadUrl,
+            rights:item.metadata?.rights || null
+          };
+        }));
+      }
+    }
+
     return res.json({
       status: 'success',
       job: {
@@ -393,6 +431,7 @@ function createAudioStudioRouter({
         canonicalAssetId: completed ? result.data.canonical_asset_id : null,
         downloadUrl,
         segments: segments.error ? [] : (segments.data || []),
+        artifacts,
         usage: result.data.usage || {},
         createdAt: result.data.created_at,
         updatedAt: result.data.updated_at,
