@@ -229,6 +229,124 @@ function providerQuote(feature, {
         costEntryId: entry.id
       });
     }
+
+    if (['music_generation','sound_effects','remix','stem_separation','translate_dub','audio_to_video'].includes(audioRequest.operation)) {
+      const operation = audioRequest.operation;
+      if (operation === 'translate_dub') {
+        throw pricingError('pack074_dub_audio_output_contract_unverified');
+      }
+      const gate = {
+        music_generation: 'PACK074_MUSIC_PAID_EXECUTION_ENABLED',
+        sound_effects: 'PACK074_SFX_PAID_EXECUTION_ENABLED',
+        remix: 'PACK074_REMIX_PAID_EXECUTION_ENABLED',
+        stem_separation: 'PACK074_STEMS_PAID_EXECUTION_ENABLED',
+        audio_to_video: 'PACK074_AUDIO_TO_VIDEO_PAID_EXECUTION_ENABLED'
+      }[operation];
+      if (!gate || String(env[gate] || '').toLowerCase() !== 'true') {
+        throw pricingError('pack074_' + operation + '_paid_execution_disabled');
+      }
+      if (!env.FAL_KEY) throw pricingError('no_configured_pack074_fal_provider');
+
+      if (operation === 'music_generation') {
+        const durationMs = BigInt(audioRequest.durationSeconds) * 1000n;
+        const entry = resolveCostEntry({
+          provider:'fal',
+          modelToolId:'cassetteai/music-generator',
+          capability:'audio_music_generation',
+          operationType:'music_generation_output_duration'
+        }, { env, now });
+        return Object.freeze({
+          provider:'fal',
+          providerCostMicroUsd:estimateProviderCostMicroUsd(entry,{
+            outputUnits:safeUsageInteger(durationMs,'pack074_music_duration_ms')
+          }),
+          pricingVersion:entry.registryVersion,
+          costEntryId:entry.id
+        });
+      }
+
+      if (operation === 'sound_effects') {
+        const entry = resolveCostEntry({
+          provider:'fal',
+          modelToolId:'cassetteai/sound-effects-generator',
+          capability:'audio_sound_effects',
+          operationType:'sound_effect_generation'
+        }, { env, now });
+        return Object.freeze({
+          provider:'fal',
+          providerCostMicroUsd:estimateProviderCostMicroUsd(entry),
+          pricingVersion:entry.registryVersion,
+          costEntryId:entry.id
+        });
+      }
+
+      if (operation === 'remix') {
+        const durationMs = durationMilliseconds(
+          audioPricingContext?.sourceDurationSeconds,
+          'pack074_remix_source_duration'
+        );
+        const entry = resolveCostEntry({
+          provider:'fal',
+          modelToolId:'fal-ai/ace-step/audio-to-audio',
+          capability:'audio_remix',
+          operationType:'audio_remix_generated_duration'
+        }, { env, now });
+        return Object.freeze({
+          provider:'fal',
+          providerCostMicroUsd:estimateProviderCostMicroUsd(entry,{
+            outputUnits:safeUsageInteger(durationMs,'pack074_remix_duration_ms')
+          }),
+          pricingVersion:entry.registryVersion,
+          costEntryId:entry.id
+        });
+      }
+
+      if (operation === 'stem_separation') {
+        if (Number(audioRequest.options?.rerankingCandidates) !== 1) {
+          throw pricingError('pack074_stem_rerank_unpriced');
+        }
+        const durationMs = durationMilliseconds(
+          audioPricingContext?.sourceDurationSeconds,
+          'pack074_stem_source_duration'
+        );
+        const entry = resolveCostEntry({
+          provider:'fal',
+          modelToolId:'fal-ai/sam-audio/separate',
+          capability:'audio_stem_separation',
+          operationType:'audio_text_guided_separation'
+        }, { env, now });
+        return Object.freeze({
+          provider:'fal',
+          providerCostMicroUsd:estimateProviderCostMicroUsd(entry,{
+            inputUnits:safeUsageInteger(durationMs,'pack074_stem_duration_ms')
+          }),
+          pricingVersion:entry.registryVersion,
+          costEntryId:entry.id
+        });
+      }
+
+      if (operation === 'audio_to_video') {
+        const videoMs = durationMilliseconds(
+          audioPricingContext?.sourceVideoDurationSeconds,
+          'pack074_audio_to_video_source_duration'
+        );
+        const increments = (videoMs + 4999n) / 5000n;
+        const entry = resolveCostEntry({
+          provider:'fal',
+          modelToolId:'fal-ai/kling-video/lipsync/audio-to-video',
+          capability:'audio_to_video',
+          operationType:'audio_to_video_lipsync_5s_increment'
+        }, { env, now });
+        return Object.freeze({
+          provider:'fal',
+          providerCostMicroUsd:estimateProviderCostMicroUsd(entry,{
+            outputUnits:safeUsageInteger(increments,'pack074_audio_to_video_units')
+          }),
+          pricingVersion:entry.registryVersion,
+          costEntryId:entry.id
+        });
+      }
+    }
   }
 
   if (
