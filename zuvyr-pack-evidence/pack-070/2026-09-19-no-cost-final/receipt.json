@@ -1,0 +1,94 @@
+{
+  "pack": "070",
+  "title": "Media Checkpoint G",
+  "date": "2026-09-19",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonicalLockedVerified": false,
+  "canonicalGateReason": "Authenticated Pack061 image generation is live-proven and the integrated media engineering baseline is production-verified, but authenticated owner production proof for local video export/cancel plus paid-provider video E2E is not available. Paid execution stays OFF.",
+  "baselineCommit": "7436c740c5b375f941b88f8751ec0f2b0db00c31",
+  "candidate": {
+    "branch": "zuvyr-pack070-candidate",
+    "head": "76a404caef3d8901193058ab8c466c9f3cb95266",
+    "pullRequest": 7,
+    "workflowRun": 35415397936,
+    "backendQuality": "PASS",
+    "releaseQuality": "PASS"
+  },
+  "production": {
+    "runtimeCommit": "75c0ade85322e585b3278b1100218a0605add707",
+    "workflowRun": 35415442792,
+    "backendQuality": "PASS",
+    "releaseQuality": "PASS",
+    "railway": {
+      "backend": {
+        "deploymentId": "766977b8-b59d-42a4-a15d-306bd3e9f838",
+        "status": "SUCCESS"
+      },
+      "worker": {
+        "deploymentId": "c07b9a04-7ab3-44db-95f8-210f1dc59a2b",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deploymentId": "209708a2-1191-42c4-b1a1-9e0cb5c35909",
+        "status": "SUCCESS"
+      }
+    },
+    "vercel": {
+      "status": "UNCHANGED_RUNTIME_VERIFIED",
+      "deploymentId": "dpl_J8r6smNKxM1SVCgJspg6bntrJdkV",
+      "state": "READY",
+      "deployedCommit": "9533a00dcaed3317d8dfead15527bc6f9cdb7a63",
+      "reason": "Pack070 production diff contains no frontend files; existing READY frontend is the intended unchanged runtime identity."
+    }
+  },
+  "checkpoint": {
+    "authoritativeReceiptRange": "Pack061 through Pack069",
+    "receiptAuthorityOrder": [
+      "dated_final_receipt",
+      "canonical_master_state",
+      "continue_handoff_notes"
+    ],
+    "fullMediaRegression": "PASS",
+    "unifiedUsageLedger": "PASS",
+    "canonicalContentAssetLineage": "PASS",
+    "libraryProjectSendTo": "PASS",
+    "imageHistoryReopenDownloadRollback": "PASS",
+    "imageProviderGatesFailClosed": "PASS",
+    "videoProviderGatesFailClosed": "PASS",
+    "localVideoExportRuntime": "PASS",
+    "videoCancelContract": "PASS",
+    "truthfulAdvertising": "PASS"
+  },
+  "historicalRepairs": {
+    "pack044TestWorkingDirectory": "preserved historical root cwd in checkpoint runner",
+    "pack062PricingAssertion": "updated to preserve image pricing invariant alongside current videoPricingContext branch",
+    "masterState": "reconciled Pack066-069 from authoritative final receipts"
+  },
+  "paidGateAudit": {
+    "pack063": false,
+    "pack064": false,
+    "pack066": false,
+    "pack067I2v": false,
+    "pack067R2v": false,
+    "pack068Edit": false,
+    "pack068Extend": false,
+    "pack068ObjectRemove": false,
+    "pack068Background": false,
+    "pack068Relight": false,
+    "pack068Recamera": false,
+    "pack068LipSync": false,
+    "pack069Subtitles": false,
+    "pack069Dub": false,
+    "pack069Enhance": false,
+    "secretValuesReadOrExposed": false
+  },
+  "noCostVerification": {
+    "paidProviderCalls": 0,
+    "paymentCalls": 0,
+    "productionDatabaseMutationsFromCheckpointTests": 0,
+    "migrationRequired": false
+  },
+  "progression": "USER_APPROVED_NO_COST_DEFERRED_GATE",
+  "nextPack": "071",
+  "nextPackTitle": "Speech-to-Text / Diarization / Cleanup"
+}

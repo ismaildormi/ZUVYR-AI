@@ -1178,8 +1178,10 @@
     "next_pack": "070"
   },
   "pack070": {
-    "status": "OPEN",
+    "status": "LOCKED_ENGINEERING_VERIFIED",
     "title": "Media Checkpoint G",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "Pack061 authenticated image generation is live-proven and all currently live-advertised no-cost media controls are production-runtime verified, but authenticated owner production proof for the Pack069 local video export/cancel flow and paid-provider video paths is not present. Paid gates remain OFF.",
     "dependencies": [
       "061",
       "062",
@@ -1191,13 +1193,50 @@
       "068",
       "069"
     ],
-    "objective": "Freeze the integrated Image/Video media baseline across canonical content/assets, usage, Library/Projects, Send-To, failure/fallback, export/cancel and truthful evidence claims.",
-    "acceptance": "Advertised Image/Video capabilities match their authoritative receipts; Packs061–069 regressions pass together; unified usage and canonical lineage are preserved.",
-    "receipt_authority_order": [
-      "dated_final_receipt",
-      "canonical_master_state",
-      "continue_handoff_notes"
+    "runtime_commit": "75c0ade85322e585b3278b1100218a0605add707",
+    "candidate_commit": "76a404caef3d8901193058ab8c466c9f3cb95266",
+    "candidate_pr": 7,
+    "candidate_ci_run": 35415397936,
+    "production_ci_run": 35415442792,
+    "media_checkpoint_tests": "PASS",
+    "authoritative_receipts": "061-069 reconciled",
+    "unified_usage_ledger": "PASS",
+    "canonical_asset_lineage": "PASS",
+    "library_send_to_projects": "PASS",
+    "truthful_advertising": "PASS",
+    "paid_execution_default": false,
+    "production": {
+      "backend_deployment": "766977b8-b59d-42a4-a15d-306bd3e9f838",
+      "worker_deployment": "c07b9a04-7ab3-44db-95f8-210f1dc59a2b",
+      "maintenance_deployment": "209708a2-1191-42c4-b1a1-9e0cb5c35909",
+      "railway_status": "SUCCESS",
+      "vercel_unchanged_ready_deployment": "dpl_J8r6smNKxM1SVCgJspg6bntrJdkV"
+    },
+    "migrations_required": false,
+    "paid_provider_calls_during_checkpoint": 0,
+    "advance_exception": "USER_APPROVED_NO_COST_DEFERRED_GATE",
+    "next_pack": "071"
+  },
+  "pack071": {
+    "status": "OPEN",
+    "title": "Speech-to-Text / Diarization / Cleanup",
+    "dependencies": [
+      "020",
+      "023",
+      "029",
+      "037",
+      "038",
+      "039",
+      "041",
+      "042",
+      "047",
+      "048",
+      "050",
+      "070"
     ],
+    "external_gate": "M14",
+    "objective": "Bind verified STT/audio processing provider(s), upload/chunk/format/diarization/noise-cleanup, language detection, storage and minute-based costing.",
+    "acceptance": "Audio→text/segments live test passes with correct duration/cost and privacy controls.",
     "paid_execution_allowed": false,
     "next_pack_allowed": false
   }

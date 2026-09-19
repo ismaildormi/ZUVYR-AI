@@ -1122,3 +1122,42 @@ All currently advertised Image/Video V1 capabilities have production E2E evidenc
 Exactly one next step:
 Audit Packs061–069 evidence, current feature flags, live production routes and usage/asset lineage, then build the checkpoint test matrix and execute every no-cost production-safe E2E path before freezing Media Checkpoint G.
 
+## PACK070 FINAL — Media Checkpoint G — 2026-09-19
+
+- Status: LOCKED_ENGINEERING_VERIFIED
+- Canonical LOCKED_VERIFIED: NO
+- Runtime commit: `75c0ade85322e585b3278b1100218a0605add707`
+- Candidate PR #7 / CI 35415397936: Backend PASS / Release PASS
+- Production CI 35415442792: Backend PASS / Release PASS
+- Packs061–069 integrated media regression: PASS
+- Unified image/video usage ledger: PASS
+- Canonical content/assets/lineage: PASS
+- Library / Projects / Send-To: PASS
+- Paid provider gates: OFF
+- Paid provider calls during checkpoint: 0
+- Migration required: NO
+- Railway backend: `766977b8-b59d-42a4-a15d-306bd3e9f838` — SUCCESS
+- Railway worker: `c07b9a04-7ab3-44db-95f8-210f1dc59a2b` — SUCCESS
+- Railway maintenance: `209708a2-1191-42c4-b1a1-9e0cb5c35909` — SUCCESS
+- Vercel: unchanged READY frontend deployment `dpl_J8r6smNKxM1SVCgJspg6bntrJdkV`
+- Final receipt: `zuvyr-pack-evidence/pack-070/2026-09-19-no-cost-final/receipt.json`
+- Receipt SHA256: `50609e941685fdb0579edc25b3d93cef1c3dbfc61a0754c0465379571beae14e`
+- Progression: USER_APPROVED_NO_COST_DEFERRED_GATE
+- Active pack after reconciliation: PACK071
+
+## PACK071 OPEN — Speech-to-Text / Diarization / Cleanup
+
+What this pack does:
+Build the V1 audio-ingestion speech pipeline on the existing canonical asset/usage architecture: verified STT, language detection, timestamped segments, diarization where provider-supported, bounded audio cleanup/noise processing, canonical transcript/segment persistence, and exact minute-based pricing.
+
+Hard rules:
+- Owner-scoped canonical audio assets only.
+- Client-supplied duration is never billing authority.
+- Unknown/stale pricing blocks paid execution.
+- Paid provider execution remains OFF until explicitly authorized / M14 live gate.
+- Transcript and speaker segments inherit privacy/retention controls from the source asset.
+- No training use is implied by transcription; training rights remain separate.
+
+Exactly one next step:
+Audit current audio routes, audio storage/duration metadata, provider/model registries, usage ledger, voice/audio feature flags and any existing STT/diarization code, then bind only verified provider capabilities and exact costs into the current architecture.
+
