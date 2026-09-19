@@ -186,10 +186,12 @@ function normalizePublicUrl(value, { allowedHosts = null } = {}) {
   });
 }
 
-function sessionPolicies() {
+function sessionPolicies({allowedHosts}={}) {
+  const hosts=normalizeAllowedHosts(allowedHosts);
   return Object.freeze({
     network:Object.freeze({
       mode:config.network.mode,
+      allowedHosts:hosts,
       blockPrivateIpLiterals:config.network.blockPrivateIpLiterals,
       blockLocalhost:config.network.blockLocalhost,
       blockLinkLocal:config.network.blockLinkLocal,
@@ -208,7 +210,9 @@ function publicSession(row) {
   if (!row) return null;
   return Object.freeze({
     id:row.id,
+    conversationId:row.conversation_id || null,
     taskRunId:row.task_run_id || null,
+    projectId:row.project_id || null,
     status:row.status,
     provider:row.provider,
     region:row.region || null,
@@ -219,6 +223,14 @@ function publicSession(row) {
     idleExpiresAt:row.idle_expires_at,
     endedAt:row.ended_at || null,
     usageSeconds:Number(row.usage_seconds || 0),
+    proxyBytes:Number(row.proxy_bytes || 0),
+    billingState:row.billing_state || 'not_reserved',
+    finalCredits:Number.isInteger(Number(row.final_credits)) ? Number(row.final_credits) : null,
+    allowedHosts:Object.freeze(
+      Array.isArray(row.network_policy?.allowedHosts)
+        ? [...row.network_policy.allowedHosts]
+        : []
+    ),
     failureCode:row.failure_code || null,
     createdAt:row.created_at,
     updatedAt:row.updated_at
