@@ -4,7 +4,7 @@ const sharp = require('sharp');
 const config = require('../config/model3d-system.v1.json');
 const { createVideoInputResolver } = require('./videoReferenceResolver');
 const { createAssetStorageKernel } = require('./assetStorageKernel');
-const { assertOwnedStoragePath } = require('./assetStoragePolicy');
+const { assertOwnedStoragePath } = require('./assetStorageContract');
 
 function inputError(code, statusCode = 400, cause = null) {
   const error = new Error(code);
