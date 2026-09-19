@@ -111,16 +111,17 @@ assert(
   'image/video must converge into the canonical generation usage category'
 );
 for (const marker of [
-  'reserveCredits(requestId',
+  'reservation = await reserveCredits({',
+  'requestId,',
   'quotedProviderCostMicroUsd',
-  "feature === 'video'",
-  "feature === 'image'"
+  'imageRequest',
+  'videoRequest'
 ]) assert(server.includes(marker), 'server unified usage marker missing: ' + marker);
 for (const marker of [
   'settleCredits(requestId',
   'refundCredits(requestId',
   "recordRefund('video')",
-  "recordRefund('image')"
+  'recordRefund(feature)'
 ]) assert(worker.includes(marker), 'worker unified settlement marker missing: ' + marker);
 
 // One canonical content/asset/lineage system.
