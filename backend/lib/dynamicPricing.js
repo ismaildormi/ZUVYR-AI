@@ -153,8 +153,55 @@ function providerQuote(feature, {
   now = Date.now(),
   imageRequest = null,
   videoRequest = null,
-  videoPricingContext = null
+  videoPricingContext = null,
+  audioRequest = null,
+  audioPricingContext = null
 } = {}) {
+  if (feature === 'audio' && audioRequest) {
+    if (audioRequest.operation === 'audio_cleanup') {
+      const entry = resolveCostEntry({
+        provider: 'local',
+        modelToolId: 'ffmpeg-alpine',
+        capability: 'audio_cleanup',
+        operationType: 'audio_cleanup_processing'
+      }, { env, now });
+      return Object.freeze({
+        provider: 'local-ffmpeg',
+        providerCostMicroUsd: estimateProviderCostMicroUsd(entry),
+        pricingVersion: entry.registryVersion,
+        costEntryId: entry.id
+      });
+    }
+
+    if (audioRequest.operation === 'transcription') {
+      if (String(env.PACK071_STT_PAID_EXECUTION_ENABLED || '').toLowerCase() !== 'true') {
+        throw pricingError('pack071_stt_paid_execution_disabled');
+      }
+      if (!env.DEEPGRAM_API_KEY) {
+        throw pricingError('no_configured_pack071_stt_provider');
+      }
+      const durationMs = durationMilliseconds(
+        audioPricingContext?.sourceDurationSeconds,
+        'pack071_source_duration'
+      );
+      const billableSeconds = ceilDiv(durationMs, 1000n);
+      const entry = resolveCostEntry({
+        provider: 'deepgram',
+        modelToolId: 'nova-3',
+        capability: 'audio_transcription',
+        operationType: 'speech_to_text_multilingual_diarization'
+      }, { env, now });
+      return Object.freeze({
+        provider: 'deepgram',
+        providerCostMicroUsd: estimateProviderCostMicroUsd(entry, {
+          inputUnits: safeUsageInteger(billableSeconds, 'pack071_audio_seconds')
+        }),
+        pricingVersion: entry.registryVersion,
+        costEntryId: entry.id
+      });
+    }
+  }
+
   if (
     feature === 'video' &&
     videoRequest &&

@@ -46,6 +46,7 @@ const {
 } = require('./lib/localImageUtilityRepository');
 const { createImageReferenceResolver } = require('./lib/imageReferenceResolver');
 const { createVideoReferenceResolver } = require('./lib/videoReferenceResolver');
+const { createAudioInputResolver } = require('./lib/audioReferenceResolver');
 const {
   generateVideo,
   DEFAULT_VIDEO_MODEL,
@@ -61,6 +62,11 @@ const { getDefaultVideoGenerationRepository } = require('./lib/videoGenerationRe
 const { getDefaultVideoDerivedRepository } = require('./lib/videoDerivedRepository');
 const { executeLocalVideoExport } = require('./lib/localVideoExport');
 const { buildSubtitleArtifacts } = require('./lib/videoSubtitleArtifacts');
+const { normalizeAudioRequest } = require('./lib/audioRequestContract');
+const { assertAudioOperationAvailable } = require('./lib/audioOperationRegistry');
+const { transcribeAudio, DEEPGRAM_MODEL } = require('./lib/audioProvider');
+const { executeLocalAudioCleanup } = require('./lib/localAudioCleanup');
+const { getDefaultAudioResultRepository } = require('./lib/audioResultRepository');
 const { connection } = require('./lib/queue');
 const { startBrainKernelWorker } = require('./lib/brainKernelWorker');
 const { supabaseAdmin } = require('./lib/supabaseAdmin');
@@ -69,6 +75,10 @@ const resolveImageReferences = createImageReferenceResolver({
   storage: supabaseAdmin.storage
 });
 const resolveVideoReferences = createVideoReferenceResolver({
+  db: supabaseAdmin,
+  storage: supabaseAdmin.storage
+});
+const audioInputResolver = createAudioInputResolver({
   db: supabaseAdmin,
   storage: supabaseAdmin.storage
 });
@@ -1120,6 +1130,255 @@ async function processVideoJob(job) {
   };
 }
 
+async function audioJobRpc(name, args) {
+  const result = await supabaseAdmin.rpc(name, args);
+  if (result.error) {
+    const error = new Error(name + '_failed');
+    error.code = name + '_failed';
+    error.cause = result.error;
+    throw error;
+  }
+  return result.data && typeof result.data === 'object' ? result.data : {};
+}
+
+async function markAudioJob(jobId, ownerId, patch) {
+  const result = await supabaseAdmin
+    .from('audio_jobs')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', jobId)
+    .eq('owner_id', ownerId);
+  if (result.error) {
+    const error = new Error('audio_job_update_failed');
+    error.code = 'audio_job_update_failed';
+    error.cause = result.error;
+    throw error;
+  }
+}
+
+async function refundAudio({ requestId, userId }) {
+  try {
+    await refundCredits(requestId);
+    recordRefund('audio');
+  } catch (error) {
+    await reportRefundFailure({
+      requestId,
+      userId,
+      feature: 'audio',
+      error
+    });
+  }
+}
+
+async function processAudioJob(job) {
+  const {
+    jobRowId,
+    requestId,
+    userId,
+    request: rawRequest,
+    creditsConsumed
+  } = job.data;
+
+  const request = normalizeAudioRequest(rawRequest);
+  assertAudioOperationAvailable(request.operation);
+
+  const begin = await audioJobRpc('begin_zuvyr_audio_job', {
+    p_owner_id: userId,
+    p_job_id: jobRowId
+  });
+
+  if (begin.claimed !== true) {
+    if (begin.status === 'cancelled' || begin.cancelRequested === true) {
+      await refundAudio({ requestId, userId });
+      return { status: 'cancelled' };
+    }
+    if (begin.status === 'done') return { status: 'done', replayed: true };
+    const error = new UnrecoverableError('audio_job_not_executable');
+    error.code = 'audio_job_not_executable';
+    throw error;
+  }
+
+  const resolved = await audioInputResolver.resolve({
+    ownerId: userId,
+    request,
+    requestId
+  });
+  const source = resolved.source;
+  const repository = getDefaultAudioResultRepository();
+  const existing = await repository.getExisting({
+    ownerId: userId,
+    jobId: jobRowId
+  });
+
+  let persisted;
+  let provider;
+  let model;
+
+  if (existing?.canonical === true) {
+    const claim = await audioJobRpc('claim_zuvyr_audio_execution', {
+      p_owner_id: userId,
+      p_job_id: jobRowId,
+      p_stage: 'processing'
+    });
+    if (claim.claimed !== true) {
+      if (claim.status === 'cancelled' || claim.cancelRequested === true) {
+        await refundAudio({ requestId, userId });
+        return { status: 'cancelled' };
+      }
+      throw new UnrecoverableError('audio_job_not_executable');
+    }
+    persisted = existing;
+    provider = existing.provider || (
+      request.operation === 'transcription' ? 'deepgram' : 'local'
+    );
+    model = existing.model || (
+      request.operation === 'transcription' ? DEEPGRAM_MODEL : 'ffmpeg-alpine'
+    );
+  } else if (request.operation === 'transcription') {
+    const claim = await audioJobRpc('claim_zuvyr_audio_execution', {
+      p_owner_id: userId,
+      p_job_id: jobRowId,
+      p_stage: 'provider'
+    });
+    if (claim.claimed !== true) {
+      if (claim.status === 'cancelled' || claim.cancelRequested === true) {
+        await refundAudio({ requestId, userId });
+        return { status: 'cancelled' };
+      }
+      throw new UnrecoverableError('audio_job_not_executable');
+    }
+
+    await markAudioJob(jobRowId, userId, {
+      progress_percent: 35,
+      stage: 'provider',
+      provider: 'deepgram',
+      model: DEEPGRAM_MODEL
+    });
+
+    const result = existing?.providerResult || await transcribeAudio(request, { source });
+    if (!existing?.providerResult) {
+      await markAudioJob(jobRowId, userId, {
+        provider_result: result,
+        progress_percent: 60
+      });
+    }
+    persisted = await repository.persistTranscript({
+      ownerId: userId,
+      jobId: jobRowId,
+      result,
+      source,
+      provider: 'deepgram',
+      model: DEEPGRAM_MODEL
+    });
+    provider = 'deepgram';
+    model = DEEPGRAM_MODEL;
+  } else if (request.operation === 'audio_cleanup') {
+    const claim = await audioJobRpc('claim_zuvyr_audio_execution', {
+      p_owner_id: userId,
+      p_job_id: jobRowId,
+      p_stage: 'processing'
+    });
+    if (claim.claimed !== true) {
+      if (claim.status === 'cancelled' || claim.cancelRequested === true) {
+        await refundAudio({ requestId, userId });
+        return { status: 'cancelled' };
+      }
+      throw new UnrecoverableError('audio_job_not_executable');
+    }
+
+    await markAudioJob(jobRowId, userId, {
+      progress_percent: 40,
+      stage: 'processing',
+      provider: 'local',
+      model: 'ffmpeg-alpine'
+    });
+
+    const cleaned = await executeLocalAudioCleanup({
+      sourceUrl: source.url,
+      format: request.options.cleanupFormat,
+      strength: request.options.cleanupStrength
+    });
+    persisted = await repository.persistCleanedAudio({
+      ownerId: userId,
+      jobId: jobRowId,
+      buffer: cleaned.buffer,
+      mimeType: cleaned.mimeType,
+      format: cleaned.format,
+      strength: request.options.cleanupStrength,
+      source
+    });
+    provider = 'local';
+    model = 'ffmpeg-alpine';
+  } else {
+    const error = new UnrecoverableError('audio_operation_not_implemented');
+    error.code = 'audio_operation_not_implemented';
+    throw error;
+  }
+
+  const finalCredits = Number(creditsConsumed);
+  if (!Number.isSafeInteger(finalCredits) || finalCredits < 1) {
+    const error = new UnrecoverableError('audio_credit_settlement_invalid');
+    error.code = 'audio_credit_settlement_invalid';
+    throw error;
+  }
+
+  await markAudioJob(jobRowId, userId, {
+    progress_percent: 90,
+    stage: 'settling'
+  });
+  await settleCredits(requestId, finalCredits);
+
+  await markAudioJob(jobRowId, userId, {
+    status: 'done',
+    stage: 'done',
+    progress_percent: 100,
+    final_credits: finalCredits,
+    provider,
+    model,
+    canonical_content_id: persisted.contentId,
+    canonical_asset_id: persisted.assetId,
+    completed_at: new Date().toISOString()
+  });
+
+  return {
+    status: 'done',
+    operation: request.operation,
+    canonicalContentId: persisted.contentId,
+    canonicalAssetId: persisted.assetId
+  };
+}
+
+async function handleAudioFailure(job, error) {
+  const attempts = Number(job.opts.attempts || 1);
+  const exhausted =
+    error.name === 'UnrecoverableError' ||
+    job.attemptsMade >= attempts;
+  if (!exhausted) return;
+
+  const { jobRowId, requestId, userId } = job.data;
+  await markAudioJob(jobRowId, userId, {
+    status: 'failed',
+    stage: 'failed',
+    progress_percent: 0,
+    error_code: String(error.code || error.message || 'audio_job_failed').slice(0, 300),
+    completed_at: new Date().toISOString()
+  }).catch(() => null);
+
+  await refundAudio({ requestId, userId });
+  await logCreditEvent({
+    userId,
+    feature: 'audio',
+    status: 'error',
+    requestId: requestId + ':detail',
+    errorMessage: error.message
+  }).catch(() => null);
+
+  console.error(
+    '[audio-worker] job failed and reservation reconciled:',
+    job.id,
+    error.code || error.message
+  );
+}
+
 const imageWorker = new Worker('rox-image-generation', processImageJob, {
   connection,
   concurrency: CONCURRENCY,
@@ -1128,6 +1387,11 @@ const imageWorker = new Worker('rox-image-generation', processImageJob, {
 const videoWorker = new Worker('rox-video-generation', processVideoJob, {
   connection,
   concurrency: Math.max(1, Math.floor(CONCURRENCY / 2)), // video is heavier ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â fewer parallel jobs
+});
+
+const audioWorker = new Worker('zuvyr-audio-processing', processAudioJob, {
+  connection,
+  concurrency: 1
 });
 
 const attachmentWorker = new Worker(
@@ -1312,6 +1576,7 @@ async function handleJobFailure(job, err, feature) {
 
 imageWorker.on('failed', (job, err) => handleJobFailure(job, err, 'image'));
 videoWorker.on('failed', (job, err) => handleJobFailure(job, err, 'video'));
+audioWorker.on('failed', (job, err) => handleAudioFailure(job, err));
 attachmentWorker.on('failed', (job, err) =>
   handleAttachmentFailure(job, err)
 );
@@ -1330,4 +1595,4 @@ brainKernelWorker.on('failed', (job, error) => {
   );
 });
 
-console.log(`ROX AI worker running (concurrency: image=${CONCURRENCY}, video=${Math.max(1, Math.floor(CONCURRENCY / 2))}, attachment=${ATTACHMENT_WORKER_CONCURRENCY})`);
+console.log(`ROX AI worker running (concurrency: image=${CONCURRENCY}, video=${Math.max(1, Math.floor(CONCURRENCY / 2))}, audio=1, attachment=${ATTACHMENT_WORKER_CONCURRENCY})`);

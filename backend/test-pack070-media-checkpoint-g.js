@@ -68,9 +68,12 @@ for (const [pack, rel, status, canonical] of receipts) {
   assert.equal(state.status, status, 'master status mismatch for Pack' + pack);
 }
 
-assert.equal(master.pack070.status, 'OPEN');
-assert.equal(master.pack070.next_pack_allowed, false);
-assert.equal(master.pack070.receipt_authority_order[0], 'dated_final_receipt');
+assert.equal(master.pack070.status, 'LOCKED_ENGINEERING_VERIFIED');
+assert.equal(master.pack070.canonical_locked_verified, false);
+assert.equal(master.pack070.media_checkpoint_tests, 'PASS');
+assert.equal(master.pack070.authoritative_receipts, '061-069 reconciled');
+assert.equal(master.pack070.advance_exception, 'USER_APPROVED_NO_COST_DEFERRED_GATE');
+assert.equal(master.pack070.next_pack, '071');
 
 // Truthful advertising: Pack061 really has authenticated live proof.
 // All later provider-paid paths remain explicitly non-live while their gates are off.

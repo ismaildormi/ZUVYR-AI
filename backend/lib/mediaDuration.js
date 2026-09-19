@@ -1,5 +1,7 @@
 'use strict';
 
+const { execFile } = require('child_process');
+
 const {
   isMp4,
   readMp4DurationSeconds
@@ -51,6 +53,40 @@ function readWavDurationSeconds(buffer) {
   return Number(milliseconds) / 1000;
 }
 
+async function probeMediaFileDurationSeconds(filePath, {
+  assetType,
+  timeoutMs = 15000,
+  execFileImpl = execFile
+} = {}) {
+  if (String(assetType || '').toLowerCase() !== 'audio') return null;
+  const target = String(filePath || '').trim();
+  if (!target) throw durationError('media_duration_probe_path_missing');
+
+  const stdout = await new Promise((resolve, reject) => {
+    execFileImpl(
+      'ffprobe',
+      [
+        '-v', 'error',
+        '-show_entries', 'format=duration',
+        '-of', 'default=noprint_wrappers=1:nokey=1',
+        target
+      ],
+      { timeout: timeoutMs, windowsHide: true, maxBuffer: 64 * 1024 },
+      (error, out) => error ? reject(error) : resolve(String(out || '').trim())
+    );
+  }).catch(error => {
+    const wrapped = durationError('media_duration_probe_failed');
+    wrapped.cause = error;
+    throw wrapped;
+  });
+
+  const seconds = Number(stdout);
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    throw durationError('media_duration_probe_invalid');
+  }
+  return Math.round(seconds * 1000) / 1000;
+}
+
 function readTrustedMediaDurationSeconds(buffer, {
   assetType,
   mimeType
@@ -73,5 +109,6 @@ function readTrustedMediaDurationSeconds(buffer, {
 
 module.exports = {
   readWavDurationSeconds,
-  readTrustedMediaDurationSeconds
+  readTrustedMediaDurationSeconds,
+  probeMediaFileDurationSeconds
 };
