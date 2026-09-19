@@ -52,6 +52,7 @@ async function releaseLock(redis, token) {
 async function runMaintenanceOnce({
   redis,
   supabaseAdmin,
+  codeSandboxCleanup = null,
   nowMs = Date.now(),
   logger = console,
 }) {
@@ -99,6 +100,7 @@ async function runMaintenanceOnce({
     finishedAt: null,
     newAlertsRaised: null,
     accountsReset: null,
+    codeSandboxes: null,
     errors: [],
   };
 
@@ -133,6 +135,37 @@ async function runMaintenanceOnce({
       receipt.accountsReset = reset.data ?? 0;
     }
 
+    if (typeof codeSandboxCleanup === 'function') {
+      try {
+        receipt.codeSandboxes = await codeSandboxCleanup({
+          db: supabaseAdmin,
+          nowMs,
+          logger
+        });
+        if (
+          Array.isArray(receipt.codeSandboxes?.failures) &&
+          receipt.codeSandboxes.failures.length > 0
+        ) {
+          receipt.errors.push({
+            step: 'code_sandbox_cleanup',
+            message:
+              'Sandbox cleanup deferred for ' +
+              receipt.codeSandboxes.failures.length +
+              ' session(s).'
+          });
+        }
+      } catch (error) {
+        receipt.errors.push({
+          step: 'code_sandbox_cleanup',
+          message: safeError(error)
+        });
+        logger.error(
+          '[maintenance] code sandbox cleanup failed:',
+          safeError(error)
+        );
+      }
+    }
+
     receipt.finishedAt = new Date().toISOString();
 
     if (receipt.errors.length === 0) {
@@ -143,6 +176,7 @@ async function runMaintenanceOnce({
         runId,
         newAlertsRaised: receipt.newAlertsRaised,
         accountsReset: receipt.accountsReset,
+        codeSandboxes: receipt.codeSandboxes,
       }));
       return { status: 'success', duplicate: false, receipt };
     }
@@ -150,6 +184,7 @@ async function runMaintenanceOnce({
     const successfulSteps = [
       receipt.newAlertsRaised !== null,
       receipt.accountsReset !== null,
+      codeSandboxCleanup === null || receipt.codeSandboxes !== null,
     ].filter(Boolean).length;
     receipt.status = successfulSteps > 0 ? 'partial' : 'failed';
     await writeReceipt(redis, receipt);
