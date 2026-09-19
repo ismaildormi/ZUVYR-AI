@@ -199,7 +199,7 @@
         "local_runtime"
       ],
       "quotaType": "local_runtime",
-      "termsLicenseNotes": "Local models require model-specific license and compute-cost verification before launch authorization. Pack069 local FFmpeg export is worker-runtime only and carries zero external provider charge; infrastructure remains priced separately.",
+      "termsLicenseNotes": "Local models require model-specific license and compute-cost verification before launch authorization. Pack069/071 FFmpeg media transforms are worker-runtime only and carry zero external provider charge; infrastructure remains priced separately.",
       "adapter": "src/modules/ai/providers/index.js",
       "capabilities": [
         {
@@ -223,6 +223,22 @@
             "authority": "backend/config/cost-registry.v1.json",
             "entryIds": [
               "local-ffmpeg-video-export"
+            ]
+          }
+        },
+        {
+          "id": "audio.cleanup",
+          "verification": "verified_repository",
+          "model": "ffmpeg-alpine",
+          "routing": {
+            "mode": "local_worker",
+            "authority": "backend/Dockerfile.worker"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "local-ffmpeg-audio-cleanup"
             ]
           }
         }
@@ -692,6 +708,36 @@
               "name": "PACK067_R2V_PAID_EXECUTION_ENABLED",
               "value": "true"
             }
+          }
+        }
+      ]
+    },
+    "deepgram": {
+      "credentialEnvironment": [
+        "DEEPGRAM_API_KEY"
+      ],
+      "regions": [
+        "provider_managed",
+        "eu_endpoint_available"
+      ],
+      "quotaType": "provider_managed",
+      "termsLicenseNotes": "Pack071 binds pre-recorded Nova-3 transcription using provider-published pricing and capability docs. Paid execution remains environment-gated until M14.",
+      "adapter": "lib/audioProvider.js",
+      "capabilities": [
+        {
+          "id": "audio.transcription",
+          "verification": "verified_provider_docs",
+          "model": "nova-3",
+          "routing": {
+            "mode": "pre_recorded_api",
+            "endpoint": "/v1/listen"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "deepgram-nova-3-multilingual-prerecorded"
+            ]
           }
         }
       ]
