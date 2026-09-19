@@ -798,6 +798,14 @@ function createCodeRuntimeExecutor({
     return finalized;
   }
 
+  async function listJobs({
+    ownerId,
+    projectId = null,
+    limit = 30
+  } = {}) {
+    return runtime.list({ ownerId, projectId, limit });
+  }
+
   async function logs({
     ownerId,
     jobId,
@@ -815,6 +823,7 @@ function createCodeRuntimeExecutor({
     start,
     refresh,
     cancel,
+    listJobs,
     logs,
     deterministicCommandId,
     commandLogChunks
