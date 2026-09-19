@@ -35,25 +35,30 @@
       "paidExecutionEnvironment": "PACK068_EXTEND_PAID_EXECUTION_ENABLED"
     },
     "subtitles": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
+      "enabledByDefault": true,
+      "status": "implemented_pack069_paid_live_deferred",
       "requiresPrompt": false,
       "requiresSourceImage": false,
-      "requiresSourceVideo": true
+      "requiresSourceVideo": true,
+      "requiresTrustedSourceDuration": true,
+      "paidExecutionEnvironment": "PACK069_SUBTITLES_PAID_EXECUTION_ENABLED"
     },
     "enhance": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
+      "enabledByDefault": true,
+      "status": "implemented_pack069_paid_live_deferred",
       "requiresPrompt": false,
       "requiresSourceImage": false,
-      "requiresSourceVideo": true
+      "requiresSourceVideo": true,
+      "requiresTrustedSourceDuration": true,
+      "paidExecutionEnvironment": "PACK069_ENHANCE_PAID_EXECUTION_ENABLED"
     },
     "export": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
+      "enabledByDefault": true,
+      "status": "implemented_pack069_local_runtime",
       "requiresPrompt": false,
       "requiresSourceImage": false,
-      "requiresSourceVideo": true
+      "requiresSourceVideo": true,
+      "requiresTrustedSourceDuration": true
     },
     "reference_to_video": {
       "enabledByDefault": true,
@@ -107,6 +112,15 @@
       "requiresSourceAudio": true,
       "requiresTrustedSourceDuration": true,
       "paidExecutionEnvironment": "PACK068_LIPSYNC_PAID_EXECUTION_ENABLED"
+    },
+    "dub": {
+      "enabledByDefault": true,
+      "status": "implemented_pack069_paid_live_deferred",
+      "requiresPrompt": false,
+      "requiresSourceImage": false,
+      "requiresSourceVideo": true,
+      "requiresTrustedSourceDuration": true,
+      "paidExecutionEnvironment": "PACK069_DUB_PAID_EXECUTION_ENABLED"
     }
   },
   "providers": {
@@ -132,7 +146,10 @@
         "background_remove",
         "relight",
         "recamera",
-        "lip_sync"
+        "lip_sync",
+        "subtitles",
+        "dub",
+        "enhance"
       ],
       "status": "verified_pack068_video_edit_vfx",
       "models": {
@@ -142,7 +159,19 @@
         "background_remove": "bria/video/background-removal/v3",
         "relight": "fal-ai/lightx/relight",
         "recamera": "fal-ai/lightx/recamera",
-        "lip_sync": "fal-ai/kling-video/lipsync/audio-to-video"
+        "lip_sync": "fal-ai/kling-video/lipsync/audio-to-video",
+        "subtitles": "fal-ai/workflow-utilities/auto-subtitle",
+        "dub": "fal-ai/elevenlabs/dubbing",
+        "enhance": "bria/video/increase-resolution"
+      }
+    },
+    "local": {
+      "implementedOperations": [
+        "export"
+      ],
+      "status": "verified_pack069_ffmpeg_local_runtime",
+      "models": {
+        "export": "ffmpeg-alpine"
       }
     }
   },
@@ -197,7 +226,7 @@
       "cancelled"
     ],
     "maxProgressPercent": 100,
-    "cancelEnabledByDefault": false
+    "cancelEnabledByDefault": true
   },
   "pack066": {
     "phase": "IMPLEMENTED_PAID_LIVE_DEFERRED",
@@ -414,6 +443,81 @@
         "mp4"
       ],
       "pricingMicroUsdPerFiveSecondIncrement": 14000
+    }
+  },
+  "pack069": {
+    "phase": "IMPLEMENTED_PAID_LIVE_DEFERRED",
+    "paidExecutionDefault": false,
+    "trustedDurationAuthority": "conversation_assets.duration_seconds",
+    "subtitles": {
+      "model": "fal-ai/workflow-utilities/auto-subtitle",
+      "paidExecutionEnvironment": "PACK069_SUBTITLES_PAID_EXECUTION_ENABLED",
+      "allowedExportFormats": [
+        "mp4"
+      ],
+      "subtitleArtifactFormats": [
+        "srt",
+        "vtt"
+      ],
+      "maxWordsPerSubtitle": 12,
+      "pricingMicroUsdPerInputMinute": 30000,
+      "pricingBasis": "trusted_source_duration_milliseconds"
+    },
+    "dubbing": {
+      "model": "fal-ai/elevenlabs/dubbing",
+      "paidExecutionEnvironment": "PACK069_DUB_PAID_EXECUTION_ENABLED",
+      "allowedExportFormats": [
+        "mp4"
+      ],
+      "targetLanguageFormat": "iso_639_1",
+      "sourceLanguageFormat": "iso_639_1_or_auto",
+      "highestResolutionDefault": true,
+      "pricingMicroUsdPerRoundedMinute": 600000
+    },
+    "enhance": {
+      "model": "bria/video/increase-resolution",
+      "paidExecutionEnvironment": "PACK069_ENHANCE_PAID_EXECUTION_ENABLED",
+      "sourceDurationMaxExclusiveSeconds": 30,
+      "allowedIncreaseFactors": [
+        2,
+        4
+      ],
+      "allowedExportFormats": [
+        "mp4",
+        "webm",
+        "mov"
+      ],
+      "outputCodecByFormat": {
+        "mp4": "mp4_h264",
+        "webm": "webm_vp9",
+        "mov": "mov_h265"
+      },
+      "preserveAudioDefault": true,
+      "pricingMicroUsdPerSourceSecond": 140000
+    },
+    "export": {
+      "provider": "local",
+      "model": "ffmpeg-alpine",
+      "allowedExportFormats": [
+        "mp4",
+        "webm",
+        "mov"
+      ],
+      "providerCostMicroUsd": 0,
+      "runtime": "worker_docker_ffmpeg",
+      "canonicalRelationType": "transcoded_from"
+    },
+    "cancellation": {
+      "databaseAuthority": "generation_jobs.cancel_requested",
+      "cancellableStages": [
+        "queued",
+        "validating",
+        "provider",
+        "processing"
+      ],
+      "commitStage": "preview",
+      "lateProviderResult": "ignore_and_refund",
+      "retryPolicy": "cancel_is_unrecoverable"
     }
   }
 }
