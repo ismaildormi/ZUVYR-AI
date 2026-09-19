@@ -126,6 +126,27 @@ function createCodeRuntimeRepository(db) {
       : null;
   }
 
+  async function activeJobs({ limit = 50 } = {}) {
+    const result = await db
+      .from('code_runtime_jobs')
+      .select('id,owner_id,project_id,sandbox_session_id,status,stage,updated_at')
+      .in('status', ['queued','running'])
+      .order('updated_at', { ascending: true })
+      .limit(Math.max(1, Math.min(200, Number(limit) || 50)));
+    if (result.error) {
+      throw runtimeRepoError('code_runtime_active_jobs_read_failed', result.error);
+    }
+    return Object.freeze((result.data || []).map(row => Object.freeze({
+      id: row.id,
+      ownerId: row.owner_id,
+      projectId: row.project_id,
+      sandboxSessionId: row.sandbox_session_id,
+      status: row.status,
+      stage: row.stage,
+      updatedAt: row.updated_at
+    })));
+  }
+
   async function list({ ownerId, projectId = null, limit = 30 } = {}) {
     let query = db
       .from('code_runtime_jobs')
@@ -384,6 +405,7 @@ function createCodeRuntimeRepository(db) {
     getInternal,
     getByRequest,
     list,
+    activeJobs,
     getRuntimeState,
     upsertRuntimeState
   });
