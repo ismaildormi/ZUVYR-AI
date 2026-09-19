@@ -2764,3 +2764,368 @@
     boot();
   }
 })();
+
+/* ZUVYR PACK073 REALTIME VOICE CONTROLLER */
+(() => {
+  'use strict';
+
+  const runtime = new WeakMap();
+  const api = async (path, options = {}) => {
+    if (typeof window.authFetch !== 'function') {
+      throw new Error('voice_auth_unavailable');
+    }
+    const response = await window.authFetch(path, options);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.status !== 'success') {
+      const error = new Error(data.code || ('HTTP ' + response.status));
+      error.code = data.code || 'voice_request_failed';
+      error.status = response.status;
+      throw error;
+    }
+    return data;
+  };
+
+  const id = () => {
+    if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+    return 'voice-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+  };
+
+  const getState = (button) => {
+    let state = runtime.get(button);
+    if (!state) {
+      state = {
+        sessionId: null,
+        turnIndex: 0,
+        listening: false,
+        stopping: false,
+        beforeText: '',
+        statusNode: null,
+        speechToken: 0,
+        speaking: null,
+        lastAssistantText: '',
+        speakTimer: 0,
+        expiresAt: null
+      };
+      runtime.set(button, state);
+    }
+    return state;
+  };
+
+  const setStatus = (button, text, mode = 'ready') => {
+    const state = getState(button);
+    const row = button.closest('.chat-input-row');
+    if (!row) return;
+    if (!state.statusNode) {
+      const node = document.createElement('span');
+      node.className = 'zuvyr-realtime-voice-status';
+      node.setAttribute('role', 'status');
+      node.setAttribute('aria-live', 'polite');
+      row.appendChild(node);
+      state.statusNode = node;
+    }
+    state.statusNode.textContent = text;
+    state.statusNode.dataset.mode = mode;
+    row.dataset.zuvyrRealtimeVoice = mode;
+  };
+
+  const postState = async (state, next, reason = null) => {
+    if (!state.sessionId) return null;
+    return api(
+      '/api/audio-studio/voice/sessions/' + encodeURIComponent(state.sessionId) + '/state',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ state: next, reason })
+      }
+    );
+  };
+
+  const recordTurn = async (state, role, text, interrupted = false, metadata = {}) => {
+    if (!state.sessionId) return null;
+    const clean = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 12000);
+    if (!clean) return null;
+    const turnIndex = state.turnIndex++;
+    return api(
+      '/api/audio-studio/voice/sessions/' + encodeURIComponent(state.sessionId) + '/turns',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientTurnId: id(),
+          turnIndex,
+          role,
+          text: clean,
+          interrupted: interrupted === true,
+          metadata
+        })
+      }
+    );
+  };
+
+  const ensureSession = async (button) => {
+    const state = getState(button);
+    if (state.sessionId) return state;
+    const data = await api('/api/audio-studio/voice/sessions/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        microphoneConsent: true,
+        continuousListening: false,
+        backgroundRecording: false,
+        storeRawAudio: false,
+        maxSeconds: 300,
+        retentionMode: 'transcript_only',
+        autoSpeak: true
+      })
+    });
+    state.sessionId = data.session.id;
+    state.expiresAt = data.session.expiresAt || null;
+    const row = button.closest('.chat-input-row');
+    if (row) {
+      row.dataset.zuvyrVoiceSessionId = state.sessionId;
+      const cancel = row.querySelector('.zuvyr-voice-cancel');
+      if (cancel) {
+        cancel.title = 'Stop voice session';
+        cancel.setAttribute('aria-label', 'Stop voice session');
+      }
+    }
+    setStatus(button, 'Voice ready', 'ready');
+    return state;
+  };
+
+  const finishSpeakingTurn = async (button, interrupted) => {
+    const state = getState(button);
+    const speaking = state.speaking;
+    if (!speaking) return;
+    state.speaking = null;
+    try {
+      await recordTurn(
+        state,
+        'assistant',
+        speaking.text,
+        interrupted === true,
+        { source: 'browser_speech_synthesis' }
+      );
+    } catch (error) {
+      console.warn('[zuvyr-pack073] assistant turn record failed', error);
+    }
+  };
+
+  const interruptSpeech = async (button, reason = 'barge_in') => {
+    const state = getState(button);
+    if (!state.speaking && !window.speechSynthesis?.speaking && !window.speechSynthesis?.pending) {
+      return false;
+    }
+    state.speechToken += 1;
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    await finishSpeakingTurn(button, true);
+    if (state.sessionId && !state.stopping) {
+      try { await postState(state, 'listening', reason); } catch (_) {}
+    }
+    setStatus(button, 'Listening', 'listening');
+    return true;
+  };
+
+  const speakAssistant = async (button, text) => {
+    const state = getState(button);
+    const clean = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 12000);
+    if (
+      !state.sessionId ||
+      state.stopping ||
+      state.listening ||
+      !clean ||
+      clean === state.lastAssistantText ||
+      !('speechSynthesis' in window) ||
+      typeof window.SpeechSynthesisUtterance !== 'function'
+    ) {
+      return;
+    }
+    state.lastAssistantText = clean;
+    const token = ++state.speechToken;
+    try {
+      await postState(state, 'speaking');
+    } catch (error) {
+      console.warn('[zuvyr-pack073] speaking state failed', error);
+      return;
+    }
+    const utterance = new window.SpeechSynthesisUtterance(clean);
+    const lang = document.documentElement.lang || navigator.language || 'en';
+    utterance.lang = lang;
+    state.speaking = { text: clean, token };
+    utterance.onstart = () => {
+      if (token === state.speechToken) setStatus(button, 'Speaking — tap mic to interrupt', 'speaking');
+    };
+    utterance.onend = async () => {
+      if (token !== state.speechToken || state.stopping) return;
+      await finishSpeakingTurn(button, false);
+      try { await postState(state, 'ready'); } catch (_) {}
+      setStatus(button, 'Voice ready', 'ready');
+    };
+    utterance.onerror = async () => {
+      if (token !== state.speechToken || state.stopping) return;
+      await finishSpeakingTurn(button, true);
+      try { await postState(state, 'ready', 'speech_error'); } catch (_) {}
+      setStatus(button, 'Voice ready', 'ready');
+    };
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stopSession = async (button, reason = 'user_stop') => {
+    const state = getState(button);
+    if (state.stopping) return;
+    state.stopping = true;
+    clearTimeout(state.speakTimer);
+    state.speechToken += 1;
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    await finishSpeakingTurn(button, true);
+
+    if (button.classList.contains('is-listening')) {
+      try { button.click(); } catch (_) {}
+    }
+
+    const sessionId = state.sessionId;
+    if (sessionId) {
+      try {
+        await api(
+          '/api/audio-studio/voice/sessions/' + encodeURIComponent(sessionId) + '/stop',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason })
+          }
+        );
+      } catch (error) {
+        console.warn('[zuvyr-pack073] session stop failed', error);
+      }
+    }
+
+    state.sessionId = null;
+    state.listening = false;
+    state.speaking = null;
+    state.beforeText = '';
+    state.stopping = false;
+    const row = button.closest('.chat-input-row');
+    if (row) {
+      delete row.dataset.zuvyrVoiceSessionId;
+      row.dataset.zuvyrRealtimeVoice = 'stopped';
+      const cancel = row.querySelector('.zuvyr-voice-cancel');
+      if (cancel) {
+        cancel.title = 'Cancel dictation';
+        cancel.setAttribute('aria-label', 'Cancel dictation');
+      }
+    }
+    setStatus(button, 'Voice stopped', 'stopped');
+  };
+
+  const assistantText = (message) => {
+    if (!message || !message.classList?.contains('bot')) return '';
+    if (message.classList.contains('zuvyr-chat-welcome')) return '';
+    const clone = message.cloneNode(true);
+    clone.querySelectorAll('button,nav,.msg-actions,.zuvyr-next-actions,.sources,.citations').forEach((node) => node.remove());
+    return String(clone.textContent || '').replace(/\s+/g, ' ').trim();
+  };
+
+  const scheduleAssistantSpeech = (button) => {
+    const state = getState(button);
+    if (!state.sessionId || state.stopping || state.listening) return;
+    clearTimeout(state.speakTimer);
+    state.speakTimer = setTimeout(() => {
+      const messages = document.getElementById('msgs-chat');
+      const last = messages?.querySelector(':scope > .msg.bot:last-of-type');
+      const text = assistantText(last);
+      if (text) void speakAssistant(button, text);
+    }, 900);
+  };
+
+  const wire = () => {
+    const button = document.querySelector('#feature-chat button[data-voice-input="chat"]');
+    if (!button || button.dataset.zuvyrRealtimeVoice === '1') return;
+    const row = button.closest('.chat-input-row');
+    const input = row?.querySelector('[data-feature="chat"]');
+    const cancel = row?.querySelector('.zuvyr-voice-cancel');
+    const messages = document.getElementById('msgs-chat');
+    if (!row || !input || !cancel || !messages) return;
+
+    button.dataset.zuvyrRealtimeVoice = '1';
+    const state = getState(button);
+    setStatus(button, 'Voice ready', 'ready');
+
+    button.addEventListener('click', () => {
+      if (!button.classList.contains('is-listening') && state.speaking) {
+        void interruptSpeech(button, 'barge_in');
+      }
+      if (!button.classList.contains('is-listening')) {
+        state.beforeText = String(input.value || '');
+      }
+    }, true);
+
+    cancel.addEventListener('click', (event) => {
+      if (!state.sessionId) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      void stopSession(button, 'user_stop');
+    }, true);
+
+    let previousListening = button.classList.contains('is-listening');
+    state.listening = previousListening;
+
+    new MutationObserver(async () => {
+      const listening = button.classList.contains('is-listening');
+      if (listening === previousListening) return;
+      previousListening = listening;
+      state.listening = listening;
+
+      if (listening) {
+        try {
+          await ensureSession(button);
+          if (state.speaking || window.speechSynthesis?.speaking || window.speechSynthesis?.pending) {
+            await interruptSpeech(button, 'barge_in');
+          } else {
+            await postState(state, 'listening');
+          }
+          setStatus(button, 'Listening', 'listening');
+        } catch (error) {
+          console.warn('[zuvyr-pack073] voice session start failed', error);
+          setStatus(button, 'Voice session unavailable', 'error');
+        }
+        return;
+      }
+
+      if (!state.sessionId || state.stopping) return;
+      if (row.dataset.zuvyrVoiceCancel === '1') {
+        await stopSession(button, 'dictation_cancelled');
+        return;
+      }
+
+      try {
+        await postState(state, 'processing');
+        const text = String(input.value || '').trim();
+        const before = String(state.beforeText || '').trim();
+        if (text && text !== before) {
+          await recordTurn(state, 'user', text, false, { source: 'browser_speech_recognition' });
+        }
+        setStatus(button, 'Processing', 'processing');
+        scheduleAssistantSpeech(button);
+      } catch (error) {
+        console.warn('[zuvyr-pack073] voice processing state failed', error);
+        setStatus(button, 'Voice session needs attention', 'error');
+      }
+    }).observe(button, { attributes: true, attributeFilter: ['class'] });
+
+    new MutationObserver(() => scheduleAssistantSpeech(button)).observe(messages, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+
+    window.addEventListener('pagehide', () => {
+      if (!state.sessionId) return;
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      void stopSession(button, 'pagehide');
+    });
+  };
+
+  wire();
+  new MutationObserver(wire).observe(document.documentElement, { childList: true, subtree: true });
+})();
+
