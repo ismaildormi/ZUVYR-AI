@@ -45,7 +45,12 @@ const {
   getDefaultLocalImageUtilityRepository
 } = require('./lib/localImageUtilityRepository');
 const { createImageReferenceResolver } = require('./lib/imageReferenceResolver');
-const { generateVideo, DEFAULT_VIDEO_MODEL } = require('./lib/videoProvider');
+const { createVideoReferenceResolver } = require('./lib/videoReferenceResolver');
+const {
+  generateVideo,
+  DEFAULT_VIDEO_MODEL,
+  defaultModelForOperation
+} = require('./lib/videoProvider');
 const { normalizeVideoRequest } = require('./lib/videoRequestContract');
 const { assertVideoRequestAvailable } = require('./lib/videoOperationRegistry');
 const { buildVideoArtifact } = require('./lib/videoArtifactContract');
@@ -54,6 +59,10 @@ const { connection } = require('./lib/queue');
 const { startBrainKernelWorker } = require('./lib/brainKernelWorker');
 const { supabaseAdmin } = require('./lib/supabaseAdmin');
 const resolveImageReferences = createImageReferenceResolver({
+  db: supabaseAdmin,
+  storage: supabaseAdmin.storage
+});
+const resolveVideoReferences = createVideoReferenceResolver({
   db: supabaseAdmin,
   storage: supabaseAdmin.storage
 });
@@ -603,6 +612,7 @@ async function processVideoJob(job) {
     conversationId = null,
     memoryRequestKey = null,
     videoOperation = 'text_to_video',
+    referenceImageAssetIds = [],
     sourceImageAssetId = null,
     sourceVideoAssetId = null,
     startFrameAssetId = null,
@@ -613,6 +623,7 @@ async function processVideoJob(job) {
   const videoRequest = normalizeVideoRequest({
     prompt,
     videoOperation,
+    referenceImageAssetIds,
     sourceImageAssetId,
     sourceVideoAssetId,
     startFrameAssetId,
@@ -635,8 +646,20 @@ async function processVideoJob(job) {
     jobId: jobRowId
   });
   let providerResult = null;
+  let resolvedInputs = null;
 
   if (!persisted) {
+    if (
+      videoRequest.operation === 'image_to_video' ||
+      videoRequest.operation === 'reference_to_video'
+    ) {
+      resolvedInputs = await resolveVideoReferences({
+        ownerId: userId,
+        request: videoRequest,
+        requestId
+      });
+    }
+
     await markJob(jobRowId, {
       progress_percent: 15,
       job_stage: 'provider'
@@ -647,12 +670,22 @@ async function processVideoJob(job) {
     });
 
     providerResult = await generateVideo(videoRequest, {
-      env: { ...process.env, REPLICATE_VIDEO_MODEL: VIDEO_MODEL }
+      env: { ...process.env, REPLICATE_VIDEO_MODEL: VIDEO_MODEL },
+      resolvedInputs: resolvedInputs || {}
     });
 
+    const expectedUnitType =
+      videoRequest.operation === 'reference_to_video'
+        ? 'video_seconds'
+        : 'videos';
+    const expectedUnits =
+      videoRequest.operation === 'reference_to_video'
+        ? videoRequest.options.durationSeconds
+        : 1;
+
     if (
-      providerResult.billableUnits?.unitType !== 'videos' ||
-      providerResult.billableUnits?.units !== 1 ||
+      providerResult.billableUnits?.unitType !== expectedUnitType ||
+      providerResult.billableUnits?.units !== expectedUnits ||
       providerResult.billableUnits?.resolution !== videoRequest.options.resolution
     ) {
       const error = new Error('video_billable_units_mismatch');
@@ -677,7 +710,8 @@ async function processVideoJob(job) {
         resolution: providerResult.billableUnits.resolution,
         providerFrames: providerResult.numFrames,
         providerFps: providerResult.fps
-      }
+      },
+      lineage: resolvedInputs?.lineage || {}
     });
   }
 
@@ -685,17 +719,22 @@ async function processVideoJob(job) {
     providerResult?.provider ||
     persisted.options?.outputProvider ||
     'replicate';
+  const fallbackModel =
+    videoRequest.operation === 'text_to_video'
+      ? VIDEO_MODEL
+      : defaultModelForOperation(videoRequest.operation);
   const model =
     providerResult?.model ||
     persisted.options?.outputModel ||
-    VIDEO_MODEL;
+    fallbackModel;
 
   const artifactOptions = {
     ...videoRequest.options,
     actualDurationSeconds: persisted.actualDurationSeconds,
     outputProvider: provider,
     outputModel: model,
-    billing: persisted.options?.billing || null
+    billing: persisted.options?.billing || null,
+    canonicalLineage: persisted.options?.canonicalLineage || null
   };
 
   const artifact = buildVideoArtifact({
@@ -707,6 +746,7 @@ async function processVideoJob(job) {
     sourceVideoAssetId: videoRequest.sourceVideoAssetId,
     startFrameAssetId: videoRequest.startFrameAssetId,
     endFrameAssetId: videoRequest.endFrameAssetId,
+    referenceImageAssetIds: videoRequest.referenceImageAssetIds,
     options: artifactOptions
   });
 
@@ -739,6 +779,7 @@ async function processVideoJob(job) {
         sourceVideoAssetId: artifact.lineage.sourceVideoAssetId,
         startFrameAssetId: artifact.lineage.startFrameAssetId,
         endFrameAssetId: artifact.lineage.endFrameAssetId,
+        referenceImageAssetIds: artifact.lineage.referenceImageAssetIds,
         videoOptions: artifact.options,
         canonicalContentId: persisted.contentId,
         canonicalAssetId: persisted.assetId
