@@ -267,11 +267,56 @@
     {
       "id": "replicate:video.text_to_video:runtime",
       "providerId": "replicate",
-      "modelId": null,
-      "modelIdEnvironment": "REPLICATE_VIDEO_MODEL",
+      "modelId": "wan-video/wan-2.2-t2v-fast",
+      "modelIdEnvironment": null,
       "kind": "tool",
       "capabilities": [
         "video.text_to_video"
+      ],
+      "modalities": {
+        "input": [
+          "text"
+        ],
+        "output": [
+          "video"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Official Replicate model page revalidated 2026-09-19; paid execution remains environment-gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "replicate-wan-2.2-t2v-fast-480p",
+          "replicate-wan-2.2-t2v-fast-720p"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK066_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "replicate:video.image_to_video:runtime",
+      "providerId": "replicate",
+      "modelId": "wan-video/wan-2.2-i2v-fast",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "video.image_to_video"
       ],
       "modalities": {
         "input": [
@@ -293,13 +338,62 @@
       "qualityTier": "unclassified",
       "latencyClass": "unmeasured",
       "commercialEligibility": {
-        "state": "unverified",
-        "evidence": "Exact runtime model/license remains model-specific."
+        "state": "verified_for_launch",
+        "evidence": "Official Replicate model page revalidated 2026-09-19; paid execution remains environment-gated."
       },
       "priceReference": {
         "authority": "backend/config/cost-registry.v1.json",
-        "environment": "REPLICATE_VIDEO_COST_USD",
-        "verification": "conditional_operator_configured"
+        "entryIds": [
+          "replicate-wan-2.2-i2v-fast-480p",
+          "replicate-wan-2.2-i2v-fast-720p"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK067_I2V_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "replicate:video.reference_to_video:runtime",
+      "providerId": "replicate",
+      "modelId": "wan-video/wan-2.7-r2v",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "video.reference_to_video"
+      ],
+      "modalities": {
+        "input": [
+          "text",
+          "image"
+        ],
+        "output": [
+          "video"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Official Replicate model page revalidated 2026-09-19; paid execution remains environment-gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "replicate-wan-2.7-r2v-second"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK067_R2V_PAID_EXECUTION_ENABLED"
       },
       "deprecation": {
         "state": "active",
