@@ -541,6 +541,57 @@ begin
 end;
 $pack077_finalize$;
 
+create or replace function public.set_zuvyr_code_sandbox_preview_port_pack077(
+  p_owner_id uuid,
+  p_session_id uuid,
+  p_preview_port integer
+) returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $pack077_preview_port$
+declare
+  v_session public.code_sandbox_sessions%rowtype;
+  v_now timestamptz := now();
+begin
+  if p_preview_port < 1024 or p_preview_port > 65535 then
+    raise exception 'pack077_preview_port_invalid';
+  end if;
+
+  select *
+    into v_session
+  from public.code_sandbox_sessions
+  where id = p_session_id
+    and owner_id = p_owner_id
+  for update;
+
+  if v_session.id is null then
+    raise exception 'pack077_sandbox_not_found';
+  end if;
+
+  if v_session.status <> 'running'
+     or v_session.expires_at <= v_now
+     or v_session.idle_expires_at <= v_now
+     or v_session.provider_session_id is null then
+    raise exception 'pack077_sandbox_not_runnable';
+  end if;
+
+  update public.code_sandbox_sessions
+  set
+    preview_port = p_preview_port,
+    last_activity_at = v_now,
+    updated_at = v_now
+  where id = p_session_id
+  returning * into v_session;
+
+  return jsonb_build_object(
+    'session_id', v_session.id,
+    'preview_port', v_session.preview_port,
+    'status', v_session.status
+  );
+end;
+$pack077_preview_port$;
+
 revoke all on function public.reserve_zuvyr_code_runtime_job_pack077(
   uuid,uuid,uuid,text,text,jsonb,integer,text,text
 ) from public, anon, authenticated;
@@ -571,6 +622,13 @@ grant execute on function public.request_zuvyr_code_runtime_cancel_pack077(
 ) to service_role;
 grant execute on function public.finalize_zuvyr_code_runtime_job_pack077(
   uuid,uuid,text,integer,bigint,integer,jsonb
+) to service_role;
+
+revoke all on function public.set_zuvyr_code_sandbox_preview_port_pack077(
+  uuid,uuid,integer
+) from public, anon, authenticated;
+grant execute on function public.set_zuvyr_code_sandbox_preview_port_pack077(
+  uuid,uuid,integer
 ) to service_role;
 
 comment on table public.code_sandbox_runtime_state is
