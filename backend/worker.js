@@ -50,7 +50,8 @@ const {
   generateVideo,
   DEFAULT_VIDEO_MODEL,
   defaultModelForOperation,
-  providerForOperation
+  providerForOperation,
+  lipSyncBillingIncrements
 } = require('./lib/videoProvider');
 const { normalizeVideoRequest } = require('./lib/videoRequestContract');
 const { assertVideoRequestAvailable } = require('./lib/videoOperationRegistry');
@@ -697,7 +698,7 @@ async function processVideoJob(job) {
       if (videoRequest.operation === 'lip_sync') {
         return {
           unitType: 'processing_operations',
-          units: Math.ceil(sourceDuration / 5)
+          units: lipSyncBillingIncrements(sourceDuration)
         };
       }
       return null;
