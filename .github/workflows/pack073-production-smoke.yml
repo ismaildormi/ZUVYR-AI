@@ -28,8 +28,6 @@ jobs:
           const API_BASE = 'https://rox-ai-production.up.railway.app';
           const FRONTEND = 'https://rox-ai-sepia.vercel.app';
           const runId = String(process.env.GITHUB_RUN_ID || 'manual');
-          const email = `zuvyr.pack073.smoke.${runId}.x9q7@gmail.com`;
-          const password = `Zuvyr-P73-${runId}-A9!xQ`;
 
           async function request(url, options = {}) {
             const response = await fetch(url, options);
@@ -51,31 +49,22 @@ jobs:
             });
           }
 
-          async function signIn() {
-            return authRequest('/auth/v1/token?grant_type=password', { email, password });
-          }
-
-          let login = await signIn();
-          if (!login.response.ok || !login.data?.access_token) {
-            const signup = await authRequest('/auth/v1/signup', {
-              email,
-              password,
-              data: { full_name: 'ZUVYR PACK073 Production Smoke' }
-            });
-
-            if (!signup.response.ok && !/already|registered|exists/i.test(JSON.stringify(signup.data))) {
-              console.error('PACK073_SMOKE_SIGNUP_FAILED', signup.response.status, signup.data?.code || signup.data?.error_code || 'unknown', signup.data?.msg || signup.data?.message || signup.data?.error_description || '');
-              process.exit(41);
+          const login = await authRequest('/auth/v1/signup', {
+            data: {
+              full_name: 'ZUVYR PACK073 Production Smoke',
+              zuvyr_smoke_run_id: runId,
+              zuvyr_smoke_pack: '073'
             }
-
-            login = await signIn();
-          }
+          });
 
           if (!login.response.ok || !login.data?.access_token) {
-            console.log('PACK073_SMOKE_NEEDS_CONFIRMATION=true');
-            console.log('PACK073_SMOKE_EMAIL=' + email);
-            console.log('PACK073_SMOKE_AUTH_STATUS=' + login.response.status);
-            process.exit(42);
+            console.error(
+              'PACK073_SMOKE_ANON_AUTH_FAILED',
+              login.response.status,
+              login.data?.code || login.data?.error_code || 'unknown',
+              login.data?.msg || login.data?.message || login.data?.error_description || ''
+            );
+            process.exit(43);
           }
 
           const token = login.data.access_token;
@@ -281,7 +270,7 @@ jobs:
 
           console.log('PACK073_PRODUCTION_SMOKE=PASS');
           console.log('PACK073_SMOKE_USER_ID=' + userId);
-          console.log('PACK073_SMOKE_EMAIL=' + email);
+          console.log('PACK073_SMOKE_AUTH_MODE=anonymous');
           console.log('PACK073_PRIMARY_SESSION=' + sessionId);
           console.log('PACK073_RETENTION_NONE_SESSION=' + noneId);
           console.log('PACK073_PROVIDER_CALLS=0');
