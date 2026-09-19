@@ -240,9 +240,6 @@ for (const marker of [
   'detectPreviewPort',
   "request.operation === 'build'",
   "request.operation === 'run'",
-  "previewState: 'building'",
-  "previewState: 'starting'",
-  "previewTransportStatus: 'blocked'",
   "previewState: 'unavailable'",
   "'build_failed'",
   "'runtime_error'",
@@ -250,6 +247,18 @@ for (const marker of [
 ]) {
   assert(executor.includes(marker), marker);
 }
+assert(
+  /previewState:\s*[\s\S]{0,180}request\.operation === 'build'[\s\S]{0,80}\? 'building'/.test(executor),
+  'build operation must enter building preview state'
+);
+assert(
+  /request\.operation === 'run'[\s\S]{0,80}\? 'starting'/.test(executor),
+  'run operation must enter starting preview state'
+);
+assert(
+  /previewTransportStatus:\s*[\s\S]{0,120}request\.operation === 'run'[\s\S]{0,80}\? 'blocked'/.test(executor),
+  'run operation must keep preview transport blocked until verified'
+);
 assert(!executor.includes("previewState: 'ready'"));
 
 for (const marker of [
