@@ -65,6 +65,9 @@ const {
 const {
   createCodeStudioRouter
 } = require('./lib/codeStudioRoutes');
+const {
+  createCodePreviewTransportRouter
+} = require('./lib/codePreviewTransportRoutes');
 const { createPermissionCenterRouter } = require('./lib/permissionCenterRoutes');
 const {
   createAudioStudioRouter
@@ -314,6 +317,15 @@ app.use(
   requireAuth,
   rateLimit('roxip'),
   createRoxIpRouter()
+);
+// PACK076 preview transport deliberately does not use bearer auth.
+// Access is gated by a short-lived, hashed preview ticket exchanged for a
+// Secure+HttpOnly+path-scoped cookie inside codePreviewTransportRoutes.
+app.use(
+  '/api/code-preview',
+  createCodePreviewTransportRouter({
+    db: supabaseAdmin
+  })
 );
 app.use(
   '/api/code-studio',
