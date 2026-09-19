@@ -293,7 +293,7 @@
   "audio_text_to_speech": {
     "enabled": false,
     "tier": "pro",
-    "status": "blocked_unpriced"
+    "status": "implemented_pack072_paid_live_deferred"
   },
   "audio_voice_chat": {
     "enabled": false,
