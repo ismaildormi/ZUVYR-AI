@@ -299,13 +299,10 @@ assert.equal(publicRow.provider_session_id, undefined);
   assert(server.includes('sandboxProvider: codeSandboxProvider'));
   assert(server.includes('codeSandboxCleanup: cleanupExpiredCodeSandboxes'));
 
-  const previewMount = server.indexOf("'/api/code-preview'");
-  const codeMount = server.indexOf("'/api/code-studio'");
+  const previewMount = server.indexOf("app.use(\n  '/api/code-preview'");
+  const codeMount = server.indexOf("app.use(\n  '/api/code-studio'", previewMount);
   assert(previewMount >= 0 && codeMount > previewMount);
-  const previewMountSegment = server.slice(
-    Math.max(0, previewMount - 300),
-    previewMount + 800
-  );
+  const previewMountSegment = server.slice(previewMount, codeMount);
   assert(!previewMountSegment.includes('requireAuth'));
 
   console.log('PASS: PACK076 sandbox create stays fail-closed before all provider/network work');
