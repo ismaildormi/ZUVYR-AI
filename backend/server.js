@@ -319,7 +319,17 @@ app.use(
   '/api/code-studio',
   requireAuth,
   rateLimit('chat'),
-  createCodeStudioRouter({ creditApi: { reserveCredits, settleCredits, refundCredits } })
+  createCodeStudioRouter({
+    db: supabaseAdmin,
+    routeRequestImpl: routeRequest,
+    creditApi: {
+      reserveCredits,
+      settleCredits,
+      refundCredits,
+      logCreditEvent,
+      reportRefundFailure
+    }
+  })
 );
 app.use(
   '/api/permissions',

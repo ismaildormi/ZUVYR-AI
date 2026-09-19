@@ -88,7 +88,14 @@ const bridge = createCodeStudioUsageBridge({
 
   assert(router.includes('createCodeStudioUsageBridge'));
   assert(router.includes('code_usage_ledger_unavailable'));
-  assert(server.includes('createCodeStudioRouter({ creditApi: { reserveCredits, settleCredits, refundCredits } })'));
+  assert(server.includes('createCodeStudioRouter({'));
+  assert(server.includes('db: supabaseAdmin'));
+  assert(server.includes('routeRequestImpl: routeRequest'));
+  assert(server.includes('reserveCredits'));
+  assert(server.includes('settleCredits'));
+  assert(server.includes('refundCredits'));
+  assert(server.includes('logCreditEvent'));
+  assert(server.includes('reportRefundFailure'));;
 
   for (const kind of ['build_job', 'sandbox_runtime', 'preview_runtime', 'preview_egress', 'idle_session']) {
     assert(registry.includes('"operationType": "' + kind + '"'));
