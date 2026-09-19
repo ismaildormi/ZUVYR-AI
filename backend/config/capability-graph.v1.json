@@ -214,9 +214,6 @@
       ],
       "code": [
         "code"
-      ],
-      "work": [
-        "browser.agent.run"
       ]
     },
     "createAndWorkRequireExplicitOutputWhenNoSurfaceDefault": true,
