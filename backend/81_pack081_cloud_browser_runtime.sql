@@ -90,6 +90,10 @@ create table if not exists public.browser_session_artifacts (
 create index if not exists browser_session_artifacts_owner_session_idx
   on public.browser_session_artifacts(owner_id, session_id, created_at desc);
 
+create unique index if not exists browser_session_artifacts_provider_unique_idx
+  on public.browser_session_artifacts(session_id, provider_artifact_id)
+  where provider_artifact_id is not null;
+
 alter table public.browser_sessions enable row level security;
 alter table public.browser_session_artifacts enable row level security;
 
