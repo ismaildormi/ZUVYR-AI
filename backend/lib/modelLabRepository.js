@@ -737,6 +737,23 @@ function createModelLabRepository(client) {
     return Object.freeze(result.data);
   }
 
+  async function rollbackCheckpoint(ownerId, checkpointId, body = {}) {
+    const result=await client.rpc('rollback_zuvyr_model_lab_checkpoint_pack095',{
+      p_admin_id:ownerId,
+      p_checkpoint_id:checkpointId,
+      p_target_stage:String(body.targetStage||'LAB').trim(),
+      p_reason:String(body.reason||'').trim().slice(0,1000)
+    });
+    if(result.error) {
+      throw labError(
+        rpcCode(result.error,'model_lab_checkpoint_rollback_failed'),
+        400,
+        result.error
+      );
+    }
+    return Object.freeze(result.data);
+  }
+
   async function createSyntheticJob(ownerId, body = {}) {
     const dataset=await client
       .from('zuvyr_model_lab_datasets')
@@ -813,6 +830,7 @@ function createModelLabRepository(client) {
     getCheckpoint,
     listCheckpoints,
     promoteCheckpoint,
+    rollbackCheckpoint,
     createSyntheticJob,
     listSyntheticJobs
   });
