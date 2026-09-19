@@ -58,7 +58,7 @@ assert.equal(runtimeConfig.repair.autoApply, false);
 assert.equal(runtimeConfig.repair.everyAttemptMetered, true);
 assert.equal(runtimeConfig.repair.stopOnRepeatedFingerprint, true);
 
-assert.equal(studioConfig.version, 'pack-078.code-studio.v1');
+assert.equal(studioConfig.version, 'pack-079.code-studio.v1');
 assert.equal(studioConfig.capabilities.preview.enabledByDefault, true);
 assert.equal(studioConfig.capabilities.preview.status, 'pack078_product_layer_live_deferred');
 assert.equal(featureFlags.code_preview.enabled, true);
