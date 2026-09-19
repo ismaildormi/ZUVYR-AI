@@ -17,12 +17,30 @@ function providerError(code, status = null, cause = null) {
 function safeProviderSession(value) {
   const id=String(value?.id || '').trim();
   if (!id || id.length > 200) throw providerError('cloud_browser_provider_session_missing');
+  const startedAt=value?.startedAt || value?.started_at || null;
+  const endedAt=value?.endedAt || value?.ended_at || null;
+  const startMs=startedAt ? Date.parse(startedAt) : NaN;
+  const endMs=endedAt ? Date.parse(endedAt) : NaN;
+  const usageSeconds=
+    Number.isFinite(startMs) && Number.isFinite(endMs) && endMs >= startMs
+      ? Math.ceil((endMs-startMs)/1000)
+      : 0;
+  const proxyBytesRaw=
+    value?.proxyBytes ??
+    value?.proxy_bytes ??
+    value?.networkUsage?.proxyBytes ??
+    0;
+  const proxyBytes=Number(proxyBytesRaw);
   return Object.freeze({
     id,
     status:String(value?.status || 'UNKNOWN').slice(0,80),
     region:value?.region ? String(value.region).slice(0,80) : null,
-    startedAt:value?.startedAt || value?.started_at || null,
-    endedAt:value?.endedAt || value?.ended_at || null
+    startedAt,
+    endedAt,
+    usageSeconds,
+    proxyBytes:Number.isFinite(proxyBytes) && proxyBytes >= 0
+      ? Math.floor(proxyBytes)
+      : 0
   });
 }
 
@@ -99,6 +117,59 @@ function createBrowserbaseProvider({
     return url.toString();
   }
 
+  async function releaseSession(providerSessionId) {
+    const id=String(providerSessionId || '').trim();
+    if (!id || id.length > 200) throw providerError('cloud_browser_provider_session_invalid');
+    const data=await request(
+      '/v1/sessions/' + encodeURIComponent(id),
+      {
+        method:'POST',
+        body:JSON.stringify({status:'REQUEST_RELEASE'})
+      }
+    );
+    return safeProviderSession(data);
+  }
+
+  async function uploadFile(providerSessionId,{
+    buffer,
+    fileName,
+    mimeType='application/octet-stream'
+  }={}) {
+    assertProviderCredentials(env);
+    const id=String(providerSessionId || '').trim();
+    if (!id || id.length > 200) throw providerError('cloud_browser_provider_session_invalid');
+    if (!Buffer.isBuffer(buffer) || buffer.length < 1 || buffer.length > config.files.maxUploadBytes) {
+      throw providerError('cloud_browser_upload_invalid');
+    }
+    const name=String(fileName || 'upload.bin').replace(/[\\/\0]/g,'_').slice(0,240);
+    const form=new FormData();
+    form.append(
+      'file',
+      new Blob([buffer],{type:String(mimeType || 'application/octet-stream').slice(0,255)}),
+      name
+    );
+    let response;
+    try {
+      response=await fetchImpl(
+        config.provider.apiBaseUrl + '/v1/sessions/' + encodeURIComponent(id) + '/uploads',
+        {
+          method:'POST',
+          headers:{'X-BB-API-Key':String(env.BROWSERBASE_API_KEY || '').trim()},
+          body:form
+        }
+      );
+    } catch (cause) {
+      throw providerError('cloud_browser_provider_unreachable',null,cause);
+    }
+    if (!response.ok) throw providerError('cloud_browser_provider_rejected',response.status);
+    const data=await response.json().catch(()=>({}));
+    return Object.freeze({
+      providerArtifactId:String(data?.id || data?.uploadId || '').slice(0,300) || null,
+      fileName:name,
+      size:buffer.length
+    });
+  }
+
   async function listDownloads(providerSessionId,{cursor=null,limit=50}={}) {
     assertProviderCredentials(env);
     const id=String(providerSessionId || '').trim();
@@ -163,6 +234,8 @@ function createBrowserbaseProvider({
     createSession,
     getSession,
     connectUrl,
+    releaseSession,
+    uploadFile,
     listDownloads,
     getDownload
   });
