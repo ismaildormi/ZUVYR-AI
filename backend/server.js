@@ -2113,7 +2113,9 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
 function requirePlanFeature(feature) {
   return function (req, res, next) {
     const normalizedFeature =
-      feature === 'video' ? 'video' : 'image';
+      ['image', 'video', '3d'].includes(feature)
+        ? feature
+        : 'image';
     const planId = canonicalPlanIdFromProfile(req.roxUser);
 
     if (!planHasFeature(planId, normalizedFeature)) {
