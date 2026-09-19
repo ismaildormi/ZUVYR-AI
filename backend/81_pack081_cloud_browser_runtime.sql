@@ -5,8 +5,11 @@
 create table if not exists public.browser_sessions (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references public.profiles(id) on delete cascade,
+  conversation_id uuid references public.shared_conversations(id) on delete set null,
   task_run_id uuid references public.zuvyr_task_runs(id) on delete set null,
-  request_id text not null check (char_length(request_id) between 1 and 200),
+  project_id uuid references public.workspace_projects(id) on delete set null,
+  request_id text not null check (char_length(request_id) between 8 and 200),
+  billing_request_id text not null check (char_length(billing_request_id) between 8 and 220),
   provider text not null default 'browserbase'
     check (provider = 'browserbase'),
   provider_session_id text,
@@ -27,10 +30,18 @@ create table if not exists public.browser_sessions (
   idle_expires_at timestamptz not null,
   ended_at timestamptz,
   usage_seconds integer not null default 0 check (usage_seconds >= 0),
+  proxy_bytes bigint not null default 0 check (proxy_bytes >= 0),
+  pricing_version text not null check (char_length(pricing_version) between 1 and 160),
+  browser_hour_price_micro_usd bigint not null check (browser_hour_price_micro_usd > 0),
+  reserved_credits integer not null check (reserved_credits >= 1),
+  billing_state text not null default 'not_reserved'
+    check (billing_state in ('not_reserved','reserved','settling','settled','refund_pending','refunded')),
+  final_credits integer check (final_credits is null or final_credits >= 0),
   failure_code text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique(owner_id, request_id)
+  unique(owner_id, request_id),
+  unique(billing_request_id)
 );
 
 create unique index if not exists browser_sessions_provider_session_unique_idx
@@ -43,6 +54,15 @@ create unique index if not exists browser_sessions_one_active_owner_idx
 
 create index if not exists browser_sessions_owner_updated_idx
   on public.browser_sessions(owner_id, updated_at desc);
+create index if not exists browser_sessions_conversation_idx
+  on public.browser_sessions(conversation_id)
+  where conversation_id is not null;
+create index if not exists browser_sessions_task_idx
+  on public.browser_sessions(task_run_id)
+  where task_run_id is not null;
+create index if not exists browser_sessions_project_idx
+  on public.browser_sessions(project_id)
+  where project_id is not null;
 
 create index if not exists browser_sessions_expiry_idx
   on public.browser_sessions(status, expires_at, idle_expires_at)
@@ -80,12 +100,18 @@ grant select, insert, update, delete on public.browser_session_artifacts to serv
 
 create or replace function public.reserve_zuvyr_browser_session_pack081(
   p_owner_id uuid,
+  p_conversation_id uuid,
   p_task_run_id uuid,
+  p_project_id uuid,
   p_request_id text,
+  p_billing_request_id text,
   p_expires_at timestamptz,
   p_idle_expires_at timestamptz,
   p_network_policy jsonb,
-  p_secret_policy jsonb
+  p_secret_policy jsonb,
+  p_pricing_version text,
+  p_browser_hour_price_micro_usd bigint,
+  p_reserved_credits integer
 ) returns jsonb
 language plpgsql
 security definer
@@ -96,8 +122,25 @@ declare
   v_row public.browser_sessions%rowtype;
   v_now timestamptz := now();
 begin
-  if char_length(coalesce(p_request_id,'')) not between 1 and 200 then
+  if char_length(coalesce(p_request_id,'')) not between 8 and 200 then
     raise exception 'pack081_request_id_invalid';
+  end if;
+  if char_length(coalesce(p_billing_request_id,'')) not between 8 and 220 then
+    raise exception 'pack081_billing_request_id_invalid';
+  end if;
+  if char_length(trim(coalesce(p_pricing_version,''))) not between 1 and 160
+     or p_browser_hour_price_micro_usd <= 0
+     or p_reserved_credits < 1 then
+    raise exception 'pack081_pricing_invalid';
+  end if;
+
+  if p_conversation_id is not null and not exists (
+    select 1
+    from public.shared_conversations
+    where id = p_conversation_id
+      and owner_id = p_owner_id
+  ) then
+    raise exception 'pack081_conversation_owner_mismatch';
   end if;
 
   if p_task_run_id is not null and not exists (
@@ -107,6 +150,15 @@ begin
       and user_id = p_owner_id
   ) then
     raise exception 'pack081_task_owner_mismatch';
+  end if;
+
+  if p_project_id is not null and not exists (
+    select 1
+    from public.workspace_projects
+    where id = p_project_id
+      and owner_id = p_owner_id
+  ) then
+    raise exception 'pack081_project_owner_mismatch';
   end if;
 
   if jsonb_typeof(p_network_policy) <> 'object'
@@ -135,7 +187,13 @@ begin
     and request_id = p_request_id;
 
   if v_existing.id is not null then
-    if v_existing.task_run_id is distinct from p_task_run_id then
+    if v_existing.conversation_id is distinct from p_conversation_id
+       or v_existing.task_run_id is distinct from p_task_run_id
+       or v_existing.project_id is distinct from p_project_id
+       or v_existing.billing_request_id <> p_billing_request_id
+       or v_existing.pricing_version <> trim(p_pricing_version)
+       or v_existing.browser_hour_price_micro_usd <> p_browser_hour_price_micro_usd
+       or v_existing.reserved_credits <> p_reserved_credits then
       raise exception 'pack081_idempotency_scope_mismatch';
     end if;
     return jsonb_build_object(
@@ -154,11 +212,15 @@ begin
   end if;
 
   insert into public.browser_sessions(
-    owner_id, task_run_id, request_id, provider, status,
-    network_policy, secret_policy, expires_at, idle_expires_at
+    owner_id, conversation_id, task_run_id, project_id,
+    request_id, billing_request_id, provider, status,
+    network_policy, secret_policy, expires_at, idle_expires_at,
+    pricing_version, browser_hour_price_micro_usd, reserved_credits
   ) values (
-    p_owner_id, p_task_run_id, p_request_id, 'browserbase', 'reserved',
-    p_network_policy, p_secret_policy, p_expires_at, p_idle_expires_at
+    p_owner_id, p_conversation_id, p_task_run_id, p_project_id,
+    p_request_id, p_billing_request_id, 'browserbase', 'reserved',
+    p_network_policy, p_secret_policy, p_expires_at, p_idle_expires_at,
+    trim(p_pricing_version), p_browser_hour_price_micro_usd, p_reserved_credits
   )
   returning * into v_row;
 
@@ -181,6 +243,7 @@ create or replace function public.transition_zuvyr_browser_session_pack081(
   p_region text default null,
   p_current_host text default null,
   p_usage_seconds integer default null,
+  p_proxy_bytes bigint default null,
   p_failure_code text default null
 ) returns jsonb
 language plpgsql
@@ -237,6 +300,9 @@ begin
   if p_usage_seconds is not null and p_usage_seconds < v_row.usage_seconds then
     raise exception 'pack081_usage_regression';
   end if;
+  if p_proxy_bytes is not null and p_proxy_bytes < v_row.proxy_bytes then
+    raise exception 'pack081_proxy_bytes_regression';
+  end if;
 
   update public.browser_sessions
   set
@@ -248,6 +314,7 @@ begin
       else nullif(lower(trim(p_current_host)),'')
     end,
     usage_seconds = greatest(usage_seconds, coalesce(p_usage_seconds, usage_seconds)),
+    proxy_bytes = greatest(proxy_bytes, coalesce(p_proxy_bytes, proxy_bytes)),
     started_at = case
       when v_next = 'running' then coalesce(started_at,v_now)
       else started_at
@@ -272,6 +339,8 @@ begin
     'session_id',v_row.id,
     'status',v_row.status,
     'usage_seconds',v_row.usage_seconds,
+    'proxy_bytes',v_row.proxy_bytes,
+    'billing_state',v_row.billing_state,
     'replayed',false
   );
 end;
@@ -336,21 +405,85 @@ begin
 end;
 $pack081_touch$;
 
+
+create or replace function public.set_zuvyr_browser_billing_state_pack081(
+  p_owner_id uuid,
+  p_session_id uuid,
+  p_expected_state text,
+  p_next_state text,
+  p_final_credits integer default null
+) returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $pack081_billing$
+declare
+  v_row public.browser_sessions%rowtype;
+  v_expected text := lower(trim(coalesce(p_expected_state,'')));
+  v_next text := lower(trim(coalesce(p_next_state,'')));
+begin
+  if v_expected not in ('not_reserved','reserved','settling','settled','refund_pending','refunded')
+     or v_next not in ('not_reserved','reserved','settling','settled','refund_pending','refunded') then
+    raise exception 'pack081_billing_state_invalid';
+  end if;
+  if p_final_credits is not null and p_final_credits < 0 then
+    raise exception 'pack081_final_credits_invalid';
+  end if;
+
+  select * into v_row
+  from public.browser_sessions
+  where id=p_session_id and owner_id=p_owner_id
+  for update;
+
+  if v_row.id is null then
+    raise exception 'pack081_session_not_found';
+  end if;
+
+  if v_row.billing_state <> v_expected then
+    return jsonb_build_object(
+      'success',false,
+      'error','pack081_billing_state_conflict',
+      'current_state',v_row.billing_state
+    );
+  end if;
+
+  update public.browser_sessions
+  set billing_state=v_next,
+      final_credits=coalesce(p_final_credits,final_credits),
+      updated_at=now()
+  where id=p_session_id
+  returning * into v_row;
+
+  return jsonb_build_object(
+    'success',true,
+    'session_id',v_row.id,
+    'billing_state',v_row.billing_state,
+    'final_credits',v_row.final_credits
+  );
+end;
+$pack081_billing$;
+
 revoke all on function public.reserve_zuvyr_browser_session_pack081(
-  uuid,uuid,text,timestamptz,timestamptz,jsonb,jsonb
+  uuid,uuid,uuid,uuid,text,text,timestamptz,timestamptz,jsonb,jsonb,text,bigint,integer
 ) from public, anon, authenticated;
 revoke all on function public.transition_zuvyr_browser_session_pack081(
-  uuid,uuid,text,text,text,text,integer,text
+  uuid,uuid,text,text,text,text,integer,bigint,text
+) from public, anon, authenticated;
+revoke all on function public.set_zuvyr_browser_billing_state_pack081(
+  uuid,uuid,text,text,integer
 ) from public, anon, authenticated;
 revoke all on function public.touch_zuvyr_browser_session_pack081(
   uuid,uuid,timestamptz,text,integer
 ) from public, anon, authenticated;
 
 grant execute on function public.reserve_zuvyr_browser_session_pack081(
-  uuid,uuid,text,timestamptz,timestamptz,jsonb,jsonb
+  uuid,uuid,uuid,uuid,text,text,timestamptz,timestamptz,jsonb,jsonb,text,bigint,integer
 ) to service_role;
 grant execute on function public.transition_zuvyr_browser_session_pack081(
-  uuid,uuid,text,text,text,text,integer,text
+  uuid,uuid,text,text,text,text,integer,bigint,text
+) to service_role;
+grant execute on function public.set_zuvyr_browser_billing_state_pack081(
+  uuid,uuid,text,text,integer
 ) to service_role;
 grant execute on function public.touch_zuvyr_browser_session_pack081(
   uuid,uuid,timestamptz,text,integer
