@@ -31,13 +31,20 @@ const groq = resolveCostQuote({
 assert.equal(groq.providerCostMicroUsd, '450');
 assert.equal(groq.verificationStatus, 'verified');
 assert.equal(groq.unitType, 'tokens');
+const groqEntry = findCostEntry({
+  provider: 'groq',
+  modelToolId: 'openai/gpt-oss-20b',
+  capability: 'chat',
+  operationType: 'text_generation'
+});
+assert(groqEntry);
 assert.throws(
   () => resolveCostEntry({
-    provider: 'groq',
-    modelToolId: 'openai/gpt-oss-20b',
-    capability: 'chat',
-    operationType: 'text_generation'
-  }, { now: Date.parse('2026-09-15T00:00:00Z'), env: {} }),
+    provider: groqEntry.provider,
+    modelToolId: groqEntry.modelToolId,
+    capability: groqEntry.capability,
+    operationType: groqEntry.operationType
+  }, { now: Date.parse(groqEntry.pricingReviewBefore), env: {} }),
   { code: 'cost_entry_expired' }
 );
 
