@@ -7,17 +7,39 @@ const MAX_MESSAGE_CHARS = 4000;
 const MAX_STACK_LINES = 24;
 
 function redact(value) {
-  return String(value || '')
-    .replace(
-      /\bAuthorization\s*:\s*Bearer\s+[A-Za-z0-9._~+\/-]{12,}/gi,
-      'Authorization: Bearer [redacted]'
+  let text = String(value || '');
+
+  // Intentionally do not use word-boundary assertions before secret markers.
+  // Escaped log separators such as "\\nAuthorization" and "\\ntoken="
+  // put a word character directly before the marker and can defeat \b.
+  text = text.replace(
+    /Authorization\s*[:=]\s*Bearer\s+[A-Za-z0-9._~+\/=-]{8,}/gi,
+    match => {
+      const label = match.match(/^Authorization\s*[:=]\s*Bearer\s+/i);
+      return (label ? label[0] : 'Authorization: Bearer ') + '[redacted]';
+    }
+  );
+
+  text = text.replace(
+    /Bearer\s+[A-Za-z0-9._~+\/=-]{12,}/gi,
+    match => match.replace(
+      /[A-Za-z0-9._~+\/=-]{12,}$/i,
+      '[redacted]'
     )
-    .replace(/\bBearer\s+[A-Za-z0-9._~+\/-]{12,}/gi, 'Bearer [redacted]')
-    .replace(
-      /(?:api[_-]?key|token|secret|password)\s*[:=]\s*['"]?[^\s'",;]+/gi,
-      match => match.replace(/([:=]\s*['"]?).*$/,'$1[redacted]')
+  );
+
+  text = text.replace(
+    /(?:api[_-]?key|token|secret|password)\s*[:=]\s*['"]?[^\\\s'",;]+/gi,
+    match => match.replace(
+      /([:=]\s*['"]?).*$/s,
+      '$1[redacted]'
     )
-    .replace(/\b(?:sk|pk|vcp|sbp)_[A-Za-z0-9_-]{12,}\b/g, '[redacted]');
+  );
+
+  return text.replace(
+    /(?:sk|pk|vcp|sbp)_[A-Za-z0-9_-]{12,}/g,
+    '[redacted]'
+  );
 }
 
 function safePath(value) {
