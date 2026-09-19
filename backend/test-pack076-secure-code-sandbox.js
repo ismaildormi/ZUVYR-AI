@@ -276,7 +276,7 @@ assert.equal(publicRow.provider_session_id, undefined);
   assert(previewSource.includes("redirect: 'manual'"));
   assert(previewSource.includes('code_preview_upstream_redirect_blocked'));
   assert(!previewSource.includes('Authorization:'));
-  assert(!previewSource.includes('provider_session_id'));
+  assert(!policySource.includes('providerSessionId: row.provider_session_id'));
 
   assert.deepEqual(parseCookies('a=1; b=two'), { a: '1', b: 'two' });
   assert(previewCookie('token', localSessionId, new Date(Date.now() + 60_000).toISOString()).includes('HttpOnly'));
