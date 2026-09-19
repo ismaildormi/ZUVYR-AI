@@ -1204,12 +1204,36 @@ async function processAudioJob(job) {
   });
   const source = resolved.source;
   const repository = getDefaultAudioResultRepository();
+  const existing = await repository.getExisting({
+    ownerId: userId,
+    jobId: jobRowId
+  });
 
   let persisted;
   let provider;
   let model;
 
-  if (request.operation === 'transcription') {
+  if (existing?.canonical === true) {
+    const claim = await audioJobRpc('claim_zuvyr_audio_execution', {
+      p_owner_id: userId,
+      p_job_id: jobRowId,
+      p_stage: 'processing'
+    });
+    if (claim.claimed !== true) {
+      if (claim.status === 'cancelled' || claim.cancelRequested === true) {
+        await refundAudio({ requestId, userId });
+        return { status: 'cancelled' };
+      }
+      throw new UnrecoverableError('audio_job_not_executable');
+    }
+    persisted = existing;
+    provider = existing.provider || (
+      request.operation === 'transcription' ? 'deepgram' : 'local'
+    );
+    model = existing.model || (
+      request.operation === 'transcription' ? DEEPGRAM_MODEL : 'ffmpeg-alpine'
+    );
+  } else if (request.operation === 'transcription') {
     const claim = await audioJobRpc('claim_zuvyr_audio_execution', {
       p_owner_id: userId,
       p_job_id: jobRowId,
@@ -1230,7 +1254,13 @@ async function processAudioJob(job) {
       model: DEEPGRAM_MODEL
     });
 
-    const result = await transcribeAudio(request, { source });
+    const result = existing?.providerResult || await transcribeAudio(request, { source });
+    if (!existing?.providerResult) {
+      await markAudioJob(jobRowId, userId, {
+        provider_result: result,
+        progress_percent: 60
+      });
+    }
     persisted = await repository.persistTranscript({
       ownerId: userId,
       jobId: jobRowId,
