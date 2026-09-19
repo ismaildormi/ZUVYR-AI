@@ -26,6 +26,8 @@ const worker = read('worker.js');
 const queue = read('lib/queue.js');
 const repository = read('lib/model3dGenerationRepository.js');
 const resolver = read('lib/model3dInputResolver.js');
+assert(resolver.includes("require('./assetStorageContract')"));
+assert(!resolver.includes("require('./assetStoragePolicy')"));
 const conversationMemory = read('lib/conversationMemory.js');
 const plans = require('./config/plans.json');
 const cfg = require('./config/model3d-system.v1.json');
