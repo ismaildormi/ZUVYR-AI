@@ -19,7 +19,7 @@ function argsFor({inputPath,outputPath,format='wav',strength='balanced'}={}){
   return [
     '-y','-hide_banner','-loglevel','error','-i',inputPath,
     '-vn',
-    '-af',`highpass=f=70,lowpass=f=12000,afftdn=nr=${reduction}:nf=-50:tn=1,loudnorm=I=-16:LRA=11:TP=-1.5`,
+    '-af',`highpass=f=60,afftdn=nr=${reduction}:nf=-50:tn=1,loudnorm=I=-16:LRA=11:TP=-1.5`,
     ...spec.codec,outputPath
   ];
 }
