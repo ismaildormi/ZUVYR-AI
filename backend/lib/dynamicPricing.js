@@ -129,8 +129,136 @@ function providerQuote(feature, {
   env = process.env,
   now = Date.now(),
   imageRequest = null,
-  videoRequest = null
+  videoRequest = null,
+  videoPricingContext = null
 } = {}) {
+  if (
+    feature === 'video' &&
+    videoRequest &&
+    ['edit','extend','object_remove','background_remove','lip_sync'].includes(
+      videoRequest.operation
+    )
+  ) {
+    const operation = videoRequest.operation;
+    const specs = {
+      edit: {
+        gate: 'PACK068_EDIT_PAID_EXECUTION_ENABLED',
+        modelToolId: 'fal-ai/ltx-2.3/retake-video',
+        capability: 'video_edit',
+        operationType: 'video_retake_generated_seconds',
+        usage: () => ({
+          outputUnits: Number(videoRequest.options?.durationSeconds)
+        })
+      },
+      extend: {
+        gate: 'PACK068_EXTEND_PAID_EXECUTION_ENABLED',
+        modelToolId: 'fal-ai/ltx-2.3/extend-video',
+        capability: 'video_extend',
+        operationType: 'video_extend_generated_seconds',
+        usage: () => ({
+          outputUnits: Number(videoRequest.options?.durationSeconds)
+        })
+      },
+      object_remove: {
+        gate: 'PACK068_OBJECT_REMOVE_PAID_EXECUTION_ENABLED',
+        modelToolId: 'bria/video/erase/prompt',
+        capability: 'video_object_remove',
+        operationType: 'video_object_remove_source_seconds',
+        usage: () => ({
+          inputUnits: Number(videoPricingContext?.sourceDurationSeconds)
+        })
+      },
+      background_remove: {
+        gate: 'PACK068_BACKGROUND_PAID_EXECUTION_ENABLED',
+        modelToolId: 'bria/video/background-removal/v3',
+        capability: 'video_background_remove',
+        operationType: 'video_background_remove_source_seconds',
+        usage: () => ({
+          inputUnits: Number(videoPricingContext?.sourceDurationSeconds)
+        })
+      },
+      lip_sync: {
+        gate: 'PACK068_LIPSYNC_PAID_EXECUTION_ENABLED',
+        modelToolId: 'fal-ai/kling-video/lipsync/audio-to-video',
+        capability: 'video_lip_sync',
+        operationType: 'video_lipsync_5s_increment',
+        usage: () => {
+          const duration = Number(videoPricingContext?.sourceDurationSeconds);
+          return {
+            outputUnits:
+              Number.isFinite(duration) && duration > 0
+                ? Math.ceil(duration / 5)
+                : 0
+          };
+        }
+      }
+    };
+    const spec = specs[operation];
+
+    if (String(env[spec.gate] || '').toLowerCase() !== 'true') {
+      throw pricingError('pack068_' + operation + '_paid_execution_disabled');
+    }
+    if (!env.FAL_KEY) {
+      throw pricingError('no_configured_pack068_video_provider');
+    }
+
+    const sourceDuration =
+      Number(videoPricingContext?.sourceDurationSeconds);
+    if (
+      ['edit','object_remove','background_remove','lip_sync'].includes(operation) &&
+      (!Number.isFinite(sourceDuration) || sourceDuration <= 0)
+    ) {
+      throw pricingError('pack068_trusted_source_duration_required');
+    }
+    if (operation === 'edit') {
+      const start = Number(videoRequest.options?.startTimeSeconds || 0);
+      const duration = Number(videoRequest.options?.durationSeconds);
+      if (
+        !Number.isFinite(start) ||
+        !Number.isFinite(duration) ||
+        start < 0 ||
+        duration <= 0 ||
+        start + duration > sourceDuration + 0.001
+      ) {
+        throw pricingError('pack068_edit_window_out_of_bounds');
+      }
+    }
+    if (operation === 'object_remove' && sourceDuration >= 5) {
+      throw pricingError('pack068_object_remove_source_too_long');
+    }
+    if (
+      operation === 'lip_sync' &&
+      (sourceDuration < 2 || sourceDuration > 10)
+    ) {
+      throw pricingError('pack068_lipsync_video_duration_unsupported');
+    }
+
+    const entry = resolveCostEntry({
+      provider: 'fal',
+      modelToolId: spec.modelToolId,
+      capability: spec.capability,
+      operationType: spec.operationType
+    }, { env, now });
+
+    return Object.freeze({
+      provider: 'fal',
+      providerCostMicroUsd:
+        estimateProviderCostMicroUsd(entry, spec.usage()),
+      pricingVersion: entry.registryVersion,
+      costEntryId: entry.id
+    });
+  }
+
+  if (
+    feature === 'video' &&
+    videoRequest &&
+    ['relight','recamera'].includes(videoRequest.operation)
+  ) {
+    throw pricingError(
+      'pack068_output_duration_precharge_pricing_unavailable'
+    );
+  }
+
   if (feature === 'video' && videoRequest?.operation === 'image_to_video') {
     if (String(env.PACK067_I2V_PAID_EXECUTION_ENABLED || '').toLowerCase() !== 'true') {
       throw pricingError('pack067_i2v_paid_execution_disabled');
