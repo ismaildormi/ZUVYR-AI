@@ -54,6 +54,9 @@ function normalizeAudioRequest(value) {
   if (operation === 'audio_cleanup' && !['wav','mp3'].includes(outputFormat)) {
     throw requestError('invalid_audio_cleanup_format', 'outputFormat');
   }
+  if (operation === 'text_to_speech' && !['mp3','wav'].includes(outputFormat)) {
+    throw requestError('invalid_tts_output_format', 'outputFormat');
+  }
   const sampleRate = value.sampleRate === undefined ? null : value.sampleRate;
   if (sampleRate !== null && !config.requestLimits.allowedSampleRates.includes(sampleRate)) throw requestError('invalid_audio_sample_rate', 'sampleRate');
 
