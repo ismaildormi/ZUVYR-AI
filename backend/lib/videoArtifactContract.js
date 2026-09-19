@@ -32,6 +32,7 @@ function buildVideoArtifact({
   sourceVideoAssetId = null,
   startFrameAssetId = null,
   endFrameAssetId = null,
+  referenceImageAssetIds = [],
   options = {}
 } = {}) {
   const normalizedUrl = normalizeVideoUrl(url);
@@ -48,7 +49,8 @@ function buildVideoArtifact({
       sourceImageAssetId,
       sourceVideoAssetId,
       startFrameAssetId,
-      endFrameAssetId
+      endFrameAssetId,
+      referenceImageAssetIds: Object.freeze([...(referenceImageAssetIds || [])])
     }),
     options: Object.freeze({ ...options })
   });
