@@ -4,6 +4,7 @@ const crypto = require('node:crypto');
 const express = require('express');
 const { publicInventory, assertAudioOperationAvailable } = require('./audioOperationRegistry');
 const { normalizeAudioRequest } = require('./audioRequestContract');
+const { resolveTtsModel } = require('./audioProvider');
 const { buildAudioJobSnapshot } = require('./audioJobContract');
 const { normalizeVoiceSessionRequest } = require('./voiceSessionContract');
 const { quoteGeneration } = require('./dynamicPricing');
@@ -68,9 +69,11 @@ function createAudioStudioRouter({
     }
 
     let request;
+    let operationAvailability;
     try {
       request = normalizeAudioRequest(req.body);
-      assertAudioOperationAvailable(request.operation, { env });
+      operationAvailability = assertAudioOperationAvailable(request.operation, { env });
+      if (request.operation === 'text_to_speech') resolveTtsModel(request);
     } catch (error) {
       return res.status(statusFor(error)).json({
         status: 'error',
@@ -115,19 +118,28 @@ function createAudioStudioRouter({
       });
     }
 
-    let inspected;
-    try {
-      inspected = await audioInputResolver.inspect({
-        ownerId: req.userId,
-        request
-      });
-    } catch (error) {
-      const code = String(error.code || error.message || '');
-      return res.status(code.includes('duration') || code.includes('not_ready') ? 409 : 400).json({
-        status: 'error',
-        code: code || 'audio_source_preflight_failed',
-        message: 'The selected audio source is not ready.'
-      });
+    let inspected = {
+      source: {
+        durationSeconds: null,
+        fileSizeBytes: null,
+        mimeType: null
+      },
+      lineage: {}
+    };
+    if (operationAvailability.requiresSourceAudio === true) {
+      try {
+        inspected = await audioInputResolver.inspect({
+          ownerId: req.userId,
+          request
+        });
+      } catch (error) {
+        const code = String(error.code || error.message || '');
+        return res.status(code.includes('duration') || code.includes('not_ready') ? 409 : 400).json({
+          status: 'error',
+          code: code || 'audio_source_preflight_failed',
+          message: 'The selected audio source is not ready.'
+        });
+      }
     }
 
     let pricing;
@@ -138,6 +150,7 @@ function createAudioStudioRouter({
           sourceDurationSeconds: inspected.source.durationSeconds,
           sourceFileSizeBytes: inspected.source.fileSizeBytes,
           sourceMimeType: inspected.source.mimeType,
+          speechCharacters: Array.from(String(request.text || '')).length,
           canonicalLineage: inspected.lineage
         },
         env
@@ -161,7 +174,9 @@ function createAudioStudioRouter({
         usageKind:
           request.operation === 'transcription'
             ? 'audio_transcription'
-            : 'audio_cleanup',
+            : request.operation === 'text_to_speech'
+              ? 'audio_text_to_speech'
+              : 'audio_cleanup',
         pricingVersion: pricing.pricingVersion
       });
     } catch (error) {
@@ -200,7 +215,8 @@ function createAudioStudioRouter({
         quotedProviderCostMicroUsd: pricing.providerCostMicroUsd,
         sourceDurationSeconds: inspected.source.durationSeconds,
         sourceMimeType: inspected.source.mimeType,
-        sourceFileSizeBytes: inspected.source.fileSizeBytes
+        sourceFileSizeBytes: inspected.source.fileSizeBytes,
+        speechCharacters: Array.from(String(request.text || '')).length
       }
     };
 

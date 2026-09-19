@@ -721,7 +721,7 @@
         "eu_endpoint_available"
       ],
       "quotaType": "provider_managed",
-      "termsLicenseNotes": "Pack071 binds pre-recorded Nova-3 transcription using provider-published pricing and capability docs. Paid execution remains environment-gated until M14.",
+      "termsLicenseNotes": "Pack071 binds Nova-3 transcription. Pack072 adds Aura-2 stock-voice TTS using provider-published pricing/docs. All paid execution remains environment-gated.",
       "adapter": "lib/audioProvider.js",
       "capabilities": [
         {
@@ -738,6 +738,30 @@
             "entryIds": [
               "deepgram-nova-3-monolingual-prerecorded",
               "deepgram-nova-3-multilingual-prerecorded"
+            ]
+          }
+        },
+        {
+          "id": "audio.text_to_speech",
+          "verification": "verified_provider_docs",
+          "model": "aura-2",
+          "routing": {
+            "mode": "rest_streaming_audio",
+            "endpoint": "/v1/speak"
+          },
+          "voices": [
+            "aura-2-thalia-en",
+            "aura-2-selena-es"
+          ],
+          "outputs": [
+            "mp3",
+            "wav"
+          ],
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "deepgram-aura-2-tts"
             ]
           }
         }

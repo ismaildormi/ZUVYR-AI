@@ -72,6 +72,14 @@ function createAudioResultRepository({db,storage,contentRepository=null,assetKer
         canonical:false
       });
     }
+    if(job.operation==='text_to_speech'&&providerResult.kind==='pack072_tts_audio'&&providerResult.audioBase64){
+      return Object.freeze({
+        providerResult,
+        provider:job.provider||'deepgram',
+        model:job.model||'aura-2-thalia-en',
+        canonical:false
+      });
+    }
     return null;
   }
 
@@ -154,6 +162,57 @@ function createAudioResultRepository({db,storage,contentRepository=null,assetKer
     });
   }
 
+  async function persistSynthesizedAudio({ownerId,jobId,text,buffer,mimeType,format,provider='deepgram',model,characterCount,providerMetadata={}}){
+    if(!Buffer.isBuffer(buffer)||buffer.length<1) throw repoError('tts_audio_buffer_invalid');
+    const textHash=digest(Buffer.from(String(text||''),'utf8'));
+    const audioSha=digest(buffer);
+    const record=await content.ensure({
+      ownerId,projectId:null,kind:'audio',title:'Synthesized speech',
+      sourceKind:'text_to_speech',sourceSystem:'zuvyr_audio_pack072',
+      sourceId:['tts',textHash,provider,model,format].join(':'),
+      sourceVersionKey:audioSha,
+      metadata:{pack:72,jobId,operation:'text_to_speech',provider,model,format,characterCount},
+      version:{
+        mimeType,uri:null,text:null,sha256:audioSha,
+        payload:{operation:'text_to_speech',provider,model,format,characterCount},
+        provenance:{pack:72,jobId,provider,model,characterCount}
+      }
+    });
+    const audioAsset=await upload({
+      ownerId,contentId:record.contentId,versionId:record.versionId,
+      buffer,mimeType,
+      metadata:{pack:72,jobId,artifact:'tts_audio',provider,model,format,characterCount}
+    });
+
+    const artifact=await db.from('audio_artifacts').insert({
+      owner_id:ownerId,job_id:jobId,asset_type:'audio',url:null,mime_type:mimeType,
+      duration_seconds:null,
+      metadata:{pack:72,provider,model,format,characterCount,providerMetadata},
+      canonical_content_id:record.contentId,canonical_asset_id:audioAsset.assetId
+    });
+    if(artifact.error&&!duplicate(artifact.error)) throw repoError('audio_artifact_persist_failed',artifact.error);
+
+    const current=await db.from('audio_jobs').select('usage').eq('id',jobId).eq('owner_id',ownerId).maybeSingle();
+    if(current.error) throw repoError('audio_job_usage_lookup_failed',current.error);
+    const usage=current.data?.usage&&typeof current.data.usage==='object'?current.data.usage:{};
+    const update=await db.from('audio_jobs').update({
+      canonical_content_id:record.contentId,
+      canonical_asset_id:audioAsset.assetId,
+      provider_result:{
+        kind:'pack072_tts_persisted',
+        provider,model,format,characterCount,
+        requestId:providerMetadata?.requestId||null
+      },
+      usage:{...usage,provider,model,format,speechCharacters:characterCount},
+      updated_at:new Date().toISOString()
+    }).eq('id',jobId).eq('owner_id',ownerId);
+    if(update.error) throw repoError('audio_job_result_link_failed',update.error);
+    return Object.freeze({
+      contentId:record.contentId,versionId:record.versionId,
+      assetId:audioAsset.assetId,mimeType,format,characterCount
+    });
+  }
+
   async function persistCleanedAudio({ownerId,jobId,buffer,mimeType,format,strength='balanced',source}){
     const sha256=digest(buffer);
     const record=await content.ensure({
@@ -190,7 +249,7 @@ function createAudioResultRepository({db,storage,contentRepository=null,assetKer
     return Object.freeze({contentId:record.contentId,versionId:record.versionId,assetId:audioAsset.assetId,mimeType,format});
   }
 
-  return Object.freeze({getExisting,persistTranscript,persistCleanedAudio});
+  return Object.freeze({getExisting,persistTranscript,persistSynthesizedAudio,persistCleanedAudio});
 }
 
 function getDefaultAudioResultRepository(){

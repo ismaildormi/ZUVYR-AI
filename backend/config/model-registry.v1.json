@@ -978,6 +978,92 @@
         "state": "active",
         "replacedBy": null
       }
+    },
+    {
+      "id": "deepgram:audio.tts:aura-2-thalia-en",
+      "providerId": "deepgram",
+      "modelId": "aura-2-thalia-en",
+      "kind": "tool",
+      "capabilities": [
+        "audio.text_to_speech"
+      ],
+      "modalities": {
+        "input": [
+          "text"
+        ],
+        "output": [
+          "audio"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "en"
+      ],
+      "languageVerification": "provider_documented_voice_language",
+      "qualityTier": "provider_default",
+      "latencyClass": "streaming_rest",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Official Deepgram Aura-2 TTS docs/pricing revalidated 2026-09-19; paid execution remains environment-gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "deepgram-aura-2-tts"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK072_TTS_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "deepgram:audio.tts:aura-2-selena-es",
+      "providerId": "deepgram",
+      "modelId": "aura-2-selena-es",
+      "kind": "tool",
+      "capabilities": [
+        "audio.text_to_speech"
+      ],
+      "modalities": {
+        "input": [
+          "text"
+        ],
+        "output": [
+          "audio"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "es"
+      ],
+      "languageVerification": "provider_documented_voice_language",
+      "qualityTier": "provider_default",
+      "latencyClass": "streaming_rest",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Official Deepgram Aura-2 TTS docs/pricing revalidated 2026-09-19; paid execution remains environment-gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "deepgram-aura-2-tts"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK072_TTS_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
     }
   ]
 }
