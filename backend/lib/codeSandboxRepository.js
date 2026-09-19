@@ -62,6 +62,21 @@ function createCodeSandboxRepository(client) {
     return get({ ownerId, sessionId: result.data.session_id });
   }
 
+  async function getByRequest({ ownerId, requestId } = {}) {
+    const result = await client
+      .from('code_sandbox_sessions')
+      .select('*')
+      .eq('owner_id', ownerId)
+      .eq('request_id', requestId)
+      .maybeSingle();
+    if (result.error) throw repositoryError('code_sandbox_request_lookup_failed', result.error);
+    if (!result.data) return null;
+    return Object.freeze({
+      public: publicSession(result.data),
+      internal: result.data
+    });
+  }
+
   async function getInternal({ ownerId, sessionId } = {}) {
     const result = await client
       .from('code_sandbox_sessions')
@@ -193,6 +208,7 @@ function createCodeSandboxRepository(client) {
   return Object.freeze({
     reserve,
     get,
+    getByRequest,
     getInternal,
     list,
     transition,
