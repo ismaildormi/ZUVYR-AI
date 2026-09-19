@@ -145,8 +145,12 @@ async function run(){
   assert.equal(dubInput.source_lang,undefined);
   assert.equal(dubInput.highest_resolution,true);
 
-  const enhanceInput=buildFalEnhanceInput(enhance,RESOLVED);
-  assert.equal(enhanceInput.video_url,RESOLVED.source.url);
+  const enhanceResolved={
+    ...RESOLVED,
+    source:{...RESOLVED.source,durationSeconds:4.5}
+  };
+  const enhanceInput=buildFalEnhanceInput(enhance,enhanceResolved);
+  assert.equal(enhanceInput.video_url,enhanceResolved.source.url);
   assert.equal(enhanceInput.desired_increase,'4');
   assert.equal(enhanceInput.output_container_and_codec,'webm_vp9');
   assert.equal(enhanceInput.preserve_audio,true);
