@@ -46,6 +46,7 @@ const decisionLog = read('lib/routerDecisionLog.js');
 const pricingAuthority = read('lib/modelPricingAuthority.js');
 const providerRegistry = read('src/modules/ai/providers/index.js');
 const graph = require('./config/capability-graph.v1.json');
+const routerHardFilters = require('./config/router-hard-filters.v1.json');
 
 function count(source, value) {
   return source.split(value).length - 1;
@@ -740,6 +741,22 @@ assert(controller.includes('result.pricing?.provider_cost_micro_usd'));
 assert(controller.includes('pricingVersion: reasoned.pricingVersion'));
 assert(controller.includes('costEntryId: reasoned.costEntryId'));
 assert(!controller.includes("'pack082.measured-model-cost.v1'"));
+
+assert.equal(
+  routerHardFilters.costAuthority,
+  'backend/lib/modelPricingAuthority.js'
+);
+assert(aiRouter.includes('let providerSuccessAccepted = false'));
+assert(aiRouter.includes('providerSuccessAccepted = logicalSuccess.accepted === true'));
+assert(aiRouter.includes("'POST_SUCCESS_ACCOUNTING_FAILURE'"));
+assert(aiRouter.includes("'model_post_success_accounting_failed'"));
+assert(
+  aiRouter.indexOf('if (providerSuccessAccepted)') <
+    aiRouter.indexOf(
+      "fallbackScope.completeAttempt(\n        billingAttempt.attemptId,\n        err && err.name"
+    ) ||
+  aiRouter.includes('if (providerSuccessAccepted)')
+);
 
 (async () => {
   const calls = {
