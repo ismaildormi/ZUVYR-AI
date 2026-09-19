@@ -86,6 +86,9 @@ const {
   createWorkspaceRouter
 } = require('./lib/workspaceRoutes');
 const {
+  createLearningPipelineRouter
+} = require('./lib/learningPipelineRoutes');
+const {
   createFinalProductRouter
 } = require('./lib/finalProductRoutes');
 const {
@@ -442,6 +445,12 @@ app.use(
   requireAuth,
   rateLimit('workspace'),
   createWorkspaceRouter()
+);
+app.use(
+  '/api/learning',
+  requireAuth,
+  rateLimit('workspace'),
+  createLearningPipelineRouter({ db: supabaseAdmin })
 );
 app.use(
   '/api/final-product',

@@ -1,0 +1,137 @@
+{
+  "version": "pack-094.learning-pipeline.v1",
+  "status": "implementation_candidate",
+  "activePack": "094",
+  "telemetry": {
+    "nonContentAggregateLearning": true,
+    "trainingOptInRequiredForNonContentTelemetry": false,
+    "allowedSignals": [
+      "task_success",
+      "tool_success",
+      "latency_ms",
+      "retry_count",
+      "provider_or_model_outcome",
+      "cost_per_successful_task",
+      "failure_category",
+      "rollback_or_repair_outcome",
+      "explicit_response_feedback"
+    ],
+    "forbiddenContentFields": [
+      "prompt",
+      "response_text",
+      "conversation_content",
+      "intent",
+      "plan",
+      "final_result",
+      "task_input",
+      "task_output",
+      "raw_provider_error",
+      "raw_tool_output"
+    ]
+  },
+  "training": {
+    "globalTrainingDefault": "opt_in_off",
+    "currentConsentAuthority": "zuvyr_user_preferences.training_consent",
+    "memoryPermissionSeparate": true,
+    "requirements": [
+      "explicit_global_training_opt_in",
+      "canonical_owner_scoped_content",
+      "active_training_rights",
+      "rights_or_license_evidence_when_required",
+      "verified_provenance",
+      "privacy_processing_and_redaction",
+      "dedupe_sha256",
+      "no_active_training_exclusion"
+    ],
+    "optOutBehavior": "exclude_existing_candidates_and_block_future_admission",
+    "reOptInBehavior": "does_not_reinclude_previously_excluded_candidates",
+    "dataDeleteBehavior": "exclude_existing_training_candidates_immediately",
+    "consentPolicyVersion": "pack094-v1"
+  },
+  "privacy": {
+    "rawSourceDuplicatedIntoLearningEvents": false,
+    "redactedCandidatePayloadServiceRoleOnly": true,
+    "deterministicRedactionProcessor": "pack094-deterministic-redaction-v1",
+    "contentCandidateMaxChars": 200000
+  },
+  "failureBank": {
+    "rawErrorTextStored": false,
+    "fingerprintInputs": [
+      "capability",
+      "failure_category",
+      "provider",
+      "model_tool",
+      "domain"
+    ],
+    "dedupeScope": "owner"
+  },
+  "evaluation": {
+    "primaryObjective": "task_success_and_total_cost_per_successful_task",
+    "learningValueScorePurpose": "prioritization_only",
+    "learningValueScoreRange": [
+      0,
+      10000
+    ],
+    "datasetCheckpointAdmissionOwner": "PACK095"
+  },
+  "economics": {
+    "zuvyrOwnedModelApiFeeUsd": 0,
+    "zuvyrOwnedModelUsageFeeUsd": 0,
+    "zuvyrInferenceMarkupUsd": 0,
+    "userOrOrganizationComputePaidDirectly": true,
+    "externalTeacherAndFallbackCostsRemainExplicit": true
+  },
+  "externalGate": null,
+  "sharedLearningPlane": {
+    "version": "pack094-shared-learning-plane-v1",
+    "objective": "All routed models use the same governed, owner-scoped knowledge envelope and learning lineage instead of isolated model-specific knowledge silos.",
+    "runtimeKnowledge": {
+      "appliesTo": [
+        "zuvyr_owned_model",
+        "external_provider_model"
+      ],
+      "ownerAndResourceScoped": true,
+      "permissionGoverned": true,
+      "sources": [
+        "authorized_memory_context",
+        "active_project_context",
+        "canonical_library_content",
+        "verified_non_content_learning_signals",
+        "failure_bank",
+        "rights_approved_dataset_retrieval"
+      ],
+      "memoryPermissionIndependentFromTrainingConsent": true,
+      "trainingOptOutDoesNotDisableAuthorizedRuntimeMemory": true,
+      "rawTrainingCandidatePayloadNotAutomaticallyInjected": true
+    },
+    "ownedModelLearning": {
+      "enabledByDesign": true,
+      "admissionOwner": "PACK095",
+      "productionOwnedCheckpointOwner": "PACK096",
+      "eligibleInputs": [
+        "rights_approved_privacy_processed_training_candidates",
+        "privacy_safe_non_content_learning_events",
+        "failure_bank",
+        "independent_eval_results"
+      ],
+      "requiresDatasetAndCheckpointLineage": true,
+      "requiresIndependentEvaluation": true,
+      "requiresRollbackAndFallback": true
+    },
+    "externalModelPolicy": {
+      "receivesAuthorizedRuntimeKnowledge": true,
+      "directWeightTrainingByZuvyr": false,
+      "teacherUseRequiresContractOrLicensePermission": true,
+      "prohibitProviderSystemPromptCollection": true,
+      "prohibitProviderWeightCopying": true,
+      "prohibitCustomerPrivateTrainingWithoutRights": true
+    },
+    "consistency": {
+      "contextEnvelopeVersion": "pack094-v1",
+      "registryPolicyRequired": true,
+      "provenanceRequired": true,
+      "modelAndProviderOutcomeSharedWithEvaluationPlane": true,
+      "goal": "A model switch must not silently lose the authorized ZUVYR knowledge/context available to the task."
+    }
+  }
+}
