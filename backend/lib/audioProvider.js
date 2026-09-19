@@ -35,13 +35,18 @@ function normalizeDeepgramResponse(payload){
   const alt=channel?.alternatives?.[0]||{};
   const transcript=String(alt.transcript||'').trim();
   if(!transcript) throw providerError('audio_transcription_empty',502);
-  const language=String(channel?.detected_language||payload?.results?.detected_language||'').trim()||null;
+  const words=normalizeWords(alt.words);
+  const languages=Array.isArray(alt.languages)
+    ? alt.languages.map(x=>String(x||'').trim()).filter(Boolean)
+    : [...new Set((alt.words||[]).map(w=>String(w?.language||'').trim()).filter(Boolean))];
+  const language=String(channel?.detected_language||payload?.results?.detected_language||languages[0]||'').trim()||null;
   const languageConfidence=Number(channel?.language_confidence??payload?.results?.language_confidence);
   return Object.freeze({
     transcript,
-    words:Object.freeze(normalizeWords(alt.words)),
+    words:Object.freeze(words),
     utterances:Object.freeze(normalizeUtterances(payload?.results?.utterances)),
     language,
+    languages:Object.freeze(languages),
     languageConfidence:Number.isFinite(languageConfidence)?languageConfidence:null,
     metadata:Object.freeze({
       requestId:payload?.metadata?.request_id||null,
@@ -60,14 +65,10 @@ function buildDeepgramUrl(request){
   if(request.options.diarization){
     url.searchParams.set('diarize_model','latest');
   }
-  if(request.language){
-    url.searchParams.set('language',request.language);
-  }else if(request.options.detectLanguage){
-    url.searchParams.set('detect_language','true');
-    url.searchParams.set('language','multi');
-  }else{
-    url.searchParams.set('language','multi');
-  }
+  // Pack071 intentionally pins the multilingual billing path so the
+  // provider price is known before reservation. Deepgram returns per-word
+  // languages and a channel language list for language=multi.
+  url.searchParams.set('language','multi');
   return url.toString();
 }
 
