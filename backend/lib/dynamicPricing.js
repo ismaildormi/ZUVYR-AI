@@ -39,6 +39,29 @@ function decimalUsdToMicroUsd(raw, name, fallback, { allowZero = false } = {}) {
   return result;
 }
 
+function durationMilliseconds(raw, name) {
+  const text = String(raw === undefined || raw === null ? '' : raw).trim();
+  if (!/^(0|[1-9][0-9]*)(?:\.([0-9]{1,3}))?$/.test(text)) {
+    throw pricingError('invalid_' + name);
+  }
+  const [whole, fraction = ''] = text.split('.');
+  const milliseconds =
+    BigInt(whole) * 1000n +
+    BigInt((fraction + '000').slice(0, 3));
+  if (milliseconds <= 0n) {
+    throw pricingError('invalid_' + name);
+  }
+  return milliseconds;
+}
+
+function safeUsageInteger(value, name) {
+  const amount = typeof value === 'bigint' ? value : BigInt(value);
+  if (amount < 0n || amount > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw pricingError('invalid_' + name);
+  }
+  return Number(amount);
+}
+
 function decimalRateToBps(raw, name, fallback) {
   const text = String(raw === undefined || raw === '' ? fallback : raw).trim();
   if (!/^(0|1)(\.[0-9]{1,4})?$/.test(text)) {
@@ -140,6 +163,21 @@ function providerQuote(feature, {
     )
   ) {
     const operation = videoRequest.operation;
+    const sourceDurationMs =
+      ['edit','object_remove','background_remove','lip_sync'].includes(operation)
+        ? durationMilliseconds(
+            videoPricingContext?.sourceDurationSeconds,
+            'pack068_source_duration'
+          )
+        : null;
+    const generatedDurationMs =
+      ['edit','extend'].includes(operation)
+        ? durationMilliseconds(
+            videoRequest.options?.durationSeconds,
+            'pack068_generated_duration'
+          )
+        : null;
+
     const specs = {
       edit: {
         gate: 'PACK068_EDIT_PAID_EXECUTION_ENABLED',
@@ -147,7 +185,8 @@ function providerQuote(feature, {
         capability: 'video_edit',
         operationType: 'video_retake_generated_seconds',
         usage: () => ({
-          outputUnits: Number(videoRequest.options?.durationSeconds)
+          outputUnits:
+            safeUsageInteger(generatedDurationMs, 'pack068_generated_duration')
         })
       },
       extend: {
@@ -156,7 +195,8 @@ function providerQuote(feature, {
         capability: 'video_extend',
         operationType: 'video_extend_generated_seconds',
         usage: () => ({
-          outputUnits: Number(videoRequest.options?.durationSeconds)
+          outputUnits:
+            safeUsageInteger(generatedDurationMs, 'pack068_generated_duration')
         })
       },
       object_remove: {
@@ -165,7 +205,8 @@ function providerQuote(feature, {
         capability: 'video_object_remove',
         operationType: 'video_object_remove_source_seconds',
         usage: () => ({
-          inputUnits: Number(videoPricingContext?.sourceDurationSeconds)
+          inputUnits:
+            safeUsageInteger(sourceDurationMs, 'pack068_source_duration')
         })
       },
       background_remove: {
@@ -174,7 +215,8 @@ function providerQuote(feature, {
         capability: 'video_background_remove',
         operationType: 'video_background_remove_source_seconds',
         usage: () => ({
-          inputUnits: Number(videoPricingContext?.sourceDurationSeconds)
+          inputUnits:
+            safeUsageInteger(sourceDurationMs, 'pack068_source_duration')
         })
       },
       lip_sync: {
@@ -182,15 +224,13 @@ function providerQuote(feature, {
         modelToolId: 'fal-ai/kling-video/lipsync/audio-to-video',
         capability: 'video_lip_sync',
         operationType: 'video_lipsync_5s_increment',
-        usage: () => {
-          const duration = Number(videoPricingContext?.sourceDurationSeconds);
-          return {
-            outputUnits:
-              Number.isFinite(duration) && duration > 0
-                ? Math.ceil(duration / 5)
-                : 0
-          };
-        }
+        usage: () => ({
+          outputUnits:
+            safeUsageInteger(
+              ceilDiv(sourceDurationMs, 5000n),
+              'pack068_lipsync_increments'
+            )
+        })
       }
     };
     const spec = specs[operation];
@@ -202,33 +242,24 @@ function providerQuote(feature, {
       throw pricingError('no_configured_pack068_video_provider');
     }
 
-    const sourceDuration =
-      Number(videoPricingContext?.sourceDurationSeconds);
-    if (
-      ['edit','object_remove','background_remove','lip_sync'].includes(operation) &&
-      (!Number.isFinite(sourceDuration) || sourceDuration <= 0)
-    ) {
-      throw pricingError('pack068_trusted_source_duration_required');
-    }
     if (operation === 'edit') {
-      const start = Number(videoRequest.options?.startTimeSeconds || 0);
-      const duration = Number(videoRequest.options?.durationSeconds);
-      if (
-        !Number.isFinite(start) ||
-        !Number.isFinite(duration) ||
-        start < 0 ||
-        duration <= 0 ||
-        start + duration > sourceDuration + 0.001
-      ) {
+      const startMs =
+        videoRequest.options?.startTimeSeconds === 0
+          ? 0n
+          : durationMilliseconds(
+              videoRequest.options?.startTimeSeconds,
+              'pack068_edit_start_time'
+            );
+      if (startMs + generatedDurationMs > sourceDurationMs) {
         throw pricingError('pack068_edit_window_out_of_bounds');
       }
     }
-    if (operation === 'object_remove' && sourceDuration >= 5) {
+    if (operation === 'object_remove' && sourceDurationMs >= 5000n) {
       throw pricingError('pack068_object_remove_source_too_long');
     }
     if (
       operation === 'lip_sync' &&
-      (sourceDuration < 2 || sourceDuration > 10)
+      (sourceDurationMs < 2000n || sourceDurationMs > 10000n)
     ) {
       throw pricingError('pack068_lipsync_video_duration_unsupported');
     }
