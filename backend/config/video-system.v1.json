@@ -10,11 +10,12 @@
       "paidExecutionEnvironment": "PACK066_PAID_EXECUTION_ENABLED"
     },
     "image_to_video": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
+      "enabledByDefault": true,
+      "status": "implemented_pack067_paid_live_deferred",
       "requiresPrompt": true,
       "requiresSourceImage": true,
-      "requiresSourceVideo": false
+      "requiresSourceVideo": false,
+      "paidExecutionEnvironment": "PACK067_I2V_PAID_EXECUTION_ENABLED"
     },
     "edit": {
       "enabledByDefault": false,
@@ -50,15 +51,31 @@
       "requiresPrompt": false,
       "requiresSourceImage": false,
       "requiresSourceVideo": true
+    },
+    "reference_to_video": {
+      "enabledByDefault": true,
+      "status": "implemented_pack067_paid_live_deferred",
+      "requiresPrompt": true,
+      "requiresSourceImage": false,
+      "requiresSourceVideo": false,
+      "requiresReferenceImages": true,
+      "paidExecutionEnvironment": "PACK067_R2V_PAID_EXECUTION_ENABLED"
     }
   },
   "providers": {
     "replicate": {
       "implementedOperations": [
-        "text_to_video"
+        "text_to_video",
+        "image_to_video",
+        "reference_to_video"
       ],
-      "status": "verified_pack066_text_to_video",
-      "model": "wan-video/wan-2.2-t2v-fast"
+      "status": "verified_pack067_video_generation",
+      "model": "wan-video/wan-2.2-t2v-fast",
+      "models": {
+        "text_to_video": "wan-video/wan-2.2-t2v-fast",
+        "image_to_video": "wan-video/wan-2.2-i2v-fast",
+        "reference_to_video": "wan-video/wan-2.7-r2v"
+      }
     }
   },
   "requestLimits": {
@@ -145,6 +162,72 @@
       "frameFormula": "duration_seconds_x_16_plus_1",
       "interpolateOutput": false,
       "optimizePrompt": false
+    }
+  },
+  "pack067": {
+    "phase": "IMPLEMENTED_PAID_LIVE_DEFERRED",
+    "paidExecutionDefault": false,
+    "provider": "replicate",
+    "maxReferenceImages": 4,
+    "imageToVideo": {
+      "model": "wan-video/wan-2.2-i2v-fast",
+      "paidExecutionEnvironment": "PACK067_I2V_PAID_EXECUTION_ENABLED",
+      "allowedDurationSeconds": [
+        5,
+        6,
+        7
+      ],
+      "allowedResolutions": [
+        "480p",
+        "720p"
+      ],
+      "allowedFps": [
+        16
+      ],
+      "allowedExportFormats": [
+        "mp4"
+      ],
+      "audioSupported": false,
+      "lastImageSupported": true,
+      "aspectRatioInputSupported": false,
+      "interpolateOutput": false,
+      "pricingBasis": "fixed_per_output_video_by_resolution"
+    },
+    "referenceToVideo": {
+      "model": "wan-video/wan-2.7-r2v",
+      "paidExecutionEnvironment": "PACK067_R2V_PAID_EXECUTION_ENABLED",
+      "allowedDurationSeconds": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "allowedRatios": [
+        "16:9",
+        "9:16",
+        "1:1",
+        "4:3",
+        "3:4"
+      ],
+      "allowedResolutions": [
+        "720p",
+        "1080p"
+      ],
+      "allowedShotTypes": [
+        "single",
+        "multi"
+      ],
+      "allowedExportFormats": [
+        "mp4"
+      ],
+      "audioSupported": false,
+      "referenceVideosSupported": false,
+      "pricingBasis": "output_video_seconds"
     }
   }
 }
