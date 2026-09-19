@@ -65,7 +65,10 @@ function failureStatus(error) {
   if (
     code === 'code_project_not_found' ||
     code === 'pack076_session_not_found' ||
-    code === 'pack077_job_not_found'
+    code === 'pack077_job_not_found' ||
+    code === 'pack078_repair_run_not_found' ||
+    code === 'pack078_repair_attempt_not_found' ||
+    code === 'pack078_repair_source_job_not_found'
   ) return 404;
   if (
     code === 'pack075_revision_conflict' ||
@@ -81,7 +84,13 @@ function failureStatus(error) {
     code === 'pack077_active_job_exists' ||
     code === 'pack077_idempotency_scope_mismatch' ||
     code === 'pack077_job_not_claimable' ||
-    code === 'pack077_terminal_job'
+    code === 'pack077_terminal_job' ||
+    code === 'pack078_revision_conflict' ||
+    code === 'pack078_repair_active_conflict' ||
+    code === 'pack078_repair_idempotency_scope_mismatch' ||
+    code === 'pack078_repair_terminal' ||
+    code === 'pack078_repair_exhausted' ||
+    code === 'pack078_repair_repeated_failure'
   ) return 409;
   if (
     code === 'code_requires_plan' ||
@@ -101,7 +110,8 @@ function failureStatus(error) {
     code === 'code_sandbox_live_gate_closed' ||
     code === 'code_sandbox_provider_credentials_unavailable' ||
     code === 'code_runtime_pricing_gate_closed' ||
-    code === 'code_runtime_pricing_snapshot_changed'
+    code === 'code_runtime_pricing_snapshot_changed' ||
+    code === 'pack078_repair_runtime_unavailable'
   ) return 503;
   if (
     code.includes('disabled') ||
@@ -635,6 +645,337 @@ function createCodeStudioRouter({
     }
   }
 
+  function assertRepairRuntimeAvailable() {
+    const pricing = runtimePricingStatus({ env: sandboxEnv });
+    const sandboxStatus = sandboxAvailability(sandboxEnv);
+    if (!pricing.live || !sandboxStatus.live) {
+      const error = new Error('pack078_repair_runtime_unavailable');
+      error.code = 'pack078_repair_runtime_unavailable';
+      error.blockers = [
+        ...new Set([
+          ...(pricing.blockers || []),
+          ...(sandboxStatus.blockers || [])
+        ])
+      ];
+      throw error;
+    }
+  }
+
+  function repairPhaseRequestId(repairRunId, attemptNo, phase) {
+    const normalizedPhase = String(phase || '').replace(/[^a-z0-9_-]/gi, '').slice(0, 24);
+    if (!uuid(repairRunId) || !Number.isInteger(Number(attemptNo))) {
+      const error = new Error('pack078_repair_request_id_invalid');
+      error.code = 'pack078_repair_request_id_invalid';
+      throw error;
+    }
+    return [
+      'pack078',
+      repairRunId,
+      String(attemptNo),
+      normalizedPhase || 'phase'
+    ].join(':');
+  }
+
+  async function startRepairRetest({
+    ownerId,
+    run,
+    attempt,
+    project
+  }) {
+    const sourceJob = await runtimeExecution().refresh({
+      ownerId,
+      jobId: attempt.sourceJobId
+    });
+    const operation = retestOperation(project, sourceJob.operation);
+    const requestId = repairPhaseRequestId(
+      run.id,
+      attempt.attemptNo,
+      'retest'
+    );
+
+    const started = await runtimeExecution().start({
+      ownerId,
+      idempotencyKey: requestId,
+      body: {
+        operation,
+        projectId: project.id,
+        sandboxSessionId: run.sandboxSessionId
+      }
+    });
+
+    await repairRepository().completeAttempt({
+      ownerId,
+      attemptId: attempt.id,
+      status: 'retesting',
+      aiEditRequestId: attempt.aiEditRequestId,
+      repairedVersionId: attempt.repairedVersionId,
+      retestJobId: started.job.id,
+      result: {
+        retestOperation: operation,
+        retestRequestId: requestId
+      }
+    });
+
+    return Object.freeze({
+      job: started.job,
+      replayed: started.replayed === true
+    });
+  }
+
+  async function applyRepairAttempt({
+    ownerId,
+    run,
+    attempt
+  }) {
+    const project = await projectRepository().get({
+      ownerId,
+      projectId: run.projectId
+    });
+    const targets = repairTargets(project, attempt.diagnosis);
+    const aiRequestId = repairPhaseRequestId(
+      run.id,
+      attempt.attemptNo,
+      'ai'
+    );
+    const ai = await executeAiEdit({
+      ownerId,
+      projectId: project.id,
+      instruction: repairInstruction(
+        attempt.diagnosis,
+        attempt.attemptNo
+      ),
+      targetPaths: targets,
+      expectedRevision: project.revision,
+      requestId: aiRequestId,
+      reasonPrefix: 'repair'
+    });
+
+    await repairRepository().completeAttempt({
+      ownerId,
+      attemptId: attempt.id,
+      status: 'applied',
+      aiEditRequestId: aiRequestId,
+      repairedVersionId: ai.aiEdit?.result?.versionId || null,
+      result: {
+        changedPaths: ai.aiEdit?.result?.changedPaths || [],
+        aiEditReceiptId: ai.aiEdit?.id || null
+      }
+    });
+
+    const updatedAttempt = await repairRepository().getLatestAttempt({
+      ownerId,
+      repairRunId: run.id
+    });
+    const updatedProject = await projectRepository().get({
+      ownerId,
+      projectId: run.projectId
+    });
+    return startRepairRetest({
+      ownerId,
+      run,
+      attempt: updatedAttempt,
+      project: updatedProject
+    });
+  }
+
+  async function claimRepairAttemptFromJob({
+    ownerId,
+    run,
+    sourceJob
+  }) {
+    const diagnostic = assertRepairableJob(sourceJob);
+    return repairRepository().claimAttempt({
+      ownerId,
+      repairRunId: run.id,
+      failureFingerprint: diagnostic.fingerprint,
+      diagnosis: {
+        ...diagnostic,
+        sourceOperation: sourceJob.operation
+      },
+      sourceJobId: sourceJob.id
+    });
+  }
+
+  async function progressRepair({
+    ownerId,
+    repairRunId
+  }) {
+    assertRepairRuntimeAvailable();
+
+    let bundle = await repairRepository().publicBundle({
+      ownerId,
+      repairRunId
+    });
+    let run = bundle.run;
+
+    if (['succeeded','failed','exhausted','cancelled'].includes(run.status)) {
+      return Object.freeze({ ...bundle, retestJob: null });
+    }
+
+    let attempt = bundle.attempts[bundle.attempts.length - 1] || null;
+
+    if (!attempt) {
+      const sourceJob = await runtimeExecution().refresh({
+        ownerId,
+        jobId: run.sourceJobId
+      });
+      attempt = await claimRepairAttemptFromJob({
+        ownerId,
+        run,
+        sourceJob
+      });
+      await applyRepairAttempt({ ownerId, run, attempt });
+      bundle = await repairRepository().publicBundle({
+        ownerId,
+        repairRunId
+      });
+      attempt = bundle.attempts[bundle.attempts.length - 1];
+      const retestJob = attempt?.retestJobId
+        ? await runtimeExecution().refresh({
+            ownerId,
+            jobId: attempt.retestJobId
+          })
+        : null;
+      return Object.freeze({ ...bundle, retestJob });
+    }
+
+    if (attempt.status === 'claimed') {
+      await applyRepairAttempt({ ownerId, run, attempt });
+      bundle = await repairRepository().publicBundle({
+        ownerId,
+        repairRunId
+      });
+      attempt = bundle.attempts[bundle.attempts.length - 1];
+      const retestJob = attempt?.retestJobId
+        ? await runtimeExecution().refresh({
+            ownerId,
+            jobId: attempt.retestJobId
+          })
+        : null;
+      return Object.freeze({ ...bundle, retestJob });
+    }
+
+    if (attempt.status === 'applied' && !attempt.retestJobId) {
+      const project = await projectRepository().get({
+        ownerId,
+        projectId: run.projectId
+      });
+      await startRepairRetest({
+        ownerId,
+        run,
+        attempt,
+        project
+      });
+      bundle = await repairRepository().publicBundle({
+        ownerId,
+        repairRunId
+      });
+      attempt = bundle.attempts[bundle.attempts.length - 1];
+    }
+
+    if (attempt.status === 'retesting' && attempt.retestJobId) {
+      const retestJob = await runtimeExecution().refresh({
+        ownerId,
+        jobId: attempt.retestJobId
+      });
+      const state = repairStatusFromJob(retestJob);
+
+      if (state === 'retesting') {
+        return Object.freeze({ ...bundle, retestJob });
+      }
+
+      if (state === 'succeeded') {
+        const project = await projectRepository().get({
+          ownerId,
+          projectId: run.projectId
+        });
+        await repairRepository().completeAttempt({
+          ownerId,
+          attemptId: attempt.id,
+          status: 'succeeded',
+          aiEditRequestId: attempt.aiEditRequestId,
+          repairedVersionId: attempt.repairedVersionId,
+          retestJobId: attempt.retestJobId,
+          finalRevision: project.revision,
+          result: {
+            retestStatus: 'succeeded',
+            retestJobId: retestJob.id
+          }
+        });
+        return Object.freeze({
+          ...(await repairRepository().publicBundle({
+            ownerId,
+            repairRunId
+          })),
+          retestJob
+        });
+      }
+
+      await repairRepository().completeAttempt({
+        ownerId,
+        attemptId: attempt.id,
+        status: 'failed',
+        aiEditRequestId: attempt.aiEditRequestId,
+        repairedVersionId: attempt.repairedVersionId,
+        retestJobId: attempt.retestJobId,
+        result: {
+          retestStatus: retestJob.status,
+          diagnostic: retestJob.result?.diagnostic || null
+        }
+      });
+
+      run = await repairRepository().get({ ownerId, repairRunId });
+      if (run.status === 'exhausted') {
+        return Object.freeze({
+          ...(await repairRepository().publicBundle({
+            ownerId,
+            repairRunId
+          })),
+          retestJob
+        });
+      }
+
+      try {
+        const nextAttempt = await claimRepairAttemptFromJob({
+          ownerId,
+          run,
+          sourceJob: retestJob
+        });
+        await applyRepairAttempt({
+          ownerId,
+          run,
+          attempt: nextAttempt
+        });
+      } catch (error) {
+        if (error?.code === 'pack078_repair_repeated_failure') {
+          return Object.freeze({
+            ...(await repairRepository().publicBundle({
+              ownerId,
+              repairRunId
+            })),
+            retestJob
+          });
+        }
+        throw error;
+      }
+
+      bundle = await repairRepository().publicBundle({
+        ownerId,
+        repairRunId
+      });
+      attempt = bundle.attempts[bundle.attempts.length - 1];
+      const nextRetest = attempt?.retestJobId
+        ? await runtimeExecution().refresh({
+            ownerId,
+            jobId: attempt.retestJobId
+          })
+        : null;
+      return Object.freeze({ ...bundle, retestJob: nextRetest });
+    }
+
+    return Object.freeze({ ...bundle, retestJob: null });
+  }
+
   router.get(
     '/capabilities',
     (_req, res) =>
@@ -681,6 +1022,19 @@ function createCodeStudioRouter({
           previewActivation: false,
           previewStatus:
             'deferred_until_private_or_provider-protected_port_route_is_verified'
+        },
+        pack078: {
+          buildTestRepairFoundation: true,
+          operations: ['build','test'],
+          structuredDiagnostics: true,
+          maxRepairAttempts: runtimeConfig.repair?.maxAttempts || 2,
+          repairAutoApply: runtimeConfig.repair?.autoApply === true,
+          previewStates: runtimeConfig.preview?.states || [],
+          previewTransportVerified: false,
+          livePreview: false,
+          previewStatus:
+            'deferred_raw_provider_port_protection_unverified',
+          fakePreviewFallback: false
         }
       })
   );
@@ -692,8 +1046,8 @@ function createCodeStudioRouter({
       const preview = req.body?.includePreview === true
         ? {
             available: false,
-            status: 'preview_unavailable_until_pack078',
-            message: 'Preview unavailable until a verified isolated runtime is connected.'
+            status: 'pack078_live_preview_deferred',
+            message: 'Preview unavailable until the sandbox port route is verified private or provider-protected.'
           }
         : undefined;
       return res.json({ status: 'success', manifest, preview });
@@ -886,6 +1240,144 @@ function createCodeStudioRouter({
       return res.json({ status: 'success', ...result });
     } catch (error) {
       return errorResponse(res, error, 'code_ai_edit_failed');
+    }
+  });
+
+  router.get('/projects/:projectId/preview/state', async (req, res) => {
+    try {
+      if (!uuid(req.params.projectId) || !uuid(req.query?.sandboxSessionId)) {
+        const error = new Error('pack078_preview_scope_invalid');
+        error.code = 'pack078_preview_scope_invalid';
+        throw error;
+      }
+      const project = await projectRepository().get({
+        ownerId: req.userId,
+        projectId: req.params.projectId
+      });
+      const state = await runtimeExecution().runtimeState({
+        ownerId: req.userId,
+        sandboxSessionId: req.query.sandboxSessionId
+      });
+      if (state && state.projectId !== project.id) {
+        const error = new Error('pack078_preview_scope_invalid');
+        error.code = 'pack078_preview_scope_invalid';
+        throw error;
+      }
+      return res.json({
+        status: 'success',
+        preview: {
+          state: state?.previewState || 'unavailable',
+          candidatePort: state?.previewCandidatePort || null,
+          transportStatus: state?.previewTransportStatus || 'blocked',
+          diagnostic: state?.lastDiagnostic || {},
+          lastBuildJobId: state?.lastBuildJobId || null,
+          lastTestJobId: state?.lastTestJobId || null,
+          updatedAt: state?.previewUpdatedAt || state?.updatedAt || null,
+          ticketAvailable:
+            state?.previewState === 'ready' &&
+            state?.previewTransportStatus === 'verified'
+        }
+      });
+    } catch (error) {
+      return errorResponse(res, error, 'code_preview_state_failed');
+    }
+  });
+
+  router.post('/projects/:projectId/repair', async (req, res) => {
+    try {
+      assertRepairRuntimeAvailable();
+      if (
+        !uuid(req.params.projectId) ||
+        !uuid(req.body?.sandboxSessionId) ||
+        !uuid(req.body?.sourceJobId)
+      ) {
+        const error = new Error('pack078_repair_scope_invalid');
+        error.code = 'pack078_repair_scope_invalid';
+        throw error;
+      }
+
+      const project = await projectRepository().get({
+        ownerId: req.userId,
+        projectId: req.params.projectId
+      });
+      const sourceJob = await runtimeExecution().refresh({
+        ownerId: req.userId,
+        jobId: req.body.sourceJobId
+      });
+      const diagnostic = assertRepairableJob(sourceJob);
+
+      if (
+        sourceJob.projectId !== project.id ||
+        sourceJob.sandboxSessionId !== req.body.sandboxSessionId
+      ) {
+        const error = new Error('pack078_repair_scope_invalid');
+        error.code = 'pack078_repair_scope_invalid';
+        throw error;
+      }
+
+      const requestId =
+        String(req.headers['idempotency-key'] || '').trim() ||
+        crypto.randomUUID();
+      if (!requestId || requestId.length > 200) {
+        const error = new Error('pack078_repair_request_id_invalid');
+        error.code = 'pack078_repair_request_id_invalid';
+        throw error;
+      }
+
+      const run = await repairRepository().reserve({
+        ownerId: req.userId,
+        projectId: project.id,
+        sandboxSessionId: req.body.sandboxSessionId,
+        sourceJobId: sourceJob.id,
+        requestId,
+        baseRevision: project.revision,
+        failureFingerprint: diagnostic.fingerprint
+      });
+
+      const progress = await progressRepair({
+        ownerId: req.userId,
+        repairRunId: run.id
+      });
+      return res.status(202).json({
+        status: 'success',
+        repair: progress
+      });
+    } catch (error) {
+      return errorResponse(res, error, 'code_repair_start_failed');
+    }
+  });
+
+  router.get('/repair/:repairRunId', async (req, res) => {
+    try {
+      if (!uuid(req.params.repairRunId)) {
+        const error = new Error('pack078_repair_run_id_invalid');
+        error.code = 'pack078_repair_run_id_invalid';
+        throw error;
+      }
+      const repair = await repairRepository().publicBundle({
+        ownerId: req.userId,
+        repairRunId: req.params.repairRunId
+      });
+      return res.json({ status: 'success', repair });
+    } catch (error) {
+      return errorResponse(res, error, 'code_repair_lookup_failed');
+    }
+  });
+
+  router.post('/repair/:repairRunId/continue', async (req, res) => {
+    try {
+      if (!uuid(req.params.repairRunId)) {
+        const error = new Error('pack078_repair_run_id_invalid');
+        error.code = 'pack078_repair_run_id_invalid';
+        throw error;
+      }
+      const repair = await progressRepair({
+        ownerId: req.userId,
+        repairRunId: req.params.repairRunId
+      });
+      return res.json({ status: 'success', repair });
+    } catch (error) {
+      return errorResponse(res, error, 'code_repair_continue_failed');
     }
   });
 
