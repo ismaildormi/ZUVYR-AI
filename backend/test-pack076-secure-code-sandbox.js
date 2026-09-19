@@ -87,7 +87,41 @@ for (const functionName of [
 }
 
 assert(
-  migration.includes("if coalesce(p_preview_token_hash,'') !~ '^[0-9a-f]{64}assert(!/grant\s+(?:select|insert|update|delete)[^;]*\s+to\s+(?:anon|authenticated)/i.test(migration));
+  migration.includes("if coalesce(p_preview_token_hash,'') !~ '^[0-9a-f]{64}$' then"),
+  'preview token regex must remain syntactically complete'
+);
+const rotateFunctionEnd = migration.indexOf('$pack076_rotate_preview$;');
+const firstFunctionGrant = migration.indexOf(
+  'revoke all on function public.reserve_zuvyr_code_sandbox_session_pack076('
+);
+assert(
+  rotateFunctionEnd >= 0 && firstFunctionGrant > rotateFunctionEnd,
+  'function grants must remain outside the preview-token function body'
+);
+assert.equal(
+  count(migration, 'comment on table public.code_sandbox_sessions is'),
+  1,
+  'sandbox table comment must exist exactly once'
+);
+for (const functionName of [
+  'reserve_zuvyr_code_sandbox_session_pack076',
+  'transition_zuvyr_code_sandbox_session_pack076',
+  'touch_zuvyr_code_sandbox_session_pack076',
+  'rotate_zuvyr_code_sandbox_preview_token_pack076'
+]) {
+  assert.equal(
+    count(migration, 'revoke all on function public.' + functionName + '('),
+    1,
+    functionName + ' revoke must exist exactly once'
+  );
+  assert.equal(
+    count(migration, 'grant execute on function public.' + functionName + '('),
+    1,
+    functionName + ' grant must exist exactly once'
+  );
+}
+
+assert(!/grant\s+(?:select|insert|update|delete)[^;]*\s+to\s+(?:anon|authenticated)/i.test(migration));
 assert(!migration.includes('preview_url'));
 assert(!migration.includes('provider_route'));
 assert(!migration.includes('service_role_key'));
