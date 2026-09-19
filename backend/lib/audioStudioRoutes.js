@@ -156,7 +156,12 @@ function createAudioStudioRouter({
         userId: req.userId,
         requestId,
         feature: 'audio',
+        modelUsed: pricing.provider,
         creditsConsumed: pricing.credits,
+        usageKind:
+          request.operation === 'transcription'
+            ? 'audio_transcription'
+            : 'audio_cleanup',
         pricingVersion: pricing.pricingVersion
       });
     } catch (error) {
