@@ -1,26 +1,116 @@
 {
-  "version": "pack-07.audio-system.v1",
+  "version": "pack-071.audio-system.v1",
   "localCapabilities": {
-    "browser_dictation": { "enabledByDefault": true, "status": "existing_browser_capability", "costMode": "device" },
-    "browser_tts": { "enabledByDefault": true, "status": "existing_browser_capability", "costMode": "device" }
+    "browser_dictation": {
+      "enabledByDefault": true,
+      "status": "existing_browser_capability",
+      "costMode": "device"
+    },
+    "browser_tts": {
+      "enabledByDefault": true,
+      "status": "existing_browser_capability",
+      "costMode": "device"
+    }
   },
   "operations": {
-    "transcription": { "enabledByDefault": false, "status": "blocked_unpriced", "unitType": "transcription_minutes", "requiresSourceAudio": true },
-    "text_to_speech": { "enabledByDefault": false, "status": "blocked_unpriced", "unitType": "speech_characters", "requiresText": true },
-    "voice_chat": { "enabledByDefault": false, "status": "blocked_unpriced", "unitType": "audio_seconds", "requiresConsent": true },
-    "music_generation": { "enabledByDefault": false, "status": "blocked_unpriced", "unitType": "music_seconds", "requiresPrompt": true },
-    "sound_effects": { "enabledByDefault": false, "status": "blocked_unpriced", "unitType": "audio_seconds", "requiresPrompt": true },
-    "audio_cleanup": { "enabledByDefault": false, "status": "blocked_unpriced", "unitType": "processing_operations", "requiresSourceAudio": true },
-    "remix": { "enabledByDefault": false, "status": "blocked_unpriced", "unitType": "processing_operations", "requiresSourceAudio": true },
-    "stem_separation": { "enabledByDefault": false, "status": "blocked_unpriced", "unitType": "processing_operations", "requiresSourceAudio": true },
-    "translate_dub": { "enabledByDefault": false, "status": "blocked_unpriced", "unitType": "audio_minutes", "requiresSourceAudio": true },
-    "audio_to_video": { "enabledByDefault": false, "status": "blocked_unpriced", "unitType": "video_seconds", "requiresSourceAudio": true }
+    "transcription": {
+      "enabledByDefault": true,
+      "status": "implemented_pack071_paid_live_deferred",
+      "unitType": "audio_seconds",
+      "requiresSourceAudio": true,
+      "paidExecutionEnvironment": "PACK071_STT_PAID_EXECUTION_ENABLED"
+    },
+    "text_to_speech": {
+      "enabledByDefault": false,
+      "status": "blocked_unpriced",
+      "unitType": "speech_characters",
+      "requiresText": true
+    },
+    "voice_chat": {
+      "enabledByDefault": false,
+      "status": "blocked_unpriced",
+      "unitType": "audio_seconds",
+      "requiresConsent": true
+    },
+    "music_generation": {
+      "enabledByDefault": false,
+      "status": "blocked_unpriced",
+      "unitType": "music_seconds",
+      "requiresPrompt": true
+    },
+    "sound_effects": {
+      "enabledByDefault": false,
+      "status": "blocked_unpriced",
+      "unitType": "audio_seconds",
+      "requiresPrompt": true
+    },
+    "audio_cleanup": {
+      "enabledByDefault": true,
+      "status": "implemented_pack071_local_runtime",
+      "unitType": "processing_operations",
+      "requiresSourceAudio": true,
+      "paidExecutionEnvironment": null
+    },
+    "remix": {
+      "enabledByDefault": false,
+      "status": "blocked_unpriced",
+      "unitType": "processing_operations",
+      "requiresSourceAudio": true
+    },
+    "stem_separation": {
+      "enabledByDefault": false,
+      "status": "blocked_unpriced",
+      "unitType": "processing_operations",
+      "requiresSourceAudio": true
+    },
+    "translate_dub": {
+      "enabledByDefault": false,
+      "status": "blocked_unpriced",
+      "unitType": "audio_minutes",
+      "requiresSourceAudio": true
+    },
+    "audio_to_video": {
+      "enabledByDefault": false,
+      "status": "blocked_unpriced",
+      "unitType": "video_seconds",
+      "requiresSourceAudio": true
+    }
   },
   "providers": {
-    "openai": { "status": "registered_unverified", "implementedOperations": [] },
-    "google": { "status": "registered_unverified", "implementedOperations": [] },
-    "fal": { "status": "registered_unverified", "implementedOperations": [] },
-    "replicate": { "status": "registered_unverified", "implementedOperations": [] }
+    "openai": {
+      "status": "registered_unverified",
+      "implementedOperations": []
+    },
+    "google": {
+      "status": "registered_unverified",
+      "implementedOperations": []
+    },
+    "fal": {
+      "status": "registered_unverified",
+      "implementedOperations": []
+    },
+    "replicate": {
+      "status": "registered_unverified",
+      "implementedOperations": []
+    },
+    "deepgram": {
+      "status": "verified_pack071_paid_live_deferred",
+      "implementedOperations": [
+        "transcription"
+      ],
+      "models": {
+        "transcription": "nova-3"
+      }
+    },
+    "local": {
+      "status": "verified_pack071_local_runtime",
+      "implementedOperations": [
+        "audio_cleanup"
+      ],
+      "models": {
+        "audio_cleanup": "ffmpeg-alpine"
+      }
+    }
   },
   "requestLimits": {
     "maxPromptCharacters": 2000,
@@ -29,15 +119,53 @@
     "maxDurationSeconds": 600,
     "maxVoiceSessionSeconds": 900,
     "maxVisualAssets": 20,
-    "allowedAudioFormats": ["mp3", "wav", "ogg", "flac", "m4a", "aac", "webm"],
-    "allowedOutputFormats": ["mp3", "wav", "ogg", "flac"],
-    "allowedVideoFormats": ["mp4", "webm"],
-    "allowedSampleRates": [16000, 24000, 44100, 48000]
+    "allowedAudioFormats": [
+      "mp3",
+      "wav",
+      "ogg",
+      "flac",
+      "m4a",
+      "aac",
+      "webm"
+    ],
+    "allowedOutputFormats": [
+      "mp3",
+      "wav",
+      "ogg",
+      "flac"
+    ],
+    "allowedVideoFormats": [
+      "mp4",
+      "webm"
+    ],
+    "allowedSampleRates": [
+      16000,
+      24000,
+      44100,
+      48000
+    ]
   },
   "jobs": {
-    "states": ["blocked", "queued", "processing", "done", "failed", "cancelled"],
-    "stages": ["blocked", "validating", "provider", "processing", "rendering", "settling", "done", "failed", "cancelled"],
-    "cancelEnabledByDefault": false
+    "states": [
+      "blocked",
+      "queued",
+      "processing",
+      "done",
+      "failed",
+      "cancelled"
+    ],
+    "stages": [
+      "blocked",
+      "validating",
+      "provider",
+      "processing",
+      "rendering",
+      "settling",
+      "done",
+      "failed",
+      "cancelled"
+    ],
+    "cancelEnabledByDefault": true
   },
   "voicePrivacy": {
     "continuousListeningEnabledByDefault": false,
@@ -46,5 +174,46 @@
     "explicitMicrophoneConsentRequired": true,
     "visibleRecordingIndicatorRequired": true,
     "stopControlRequired": true
+  },
+  "pack071": {
+    "phase": "IMPLEMENTED_PAID_LIVE_DEFERRED",
+    "transcription": {
+      "provider": "deepgram",
+      "model": "nova-3",
+      "paidExecutionEnvironment": "PACK071_STT_PAID_EXECUTION_ENABLED",
+      "exactPricing": {
+        "payAsYouGoUsdPerMinute": "0.0052",
+        "billingGranularity": "true_per_second",
+        "diarizationIncludedForPreRecorded": true
+      },
+      "features": {
+        "detectLanguage": true,
+        "smartFormat": true,
+        "utterances": true,
+        "diarizationModel": "latest",
+        "wordTimestamps": true
+      }
+    },
+    "cleanup": {
+      "provider": "local",
+      "model": "ffmpeg-alpine",
+      "externalProviderCostMicroUsd": "0",
+      "outputFormats": [
+        "wav",
+        "mp3"
+      ],
+      "filters": [
+        "highpass",
+        "lowpass",
+        "afftdn",
+        "loudnorm"
+      ]
+    },
+    "privacy": {
+      "sourceAssets": "owner_scoped_private",
+      "transcriptInheritsSourceRetention": true,
+      "trainingRightsIndependent": true,
+      "rawAudioProviderPersistence": "not_required_by_zuvyr"
+    }
   }
 }
