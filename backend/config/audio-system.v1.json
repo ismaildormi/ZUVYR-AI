@@ -1,5 +1,5 @@
 {
-  "version": "pack-071.audio-system.v1",
+  "version": "pack-074.audio-system.v1",
   "localCapabilities": {
     "browser_dictation": {
       "enabledByDefault": true,
@@ -36,16 +36,20 @@
       "billingAuthority": false
     },
     "music_generation": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
+      "enabledByDefault": true,
+      "status": "implemented_pack074_paid_live_deferred",
       "unitType": "music_seconds",
-      "requiresPrompt": true
+      "requiresPrompt": true,
+      "paidExecutionEnvironment": "PACK074_MUSIC_PAID_EXECUTION_ENABLED",
+      "billingAuthority": true
     },
     "sound_effects": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
-      "unitType": "audio_seconds",
-      "requiresPrompt": true
+      "enabledByDefault": true,
+      "status": "implemented_pack074_paid_live_deferred",
+      "unitType": "processing_operations",
+      "requiresPrompt": true,
+      "paidExecutionEnvironment": "PACK074_SFX_PAID_EXECUTION_ENABLED",
+      "billingAuthority": true
     },
     "audio_cleanup": {
       "enabledByDefault": true,
@@ -55,28 +59,39 @@
       "paidExecutionEnvironment": null
     },
     "remix": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
-      "unitType": "processing_operations",
-      "requiresSourceAudio": true
+      "enabledByDefault": true,
+      "status": "implemented_pack074_paid_live_deferred",
+      "unitType": "audio_seconds",
+      "requiresSourceAudio": true,
+      "requiresPrompt": true,
+      "paidExecutionEnvironment": "PACK074_REMIX_PAID_EXECUTION_ENABLED",
+      "billingAuthority": true
     },
     "stem_separation": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
-      "unitType": "processing_operations",
-      "requiresSourceAudio": true
+      "enabledByDefault": true,
+      "status": "implemented_pack074_paid_live_deferred",
+      "unitType": "audio_seconds",
+      "requiresSourceAudio": true,
+      "requiresPrompt": true,
+      "paidExecutionEnvironment": "PACK074_STEMS_PAID_EXECUTION_ENABLED",
+      "billingAuthority": true
     },
     "translate_dub": {
       "enabledByDefault": false,
-      "status": "blocked_unpriced",
-      "unitType": "audio_minutes",
-      "requiresSourceAudio": true
+      "status": "blocked_provider_output_contract_unverified",
+      "unitType": "processing_operations",
+      "requiresSourceAudio": true,
+      "paidExecutionEnvironment": "PACK074_DUB_PAID_EXECUTION_ENABLED",
+      "billingAuthority": true
     },
     "audio_to_video": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
-      "unitType": "video_seconds",
-      "requiresSourceAudio": true
+      "enabledByDefault": true,
+      "status": "implemented_pack074_paid_live_deferred",
+      "unitType": "processing_operations",
+      "requiresSourceAudio": true,
+      "requiresSourceVideo": true,
+      "paidExecutionEnvironment": "PACK074_AUDIO_TO_VIDEO_PAID_EXECUTION_ENABLED",
+      "billingAuthority": true
     }
   },
   "providers": {
@@ -89,8 +104,23 @@
       "implementedOperations": []
     },
     "fal": {
-      "status": "registered_unverified",
-      "implementedOperations": []
+      "status": "verified_pack074_paid_live_deferred",
+      "implementedOperations": [
+        "music_generation",
+        "sound_effects",
+        "remix",
+        "stem_separation",
+        "translate_dub",
+        "audio_to_video"
+      ],
+      "models": {
+        "music_generation": "cassetteai/music-generator",
+        "sound_effects": "cassetteai/sound-effects-generator",
+        "remix": "fal-ai/ace-step/audio-to-audio",
+        "stem_separation": "fal-ai/sam-audio/separate",
+        "translate_dub": "fal-ai/elevenlabs/dubbing",
+        "audio_to_video": "fal-ai/kling-video/lipsync/audio-to-video"
+      }
     },
     "replicate": {
       "status": "registered_unverified",
@@ -297,6 +327,57 @@
       "visibleRecordingIndicatorRequired": true,
       "rawAudioStoredByZuvyr": false,
       "trainingPermissionIndependent": true
+    }
+  },
+  "pack074": {
+    "phase": "IMPLEMENTED_PAID_LIVE_DEFERRED",
+    "providers": {
+      "music": {
+        "provider": "fal",
+        "model": "cassetteai/music-generator",
+        "gate": "PACK074_MUSIC_PAID_EXECUTION_ENABLED"
+      },
+      "sfx": {
+        "provider": "fal",
+        "model": "cassetteai/sound-effects-generator",
+        "gate": "PACK074_SFX_PAID_EXECUTION_ENABLED"
+      },
+      "remix": {
+        "provider": "fal",
+        "model": "fal-ai/ace-step/audio-to-audio",
+        "gate": "PACK074_REMIX_PAID_EXECUTION_ENABLED"
+      },
+      "stems": {
+        "provider": "fal",
+        "model": "fal-ai/sam-audio/separate",
+        "gate": "PACK074_STEMS_PAID_EXECUTION_ENABLED"
+      },
+      "dub": {
+        "provider": "fal",
+        "model": "fal-ai/elevenlabs/dubbing",
+        "gate": "PACK074_DUB_PAID_EXECUTION_ENABLED",
+        "executionStatus": "blocked_provider_output_contract_unverified"
+      },
+      "audioToVideo": {
+        "provider": "fal",
+        "model": "fal-ai/kling-video/lipsync/audio-to-video",
+        "gate": "PACK074_AUDIO_TO_VIDEO_PAID_EXECUTION_ENABLED"
+      }
+    },
+    "rights": {
+      "sourceRightsRequiredFor": [
+        "remix",
+        "stem_separation",
+        "translate_dub",
+        "audio_to_video"
+      ],
+      "rightsMetadataPersisted": true,
+      "providerCommercialUseEvidenceRequired": true
+    },
+    "limits": {
+      "maxMusicDurationSeconds": 180,
+      "maxSoundEffectDurationSeconds": 30,
+      "stemRerankingCandidates": 1
     }
   }
 }
