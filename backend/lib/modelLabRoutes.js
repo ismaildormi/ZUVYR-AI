@@ -14,6 +14,10 @@ const {
   healthCheck
 } = require('./modelLabComputeConnector');
 const config = require('../config/model-lab.v1.json');
+const ownedConfig = require('../config/owned-model-runtime.v1.json');
+const {
+  createOwnedModelRuntimeRepository
+} = require('./ownedModelRuntimeRepository');
 
 function uuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -53,10 +57,14 @@ function object(value) {
 function createModelLabRouter({
   db,
   verifyOwnershipImpl = verifyOwnership,
-  healthCheckImpl = healthCheck
+  healthCheckImpl = healthCheck,
+  env = process.env
 } = {}) {
   const router = express.Router();
   const lab = createModelLabRepository(db);
+  const owned = createOwnedModelRuntimeRepository(db);
+  const m21Verified = () =>
+    String(env[ownedConfig.liveGate.env] || '').trim().toLowerCase() === 'true';
 
   router.get('/capabilities', (_req,res) => {
     res.json({
@@ -80,6 +88,18 @@ function createModelLabRouter({
         credentials:'supabase_vault_reference',
         browserSecretExposure:false,
         customerAndZuvyrCostSeparated:true
+      },
+      pack096:{
+        title:'ZUVYR 7 Manager / Operator — V1 Production Model + V2 Bridge',
+        externalGate:'M21',
+        m21Verified:m21Verified(),
+        ownedModelApiSoftwareFeeUsd:0,
+        ownedModelUsageFeeUsd:0,
+        inferenceMarkupUsd:0,
+        customerComputeBilledDirectly:true,
+        boundedInitialWorkload:'text_chat',
+        liveTrainingExecutionConnected:false,
+        liveServingActivationAllowed:m21Verified()
       }
     });
   });
@@ -582,6 +602,142 @@ function createModelLabRouter({
       });
     } catch(error) {
       return respondError(res,error);
+    }
+  });
+
+  router.get('/owned-runtime/capabilities', (_req,res) => {
+    return res.json({
+      status:'success',
+      pack:96,
+      title:ownedConfig.modelFamily.productName,
+      externalGate:ownedConfig.liveGate.externalGate,
+      m21Verified:m21Verified(),
+      liveServingActivationAllowed:m21Verified(),
+      liveTrainingExecutionConnected:false,
+      initialEligibleFeatures:ownedConfig.workloadPolicy.initialEligibleFeatures,
+      routableStages:ownedConfig.rollout.routableStages,
+      automaticRollback:ownedConfig.rollout.automaticRollback,
+      externalFallbackRequired:ownedConfig.rollout.externalFallbackRequired,
+      economics:{
+        apiSoftwareFeeUsd:0,
+        ownedModelUsageFeeUsd:0,
+        inferenceMarkupUsd:0,
+        customerComputeBilledDirectly:true,
+        zuvyrPaidGpuRequired:false
+      }
+    });
+  });
+
+  router.get('/owned-runtime/deployments', async (req,res) => {
+    try {
+      return res.json({
+        status:'success',
+        deployments:await owned.listDeployments(req.userId)
+      });
+    } catch(error) {
+      return respondError(res,error,'pack096_deployment_list_failed');
+    }
+  });
+
+  router.post('/owned-runtime/deployments', async (req,res) => {
+    try {
+      requireUuid(req.body?.checkpointId,'pack096_checkpoint_id_invalid');
+      requireUuid(req.body?.evaluationId,'pack096_evaluation_id_invalid');
+      requireUuid(req.body?.computeConnectorId,'pack096_connector_id_invalid');
+      const deployment=await owned.registerDeployment(req.userId,{
+        ...object(req.body),
+        workloadPolicy:{
+          eligible_features:['chat'],
+          low_risk_only:true
+        }
+      });
+      return res.status(201).json({
+        status:'success',
+        deployment,
+        liveRoutingEnabled:false,
+        externalGate:'M21'
+      });
+    } catch(error) {
+      return respondError(res,error,'pack096_deployment_register_failed');
+    }
+  });
+
+  router.post('/owned-runtime/deployments/:deploymentId/activate', async (req,res) => {
+    try {
+      const deploymentId=requireUuid(req.params.deploymentId,'pack096_deployment_id_invalid');
+      if(!m21Verified()){
+        const error=labError('pack096_m21_unverified',503);
+        throw error;
+      }
+      const deployment=await owned.activateDeployment(req.userId,deploymentId);
+      return res.json({
+        status:'success',
+        deployment,
+        liveRoutingEnabled:true
+      });
+    } catch(error) {
+      return respondError(res,error,'pack096_deployment_activate_failed');
+    }
+  });
+
+  router.post('/owned-runtime/deployments/:deploymentId/rollback', async (req,res) => {
+    try {
+      const deploymentId=requireUuid(req.params.deploymentId,'pack096_deployment_id_invalid');
+      const deployment=await owned.rollbackDeployment(
+        req.userId,
+        deploymentId,
+        req.body?.reason || 'operator_rollback'
+      );
+      return res.json({
+        status:'success',
+        deployment,
+        fallbackRequired:true
+      });
+    } catch(error) {
+      return respondError(res,error,'pack096_deployment_rollback_failed');
+    }
+  });
+
+  router.get('/owned-runtime/route-receipts', async (req,res) => {
+    try {
+      return res.json({
+        status:'success',
+        receipts:await owned.listRouteReceipts(req.userId,{limit:req.query?.limit})
+      });
+    } catch(error) {
+      return respondError(res,error,'pack096_route_receipt_list_failed');
+    }
+  });
+
+  router.get('/teacher-gateway/records', async (req,res) => {
+    try {
+      return res.json({
+        status:'success',
+        records:await owned.listTeacherGateway(req.userId,{limit:req.query?.limit})
+      });
+    } catch(error) {
+      return respondError(res,error,'pack096_teacher_gateway_list_failed');
+    }
+  });
+
+  router.post('/teacher-gateway/records', async (req,res) => {
+    try {
+      requireUuid(req.body?.rightsId,'pack096_teacher_rights_id_invalid');
+      if(req.body?.sourceEventId){
+        requireUuid(req.body.sourceEventId,'pack096_teacher_source_event_id_invalid');
+      }
+      const record=await owned.recordTeacherGateway(req.userId,{
+        ...object(req.body),
+        providerSystemPromptCollected:false,
+        providerWeightsCollected:false,
+        customerPrivateContentWithoutRights:false
+      });
+      return res.status(201).json({
+        status:'success',
+        teacherGateway:record
+      });
+    } catch(error) {
+      return respondError(res,error,'pack096_teacher_gateway_record_failed');
     }
   });
 
