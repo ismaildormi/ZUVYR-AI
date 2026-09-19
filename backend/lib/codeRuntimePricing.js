@@ -167,11 +167,37 @@ function quoteRuntimeFinal(runtimeMs, options = {}) {
   );
 }
 
+function quoteRuntimeFinalAgainstReservation(
+  runtimeMs,
+  reservation,
+  options = {}
+) {
+  if (
+    !reservation ||
+    typeof reservation !== 'object' ||
+    !String(reservation.costEntryId || '').trim() ||
+    !String(reservation.pricingVersion || '').trim()
+  ) {
+    throw pricingError('code_runtime_reservation_pricing_missing');
+  }
+
+  const quote = quoteRuntimeFinal(runtimeMs, options);
+  if (
+    quote.costEntryId !== reservation.costEntryId ||
+    quote.pricingVersion !== reservation.pricingVersion
+  ) {
+    throw pricingError('code_runtime_pricing_snapshot_changed');
+  }
+
+  return quote;
+}
+
 module.exports = {
   runtimeQuery,
   runtimeSecondsFromMs,
   runtimePricingStatus,
   quoteRuntimeSeconds,
   quoteRuntimeReservation,
-  quoteRuntimeFinal
+  quoteRuntimeFinal,
+  quoteRuntimeFinalAgainstReservation
 };
