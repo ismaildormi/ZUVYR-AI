@@ -193,6 +193,15 @@ begin
   if p_traffic_bps < 0 or p_traffic_bps > 10000 then
     raise exception 'pack096_traffic_bps_invalid';
   end if;
+  if v_stage='CANARY' and p_traffic_bps>2500 then
+    raise exception 'pack096_canary_traffic_too_high';
+  end if;
+  if v_stage='SECONDARY' and p_traffic_bps>5000 then
+    raise exception 'pack096_secondary_traffic_too_high';
+  end if;
+  if v_stage='PRIMARY' and p_traffic_bps<>10000 then
+    raise exception 'pack096_primary_requires_full_traffic';
+  end if;
   if jsonb_typeof(v_policy)<>'object'
      or jsonb_typeof(v_policy->'eligible_features')<>'array'
      or jsonb_array_length(v_policy->'eligible_features')<1 then
