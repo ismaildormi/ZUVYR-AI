@@ -14,7 +14,7 @@
     "068",
     "069"
   ],
-  "rule": "No media capability may be presented as live unless its current production evidence supports that exact claim. Paid-provider paths remain engineering-ready but non-live while execution gates are OFF.",
+  "rule": "Media truth follows dated pack receipts first. A capability may be presented as live only when the authoritative receipt proves that exact production behavior; deferred provider paths remain non-live while their gates are OFF.",
   "canonicalSystems": {
     "usageLedger": "public.zuvyr_usage_records",
     "contentObjects": "public.zuvyr_content_objects",
@@ -28,8 +28,9 @@
   "image": {
     "generate": {
       "engineering": "implemented",
-      "liveClaim": "deferred_m12",
-      "uiTruth": "paid_live_proof_deferred"
+      "liveClaim": "verified_pack061_authenticated_production",
+      "externalGate": "M12_VERIFIED",
+      "uiTruth": "live_proof"
     },
     "referenceVariations": {
       "engineering": "implemented",
@@ -97,6 +98,7 @@
   },
   "advertisedLiveRule": {
     "allowedWithoutExternalPaidGate": [
+      "image.generate",
       "image.history",
       "image.reopen",
       "image.download",
@@ -106,7 +108,8 @@
       "video.export.local",
       "video.cancel"
     ],
-    "providerPaidCapabilitiesMustNotClaimLive": true
+    "providerPaidCapabilitiesMustNotClaimLive": true,
+    "receiptAuthority": "zuvyr-pack-evidence/pack-061/2026-09-17-final/receipt.json"
   },
   "checkpoint": {
     "paidProviderCallsRequired": false,
