@@ -164,6 +164,9 @@ function assertObservationBoundary(observation = {}) {
   if (observation.captchaDetected === true) {
     throw agentError('browser_agent_captcha_user_required');
   }
+  if (observation.authChallengeDetected === true) {
+    throw agentError('browser_agent_auth_user_required');
+  }
   if (observation.robots === 'disallowed') {
     throw agentError('browser_agent_robots_disallowed');
   }
