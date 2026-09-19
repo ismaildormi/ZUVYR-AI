@@ -22,7 +22,7 @@ assert(generation.indexOf('assertVideoRequestAvailable(videoRequest)') < generat
 for (const marker of [
   "require('./lib/videoProvider')", 'assertVideoRequestAvailable(videoRequest)',
   'providerResult = await generateVideo', 'buildVideoArtifact({',
-  "job_stage: 'preview'", "job_stage: 'done'", 'preview_url: artifact.previewUrl'
+  "job_stage: 'preview'", "job_stage: 'done'", 'preview_url: pack069 ? null : artifact.previewUrl'
 ]) assert(worker.includes(marker), `Missing worker marker: ${marker}`);
 assert(worker.indexOf('assertVideoRequestAvailable(videoRequest)') < worker.indexOf('providerResult = await generateVideo'));
 
