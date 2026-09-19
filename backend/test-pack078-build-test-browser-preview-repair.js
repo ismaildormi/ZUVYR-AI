@@ -230,8 +230,6 @@ for (const marker of [
   'detectPreviewPort',
   "request.operation === 'build'",
   "request.operation === 'run'",
-  "previewState: 'building'",
-  "previewState: 'starting'",
   "previewTransportStatus: 'blocked'",
   "previewState: 'unavailable'",
   "'build_failed'",
@@ -240,6 +238,15 @@ for (const marker of [
 ]) {
   assert(executor.includes(marker), marker);
 }
+
+assert(
+  /previewState:\s*[\s\S]{0,220}?request\.operation === 'build'[\s\S]{0,120}?\? 'building'/.test(executor),
+  'build must persist the canonical building preview state'
+);
+assert(
+  /request\.operation === 'run'[\s\S]{0,120}?\? 'starting'/.test(executor),
+  'run must persist the canonical starting preview state'
+);
 assert(!executor.includes("previewState: 'ready'"));
 
 for (const marker of [
