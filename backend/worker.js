@@ -1303,6 +1303,7 @@ async function processAudioJob(job) {
       buffer: cleaned.buffer,
       mimeType: cleaned.mimeType,
       format: cleaned.format,
+      strength: request.options.cleanupStrength,
       source
     });
     provider = 'local';
