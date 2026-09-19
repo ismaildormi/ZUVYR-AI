@@ -43,10 +43,43 @@ function createAudioResultRepository({db,storage,contentRepository=null,assetKer
     if(result.error) throw repoError('audio_result_lineage_failed',result.error);
   }
 
+  async function getExisting({ownerId,jobId}){
+    const result=await db.from('audio_jobs')
+      .select('id,owner_id,operation,status,provider,model,canonical_content_id,canonical_asset_id,result_text,detected_language,provider_result,usage')
+      .eq('id',jobId).eq('owner_id',ownerId).maybeSingle();
+    if(result.error) throw repoError('audio_job_lookup_failed',result.error);
+    const job=result.data;
+    if(!job) return null;
+    if(job.canonical_content_id&&job.canonical_asset_id){
+      return Object.freeze({
+        contentId:job.canonical_content_id,
+        assetId:job.canonical_asset_id,
+        transcript:job.result_text||null,
+        language:job.detected_language||null,
+        provider:job.provider||null,
+        model:job.model||null,
+        canonical:true
+      });
+    }
+    const providerResult=job.provider_result&&typeof job.provider_result==='object'
+      ? job.provider_result
+      : {};
+    if(job.operation==='transcription'&&providerResult.transcript){
+      return Object.freeze({
+        providerResult,
+        provider:job.provider||'deepgram',
+        model:job.model||'nova-3',
+        canonical:false
+      });
+    }
+    return null;
+  }
+
   async function persistTranscript({ownerId,jobId,result,source,provider='deepgram',model='nova-3'}){
     const payload={
       transcript:result.transcript,
       language:result.language,
+      languages:result.languages || [],
       languageConfidence:result.languageConfidence,
       words:result.words,
       utterances:result.utterances,
@@ -104,6 +137,7 @@ function createAudioResultRepository({db,storage,contentRepository=null,assetKer
       usage:{
         provider,model,durationSeconds:source.durationSeconds,
         languageConfidence:result.languageConfidence,
+        languages:result.languages || [],
         transcriptJsonAssetId:jsonAsset.assetId,
         transcriptTextAssetId:textAsset.assetId,
         diarized:result.words.some(w=>Number.isInteger(w.speaker))
@@ -155,7 +189,7 @@ function createAudioResultRepository({db,storage,contentRepository=null,assetKer
     return Object.freeze({contentId:record.contentId,versionId:record.versionId,assetId:audioAsset.assetId,mimeType,format});
   }
 
-  return Object.freeze({persistTranscript,persistCleanedAudio});
+  return Object.freeze({getExisting,persistTranscript,persistCleanedAudio});
 }
 
 function getDefaultAudioResultRepository(){
