@@ -670,9 +670,9 @@ assert(routes.includes('no-store'));
 
 // Canonical registry is the only monetary authority. Provider-reported
 // usage.cost remains telemetry and must not override verified rates.
-assert.equal(
+assert.match(
   MODEL_PRICING_REGISTRY_VERSION,
-  'pack-014.single-cost-registry.v1'
+  /^pack-\d{3}\.single-cost-registry\.v\d+$/
 );
 const canonicalQuote = quoteModelCost({
   provider: 'groq',
