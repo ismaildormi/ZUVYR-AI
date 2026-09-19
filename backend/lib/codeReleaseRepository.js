@@ -133,6 +133,17 @@ function createCodeReleaseRepository(db) {
     return getValidation({ownerId,validationId:result.data.validation_id});
   }
 
+  async function getValidationInternal({ownerId,validationId}) {
+    const result=await db.from('code_release_validations')
+      .select('*')
+      .eq('id',validationId)
+      .eq('owner_id',ownerId)
+      .maybeSingle();
+    if(result.error) throw releaseRepositoryError('pack079_validation_lookup_failed',result.error);
+    if(!result.data) throw releaseRepositoryError('pack079_validation_not_found');
+    return result.data;
+  }
+
   async function getValidation({ownerId,validationId}) {
     const result=await db.from('code_release_validations')
       .select('id,owner_id,project_id,project_version_id,project_revision,snapshot_sha256,files_digest,build_job_id,test_job_id,preview_state,preview_transport_status,validated_at')
@@ -284,6 +295,16 @@ function createCodeReleaseRepository(db) {
     return getDeploy({ownerId,deployRequestId:result.data.deploy_request_id});
   }
 
+  async function getDeployByRequest({ownerId,requestId}) {
+    const result=await db.from('code_deploy_requests')
+      .select('*')
+      .eq('owner_id',ownerId)
+      .eq('request_id',requestId)
+      .maybeSingle();
+    if(result.error) throw releaseRepositoryError('pack079_deploy_request_lookup_failed',result.error);
+    return result.data || null;
+  }
+
   async function getDeployInternal({ownerId,deployRequestId}) {
     const result=await db.from('code_deploy_requests')
       .select('*')
@@ -349,6 +370,16 @@ function createCodeReleaseRepository(db) {
     return getRollback({ownerId,rollbackId:result.data.rollback_id});
   }
 
+  async function getRollbackByRequest({ownerId,requestId}) {
+    const result=await db.from('code_deployment_rollbacks')
+      .select('*')
+      .eq('owner_id',ownerId)
+      .eq('request_id',requestId)
+      .maybeSingle();
+    if(result.error) throw releaseRepositoryError('pack079_rollback_request_lookup_failed',result.error);
+    return result.data || null;
+  }
+
   async function getRollbackInternal({ownerId,rollbackId}) {
     const result=await db.from('code_deployment_rollbacks')
       .select('*')
@@ -386,6 +417,7 @@ function createCodeReleaseRepository(db) {
     getVersion,
     validateRelease,
     getValidation,
+    getValidationInternal,
     latestValidation,
     recordArtifact,
     getArtifact,
@@ -395,11 +427,13 @@ function createCodeReleaseRepository(db) {
     listDeploymentTargets,
     reserveDeploy,
     getDeploy,
+    getDeployByRequest,
     getDeployInternal,
     transitionDeploy,
     listDeploys,
     reserveRollback,
     getRollback,
+    getRollbackByRequest,
     getRollbackInternal,
     transitionRollback
   });
