@@ -199,7 +199,7 @@
         "local_runtime"
       ],
       "quotaType": "local_runtime",
-      "termsLicenseNotes": "Local models require model-specific license and compute-cost verification before launch authorization.",
+      "termsLicenseNotes": "Local models require model-specific license and compute-cost verification before launch authorization. Pack069 local FFmpeg export is worker-runtime only and carries zero external provider charge; infrastructure remains priced separately.",
       "adapter": "src/modules/ai/providers/index.js",
       "capabilities": [
         {
@@ -208,6 +208,22 @@
           "cost": {
             "mode": "unverified",
             "authority": "backend/config/cost-registry.v1.json"
+          }
+        },
+        {
+          "id": "video.export",
+          "verification": "verified_repository",
+          "model": "ffmpeg-alpine",
+          "routing": {
+            "mode": "local_worker",
+            "authority": "backend/Dockerfile.worker"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "local-ffmpeg-video-export"
+            ]
           }
         }
       ]
@@ -221,7 +237,7 @@
         "provider_managed"
       ],
       "quotaType": "provider_managed",
-      "termsLicenseNotes": "Pack061 ordinary FLUX Schnell may route through HF_TOKEN or direct FAL_KEY. Pack062 FLUX Kontext multi requires direct FAL_KEY because Hugging Face Inference Providers returned model-not-supported for provider fal-ai on 2026-09-18. Pack063 adds direct-Fal source edit, Qwen inpaint and directional outpaint adapters. Paid Pack063 execution remains disabled by default; inpaint/outpaint variable-MP billing activation is fail-closed. Pack064 Phase01 adds repository adapters for BiRefNet v2 background removal, Flux Vision Upscaler and Image Apps v2 relighting. No operation is exposed or externally executed until Phase02 completes pricing/persistence/runtime wiring. Pack068 adds direct-fal video edit/VFX adapters. LTX 2.3 retake/extend, Bria erase/background removal and Kling LipSync have verified pre-charge pricing. LightX relight/recamera adapters are repository-verified but paid execution remains blocked because fal prices output seconds and source-to-output duration equivalence is not documented.",
+      "termsLicenseNotes": "Pack061 ordinary FLUX Schnell may route through HF_TOKEN or direct FAL_KEY. Pack062 FLUX Kontext multi requires direct FAL_KEY because Hugging Face Inference Providers returned model-not-supported for provider fal-ai on 2026-09-18. Pack063 adds direct-Fal source edit, Qwen inpaint and directional outpaint adapters. Paid Pack063 execution remains disabled by default; inpaint/outpaint variable-MP billing activation is fail-closed. Pack064 Phase01 adds repository adapters for BiRefNet v2 background removal, Flux Vision Upscaler and Image Apps v2 relighting. No operation is exposed or externally executed until Phase02 completes pricing/persistence/runtime wiring. Pack068 adds direct-fal video edit/VFX adapters. LTX 2.3 retake/extend, Bria erase/background removal and Kling LipSync have verified pre-charge pricing. LightX relight/recamera adapters are repository-verified but paid execution remains blocked because fal prices output seconds and source-to-output duration equivalence is not documented. Pack069 adds auto-subtitle, ElevenLabs dubbing and Bria increase-resolution video adapters with official fal pricing. Paid execution remains environment-gated.",
       "adapter": "image.providers",
       "capabilities": [
         {
@@ -523,6 +539,75 @@
             ],
             "requiredEnvironment": {
               "name": "PACK068_LIPSYNC_PAID_EXECUTION_ENABLED",
+              "value": "true"
+            }
+          }
+        },
+        {
+          "id": "video.subtitles",
+          "verification": "verified_repository",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "model": "fal-ai/workflow-utilities/auto-subtitle",
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/fal-ai/workflow-utilities/auto-subtitle/api"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "fal-auto-subtitle-input-minute"
+            ],
+            "requiredEnvironment": {
+              "name": "PACK069_SUBTITLES_PAID_EXECUTION_ENABLED",
+              "value": "true"
+            }
+          }
+        },
+        {
+          "id": "video.dub",
+          "verification": "verified_repository",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "model": "fal-ai/elevenlabs/dubbing",
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/fal-ai/elevenlabs/dubbing/api"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "fal-elevenlabs-dubbing-rounded-minute"
+            ],
+            "requiredEnvironment": {
+              "name": "PACK069_DUB_PAID_EXECUTION_ENABLED",
+              "value": "true"
+            }
+          }
+        },
+        {
+          "id": "video.enhance",
+          "verification": "verified_repository",
+          "requiredCredentialEnvironment": [
+            "FAL_KEY"
+          ],
+          "model": "bria/video/increase-resolution",
+          "routing": {
+            "mode": "direct_fal",
+            "authority": "https://fal.ai/models/bria/video/increase-resolution/api"
+          },
+          "cost": {
+            "mode": "registry_verified_entry",
+            "authority": "backend/config/cost-registry.v1.json",
+            "entryIds": [
+              "fal-bria-video-increase-resolution-second"
+            ],
+            "requiredEnvironment": {
+              "name": "PACK069_ENHANCE_PAID_EXECUTION_ENABLED",
               "value": "true"
             }
           }
