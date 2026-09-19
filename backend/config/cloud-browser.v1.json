@@ -75,11 +75,12 @@
     "maxTabs": 10
   },
   "files": {
-    "maxUploadBytes": 104857600,
+    "maxUploadBytes": 10485760,
     "maxDownloadBytes": 104857600,
     "canonicalAssetBucket": "conversation-files",
     "uploadsRequireOwnedCanonicalAsset": true,
-    "downloadsBecomeCanonicalAssets": true
+    "downloadsBecomeCanonicalAssets": true,
+    "uploadTransport": "bounded_cdp_file_object"
   },
   "metering": {
     "usageKind": "browser_runtime",
