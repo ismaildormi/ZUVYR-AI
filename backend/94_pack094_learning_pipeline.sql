@@ -922,6 +922,9 @@ revoke all on function public.admit_zuvyr_training_candidate_pack094(uuid,uuid,u
 revoke all on function public.admit_zuvyr_redacted_text_candidate_pack094(uuid,uuid,uuid,text,integer,integer,integer,text,text,jsonb)
   from public,anon,authenticated;
 
+revoke all on function public.record_zuvyr_repair_learning_pack094(uuid,text,text,text,text,text,bigint,numeric,boolean)
+  from public,anon,authenticated;
+
 grant execute on function public.pack094_learning_value_score(text,text,integer,boolean,integer)
   to service_role;
 grant execute on function public.set_zuvyr_learning_consent_pack094(uuid,boolean,text,text)
@@ -936,6 +939,9 @@ grant execute on function public.admit_zuvyr_training_candidate_pack094(uuid,uui
   to service_role;
 
 grant execute on function public.admit_zuvyr_redacted_text_candidate_pack094(uuid,uuid,uuid,text,integer,integer,integer,text,text,jsonb)
+  to service_role;
+
+grant execute on function public.record_zuvyr_repair_learning_pack094(uuid,text,text,text,text,text,bigint,numeric,boolean)
   to service_role;
 
 comment on table public.zuvyr_learning_events is
@@ -985,6 +991,89 @@ comment on table public.zuvyr_training_candidate_payloads is
   );
 end;
 $pack094_text_candidate$;
+
+create or replace function public.record_zuvyr_repair_learning_pack094(
+  p_owner_id uuid,
+  p_source_id text,
+  p_capability text,
+  p_repair_outcome text,
+  p_provider text default null,
+  p_model_tool text default null,
+  p_latency_ms bigint default null,
+  p_actual_cost_microusd numeric default null,
+  p_cost_known boolean default false
+) returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $pack094_repair$
+declare
+  v_event public.zuvyr_learning_events%rowtype;
+  v_outcome text;
+begin
+  if char_length(btrim(coalesce(p_source_id,''))) not between 1 and 200 then
+    raise exception 'pack094_repair_source_invalid';
+  end if;
+  if p_repair_outcome not in ('repaired','rolled_back','unrepaired') then
+    raise exception 'pack094_repair_outcome_invalid';
+  end if;
+  if p_latency_ms is not null and p_latency_ms < 0 then
+    raise exception 'pack094_repair_latency_invalid';
+  end if;
+  if p_actual_cost_microusd is not null and p_actual_cost_microusd < 0 then
+    raise exception 'pack094_repair_cost_invalid';
+  end if;
+
+  v_outcome := case
+    when p_repair_outcome='repaired' then 'repaired'
+    when p_repair_outcome='rolled_back' then 'rolled_back'
+    else 'failure'
+  end;
+
+  insert into public.zuvyr_learning_events(
+    owner_id,source_kind,source_id,event_type,capability,provider,model_tool,
+    outcome,latency_ms,retry_count,failure_category,actual_cost_microusd,
+    cost_known,repair_outcome,learning_value_score,contains_user_content,
+    metadata,created_at,updated_at
+  ) values (
+    p_owner_id,'repair',btrim(p_source_id),'repair_outcome',
+    nullif(left(btrim(coalesce(p_capability,'')),120),''),
+    nullif(left(btrim(coalesce(p_provider,'')),120),''),
+    nullif(left(btrim(coalesce(p_model_tool,'')),200),''),
+    v_outcome,p_latency_ms,0,
+    case when p_repair_outcome='unrepaired' then 'repair_unrepaired' else null end,
+    p_actual_cost_microusd,coalesce(p_cost_known,false),p_repair_outcome,
+    public.pack094_learning_value_score(
+      'task_outcome',
+      case when p_repair_outcome='unrepaired' then 'failure' else 'success' end,
+      0,
+      coalesce(p_cost_known,false),
+      null
+    ),
+    false,'{}'::jsonb,now(),now()
+  )
+  on conflict (owner_id,source_kind,source_id,event_type) do update set
+    capability=excluded.capability,
+    provider=excluded.provider,
+    model_tool=excluded.model_tool,
+    outcome=excluded.outcome,
+    latency_ms=excluded.latency_ms,
+    failure_category=excluded.failure_category,
+    actual_cost_microusd=excluded.actual_cost_microusd,
+    cost_known=excluded.cost_known,
+    repair_outcome=excluded.repair_outcome,
+    learning_value_score=excluded.learning_value_score,
+    updated_at=now()
+  returning * into v_event;
+
+  return jsonb_build_object(
+    'id',v_event.id,
+    'outcome',v_event.outcome,
+    'repair_outcome',v_event.repair_outcome,
+    'learning_value_score',v_event.learning_value_score
+  );
+end;
+$pack094_repair$;
 
 create or replace function public.capture_zuvyr_usage_learning_pack094()
 returns trigger
