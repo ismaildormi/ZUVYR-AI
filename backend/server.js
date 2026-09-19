@@ -342,6 +342,7 @@ app.use(
       reportRefundFailure
     },
     audioInputResolver,
+    videoInputResolver,
     assetKernel: assetStorageKernel
   })
 );
