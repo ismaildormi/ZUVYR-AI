@@ -288,7 +288,7 @@
   "audio_transcription": {
     "enabled": false,
     "tier": "pro",
-    "status": "blocked_unpriced"
+    "status": "implemented_pack071_paid_live_deferred"
   },
   "audio_text_to_speech": {
     "enabled": false,
@@ -311,9 +311,9 @@
     "status": "blocked_unpriced"
   },
   "audio_cleanup": {
-    "enabled": false,
+    "enabled": true,
     "tier": "pro",
-    "status": "blocked_unpriced"
+    "status": "implemented_pack071_local_runtime"
   },
   "audio_remix": {
     "enabled": false,
