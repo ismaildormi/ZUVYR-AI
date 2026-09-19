@@ -213,6 +213,7 @@ revoke all on public.zuvyr_training_exclusions from public,anon,authenticated;
 
 grant select,insert,update,delete on public.zuvyr_learning_events to service_role;
 grant select,insert,update,delete on public.zuvyr_failure_bank to service_role;
+revoke all on public.zuvyr_training_consent_events from service_role;
 grant select,insert on public.zuvyr_training_consent_events to service_role;
 grant select,insert,update,delete on public.zuvyr_training_rights to service_role;
 grant select,insert,update,delete on public.zuvyr_training_candidates to service_role;
