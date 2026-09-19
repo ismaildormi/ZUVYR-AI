@@ -63,6 +63,7 @@ function publicCandidate(row) {
     versionId: row.version_id,
     rightsId: row.rights_id,
     sourceEventId: row.source_event_id || null,
+    consentEventId: row.consent_event_id == null ? null : Number(row.consent_event_id),
     consentVersion: Number(row.consent_version || 0),
     dedupeSha256: row.dedupe_sha256,
     payloadKind: row.payload_kind,
@@ -84,13 +85,33 @@ function createLearningPipelineRepository(client) {
   }
 
   async function getConsent(ownerId) {
-    const result = await client
-      .from('zuvyr_learning_consents')
-      .select('owner_id,global_training_opt_in,policy_version,consent_version,source,created_at,updated_at,last_opt_in_at,last_opt_out_at')
-      .eq('owner_id', ownerId)
-      .maybeSingle();
-    if (result.error) throw learningError('pack094_consent_lookup_failed', result.error);
-    return publicConsent(result.data);
+    const [preferences, event] = await Promise.all([
+      client
+        .from('zuvyr_user_preferences')
+        .select('owner_id,training_consent,updated_at')
+        .eq('owner_id', ownerId)
+        .maybeSingle(),
+      client
+        .from('zuvyr_training_consent_events')
+        .select('id,owner_id,consent_version,global_training_opt_in,previous_opt_in,policy_version,source,created_at')
+        .eq('owner_id', ownerId)
+        .order('consent_version', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    ]);
+    if (preferences.error || event.error) {
+      throw learningError(
+        'pack094_consent_lookup_failed',
+        preferences.error || event.error
+      );
+    }
+    return publicConsent({
+      global_training_opt_in: preferences.data?.training_consent === true,
+      policy_version: event.data?.policy_version || 'pack094-v1',
+      consent_version: Number(event.data?.consent_version || 0),
+      source: event.data?.source || 'default_off',
+      updated_at: event.data?.created_at || preferences.data?.updated_at || null
+    });
   }
 
   async function setConsent({
@@ -337,7 +358,7 @@ function createLearningPipelineRepository(client) {
   async function listCandidates(ownerId, { limit = 100 } = {}) {
     const result = await client
       .from('zuvyr_training_candidates')
-      .select('id,owner_id,content_id,version_id,rights_id,source_event_id,consent_version,dedupe_sha256,payload_kind,domain,difficulty,quality_score,learning_value_score,status,exclusion_reason,excluded_at,created_at,updated_at')
+      .select('id,owner_id,content_id,version_id,rights_id,source_event_id,consent_event_id,consent_version,dedupe_sha256,payload_kind,domain,difficulty,quality_score,learning_value_score,status,exclusion_reason,excluded_at,created_at,updated_at')
       .eq('owner_id', ownerId)
       .order('created_at', { ascending: false })
       .limit(Math.max(1, Math.min(200, Number(limit) || 100)));
@@ -419,6 +440,74 @@ function createLearningPipelineRepository(client) {
     });
   }
 
+  async function listConsentHistory(ownerId, { limit = 100 } = {}) {
+    const result = await client
+      .from('zuvyr_training_consent_events')
+      .select('id,consent_version,global_training_opt_in,previous_opt_in,policy_version,source,created_at')
+      .eq('owner_id', ownerId)
+      .order('consent_version', { ascending: false })
+      .limit(Math.max(1, Math.min(200, Number(limit) || 100)));
+    if (result.error) {
+      throw learningError('pack094_consent_history_lookup_failed', result.error);
+    }
+    return Object.freeze((result.data || []).map(row => Object.freeze({
+      id: Number(row.id),
+      consentVersion: Number(row.consent_version),
+      globalTrainingOptIn: row.global_training_opt_in === true,
+      previousOptIn:
+        row.previous_opt_in === null ? null : row.previous_opt_in === true,
+      policyVersion: row.policy_version,
+      source: row.source,
+      createdAt: row.created_at
+    })));
+  }
+
+  async function listExclusions(ownerId, { limit = 100 } = {}) {
+    const result = await client
+      .from('zuvyr_training_exclusions')
+      .select('id,candidate_id,content_id,version_id,rights_id,reason,source,created_at')
+      .eq('owner_id', ownerId)
+      .order('created_at', { ascending: false })
+      .limit(Math.max(1, Math.min(200, Number(limit) || 100)));
+    if (result.error) {
+      throw learningError('pack094_exclusion_list_failed', result.error);
+    }
+    return Object.freeze((result.data || []).map(row => Object.freeze({
+      id: Number(row.id),
+      candidateId: row.candidate_id || null,
+      contentId: row.content_id || null,
+      versionId: row.version_id || null,
+      rightsId: row.rights_id || null,
+      reason: row.reason,
+      source: row.source,
+      createdAt: row.created_at
+    })));
+  }
+
+  async function excludeCandidate({
+    ownerId,
+    candidateId,
+    reason = 'user_excluded'
+  } = {}) {
+    const result = await client.rpc('exclude_zuvyr_training_candidate_pack094', {
+      p_owner_id: ownerId,
+      p_candidate_id: candidateId,
+      p_reason: String(reason || 'user_excluded').slice(0, 200)
+    });
+    if (result.error) {
+      throw learningError(
+        rpcCode(result.error, 'pack094_candidate_exclude_failed'),
+        result.error
+      );
+    }
+    return Object.freeze({
+      id: result.data.id,
+      status: result.data.status,
+      exclusionReason: result.data.exclusion_reason,
+      excludedAt: result.data.excluded_at
+    });
+  }
+
   async function summary(ownerId) {
     const [
       consent,
@@ -427,7 +516,8 @@ function createLearningPipelineRepository(client) {
       openFailures,
       candidates,
       eligibleCandidates,
-      rights
+      rights,
+      exclusions
     ] = await Promise.all([
       getConsent(ownerId),
       client.from('zuvyr_learning_events').select('id', { count: 'exact', head: true }).eq('owner_id', ownerId),
@@ -435,10 +525,11 @@ function createLearningPipelineRepository(client) {
       client.from('zuvyr_failure_bank').select('id', { count: 'exact', head: true }).eq('owner_id', ownerId).eq('status', 'open'),
       client.from('zuvyr_training_candidates').select('id', { count: 'exact', head: true }).eq('owner_id', ownerId),
       client.from('zuvyr_training_candidates').select('id', { count: 'exact', head: true }).eq('owner_id', ownerId).eq('status', 'candidate'),
-      client.from('zuvyr_training_rights').select('id', { count: 'exact', head: true }).eq('owner_id', ownerId).eq('allow_global_training', true).is('revoked_at', null)
+      client.from('zuvyr_training_rights').select('id', { count: 'exact', head: true }).eq('owner_id', ownerId).eq('allow_global_training', true).is('revoked_at', null),
+      client.from('zuvyr_training_exclusions').select('id', { count: 'exact', head: true }).eq('owner_id', ownerId)
     ]);
 
-    for (const result of [events,failures,openFailures,candidates,eligibleCandidates,rights]) {
+    for (const result of [events,failures,openFailures,candidates,eligibleCandidates,rights,exclusions]) {
       if (result.error) throw learningError('pack094_summary_lookup_failed', result.error);
     }
 
@@ -450,7 +541,9 @@ function createLearningPipelineRepository(client) {
       trainingCandidates: Number(candidates.count || 0),
       eligibleTrainingCandidates: Number(eligibleCandidates.count || 0),
       activeTrainingRights: Number(rights.count || 0),
-      memoryPermissionIndependent: true
+      trainingExclusions: Number(exclusions.count || 0),
+      memoryPermissionIndependent: true,
+      currentConsentAuthority: 'zuvyr_user_preferences.training_consent'
     });
   }
 
@@ -489,6 +582,9 @@ function createLearningPipelineRepository(client) {
     listCandidates,
     listEvents,
     recordRepairOutcome,
+    listConsentHistory,
+    listExclusions,
+    excludeCandidate,
     summary,
     listFailures
   });
