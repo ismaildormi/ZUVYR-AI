@@ -50,7 +50,11 @@ function object(value) {
     : {};
 }
 
-function createModelLabRouter({ db } = {}) {
+function createModelLabRouter({
+  db,
+  verifyOwnershipImpl = verifyOwnership,
+  healthCheckImpl = healthCheck
+} = {}) {
   const router = express.Router();
   const lab = createModelLabRepository(db);
 
@@ -374,7 +378,7 @@ function createModelLabRouter({ db } = {}) {
         throw connectorError('model_lab_connector_challenge_expired',409);
       }
 
-      const proof=await verifyOwnership({
+      const proof=await verifyOwnershipImpl({
         endpointUrl:connector.endpoint_url,
         challengeToken:req.body?.challengeToken,
         expectedChallengeHash:connector.ownership_challenge_hash
@@ -411,7 +415,7 @@ function createModelLabRouter({ db } = {}) {
 
       let attestation;
       try {
-        attestation=await healthCheck({
+        attestation=await healthCheckImpl({
           connectorKind:connector.connector_kind,
           endpointUrl:connector.endpoint_url,
           healthPath:connector.health_path,
