@@ -276,8 +276,9 @@ function createAudioStudioRouter({
     if (result.error) return res.status(500).json({ status: 'error', code: 'audio_job_lookup_failed' });
     if (!result.data) return res.status(404).json({ status: 'error', code: 'audio_job_not_found' });
 
+    const completed = result.data.status === 'done';
     let downloadUrl = null;
-    if (result.data.canonical_asset_id && assetKernel) {
+    if (completed && result.data.canonical_asset_id && assetKernel) {
       try {
         const signed = await assetKernel.createSignedDownload({
           ownerId: req.userId,
@@ -291,7 +292,7 @@ function createAudioStudioRouter({
       }
     }
 
-    const segments = result.data.operation === 'transcription'
+    const segments = completed && result.data.operation === 'transcription'
       ? await db.from('audio_transcript_segments')
           .select('segment_index,start_seconds,end_seconds,speaker,confidence,text,metadata')
           .eq('owner_id', req.userId)
@@ -310,11 +311,11 @@ function createAudioStudioRouter({
         progressPercent: Number(result.data.progress_percent || 0),
         provider: result.data.provider,
         model: result.data.model,
-        language: result.data.detected_language,
-        transcript: result.data.result_text,
+        language: completed ? result.data.detected_language : null,
+        transcript: completed ? result.data.result_text : null,
         errorCode: result.data.error_code,
-        canonicalContentId: result.data.canonical_content_id,
-        canonicalAssetId: result.data.canonical_asset_id,
+        canonicalContentId: completed ? result.data.canonical_content_id : null,
+        canonicalAssetId: completed ? result.data.canonical_asset_id : null,
         downloadUrl,
         segments: segments.error ? [] : (segments.data || []),
         usage: result.data.usage || {},
