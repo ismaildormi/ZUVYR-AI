@@ -20,7 +20,7 @@
       "pricingSourceUrl": "https://console.groq.com/docs/model/openai/gpt-oss-20b",
       "pricingEffectiveDate": "2026-09-08T00:00:00Z",
       "verificationStatus": "verified",
-      "verificationEvidence": "Groq published on-demand uncached text pricing, consolidated into the Pack 014 authoritative registry.",
+      "verificationEvidence": "Groq official model docs re-verified 2026-09-19: openai/gpt-oss-20b on-demand pricing remains $0.075/M input and $0.30/M output; cached input $0.037/M. ZUVYR continues quoting uncached rates conservatively until cached-token settlement is explicitly wired.",
       "requiredEnvironment": null,
       "enabledState": "enabled",
       "safetyReserveBps": 0,
@@ -29,7 +29,7 @@
       "targetGrossMarginBps": 5000,
       "creditConversionResult": null,
       "pricingSource": "provider_published_url",
-      "pricingReviewBefore": "2026-09-15T00:00:00Z"
+      "pricingReviewBefore": "2026-10-19T00:00:00Z"
     },
     {
       "id": "groq-gpt-oss-120b-chat",
@@ -48,7 +48,7 @@
       "pricingSourceUrl": "https://console.groq.com/docs/model/openai/gpt-oss-120b",
       "pricingEffectiveDate": "2026-09-08T00:00:00Z",
       "verificationStatus": "verified",
-      "verificationEvidence": "Groq published on-demand uncached text pricing, consolidated into the Pack 014 authoritative registry.",
+      "verificationEvidence": "Groq official model docs re-verified 2026-09-19: openai/gpt-oss-120b on-demand pricing remains $0.075/M input and $0.30/M output; cached input $0.037/M. ZUVYR continues quoting uncached rates conservatively until cached-token settlement is explicitly wired.",
       "requiredEnvironment": null,
       "enabledState": "enabled",
       "safetyReserveBps": 0,
@@ -57,7 +57,7 @@
       "targetGrossMarginBps": 5000,
       "creditConversionResult": null,
       "pricingSource": "provider_published_url",
-      "pricingReviewBefore": "2026-09-15T00:00:00Z"
+      "pricingReviewBefore": "2026-10-19T00:00:00Z"
     },
     {
       "id": "groq-gpt-oss-120b-code",
@@ -76,7 +76,7 @@
       "pricingSourceUrl": "https://console.groq.com/docs/model/openai/gpt-oss-120b",
       "pricingEffectiveDate": "2026-09-08T00:00:00Z",
       "verificationStatus": "verified",
-      "verificationEvidence": "Groq published on-demand uncached text pricing, consolidated into the Pack 014 authoritative registry.",
+      "verificationEvidence": "Groq official model docs re-verified 2026-09-19: openai/gpt-oss-120b on-demand pricing remains $0.075/M input and $0.30/M output; cached input $0.037/M. ZUVYR continues quoting uncached rates conservatively until cached-token settlement is explicitly wired.",
       "requiredEnvironment": null,
       "enabledState": "enabled",
       "safetyReserveBps": 0,
@@ -85,7 +85,7 @@
       "targetGrossMarginBps": 5000,
       "creditConversionResult": null,
       "pricingSource": "provider_published_url",
-      "pricingReviewBefore": "2026-09-15T00:00:00Z"
+      "pricingReviewBefore": "2026-10-19T00:00:00Z"
     },
     {
       "id": "groq-gpt-oss-20b-code",
@@ -104,7 +104,7 @@
       "pricingSourceUrl": "https://console.groq.com/docs/model/openai/gpt-oss-20b",
       "pricingEffectiveDate": "2026-09-08T00:00:00Z",
       "verificationStatus": "verified",
-      "verificationEvidence": "Groq published on-demand uncached text pricing, consolidated into the Pack 014 authoritative registry.",
+      "verificationEvidence": "Groq official model docs re-verified 2026-09-19: openai/gpt-oss-20b on-demand pricing remains $0.075/M input and $0.30/M output; cached input $0.037/M. ZUVYR continues quoting uncached rates conservatively until cached-token settlement is explicitly wired.",
       "requiredEnvironment": null,
       "enabledState": "enabled",
       "safetyReserveBps": 0,
@@ -113,7 +113,7 @@
       "targetGrossMarginBps": 5000,
       "creditConversionResult": null,
       "pricingSource": "provider_published_url",
-      "pricingReviewBefore": "2026-09-15T00:00:00Z"
+      "pricingReviewBefore": "2026-10-19T00:00:00Z"
     },
     {
       "id": "openrouter-nemotron-free-chat",
