@@ -4,6 +4,13 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
+const crypto = require('node:crypto');
+const {
+  MODEL_PRICING_REGISTRY_VERSION,
+  quoteModelCost,
+  providerReportedCostTelemetry
+} = require('./lib/modelPricingAuthority');
+
 const read = file =>
   fs.readFileSync(path.join(__dirname, file), 'utf8');
 
@@ -34,6 +41,10 @@ const controller = read('lib/browserAgentController.js');
 const repository = read('lib/browserAgentRepository.js');
 const durable = read('lib/durableTaskPersistence.js');
 const server = read('server.js');
+const aiRouter = read('aiRouter.js');
+const decisionLog = read('lib/routerDecisionLog.js');
+const pricingAuthority = read('lib/modelPricingAuthority.js');
+const providerRegistry = read('src/modules/ai/providers/index.js');
 const graph = require('./config/capability-graph.v1.json');
 
 function count(source, value) {
@@ -546,6 +557,181 @@ for (const marker of [
 assert(durable.includes("rpc('defer_zuvyr_task_step_pack082'"));
 assert(durable.includes("rpc('resume_zuvyr_task_step_pack082'"));
 assert(!durable.includes('browser_agent_task_queue'));
+
+
+// PACK082 regression locks: the migration must never return to the corrupted
+// 10k-line/multi-copy draft, and typed values must remain transient.
+assert(
+  migration.split(/\r?\n/).length < 2000,
+  'PACK082 migration unexpectedly expanded'
+);
+assert(!/input_text_redacted/i.test(migration));
+assert(!/input_text_redacted/i.test(repository));
+assert(!/input_text_redacted/i.test(controller));
+assert(!/public\.conversations\b/i.test(migration));
+assert(!/zuvyr_task_runs[\s\S]{0,180}\.owner_id/i.test(migration));
+assert(migration.includes('pricing_version text'));
+assert(migration.includes('cost_entry_id text'));
+assert(migration.includes('pack082_type_input_digest_required'));
+assert(migration.includes('pack082_non_type_input_digest_forbidden'));
+
+const reserveActionBody = functionBody(
+  migration,
+  'reserve_zuvyr_browser_agent_action_pack082'
+);
+assert(reserveActionBody.includes('p_input_sha256 text'));
+assert(reserveActionBody.includes('p_input_length integer'));
+assert(!reserveActionBody.includes('p_input_text'));
+assert(repository.includes('p_input_sha256: classified.inputSha256'));
+assert(repository.includes('p_input_length: classified.inputLength'));
+assert(!repository.includes('p_input_text_redacted'));
+
+const transientValue = 'private-but-noncredential-value';
+const typedPrivacyAction = classifyAction({
+  type: 'type',
+  target: {
+    handle: 'za_abcdef12',
+    tag: 'input',
+    role: 'textbox',
+    type: 'text',
+    text: 'Email address',
+    host: 'example.com',
+    path: '/form'
+  },
+  text: transientValue
+}, {
+  allowedHosts: ['example.com']
+});
+assert.equal(typedPrivacyAction.text, transientValue);
+assert.equal(
+  typedPrivacyAction.inputSha256,
+  crypto.createHash('sha256').update(transientValue, 'utf8').digest('hex')
+);
+assert.equal(typedPrivacyAction.inputLength, transientValue.length);
+assert(
+  !JSON.stringify(typedPrivacyAction.persistedTarget).includes(transientValue),
+  'typed input leaked into persistedTarget'
+);
+assert.throws(
+  () => classifyAction({
+    type: 'type',
+    target: {
+      handle: 'za_abcdef12',
+      tag: 'input',
+      role: 'textbox',
+      type: 'password',
+      text: 'Password',
+      host: 'example.com',
+      path: '/login'
+    },
+    text: 'password: secret123'
+  }, {
+    allowedHosts: ['example.com']
+  }),
+  error => error.code === 'browser_agent_sensitive_input_blocked'
+);
+
+for (const marker of [
+  'browser_agent_input_resubmission_required',
+  'browser_agent_input_integrity_mismatch',
+  'verifiedTransientInput(',
+  'requiredOnApprove: true',
+  'available: false',
+  'available: true',
+  'inputText: transientText'
+]) {
+  assert(controller.includes(marker), marker);
+}
+assert(!controller.includes("internal.input_text_redacted || ''"));
+const approveStart = controller.indexOf('async function approveAction({');
+const approveEnd = controller.indexOf(
+  'async function resumeHumanBoundary',
+  approveStart
+);
+const approveBlock = controller.slice(approveStart, approveEnd);
+assert(approveStart >= 0 && approveEnd > approveStart);
+assert(
+  approveBlock.indexOf('verifiedTransientInput(') >= 0 &&
+  approveBlock.indexOf('verifiedTransientInput(') <
+    approveBlock.indexOf('permissions.consume('),
+  'typed input integrity must be checked before permission consumption'
+);
+assert(routes.includes('inputText:'));
+assert(routes.includes('no-store'));
+
+// Canonical registry is the only monetary authority. Provider-reported
+// usage.cost remains telemetry and must not override verified rates.
+assert.equal(
+  MODEL_PRICING_REGISTRY_VERSION,
+  'pack-014.single-cost-registry.v1'
+);
+const canonicalQuote = quoteModelCost({
+  provider: 'groq',
+  model: 'openai/gpt-oss-20b',
+  capability: 'chat',
+  usage: {
+    prompt_tokens: 1000000,
+    completion_tokens: 1000000,
+    cost: 0
+  },
+  requireMeasuredUsage: true,
+  now: Date.parse('2026-09-19T12:00:00Z')
+});
+assert.equal(canonicalQuote.providerCostMicroUsd, '375000');
+assert.equal(canonicalQuote.providerCostUsd, 0.375);
+assert.equal(canonicalQuote.verificationStatus, 'verified');
+assert.equal(canonicalQuote.costEntryId, 'groq-gpt-oss-20b-chat');
+assert.equal(providerReportedCostTelemetry({ cost: 0 }), 0);
+
+assert.throws(
+  () => quoteModelCost({
+    provider: 'openrouter',
+    model: 'openrouter/free',
+    capability: 'chat',
+    usage: {
+      prompt_tokens: 10,
+      completion_tokens: 10,
+      cost: 0
+    },
+    requireMeasuredUsage: true,
+    now: Date.parse('2026-09-19T12:00:00Z')
+  }),
+  error => /cost_entry_/i.test(String(error.code || error.message || ''))
+);
+assert.throws(
+  () => quoteModelCost({
+    provider: 'groq',
+    model: 'openai/gpt-oss-20b',
+    capability: 'chat',
+    usage: { cost: 0 },
+    requireMeasuredUsage: true,
+    now: Date.parse('2026-09-19T12:00:00Z')
+  }),
+  error => error.code === 'model_pricing_measured_usage_required'
+);
+
+assert(pricingAuthority.includes("require('./costRegistry')"));
+assert(!pricingAuthority.includes("require('./modelCosts')"));
+assert(!pricingAuthority.includes('models.json'));
+assert(!aiRouter.includes("require('./lib/modelCosts')"));
+assert(!aiRouter.includes('result.usage?.cost'));
+assert(aiRouter.includes('quoteModelCost({'));
+assert(aiRouter.includes('provider_cost_micro_usd: actualQuote.providerCostMicroUsd'));
+assert(aiRouter.includes('cost_usd: actualRouteCost'));
+assert(aiRouter.includes('provider_reported_cost_usd: providerReportedCostUsd'));
+assert(!decisionLog.includes("require('./modelCosts')"));
+assert(decisionLog.includes("require('./modelPricingAuthority')"));
+assert(providerRegistry.includes('modelPricingAuthority/costRegistry'));
+assert(!providerRegistry.includes('lib/modelCosts.js already normalizes'));
+
+assert(repository.includes('pricing_version: normalizedPricingVersion'));
+assert(repository.includes('cost_entry_id: normalizedCostEntryId'));
+assert(controller.includes('MODEL_PRICING_REGISTRY_VERSION'));
+assert(controller.includes('browser_agent_reasoning_pricing_lineage_missing'));
+assert(controller.includes('result.pricing?.provider_cost_micro_usd'));
+assert(controller.includes('pricingVersion: reasoned.pricingVersion'));
+assert(controller.includes('costEntryId: reasoned.costEntryId'));
+assert(!controller.includes("'pack082.measured-model-cost.v1'"));
 
 (async () => {
   const calls = {
