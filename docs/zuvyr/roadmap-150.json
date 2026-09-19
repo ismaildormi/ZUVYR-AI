@@ -1,7 +1,7 @@
 {
   "schema_version": "zuvyr.roadmap.150.v1",
   "date": "2026-09-19",
-  "active_pack": "083",
+  "active_pack": "094",
   "total_packs": 150,
   "authority": "Latest user MASTER EXECUTION PROMPT plus 2026-09-19 Model-First BYO Compute priority override",
   "source_sha256": "148699a2a98439391bf4a3b656a09c42fc9fd8e42779a98bdab68ed84e7a1a5f",
@@ -4059,7 +4059,6 @@
   ],
   "priority_override": {
     "id": "MODEL_FIRST_BYO_COMPUTE_2026_09_19",
-    "current_inflight_pack_may_finish": "083",
     "execute_next": [
       "094",
       "095",
@@ -4084,6 +4083,8 @@
     "owned_model_usage_fee_usd": 0,
     "inference_markup_usd": 0,
     "default_compute_payer": "user_or_organization",
-    "default_serving_mode": "bring_your_own_compute"
+    "default_serving_mode": "bring_your_own_compute",
+    "completed_inflight_pack": "083",
+    "active_priority_pack": "094"
   }
 }
