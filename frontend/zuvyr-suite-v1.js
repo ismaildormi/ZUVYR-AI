@@ -1580,6 +1580,13 @@
       setStatus('Saved as a new immutable version.');
       render();
       saveEditorStateSoon();
+      if (typeof window.__zuvyrPack078OnProjectSaved === 'function') {
+        window.__zuvyrPack078OnProjectSaved({
+          projectId: state.project && state.project.id,
+          revision: state.project && state.project.revision,
+          source: 'save'
+        });
+      }
       return state.project;
     }).catch(function (error) {
       setStatus(error.code === 'pack075_revision_conflict'
@@ -1734,6 +1741,13 @@
       if (field) field.value = '';
       setStatus('AI edit applied, metered and saved as a version.');
       render();
+      if (typeof window.__zuvyrPack078OnProjectSaved === 'function') {
+        window.__zuvyrPack078OnProjectSaved({
+          projectId: state.project && state.project.id,
+          revision: state.project && state.project.revision,
+          source: 'ai-edit'
+        });
+      }
     }).catch(function (error) {
       setStatus(error.message);
     });
@@ -2583,15 +2597,19 @@
       return;
     }
 
-    if (
-      event.target.closest('[data-zs-code-save]') ||
-      event.target.closest('[data-zs-code-ai-apply]')
-    ) {
-      scheduleSavedProjectValidation();
-    }
   }
 
   document.addEventListener('click', handleClick, true);
+
+  window.__zuvyrPack078OnProjectSaved = function (detail) {
+    if (
+      detail &&
+      detail.projectId &&
+      runtime.projectId &&
+      String(detail.projectId) !== String(runtime.projectId)
+    ) return;
+    scheduleSavedProjectValidation();
+  };
 
   var observer = new MutationObserver(function () {
     enhanceDom();
