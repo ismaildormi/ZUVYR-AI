@@ -436,7 +436,8 @@ function createCodeRuntimeExecutor({
   async function start({
     ownerId,
     body,
-    idempotencyKey = null
+    idempotencyKey = null,
+    sourceJobId = null
   } = {}) {
     const normalized = normalizeRuntimeRequest(body, { idempotencyKey });
     const request = Object.freeze({
@@ -475,6 +476,7 @@ function createCodeRuntimeExecutor({
       ownerId,
       projectId: request.projectId,
       sandboxSessionId: request.sandboxSessionId,
+      sourceJobId,
       requestId: request.requestId,
       operation: request.operation,
       commandSpec,
