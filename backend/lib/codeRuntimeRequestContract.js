@@ -235,6 +235,35 @@ function inferRunCommand(project) {
   });
 }
 
+function packageScriptCommand(project, operation) {
+  const pkg = parsePackageJson(project);
+  const script =
+    operation === 'build'
+      ? runtimeConfig.build?.script
+      : operation === 'test'
+        ? runtimeConfig.test?.script
+        : null;
+  if (!script || typeof pkg.scripts[script] !== 'string' || !pkg.scripts[script].trim()) {
+    throw contractError(
+      operation === 'build'
+        ? 'pack078_build_script_unavailable'
+        : 'pack078_test_script_unavailable'
+    );
+  }
+  const settings = runtimeConfig[operation] || {};
+  return Object.freeze({
+    command: 'npm',
+    args: Object.freeze(['run', script]),
+    cwd: runtimeConfig.workspace.cwd,
+    env: Object.freeze({ CI: '1' }),
+    wait: true,
+    logs: true,
+    sudo: false,
+    timeout: Number(settings.timeoutMs || 300000),
+    script
+  });
+}
+
 function terminalCommand(request) {
   return Object.freeze({
     command: request.command,
@@ -252,6 +281,8 @@ function commandSpecForOperation(request, project) {
   if (request.operation === 'terminal') return terminalCommand(request);
   if (request.operation === 'dependencies') return dependencyCommand(project);
   if (request.operation === 'run') return inferRunCommand(project);
+  if (request.operation === 'build') return packageScriptCommand(project, 'build');
+  if (request.operation === 'test') return packageScriptCommand(project, 'test');
   throw contractError('pack077_operation_invalid');
 }
 
@@ -291,6 +322,7 @@ module.exports = {
   dependencyDigest,
   dependencyCommand,
   inferRunCommand,
+  packageScriptCommand,
   terminalCommand,
   commandSpecForOperation,
   detectPreviewPort
