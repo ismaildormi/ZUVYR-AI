@@ -18,18 +18,21 @@
       "paidExecutionEnvironment": "PACK067_I2V_PAID_EXECUTION_ENABLED"
     },
     "edit": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
-      "requiresPrompt": false,
-      "requiresSourceImage": false,
-      "requiresSourceVideo": true
-    },
-    "extend": {
-      "enabledByDefault": false,
-      "status": "blocked_unpriced",
+      "enabledByDefault": true,
+      "status": "implemented_pack068_paid_live_deferred",
       "requiresPrompt": true,
       "requiresSourceImage": false,
-      "requiresSourceVideo": true
+      "requiresSourceVideo": true,
+      "paidExecutionEnvironment": "PACK068_EDIT_PAID_EXECUTION_ENABLED",
+      "requiresTrustedSourceDuration": true
+    },
+    "extend": {
+      "enabledByDefault": true,
+      "status": "implemented_pack068_paid_live_deferred",
+      "requiresPrompt": false,
+      "requiresSourceImage": false,
+      "requiresSourceVideo": true,
+      "paidExecutionEnvironment": "PACK068_EXTEND_PAID_EXECUTION_ENABLED"
     },
     "subtitles": {
       "enabledByDefault": false,
@@ -60,6 +63,50 @@
       "requiresSourceVideo": false,
       "requiresReferenceImages": true,
       "paidExecutionEnvironment": "PACK067_R2V_PAID_EXECUTION_ENABLED"
+    },
+    "object_remove": {
+      "enabledByDefault": true,
+      "status": "implemented_pack068_paid_live_deferred",
+      "requiresPrompt": true,
+      "requiresSourceImage": false,
+      "requiresSourceVideo": true,
+      "requiresTrustedSourceDuration": true,
+      "paidExecutionEnvironment": "PACK068_OBJECT_REMOVE_PAID_EXECUTION_ENABLED"
+    },
+    "background_remove": {
+      "enabledByDefault": true,
+      "status": "implemented_pack068_paid_live_deferred",
+      "requiresPrompt": false,
+      "requiresSourceImage": false,
+      "requiresSourceVideo": true,
+      "requiresTrustedSourceDuration": true,
+      "paidExecutionEnvironment": "PACK068_BACKGROUND_PAID_EXECUTION_ENABLED"
+    },
+    "relight": {
+      "enabledByDefault": false,
+      "status": "implemented_pack068_output_duration_pricing_deferred",
+      "requiresPrompt": true,
+      "requiresSourceImage": false,
+      "requiresSourceVideo": true,
+      "requiresTrustedSourceDuration": true
+    },
+    "recamera": {
+      "enabledByDefault": false,
+      "status": "implemented_pack068_output_duration_pricing_deferred",
+      "requiresPrompt": false,
+      "requiresSourceImage": false,
+      "requiresSourceVideo": true,
+      "requiresTrustedSourceDuration": true
+    },
+    "lip_sync": {
+      "enabledByDefault": true,
+      "status": "implemented_pack068_paid_live_deferred",
+      "requiresPrompt": false,
+      "requiresSourceImage": false,
+      "requiresSourceVideo": true,
+      "requiresSourceAudio": true,
+      "requiresTrustedSourceDuration": true,
+      "paidExecutionEnvironment": "PACK068_LIPSYNC_PAID_EXECUTION_ENABLED"
     }
   },
   "providers": {
@@ -75,6 +122,27 @@
         "text_to_video": "wan-video/wan-2.2-t2v-fast",
         "image_to_video": "wan-video/wan-2.2-i2v-fast",
         "reference_to_video": "wan-video/wan-2.7-r2v"
+      }
+    },
+    "fal": {
+      "implementedOperations": [
+        "edit",
+        "extend",
+        "object_remove",
+        "background_remove",
+        "relight",
+        "recamera",
+        "lip_sync"
+      ],
+      "status": "verified_pack068_video_edit_vfx",
+      "models": {
+        "edit": "fal-ai/ltx-2.3/retake-video",
+        "extend": "fal-ai/ltx-2.3/extend-video",
+        "object_remove": "bria/video/erase/prompt",
+        "background_remove": "bria/video/background-removal/v3",
+        "relight": "fal-ai/lightx/relight",
+        "recamera": "fal-ai/lightx/recamera",
+        "lip_sync": "fal-ai/kling-video/lipsync/audio-to-video"
       }
     }
   },
@@ -228,6 +296,124 @@
       "audioSupported": false,
       "referenceVideosSupported": false,
       "pricingBasis": "output_video_seconds"
+    }
+  },
+  "pack068": {
+    "phase": "IMPLEMENTED_PAID_LIVE_DEFERRED",
+    "paidExecutionDefault": false,
+    "provider": "fal",
+    "trustedDurationAuthority": "conversation_assets.duration_seconds",
+    "edit": {
+      "model": "fal-ai/ltx-2.3/retake-video",
+      "paidExecutionEnvironment": "PACK068_EDIT_PAID_EXECUTION_ENABLED",
+      "allowedDurationSeconds": [
+        5
+      ],
+      "allowedRetakeModes": [
+        "replace_audio",
+        "replace_video",
+        "replace_audio_and_video"
+      ],
+      "allowedExportFormats": [
+        "mp4"
+      ],
+      "pricingMicroUsdPerGeneratedSecond": 100000
+    },
+    "extend": {
+      "model": "fal-ai/ltx-2.3/extend-video",
+      "paidExecutionEnvironment": "PACK068_EXTEND_PAID_EXECUTION_ENABLED",
+      "minDurationSeconds": 2,
+      "maxDurationSeconds": 20,
+      "minContextSeconds": 1,
+      "maxContextSeconds": 20,
+      "allowedModes": [
+        "start",
+        "end"
+      ],
+      "allowedExportFormats": [
+        "mp4"
+      ],
+      "pricingMicroUsdPerGeneratedSecond": 100000
+    },
+    "objectRemove": {
+      "model": "bria/video/erase/prompt",
+      "paidExecutionEnvironment": "PACK068_OBJECT_REMOVE_PAID_EXECUTION_ENABLED",
+      "trustedSourceDurationRequired": true,
+      "sourceDurationMaxExclusiveSeconds": 5,
+      "outputContainerAndCodec": "mp4_h264",
+      "autoTrim": true,
+      "preserveAudioDefault": true,
+      "pricingMicroUsdPerSourceSecond": 140000
+    },
+    "backgroundRemove": {
+      "model": "bria/video/background-removal/v3",
+      "paidExecutionEnvironment": "PACK068_BACKGROUND_PAID_EXECUTION_ENABLED",
+      "trustedSourceDurationRequired": true,
+      "outputContainerAndCodec": "mp4_h264",
+      "allowedBackgroundColors": [
+        "Transparent",
+        "Black",
+        "White",
+        "Gray",
+        "Red",
+        "Green",
+        "Blue",
+        "Yellow",
+        "Cyan",
+        "Magenta",
+        "Orange"
+      ],
+      "preserveAudioDefault": true,
+      "autoZoomDefault": false,
+      "pricingMicroUsdPerSourceSecond": 50000
+    },
+    "relight": {
+      "model": "fal-ai/lightx/relight",
+      "paidExecutionEnvironment": "PACK068_RELIGHT_PAID_EXECUTION_ENABLED",
+      "trustedSourceDurationRequired": true,
+      "exposedConditionType": "ic",
+      "allowedLightDirections": [
+        "Left",
+        "Right",
+        "Top",
+        "Bottom"
+      ],
+      "cfg": 2,
+      "pricingMicroUsdPerSourceSecond": 100000,
+      "activation": "blocked_until_output_duration_precharge_basis_is_proven"
+    },
+    "recamera": {
+      "model": "fal-ai/lightx/recamera",
+      "paidExecutionEnvironment": "PACK068_RECAMERA_PAID_EXECUTION_ENABLED",
+      "trustedSourceDurationRequired": true,
+      "allowedCameraModes": [
+        "traj",
+        "target"
+      ],
+      "allowedMotionModes": [
+        "gradual",
+        "bullet",
+        "direct",
+        "dolly-zoom"
+      ],
+      "pricingMicroUsdPerSourceSecond": 100000,
+      "activation": "blocked_until_output_duration_precharge_basis_is_proven"
+    },
+    "lipSync": {
+      "model": "fal-ai/kling-video/lipsync/audio-to-video",
+      "paidExecutionEnvironment": "PACK068_LIPSYNC_PAID_EXECUTION_ENABLED",
+      "trustedSourceDurationRequired": true,
+      "trustedAudioDurationRequired": true,
+      "minVideoDurationSeconds": 2,
+      "maxVideoDurationSeconds": 10,
+      "maxVideoBytes": 104857600,
+      "minAudioDurationSeconds": 2,
+      "maxAudioDurationSeconds": 60,
+      "maxAudioBytes": 5242880,
+      "allowedExportFormats": [
+        "mp4"
+      ],
+      "pricingMicroUsdPerFiveSecondIncrement": 14000
     }
   }
 }

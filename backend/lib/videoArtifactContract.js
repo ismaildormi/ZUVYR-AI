@@ -30,6 +30,7 @@ function buildVideoArtifact({
   model = null,
   sourceImageAssetId = null,
   sourceVideoAssetId = null,
+  sourceAudioAssetId = null,
   startFrameAssetId = null,
   endFrameAssetId = null,
   referenceImageAssetIds = [],
@@ -48,6 +49,7 @@ function buildVideoArtifact({
     lineage: Object.freeze({
       sourceImageAssetId,
       sourceVideoAssetId,
+      sourceAudioAssetId,
       startFrameAssetId,
       endFrameAssetId,
       referenceImageAssetIds: Object.freeze([...(referenceImageAssetIds || [])])

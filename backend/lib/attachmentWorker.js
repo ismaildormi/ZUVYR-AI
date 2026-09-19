@@ -33,6 +33,9 @@ const {
   canProcessDocumentWithTools,
   extractDocumentWithTools
 } = require('./documentToolExtraction');
+const {
+  readTrustedMediaDurationSeconds
+} = require('./mediaDuration');
 
 const DEFAULT_MAX_BUFFERED_BYTES =
   96 * 1024 * 1024;
@@ -294,12 +297,25 @@ function createAttachmentJobProcessor({
         );
       }
       let result;
+      let trustedDurationSeconds = null;
       if (
         downloaded.receivedBytes <=
         maxBufferedBytes
       ) {
         const buffer =
           await fsp.readFile(downloaded.tempFile);
+
+        try {
+          trustedDurationSeconds =
+            readTrustedMediaDurationSeconds(buffer, {
+              assetType: attachment.assetType,
+              mimeType: attachment.mimeType
+            });
+        } catch (_) {
+          // Missing/unsupported duration metadata leaves Pack068
+          // duration-based operations fail-closed without failing ingestion.
+        }
+
         result = await extractAttachment({
           buffer,
           fileName: attachment.fileName,
@@ -500,6 +516,8 @@ function createAttachmentJobProcessor({
           scanStatus: 'clean',
           extractionStatus:
             extractionStatus(result),
+          durationSeconds:
+            trustedDurationSeconds,
           sha256: downloaded.sha256,
           metadata: {
             kind: 'source',

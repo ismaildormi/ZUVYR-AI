@@ -39,6 +39,29 @@ function decimalUsdToMicroUsd(raw, name, fallback, { allowZero = false } = {}) {
   return result;
 }
 
+function durationMilliseconds(raw, name) {
+  const text = String(raw === undefined || raw === null ? '' : raw).trim();
+  if (!/^(0|[1-9][0-9]*)(?:\.([0-9]{1,3}))?$/.test(text)) {
+    throw pricingError('invalid_' + name);
+  }
+  const [whole, fraction = ''] = text.split('.');
+  const milliseconds =
+    BigInt(whole) * 1000n +
+    BigInt((fraction + '000').slice(0, 3));
+  if (milliseconds <= 0n) {
+    throw pricingError('invalid_' + name);
+  }
+  return milliseconds;
+}
+
+function safeUsageInteger(value, name) {
+  const amount = typeof value === 'bigint' ? value : BigInt(value);
+  if (amount < 0n || amount > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw pricingError('invalid_' + name);
+  }
+  return Number(amount);
+}
+
 function decimalRateToBps(raw, name, fallback) {
   const text = String(raw === undefined || raw === '' ? fallback : raw).trim();
   if (!/^(0|1)(\.[0-9]{1,4})?$/.test(text)) {
@@ -129,8 +152,170 @@ function providerQuote(feature, {
   env = process.env,
   now = Date.now(),
   imageRequest = null,
-  videoRequest = null
+  videoRequest = null,
+  videoPricingContext = null
 } = {}) {
+  if (
+    feature === 'video' &&
+    videoRequest &&
+    ['edit','extend','object_remove','background_remove','lip_sync'].includes(
+      videoRequest.operation
+    )
+  ) {
+    const operation = videoRequest.operation;
+    const sourceDurationMs =
+      ['edit','object_remove','background_remove','lip_sync'].includes(operation)
+        ? durationMilliseconds(
+            videoPricingContext?.sourceDurationSeconds,
+            'pack068_source_duration'
+          )
+        : null;
+    const generatedDurationMs =
+      ['edit','extend'].includes(operation)
+        ? durationMilliseconds(
+            videoRequest.options?.durationSeconds,
+            'pack068_generated_duration'
+          )
+        : null;
+
+    const specs = {
+      edit: {
+        gate: 'PACK068_EDIT_PAID_EXECUTION_ENABLED',
+        modelToolId: 'fal-ai/ltx-2.3/retake-video',
+        capability: 'video_edit',
+        operationType: 'video_retake_generated_seconds',
+        usage: () => ({
+          outputUnits:
+            safeUsageInteger(generatedDurationMs, 'pack068_generated_duration')
+        })
+      },
+      extend: {
+        gate: 'PACK068_EXTEND_PAID_EXECUTION_ENABLED',
+        modelToolId: 'fal-ai/ltx-2.3/extend-video',
+        capability: 'video_extend',
+        operationType: 'video_extend_generated_seconds',
+        usage: () => ({
+          outputUnits:
+            safeUsageInteger(generatedDurationMs, 'pack068_generated_duration')
+        })
+      },
+      object_remove: {
+        gate: 'PACK068_OBJECT_REMOVE_PAID_EXECUTION_ENABLED',
+        modelToolId: 'bria/video/erase/prompt',
+        capability: 'video_object_remove',
+        operationType: 'video_object_remove_source_seconds',
+        usage: () => ({
+          inputUnits:
+            safeUsageInteger(sourceDurationMs, 'pack068_source_duration')
+        })
+      },
+      background_remove: {
+        gate: 'PACK068_BACKGROUND_PAID_EXECUTION_ENABLED',
+        modelToolId: 'bria/video/background-removal/v3',
+        capability: 'video_background_remove',
+        operationType: 'video_background_remove_source_seconds',
+        usage: () => ({
+          inputUnits:
+            safeUsageInteger(sourceDurationMs, 'pack068_source_duration')
+        })
+      },
+      lip_sync: {
+        gate: 'PACK068_LIPSYNC_PAID_EXECUTION_ENABLED',
+        modelToolId: 'fal-ai/kling-video/lipsync/audio-to-video',
+        capability: 'video_lip_sync',
+        operationType: 'video_lipsync_5s_increment',
+        usage: () => ({
+          outputUnits:
+            safeUsageInteger(
+              ceilDiv(sourceDurationMs, 5000n),
+              'pack068_lipsync_increments'
+            )
+        })
+      }
+    };
+    const spec = specs[operation];
+
+    if (String(env[spec.gate] || '').toLowerCase() !== 'true') {
+      throw pricingError('pack068_' + operation + '_paid_execution_disabled');
+    }
+    if (!env.FAL_KEY) {
+      throw pricingError('no_configured_pack068_video_provider');
+    }
+
+    if (operation === 'edit') {
+      const startMs =
+        videoRequest.options?.startTimeSeconds === 0
+          ? 0n
+          : durationMilliseconds(
+              videoRequest.options?.startTimeSeconds,
+              'pack068_edit_start_time'
+            );
+      if (startMs + generatedDurationMs > sourceDurationMs) {
+        throw pricingError('pack068_edit_window_out_of_bounds');
+      }
+    }
+    if (operation === 'object_remove' && sourceDurationMs >= 5000n) {
+      throw pricingError('pack068_object_remove_source_too_long');
+    }
+    if (operation === 'lip_sync') {
+      if (sourceDurationMs < 2000n || sourceDurationMs > 10000n) {
+        throw pricingError('pack068_lipsync_video_duration_unsupported');
+      }
+      const audioDurationMs =
+        durationMilliseconds(
+          videoPricingContext?.audioDurationSeconds,
+          'pack068_audio_duration'
+        );
+      if (audioDurationMs < 2000n || audioDurationMs > 60000n) {
+        throw pricingError('pack068_lipsync_audio_duration_unsupported');
+      }
+      if (
+        Number(videoPricingContext?.sourceFileSizeBytes) > 100 * 1024 * 1024 ||
+        !['video/mp4','video/quicktime'].includes(
+          String(videoPricingContext?.sourceMimeType || '').toLowerCase()
+        )
+      ) {
+        throw pricingError('pack068_lipsync_video_format_unsupported');
+      }
+      if (
+        Number(videoPricingContext?.audioFileSizeBytes) > 5 * 1024 * 1024 ||
+        ![
+          'audio/mpeg','audio/mp3','audio/ogg','audio/wav','audio/x-wav',
+          'audio/mp4','audio/x-m4a','audio/aac','audio/x-aac'
+        ].includes(
+          String(videoPricingContext?.audioMimeType || '').toLowerCase()
+        )
+      ) {
+        throw pricingError('pack068_lipsync_audio_format_unsupported');
+      }
+    }
+
+    const entry = resolveCostEntry({
+      provider: 'fal',
+      modelToolId: spec.modelToolId,
+      capability: spec.capability,
+      operationType: spec.operationType
+    }, { env, now });
+
+    return Object.freeze({
+      provider: 'fal',
+      providerCostMicroUsd:
+        estimateProviderCostMicroUsd(entry, spec.usage()),
+      pricingVersion: entry.registryVersion,
+      costEntryId: entry.id
+    });
+  }
+
+  if (
+    feature === 'video' &&
+    videoRequest &&
+    ['relight','recamera'].includes(videoRequest.operation)
+  ) {
+    throw pricingError(
+      'pack068_output_duration_precharge_pricing_unavailable'
+    );
+  }
+
   if (feature === 'video' && videoRequest?.operation === 'image_to_video') {
     if (String(env.PACK067_I2V_PAID_EXECUTION_ENABLED || '').toLowerCase() !== 'true') {
       throw pricingError('pack067_i2v_paid_execution_disabled');

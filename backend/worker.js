@@ -49,7 +49,9 @@ const { createVideoReferenceResolver } = require('./lib/videoReferenceResolver')
 const {
   generateVideo,
   DEFAULT_VIDEO_MODEL,
-  defaultModelForOperation
+  defaultModelForOperation,
+  providerForOperation,
+  lipSyncBillingIncrements
 } = require('./lib/videoProvider');
 const { normalizeVideoRequest } = require('./lib/videoRequestContract');
 const { assertVideoRequestAvailable } = require('./lib/videoOperationRegistry');
@@ -615,6 +617,7 @@ async function processVideoJob(job) {
     referenceImageAssetIds = [],
     sourceImageAssetId = null,
     sourceVideoAssetId = null,
+    sourceAudioAssetId = null,
     startFrameAssetId = null,
     endFrameAssetId = null,
     videoOptions = {}
@@ -626,6 +629,7 @@ async function processVideoJob(job) {
     referenceImageAssetIds,
     sourceImageAssetId,
     sourceVideoAssetId,
+    sourceAudioAssetId,
     startFrameAssetId,
     endFrameAssetId,
     videoOptions
@@ -649,10 +653,7 @@ async function processVideoJob(job) {
   let resolvedInputs = null;
 
   if (!persisted) {
-    if (
-      videoRequest.operation === 'image_to_video' ||
-      videoRequest.operation === 'reference_to_video'
-    ) {
+    if (videoRequest.operation !== 'text_to_video') {
       resolvedInputs = await resolveVideoReferences({
         ownerId: userId,
         request: videoRequest,
@@ -674,19 +675,39 @@ async function processVideoJob(job) {
       resolvedInputs: resolvedInputs || {}
     });
 
-    const expectedUnitType =
-      videoRequest.operation === 'reference_to_video'
-        ? 'video_seconds'
-        : 'videos';
-    const expectedUnits =
-      videoRequest.operation === 'reference_to_video'
-        ? videoRequest.options.durationSeconds
-        : 1;
+    const sourceDuration =
+      Number(resolvedInputs?.source?.durationSeconds || 0);
+    const expectedBilling = (() => {
+      if (['text_to_video','image_to_video'].includes(videoRequest.operation)) {
+        return { unitType: 'videos', units: 1 };
+      }
+      if (
+        ['reference_to_video','edit','extend'].includes(videoRequest.operation)
+      ) {
+        return {
+          unitType: 'video_seconds',
+          units: Number(videoRequest.options.durationSeconds)
+        };
+      }
+      if (
+        ['object_remove','background_remove','relight','recamera']
+          .includes(videoRequest.operation)
+      ) {
+        return { unitType: 'video_seconds', units: sourceDuration };
+      }
+      if (videoRequest.operation === 'lip_sync') {
+        return {
+          unitType: 'processing_operations',
+          units: lipSyncBillingIncrements(sourceDuration)
+        };
+      }
+      return null;
+    })();
 
     if (
-      providerResult.billableUnits?.unitType !== expectedUnitType ||
-      providerResult.billableUnits?.units !== expectedUnits ||
-      providerResult.billableUnits?.resolution !== videoRequest.options.resolution
+      !expectedBilling ||
+      providerResult.billableUnits?.unitType !== expectedBilling.unitType ||
+      providerResult.billableUnits?.units !== expectedBilling.units
     ) {
       const error = new Error('video_billable_units_mismatch');
       error.code = 'video_billable_units_mismatch';
@@ -718,7 +739,7 @@ async function processVideoJob(job) {
   const provider =
     providerResult?.provider ||
     persisted.options?.outputProvider ||
-    'replicate';
+    providerForOperation(videoRequest.operation);
   const fallbackModel =
     videoRequest.operation === 'text_to_video'
       ? VIDEO_MODEL
@@ -744,6 +765,7 @@ async function processVideoJob(job) {
     model,
     sourceImageAssetId: videoRequest.sourceImageAssetId,
     sourceVideoAssetId: videoRequest.sourceVideoAssetId,
+    sourceAudioAssetId: videoRequest.sourceAudioAssetId,
     startFrameAssetId: videoRequest.startFrameAssetId,
     endFrameAssetId: videoRequest.endFrameAssetId,
     referenceImageAssetIds: videoRequest.referenceImageAssetIds,
@@ -777,10 +799,12 @@ async function processVideoJob(job) {
         operation: artifact.operation,
         sourceImageAssetId: artifact.lineage.sourceImageAssetId,
         sourceVideoAssetId: artifact.lineage.sourceVideoAssetId,
+        sourceAudioAssetId: artifact.lineage.sourceAudioAssetId,
         startFrameAssetId: artifact.lineage.startFrameAssetId,
         endFrameAssetId: artifact.lineage.endFrameAssetId,
         referenceImageAssetIds: artifact.lineage.referenceImageAssetIds,
         videoOptions: artifact.options,
+        durationSeconds: persisted.actualDurationSeconds,
         canonicalContentId: persisted.contentId,
         canonicalAssetId: persisted.assetId
       });

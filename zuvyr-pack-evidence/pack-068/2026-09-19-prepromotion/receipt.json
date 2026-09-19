@@ -1,0 +1,103 @@
+{
+  "pack": "068",
+  "title": "Video Edit / Extend / VFX",
+  "phase": "PRE_PROMOTION_CI_AND_SCHEMA_VERIFIED",
+  "date": "2026-09-19",
+  "baselineCommit": "1cdaa7166f887a3afd96ef7ac493fade4092276f",
+  "candidateCommit": "46c5db5c3144946fb37995e4213f0809d683d20f",
+  "candidatePullRequest": 5,
+  "candidateWorkflowRun": 35412167855,
+  "validation": {
+    "backendQuality": "PASS",
+    "releaseQuality": "PASS",
+    "liveProviderCalls": 0,
+    "paymentCalls": 0,
+    "productionNetworkCallsFromTests": 0,
+    "exactMoney": "integer_micro_usd_and_millisecond_usage",
+    "assertions": [
+      "Owner-scoped canonical video/audio inputs resolve into exact fal provider schemas.",
+      "LTX retake/extend, Bria erase/background and Kling lip-sync pre-charge pricing is exact.",
+      "LightX relight/recamera remains fail-closed because output-second pre-charge duration basis is not proven.",
+      "Trusted duration is measured/persisted by server paths rather than accepted from client billing input."
+    ]
+  },
+  "database": {
+    "projectRef": "tqoqsgaymygmqrzddvtu",
+    "migrations": [
+      {
+        "version": "20260919011619",
+        "name": "pack068_video_edit_vfx_foundation",
+        "status": "APPLIED_VERIFIED"
+      },
+      {
+        "version": "20260919011745",
+        "name": "pack068_source_audio_fk_index",
+        "status": "APPLIED_VERIFIED"
+      }
+    ],
+    "durationColumn": "conversation_assets.duration_seconds numeric nullable",
+    "sourceAudioColumn": "generation_jobs.source_audio_asset_id uuid nullable FK conversation_assets",
+    "operationConstraintIncludes": [
+      "edit",
+      "extend",
+      "object_remove",
+      "background_remove",
+      "relight",
+      "recamera",
+      "lip_sync"
+    ],
+    "productionPack068Jobs": 0,
+    "sourceAudioIndex": "generation_jobs_source_audio_asset_idx"
+  },
+  "providerActivation": {
+    "edit": {
+      "model": "fal-ai/ltx-2.3/retake-video",
+      "gate": "PACK068_EDIT_PAID_EXECUTION_ENABLED",
+      "defaultPaidExecution": false
+    },
+    "extend": {
+      "model": "fal-ai/ltx-2.3/extend-video",
+      "gate": "PACK068_EXTEND_PAID_EXECUTION_ENABLED",
+      "defaultPaidExecution": false
+    },
+    "objectRemove": {
+      "model": "bria/video/erase/prompt",
+      "gate": "PACK068_OBJECT_REMOVE_PAID_EXECUTION_ENABLED",
+      "defaultPaidExecution": false
+    },
+    "backgroundRemove": {
+      "model": "bria/video/background-removal/v3",
+      "gate": "PACK068_BACKGROUND_PAID_EXECUTION_ENABLED",
+      "defaultPaidExecution": false
+    },
+    "lipSync": {
+      "model": "fal-ai/kling-video/lipsync/audio-to-video",
+      "gate": "PACK068_LIPSYNC_PAID_EXECUTION_ENABLED",
+      "defaultPaidExecution": false
+    },
+    "relight": {
+      "model": "fal-ai/lightx/relight",
+      "paidExecution": "BLOCKED_OUTPUT_DURATION_PRECHARGE_BASIS_UNPROVEN"
+    },
+    "recamera": {
+      "model": "fal-ai/lightx/recamera",
+      "paidExecution": "BLOCKED_OUTPUT_DURATION_PRECHARGE_BASIS_UNPROVEN"
+    }
+  },
+  "advisorReview": {
+    "sourceAudioUnindexedForeignKeyFindingAfterFoundation": true,
+    "followupIndexApplied": true,
+    "sourceAudioUnindexedForeignKeyFindingAfterFollowup": false,
+    "unindexedForeignKeyCountBeforeFollowup": 73,
+    "unindexedForeignKeyCountAfterFollowup": 72,
+    "freshIndexUnusedInfoExpectedBecauseProductionPack068JobsAreZero": true,
+    "preExistingProjectDebtRemainsSeparate": true
+  },
+  "safety": {
+    "pack066PaidGateMustRemainOff": true,
+    "pack067PaidGatesMustRemainOff": true,
+    "pack068PaidGatesMustRemainOff": true,
+    "paidLiveE2EExecuted": false,
+    "canonicalLockedVerified": false
+  }
+}

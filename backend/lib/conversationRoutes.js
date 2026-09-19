@@ -19,6 +19,9 @@ const {
 const {
   quoteAttachmentAnalysisReservation
 } = require('./attachmentAnalysisPricing');
+const {
+  readTrustedMediaDurationSeconds
+} = require('./mediaDuration');
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -687,6 +690,20 @@ function createConversationRouter({
             mimeType: attachment.mimeType
           });
 
+        let trustedDurationSeconds = null;
+        try {
+          trustedDurationSeconds =
+            readTrustedMediaDurationSeconds(buffer, {
+              assetType: inspection.assetType,
+              mimeType:
+                inspection.detectedMimeType ||
+                attachment.mimeType
+            });
+        } catch (_) {
+          // Duration evidence is optional for ingestion.
+          // Pack068 duration-based operations remain fail-closed when absent.
+        }
+
         const extractionResult =
           await extractAttachment({
             buffer,
@@ -771,6 +788,8 @@ function createConversationRouter({
               attachment.fileName,
             fileSizeBytes:
               buffer.length,
+            durationSeconds:
+              trustedDurationSeconds,
             sha256,
             scanStatus: 'clean',
             extractionStatus,
