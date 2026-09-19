@@ -30,9 +30,12 @@ RUN apk add --no-cache \
     tesseract-ocr-data-fra \
     font-dejavu \
     font-noto-arabic \
+    ffmpeg \
   && soffice --version \
   && pdftotext -v 2>&1 | head -n 1 \
-  && tesseract --version | head -n 1
+  && tesseract --version | head -n 1 \
+  && ffmpeg -version | head -n 1 \
+  && ffprobe -version | head -n 1
 
 ENV NODE_ENV=production \
     HOME=/tmp/zuvyr-worker-home \
