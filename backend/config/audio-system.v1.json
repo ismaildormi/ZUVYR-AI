@@ -186,7 +186,8 @@
         "payAsYouGoUsdPerMinuteMultilingual": "0.0052",
         "billingGranularity": "true_per_second",
         "diarizationIncludedForPreRecorded": true,
-        "smartFormattingIncluded": true
+        "smartFormattingIncluded": true,
+        "billingBasis": "trusted_server_measured_milliseconds"
       },
       "features": {
         "detectLanguage": true,
@@ -206,7 +207,6 @@
       ],
       "filters": [
         "highpass",
-        "lowpass",
         "afftdn",
         "loudnorm"
       ]
