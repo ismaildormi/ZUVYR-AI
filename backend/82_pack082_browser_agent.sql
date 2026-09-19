@@ -9844,3 +9844,411 @@ comment on table public.browser_agent_actions is
 
 comment on table public.browser_agent_reasoning_turns is
   'PACK082 idempotent AI reasoning receipts. Stores observation/action fingerprints and measured billing only; raw typed text and secrets are intentionally absent.';
+
+
+-- PACK082 durable human-approval bridge for the canonical Brain Kernel.
+-- A deferred step releases its worker lease and is not claimable until an
+-- explicit owner-scoped resume. Deferral does not consume a retry attempt.
+
+alter table public.zuvyr_task_steps
+  drop constraint if exists zuvyr_task_steps_state_allowed;
+
+alter table public.zuvyr_task_steps
+  add constraint zuvyr_task_steps_state_allowed
+  check (state in (
+    'pending',
+    'running',
+    'deferred',
+    'succeeded',
+    'failed',
+    'cancelled'
+  ));
+
+create or replace function public.defer_zuvyr_task_step_pack082(
+  p_step_id bigint,
+  p_worker_owner text,
+  p_lease_token uuid,
+  p_checkpoint jsonb
+) returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $pack082_defer_task_step$
+declare
+  v_step public.zuvyr_task_steps%rowtype;
+begin
+  if p_checkpoint is null or jsonb_typeof(p_checkpoint) <> 'object' then
+    raise exception 'pack082_defer_checkpoint_invalid';
+  end if;
+
+  select *
+    into v_step
+  from public.zuvyr_task_steps
+  where id=p_step_id
+    and state='running'
+    and lease_owner=btrim(p_worker_owner)
+    and lease_token=p_lease_token
+    and lease_expires_at > now()
+  for update;
+
+  if v_step.id is null then
+    raise exception 'pack082_defer_lease_not_current';
+  end if;
+
+  update public.zuvyr_task_steps
+  set state='deferred',
+      attempts=greatest(attempts - 1, 0),
+      checkpoint=p_checkpoint,
+      checkpoint_version=checkpoint_version + 1,
+      last_checkpoint_at=now(),
+      lease_owner=null,
+      lease_token=null,
+      lease_expires_at=null,
+      last_heartbeat_at=now(),
+      error_code=null,
+      updated_at=now()
+  where id=v_step.id
+  returning * into v_step;
+
+  update public.zuvyr_task_runs
+  set checkpoint=jsonb_build_object(
+        'stepKey',v_step.step_key,
+        'stepCheckpointVersion',v_step.checkpoint_version,
+        'phase','deferred'
+      ),
+      checkpoint_version=checkpoint_version + 1,
+      last_checkpoint_at=now(),
+      updated_at=now()
+  where id=v_step.task_run_id;
+
+  return jsonb_build_object(
+    'taskRunId',v_step.task_run_id,
+    'stepId',v_step.id,
+    'stepKey',v_step.step_key,
+    'state',v_step.state,
+    'attempts',v_step.attempts,
+    'checkpoint',v_step.checkpoint,
+    'checkpointVersion',v_step.checkpoint_version
+  );
+end;
+$pack082_defer_task_step$;
+
+create or replace function public.resume_zuvyr_task_step_pack082(
+  p_task_run_id uuid,
+  p_user_id uuid,
+  p_step_id bigint,
+  p_resume_receipt jsonb
+) returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $pack082_resume_task_step$
+declare
+  v_run public.zuvyr_task_runs%rowtype;
+  v_step public.zuvyr_task_steps%rowtype;
+  v_checkpoint jsonb;
+begin
+  if p_resume_receipt is null
+     or jsonb_typeof(p_resume_receipt) <> 'object' then
+    raise exception 'pack082_resume_receipt_invalid';
+  end if;
+
+  select *
+    into v_run
+  from public.zuvyr_task_runs
+  where id=p_task_run_id
+    and user_id=p_user_id
+  for update;
+
+  if v_run.id is null then
+    raise exception 'pack082_task_not_found';
+  end if;
+
+  if v_run.cancel_requested
+     or v_run.state in ('succeeded','failed','cancelled') then
+    raise exception 'pack082_task_not_resumable';
+  end if;
+
+  select *
+    into v_step
+  from public.zuvyr_task_steps
+  where id=p_step_id
+    and task_run_id=v_run.id
+  for update;
+
+  if v_step.id is null then
+    raise exception 'pack082_step_not_found';
+  end if;
+
+  if v_step.state='pending' then
+    return jsonb_build_object(
+      'taskRunId',v_run.id,
+      'stepId',v_step.id,
+      'stepKey',v_step.step_key,
+      'state',v_step.state,
+      'replayed',true,
+      'resumeCount',v_step.resume_count
+    );
+  end if;
+
+  if v_step.state <> 'deferred' then
+    raise exception 'pack082_step_not_deferred';
+  end if;
+
+  v_checkpoint :=
+    coalesce(v_step.checkpoint,'{}'::jsonb)
+    || jsonb_build_object(
+         'phase','resumed',
+         'resumeReceipt',p_resume_receipt
+       );
+
+  update public.zuvyr_task_steps
+  set state='pending',
+      checkpoint=v_checkpoint,
+      checkpoint_version=checkpoint_version + 1,
+      last_checkpoint_at=now(),
+      resume_count=resume_count + 1,
+      error_code=null,
+      lease_owner=null,
+      lease_token=null,
+      lease_expires_at=null,
+      updated_at=now()
+  where id=v_step.id
+  returning * into v_step;
+
+  update public.zuvyr_task_runs
+  set state='running',
+      resume_count=resume_count + 1,
+      checkpoint=jsonb_build_object(
+        'stepKey',v_step.step_key,
+        'stepCheckpointVersion',v_step.checkpoint_version,
+        'phase','resumed'
+      ),
+      checkpoint_version=checkpoint_version + 1,
+      last_checkpoint_at=now(),
+      updated_at=now()
+  where id=v_run.id;
+
+  return jsonb_build_object(
+    'taskRunId',v_run.id,
+    'stepId',v_step.id,
+    'stepKey',v_step.step_key,
+    'state',v_step.state,
+    'replayed',false,
+    'resumeCount',v_step.resume_count,
+    'checkpoint',v_step.checkpoint
+  );
+end;
+$pack082_resume_task_step$;
+
+-- PACK039 cancellation is widened so a human-deferred task cannot survive
+-- a global cancel as a nonterminal orphan.
+create or replace function public.request_cancel_zuvyr_task(
+  p_task_run_id uuid,
+  p_user_id uuid,
+  p_reason text
+) returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $pack082_request_cancel_task$
+declare
+  v_run public.zuvyr_task_runs%rowtype;
+  v_reason text;
+  v_running_count integer := 0;
+  v_receipt jsonb;
+begin
+  v_reason := btrim(coalesce(p_reason,'user_requested'));
+
+  if length(v_reason) < 1 or length(v_reason) > 500 then
+    raise exception 'pack039_cancel_reason_invalid';
+  end if;
+
+  select *
+    into v_run
+  from public.zuvyr_task_runs
+  where id=p_task_run_id
+    and user_id=p_user_id
+  for update;
+
+  if v_run.id is null then
+    raise exception 'pack039_task_not_found';
+  end if;
+
+  if v_run.state in ('succeeded','failed','cancelled') then
+    return jsonb_build_object(
+      'taskRunId',v_run.id,
+      'accepted',false,
+      'replayed',v_run.cancel_requested,
+      'state',v_run.state,
+      'cancelRequested',v_run.cancel_requested
+    );
+  end if;
+
+  update public.zuvyr_task_runs
+  set cancel_requested=true,
+      cancel_reason=coalesce(cancel_reason,v_reason),
+      cancel_requested_at=coalesce(cancel_requested_at,now()),
+      updated_at=now()
+  where id=v_run.id
+  returning * into v_run;
+
+  select count(*)
+    into v_running_count
+  from public.zuvyr_task_steps s
+  where s.task_run_id=v_run.id
+    and s.state='running';
+
+  if v_running_count=0 then
+    v_receipt := jsonb_build_object(
+      'version','pack-039.cancel-receipt.v1',
+      'reason',v_run.cancel_reason,
+      'phase','cancelled_before_active_step',
+      'lateResultIgnored',false
+    );
+
+    update public.zuvyr_task_steps
+    set state='cancelled',
+        cancelled_at=now(),
+        cancellation_receipt=v_receipt,
+        lease_owner=null,
+        lease_token=null,
+        lease_expires_at=null,
+        completed_at=coalesce(completed_at,now()),
+        updated_at=now()
+    where task_run_id=v_run.id
+      and state in ('pending','running','deferred');
+
+    update public.zuvyr_task_runs
+    set state='cancelled',
+        cancellation_receipt=v_receipt,
+        cancelled_at=now(),
+        completed_at=coalesce(completed_at,now()),
+        final_result=jsonb_build_object(
+          'cancelled',true,
+          'cancellationReceipt',v_receipt
+        ),
+        updated_at=now()
+    where id=v_run.id
+    returning * into v_run;
+  end if;
+
+  return jsonb_build_object(
+    'taskRunId',v_run.id,
+    'accepted',true,
+    'state',v_run.state,
+    'cancelRequested',true,
+    'reason',v_run.cancel_reason,
+    'activeSteps',v_running_count
+  );
+end;
+$pack082_request_cancel_task$;
+
+create or replace function public.cancel_zuvyr_task_step(
+  p_step_id bigint,
+  p_worker_owner text,
+  p_lease_token uuid,
+  p_receipt jsonb
+) returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $pack082_cancel_task_step$
+declare
+  v_step public.zuvyr_task_steps%rowtype;
+  v_run public.zuvyr_task_runs%rowtype;
+begin
+  if p_receipt is null or jsonb_typeof(p_receipt) <> 'object' then
+    raise exception 'pack039_cancellation_receipt_invalid';
+  end if;
+
+  select s.*
+    into v_step
+  from public.zuvyr_task_steps s
+  where s.id=p_step_id
+    and s.state='running'
+    and s.lease_owner=btrim(p_worker_owner)
+    and s.lease_token=p_lease_token
+    and s.lease_expires_at > now()
+  for update;
+
+  if v_step.id is null then
+    raise exception 'pack039_cancel_lease_not_current';
+  end if;
+
+  select *
+    into v_run
+  from public.zuvyr_task_runs
+  where id=v_step.task_run_id
+  for update;
+
+  if v_run.id is null then
+    raise exception 'pack039_task_not_found';
+  end if;
+
+  if not v_run.cancel_requested then
+    raise exception 'pack039_cancel_not_requested';
+  end if;
+
+  update public.zuvyr_task_steps
+  set state='cancelled',
+      cancelled_at=now(),
+      cancellation_receipt=p_receipt,
+      lease_owner=null,
+      lease_token=null,
+      lease_expires_at=null,
+      last_heartbeat_at=now(),
+      completed_at=coalesce(completed_at,now()),
+      updated_at=now()
+  where task_run_id=v_run.id
+    and state in ('pending','running','deferred');
+
+  update public.zuvyr_task_runs
+  set state='cancelled',
+      cancellation_receipt=p_receipt,
+      cancelled_at=now(),
+      completed_at=coalesce(completed_at,now()),
+      final_result=jsonb_build_object(
+        'cancelled',true,
+        'cancellationReceipt',p_receipt
+      ),
+      updated_at=now()
+  where id=v_run.id
+  returning * into v_run;
+
+  return jsonb_build_object(
+    'taskRunId',v_run.id,
+    'stepId',v_step.id,
+    'stepKey',v_step.step_key,
+    'state',v_run.state,
+    'cancelRequested',v_run.cancel_requested,
+    'cancellationReceipt',v_run.cancellation_receipt
+  );
+end;
+$pack082_cancel_task_step$;
+
+revoke all on function public.defer_zuvyr_task_step_pack082(
+  bigint,text,uuid,jsonb
+) from public,anon,authenticated;
+
+revoke all on function public.resume_zuvyr_task_step_pack082(
+  uuid,uuid,bigint,jsonb
+) from public,anon,authenticated;
+
+grant execute on function public.defer_zuvyr_task_step_pack082(
+  bigint,text,uuid,jsonb
+) to service_role;
+
+grant execute on function public.resume_zuvyr_task_step_pack082(
+  uuid,uuid,bigint,jsonb
+) to service_role;
+
+-- Existing PACK039 execute grants remain service-role-only after replacement.
+revoke all on function public.request_cancel_zuvyr_task(uuid,uuid,text)
+  from public,anon,authenticated;
+revoke all on function public.cancel_zuvyr_task_step(bigint,text,uuid,jsonb)
+  from public,anon,authenticated;
+grant execute on function public.request_cancel_zuvyr_task(uuid,uuid,text)
+  to service_role;
+grant execute on function public.cancel_zuvyr_task_step(bigint,text,uuid,jsonb)
+  to service_role;
