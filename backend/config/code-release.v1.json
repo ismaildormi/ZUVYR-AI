@@ -23,12 +23,14 @@
       "VERCEL_TEAM_ID"
     ],
     "liveGateEnvironment": [
-      "ZUVYR_M16_VERIFIED"
+      "ZUVYR_M16_VERIFIED",
+      "ZUVYR_DEPLOY_PRICING_VERIFIED"
     ],
     "previewAndProductionDistinct": true,
     "productionRequiresPermission": "deploy.execute",
     "rollbackRequiresPermission": "deploy.rollback",
-    "rawClientApprovalReceiptAccepted": false
+    "rawClientApprovalReceiptAccepted": false,
+    "pricingVerificationStatus": "unverified"
   },
   "exclusions": {
     "previewTokens": true,
