@@ -399,6 +399,320 @@
         "state": "active",
         "replacedBy": null
       }
+    },
+    {
+      "id": "fal:video.edit:runtime",
+      "providerId": "fal",
+      "modelId": "fal-ai/ltx-2.3/retake-video",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "video.edit"
+      ],
+      "modalities": {
+        "input": [
+          "text",
+          "video"
+        ],
+        "output": [
+          "video"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Official fal model/API page revalidated 2026-09-19. Paid execution remains environment/pricing gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "fal-ltx23-retake-second"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK068_EDIT_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "fal:video.extend:runtime",
+      "providerId": "fal",
+      "modelId": "fal-ai/ltx-2.3/extend-video",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "video.extend"
+      ],
+      "modalities": {
+        "input": [
+          "text",
+          "video"
+        ],
+        "output": [
+          "video"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Official fal model/API page revalidated 2026-09-19. Paid execution remains environment/pricing gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "fal-ltx23-extend-second"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK068_EXTEND_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "fal:video.object_remove:runtime",
+      "providerId": "fal",
+      "modelId": "bria/video/erase/prompt",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "video.object_remove"
+      ],
+      "modalities": {
+        "input": [
+          "text",
+          "video"
+        ],
+        "output": [
+          "video"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Official fal model/API page revalidated 2026-09-19. Paid execution remains environment/pricing gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "fal-bria-video-erase-prompt-second"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK068_OBJECT_REMOVE_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "fal:video.background_remove:runtime",
+      "providerId": "fal",
+      "modelId": "bria/video/background-removal/v3",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "video.background_remove"
+      ],
+      "modalities": {
+        "input": [
+          "video"
+        ],
+        "output": [
+          "video"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Official fal model/API page revalidated 2026-09-19. Paid execution remains environment/pricing gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "fal-bria-video-background-v3-second"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK068_BACKGROUND_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "fal:video.relight:runtime",
+      "providerId": "fal",
+      "modelId": "fal-ai/lightx/relight",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "video.relight"
+      ],
+      "modalities": {
+        "input": [
+          "text",
+          "video"
+        ],
+        "output": [
+          "video"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "pricing_activation_blocked",
+        "evidence": "Official fal model/API page revalidated 2026-09-19. Paid execution remains environment/pricing gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "fal-lightx-relight-output-second"
+        ],
+        "verification": "verified",
+        "activation": "blocked"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "fal:video.recamera:runtime",
+      "providerId": "fal",
+      "modelId": "fal-ai/lightx/recamera",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "video.recamera"
+      ],
+      "modalities": {
+        "input": [
+          "text",
+          "video"
+        ],
+        "output": [
+          "video"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "pricing_activation_blocked",
+        "evidence": "Official fal model/API page revalidated 2026-09-19. Paid execution remains environment/pricing gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "fal-lightx-recamera-output-second"
+        ],
+        "verification": "verified",
+        "activation": "blocked"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "fal:video.lip_sync:runtime",
+      "providerId": "fal",
+      "modelId": "fal-ai/kling-video/lipsync/audio-to-video",
+      "modelIdEnvironment": null,
+      "kind": "tool",
+      "capabilities": [
+        "video.lip_sync"
+      ],
+      "modalities": {
+        "input": [
+          "video",
+          "audio"
+        ],
+        "output": [
+          "video"
+        ]
+      },
+      "context": {
+        "maxTokens": null,
+        "verification": "not_applicable"
+      },
+      "languages": [
+        "und"
+      ],
+      "languageVerification": "not_applicable",
+      "qualityTier": "unclassified",
+      "latencyClass": "unmeasured",
+      "commercialEligibility": {
+        "state": "verified_for_launch",
+        "evidence": "Official fal model/API page revalidated 2026-09-19. Paid execution remains environment/pricing gated."
+      },
+      "priceReference": {
+        "authority": "backend/config/cost-registry.v1.json",
+        "entryIds": [
+          "fal-kling-lipsync-5s-increment"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK068_LIPSYNC_PAID_EXECUTION_ENABLED"
+      },
+      "deprecation": {
+        "state": "active",
+        "replacedBy": null
+      }
     }
   ]
 }
