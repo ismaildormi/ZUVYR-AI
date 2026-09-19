@@ -382,7 +382,7 @@
         "provider_managed"
       ],
       "quotaType": "provider_managed",
-      "termsLicenseNotes": "Pack061 revalidated the official Replicate FLUX Schnell model page on 2026-09-15: commercial use permitted; production account/token/billing live E2E remains M12.",
+      "termsLicenseNotes": "Pack066 revalidated the official Replicate Wan 2.2 T2V Fast model page on 2026-09-19: commercial use is permitted; official pricing is $0.05/output video at 480p and $0.10/output video at 720p. Paid execution remains gated by PACK066_PAID_EXECUTION_ENABLED.",
       "adapter": "image.providers",
       "capabilities": [
         {
@@ -399,12 +399,21 @@
           "id": "video.text_to_video",
           "verification": "verified_repository",
           "cost": {
-            "mode": "compat_environment_cost",
+            "mode": "registry_verified_entry",
             "authority": "backend/config/cost-registry.v1.json",
-            "requiredEnvironment": [
-              "REPLICATE_VIDEO_COST_USD"
-            ]
-          }
+            "entryIds": [
+              "replicate-wan-2.2-t2v-fast-480p",
+              "replicate-wan-2.2-t2v-fast-720p"
+            ],
+            "requiredEnvironment": {
+              "name": "PACK066_PAID_EXECUTION_ENABLED",
+              "value": "true"
+            }
+          },
+          "requiredCredentialEnvironment": [
+            "REPLICATE_API_TOKEN"
+          ],
+          "model": "wan-video/wan-2.2-t2v-fast"
         }
       ]
     }

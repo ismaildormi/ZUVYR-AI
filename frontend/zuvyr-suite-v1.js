@@ -4,7 +4,7 @@
   window.__zuvyrSuiteV1Loaded = true;
 
   var sections = [
-    ['dashboard','⌂','Dashboard','ready'],['images','◇','Images','ready'],['video','▷','Video','connect'],
+    ['dashboard','⌂','Dashboard','ready'],['images','◇','Images','ready'],['video','▷','Video','gated'],
     ['code','</>','Code Studio','ready'],['voice','◉','Voice','connect'],['music','♫','Music','connect'],
     ['ip','✦','ZUVYR IP','plan'],['research','⌕','Research','ready'],['library','▦','Library','ready'],
     ['projects','▣','Projects','ready'],['documents','▤','Documents','ready'],['spreadsheets','▥','Spreadsheets','ready'],
@@ -14,7 +14,7 @@
   var copy = {
     dashboard:['Work','Continue projects, assets, research, code and history from one coordinated workspace.'],
     images:['Image Studio','Reopen canonical image history, export owned assets, inspect versions and Send-To without pretending blocked image operations are live.'],
-    video:['Video','Plan text-to-video, image-to-video, editing, subtitles and export in one job surface.'],
+    video:['Video','Prepare verified text-to-video with Wan 2.2 Fast at 480p or 720p. Image-to-video, editing and export stay gated until their own Packs are verified.'],
     code:['Code Studio','Build multi-file projects and request approved image or video assets when the experience needs them.'],
     voice:['Voice','Prepare transcription, speech and voice conversations with transparent minute usage.'],
     music:['Music & Audio','Create music, effects, cleanup and remix workflows after pricing is verified.'],
@@ -33,7 +33,7 @@
   };
 
   function esc(value) { return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char]; }); }
-  function statusLabel(state) { return state === 'ready' ? 'Foundation ready' : state === 'plan' ? 'Planning only' : state === 'validate' ? 'Validate data' : state === 'blocked' ? 'Safety blocked' : 'Connect provider'; }
+  function statusLabel(state) { return state === 'ready' ? 'Foundation ready' : state === 'plan' ? 'Planning only' : state === 'validate' ? 'Validate data' : state === 'blocked' ? 'Safety blocked' : state === 'gated' ? 'Execution gated' : 'Connect provider'; }
   function navHtml() {
     var groups = [['Workspace',sections.slice(0,10)],['Create & manage',sections.slice(10,15)],['Account',sections.slice(15)]];
     return groups.map(function (group) {
@@ -56,7 +56,7 @@
   function toolCards(id) {
     var maps = {
       images:[['History & reopen','Canonical image jobs with fresh owner-scoped previews'],['Actions & export','Download, Send-To, versions and reversible edit rollback'],['Creation gates','Only live-proven operations may be advertised; upscale stays blocked']],
-      video:[['Generate','Text or image to video'],['Jobs','Queue, progress, preview and cancel'],['Edit & export','Extend, subtitles and enhance']],
+      video:[['Text to video','Wan 2.2 Fast · 480p/720p · 5–7 seconds · no audio'],['Jobs','Queue, staged progress, canonical storage and exact settlement'],['Next Packs','Image/reference-to-video, edit, extend and export remain gated']],
       voice:[['Transcribe','Speech to text with minute tracking'],['Speak','Text to speech and voice selection'],['Voice chat','Transcript, waveform and STOP']],
       music:[['Music','Prompt, duration and variants'],['Audio tools','Cleanup, remix and stems'],['Audio to video','Scenes, subtitles and export']],
       research:[['Web Search','Live sources and citations'],['Deep Research','Multi-round plan and verification'],['Shopping','Products, prices and specs']],

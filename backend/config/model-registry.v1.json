@@ -267,16 +267,15 @@
     {
       "id": "replicate:video.text_to_video:runtime",
       "providerId": "replicate",
-      "modelId": null,
-      "modelIdEnvironment": "REPLICATE_VIDEO_MODEL",
+      "modelId": "wan-video/wan-2.2-t2v-fast",
+      "modelIdEnvironment": null,
       "kind": "tool",
       "capabilities": [
         "video.text_to_video"
       ],
       "modalities": {
         "input": [
-          "text",
-          "image"
+          "text"
         ],
         "output": [
           "video"
@@ -293,13 +292,17 @@
       "qualityTier": "unclassified",
       "latencyClass": "unmeasured",
       "commercialEligibility": {
-        "state": "unverified",
-        "evidence": "Exact runtime model/license remains model-specific."
+        "state": "verified_for_launch",
+        "evidence": "Pack066 verified the official Replicate Wan 2.2 T2V Fast page on 2026-09-19: commercial use is permitted."
       },
       "priceReference": {
         "authority": "backend/config/cost-registry.v1.json",
-        "environment": "REPLICATE_VIDEO_COST_USD",
-        "verification": "conditional_operator_configured"
+        "entryIds": [
+          "replicate-wan-2.2-t2v-fast-480p",
+          "replicate-wan-2.2-t2v-fast-720p"
+        ],
+        "verification": "verified",
+        "runtimeGateEnvironment": "PACK066_PAID_EXECUTION_ENABLED"
       },
       "deprecation": {
         "state": "active",

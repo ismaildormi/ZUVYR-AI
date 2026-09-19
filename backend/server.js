@@ -1729,7 +1729,7 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
   try {
     pricing = quoteGeneration(
       feature,
-      imageRequest ? { imageRequest } : {}
+      imageRequest ? { imageRequest } : videoRequest ? { videoRequest } : {}
     );
   } catch (err) {
     console.error(`[${feature}] pricing unavailable:`, err.message);
@@ -1745,7 +1745,13 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
 
   let reservation;
   try {
-    reservation = await reserveCredits({ userId, requestId, feature, creditsConsumed });
+    reservation = await reserveCredits({
+      userId,
+      requestId,
+      feature,
+      creditsConsumed,
+      pricingVersion: pricing.pricingVersion
+    });
   } catch (err) {
     if (err.code === 'insufficient_credits') {
       return res.status(402).json({ status: 'error', message: 'Insufficient credits.' });
@@ -1857,6 +1863,9 @@ async function handleGenerationRequest(req, res, { feature, queue }) {
       aiPreferences: normalizedAiPreferences,
       feature,
       creditsConsumed,
+      pricingVersion: pricing.pricingVersion,
+      pricingCostEntryId: pricing.costEntryId || null,
+      providerCostMicroUsd: pricing.providerCostMicroUsd,
       conversationId: conversationId || null,
       requestMessageId:
         requestMessage ? requestMessage.id : null,

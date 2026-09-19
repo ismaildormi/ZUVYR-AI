@@ -128,8 +128,30 @@ function configuredProviders(feature, env) {
 function providerQuote(feature, {
   env = process.env,
   now = Date.now(),
-  imageRequest = null
+  imageRequest = null,
+  videoRequest = null
 } = {}) {
+  if (feature === 'video') {
+    const request = videoRequest || { operation: 'text_to_video', options: { resolution: '480p' } };
+    if (request.operation !== 'text_to_video') throw pricingError('unsupported_dynamic_video_operation');
+    const resolution = String(request.options && request.options.resolution || '480p').toLowerCase();
+    const operationType = { '480p': 'video_generation_480p', '720p': 'video_generation_720p' }[resolution];
+    if (!operationType) throw pricingError('unsupported_video_resolution_pricing');
+    const entry = resolveCostEntry({
+      provider: 'replicate',
+      modelToolId: 'wan-video/wan-2.2-t2v-fast',
+      capability: 'video.text_to_video',
+      operationType
+    }, { env, now });
+    return Object.freeze({
+      provider: 'replicate',
+      providerCostMicroUsd: estimateProviderCostMicroUsd(entry),
+      pricingVersion: entry.registryVersion,
+      costEntryId: entry.id,
+      modelToolId: entry.modelToolId
+    });
+  }
+
   if (
     feature === 'image' &&
     imageRequest &&
@@ -385,6 +407,8 @@ function quoteGeneration(feature, options = {}) {
     providerCostUsd: microUsdDisplayNumber(provider.providerCostMicroUsd),
     providerCostMicroUsd: provider.providerCostMicroUsd,
     pricingVersion: provider.pricingVersion,
+    costEntryId: provider.costEntryId || null,
+    modelToolId: provider.modelToolId || null,
     estimatedNetProfitUsd: microUsdDisplayNumber(estimatedNetProfit),
     estimatedNetMargin: marginDisplayNumber(estimatedNetMarginBps),
     revenueMicroUsd: revenue.toString(),

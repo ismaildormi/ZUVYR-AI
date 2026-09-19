@@ -1,0 +1,102 @@
+{
+  "pack": "066",
+  "createdAt": "2026-09-19T00:30:00Z",
+  "baselineCommit": "ab73229270e46c1d9bb35780e56347442839bd3c",
+  "baselineTree": "4cd412bb64ed8243efcad01a41fbda1b92bcb14b",
+  "strategy": "immutable_git_parent_blob_manifest",
+  "rollbackRule": "Restore only scoped paths from the listed immutable baseline blobs using a new forward commit; never git reset/restore/stash.",
+  "paidExecutionEnabledByPatch": false,
+  "liveBillingAllowed": false,
+  "files": [
+    {
+      "path": "backend/config/video-system.v1.json",
+      "baselineBlobSha": "61691e760e6a8068bb671922d025e47293c9a479",
+      "candidateBlobSha": "42e86c18f7f382967ba243a92d022c58a75ae1b9",
+      "newFile": false
+    },
+    {
+      "path": "backend/lib/videoOperationRegistry.js",
+      "baselineBlobSha": "399386516ef5c7e43f2d556d377d9fd2f5725c62",
+      "candidateBlobSha": "ba44519883a1bafc9aadb8c461c06cdc53285b87",
+      "newFile": false
+    },
+    {
+      "path": "backend/lib/videoProvider.js",
+      "baselineBlobSha": "55adeea65989453f7302639cfe09582642fdc32b",
+      "candidateBlobSha": "e1541736adcca16a990acd57af61c0c546a55f80",
+      "newFile": false
+    },
+    {
+      "path": "backend/lib/dynamicPricing.js",
+      "baselineBlobSha": "368f86a14129093c1610bc86ab879d1c74dbd82c",
+      "candidateBlobSha": "74ffe58829ef3ae5374febbadcdf5d8fbbdc3a51",
+      "newFile": false
+    },
+    {
+      "path": "backend/config/cost-registry.v1.json",
+      "baselineBlobSha": "c6c9713bee5baa3eb392ef701ec7964ba2ebc57d",
+      "candidateBlobSha": "71bd84897430e6db6db7ad750ca4981d8a9c7f33",
+      "newFile": false
+    },
+    {
+      "path": "backend/test-pack05-provider.js",
+      "baselineBlobSha": "b41b68bec55688e120152fd9b1987ae23e603b81",
+      "candidateBlobSha": "f1312428d3614cf4e4bd988f52efe70218e66a40",
+      "newFile": false
+    },
+    {
+      "path": "backend/test-pack05-request-contract.js",
+      "baselineBlobSha": "b763bbdd8dd1023ac840f037bcc80706da13cab3",
+      "candidateBlobSha": "df97eabb4ed508cf4efa7f190956cfd5f22ad860",
+      "newFile": false
+    },
+    {
+      "path": "backend/test-pack05-operations.js",
+      "baselineBlobSha": "5186a52110e7e6747cc3ec60a00574fd993f0806",
+      "candidateBlobSha": "d5bae8e179737e78c59a1e21ac20d9c7575c3268",
+      "newFile": false
+    },
+    {
+      "path": "backend/test-pack066-text-to-video.js",
+      "baselineBlobSha": null,
+      "candidateBlobSha": "219e32d063ecaa6296a674010195c4d98cad6562",
+      "newFile": true
+    },
+    {
+      "path": "backend/config/provider-registry.v1.json",
+      "baselineBlobSha": "5ca169c8f902295458dff28412874dba9e5fc648",
+      "candidateBlobSha": "81029ad892ba0e51e7f26762c4376d1eff06aa70",
+      "newFile": false
+    },
+    {
+      "path": "backend/config/model-registry.v1.json",
+      "baselineBlobSha": "d06c4398a6c74cc400150b9970058c51d6572bc4",
+      "candidateBlobSha": "9734252a5baf64d6582b4f8b6da3284c1dd0eb03",
+      "newFile": false
+    },
+    {
+      "path": "backend/lib/videoGenerationRepository.js",
+      "baselineBlobSha": null,
+      "candidateBlobSha": "fe328650d565586cf6297f38cc66c83fe111dee2",
+      "newFile": true
+    },
+    {
+      "path": "backend/server.js",
+      "baselineBlobSha": "56ac6d6ed4ae9dedc3c0a4bc0e666184b39690bc",
+      "candidateBlobSha": "723148f45f9c4e463fde5f22ec731a6b34d6f1b3",
+      "newFile": false
+    },
+    {
+      "path": "backend/worker.js",
+      "baselineBlobSha": "4de5be22f532502ea90675d6220c395d922a127e",
+      "candidateBlobSha": "2c4e319639dd98675fb8f141bcbbcafaedb7c6a7",
+      "newFile": false
+    },
+    {
+      "path": "frontend/zuvyr-suite-v1.js",
+      "baselineBlobSha": "5163a48898d2215be0010084f17b745530abb22a",
+      "candidateBlobSha": "0a5c1df9d8a692aff48a35938e4cfa264e205576",
+      "newFile": false
+    }
+  ]
+}
