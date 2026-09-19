@@ -52,7 +52,7 @@ assert.deepEqual(
 );
 assert.equal(runtimeConfig.dependencies.networkPolicy.mode, 'custom');
 assert.equal(runtimeConfig.dependencies.restoreNetworkPolicy.mode, 'deny-all');
-assert.equal(runtimeConfig.preview.rawProviderRouteExposed, false);
+assert.equal(runtimeConfig.preview.rawProviderRouteReturned, false);
 
 for (const flag of [
   'code_terminal',
