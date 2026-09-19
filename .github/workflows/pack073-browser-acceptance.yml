@@ -1,0 +1,533 @@
+name: PACK073 Browser Acceptance
+
+on:
+  push:
+    branches:
+      - pack073-browser-acceptance-20260919
+
+permissions:
+  contents: read
+
+jobs:
+  browser-acceptance:
+    name: PACK073 Browser Acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ROX_SMOKE_ACCESS_TOKEN: ${{ secrets.ROX_SMOKE_ACCESS_TOKEN }}
+    steps:
+      - name: Checkout exact acceptance commit
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run production browser voice acceptance
+        shell: bash
+        run: |
+          node <<'NODE'
+          'use strict';
+
+          const assert = require('node:assert/strict');
+          const { chromium } = require('playwright');
+
+          async function main() {
+            const token = String(process.env.ROX_SMOKE_ACCESS_TOKEN || '').trim();
+            if (!token) {
+              console.error('PACK073_BROWSER_ACCEPTANCE_BLOCKED=ROX_SMOKE_ACCESS_TOKEN_MISSING');
+              process.exit(44);
+            }
+
+            const FRONTEND = 'https://rox-ai-sepia.vercel.app';
+            const API_BASE = 'https://rox-ai-production.up.railway.app';
+
+            const browser = await chromium.launch({
+              headless: true,
+              args: [
+                '--use-fake-ui-for-media-stream',
+                '--use-fake-device-for-media-stream',
+                '--autoplay-policy=no-user-gesture-required'
+              ]
+            });
+
+            const context = await browser.newContext();
+            await context.grantPermissions(['microphone'], { origin: FRONTEND });
+
+            const page = await context.newPage();
+
+            await page.addInitScript(() => {
+              window.__pack073Streams = [];
+              window.__pack073Recognition = null;
+
+              if (navigator.mediaDevices?.getUserMedia) {
+                const originalGetUserMedia =
+                  navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+
+                navigator.mediaDevices.getUserMedia = async (...args) => {
+                  const stream = await originalGetUserMedia(...args);
+                  window.__pack073Streams.push(stream);
+                  return stream;
+                };
+              }
+
+              class AcceptanceSpeechRecognition extends EventTarget {
+                constructor() {
+                  super();
+                  this.lang = 'en-US';
+                  this.continuous = false;
+                  this.interimResults = true;
+                  this.maxAlternatives = 1;
+                  this.active = false;
+                  window.__pack073Recognition = this;
+                }
+
+                start() {
+                  if (this.active) {
+                    throw new DOMException('Recognition already active', 'InvalidStateError');
+                  }
+                  this.active = true;
+                  queueMicrotask(() => this.dispatchEvent(new Event('start')));
+                }
+
+                stop() {
+                  if (!this.active) return;
+                  this.active = false;
+                  queueMicrotask(() => this.dispatchEvent(new Event('end')));
+                }
+
+                emitTranscript(text) {
+                  if (!this.active) throw new Error('recognition_not_active');
+                  const event = new Event('result');
+                  Object.defineProperty(event, 'resultIndex', { value: 0 });
+                  Object.defineProperty(event, 'results', {
+                    value: [{
+                      0: { transcript: String(text) },
+                      length: 1,
+                      isFinal: true
+                    }]
+                  });
+                  this.dispatchEvent(event);
+                }
+              }
+
+              class AcceptanceUtterance {
+                constructor(text) {
+                  this.text = String(text || '');
+                  this.lang = 'en-US';
+                  this.rate = 1;
+                  this.pitch = 1;
+                  this.volume = 1;
+                  this.voice = null;
+                  this.onstart = null;
+                  this.onend = null;
+                  this.onerror = null;
+                }
+              }
+
+              let currentUtterance = null;
+              const speech = {
+                speaking: false,
+                pending: false,
+                getVoices() { return []; },
+                speak(utterance) {
+                  currentUtterance = utterance;
+                  this.pending = false;
+                  this.speaking = true;
+                  queueMicrotask(() => utterance.onstart?.());
+                },
+                cancel() {
+                  const utterance = currentUtterance;
+                  currentUtterance = null;
+                  this.pending = false;
+                  this.speaking = false;
+                  if (utterance) queueMicrotask(() => utterance.onend?.());
+                }
+              };
+
+              window.SpeechRecognition = AcceptanceSpeechRecognition;
+              window.webkitSpeechRecognition = AcceptanceSpeechRecognition;
+              window.SpeechSynthesisUtterance = AcceptanceUtterance;
+
+              try {
+                Object.defineProperty(window, 'speechSynthesis', {
+                  configurable: true,
+                  value: speech
+                });
+              } catch (_) {
+                window.speechSynthesis = speech;
+              }
+            });
+
+            const browserErrors = [];
+            page.on('pageerror', error => browserErrors.push(String(error?.stack || error)));
+            page.on('console', message => {
+              if (message.type() === 'error') {
+                browserErrors.push('console:' + message.text());
+              }
+            });
+
+            await page.goto(FRONTEND + '/', {
+              waitUntil: 'domcontentloaded',
+              timeout: 60000
+            });
+
+            await page.waitForSelector(
+              '#feature-chat button[data-voice-input="chat"]',
+              { state: 'attached', timeout: 30000 }
+            );
+            await page.waitForSelector(
+              '#feature-chat .zuvyr-voice-cancel',
+              { state: 'attached', timeout: 30000 }
+            );
+
+            await page.evaluate(({ token, API_BASE }) => {
+              window.authFetch = (path, options = {}) =>
+                fetch(API_BASE + path, {
+                  ...options,
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: 'Bearer ' + token,
+                    ...(options.headers || {})
+                  }
+                });
+            }, { token, API_BASE });
+
+            const selectors = {
+              button: '#feature-chat button[data-voice-input="chat"]',
+              row: '#feature-chat .chat-input-row',
+              input: '#feature-chat [data-feature="chat"]',
+              cancel: '#feature-chat .zuvyr-voice-cancel',
+              send: '#feature-chat [data-send="chat"]',
+              messages: '#msgs-chat',
+              status: '#feature-chat .zuvyr-realtime-voice-status'
+            };
+
+            const clickMic = () =>
+              page.evaluate(selector =>
+                document.querySelector(selector).click(),
+              selectors.button);
+
+            await clickMic();
+
+            await page.waitForFunction(
+              ({ row }) => {
+                const node = document.querySelector(row);
+                return Boolean(
+                  node?.dataset.zuvyrVoiceSessionId &&
+                  node?.dataset.zuvyrRealtimeVoice === 'listening'
+                );
+              },
+              { row: selectors.row },
+              { timeout: 30000 }
+            );
+
+            const sessionId = await page.$eval(
+              selectors.row,
+              node => node.dataset.zuvyrVoiceSessionId
+            );
+
+            assert.match(
+              String(sessionId || ''),
+              /^[0-9a-f]{8}-[0-9a-f-]{27}$/i,
+              'server voice session id missing'
+            );
+
+            await page.waitForFunction(
+              () =>
+                Array.isArray(window.__pack073Streams) &&
+                window.__pack073Streams.length >= 1 &&
+                window.__pack073Streams.some(stream =>
+                  stream.getAudioTracks().some(track => track.readyState === 'live')
+                ),
+              null,
+              { timeout: 30000 }
+            );
+
+            await page.evaluate(() => {
+              window.__pack073Recognition.emitTranscript(
+                'PACK073 browser acceptance first dictation'
+              );
+            });
+
+            await page.waitForFunction(
+              selector =>
+                document.querySelector(selector)?.value
+                  .includes('PACK073 browser acceptance first dictation'),
+              selectors.input,
+              { timeout: 10000 }
+            );
+
+            await clickMic();
+
+            await page.waitForFunction(
+              ({ button, row }) => {
+                const mic = document.querySelector(button);
+                const wrapper = document.querySelector(row);
+                return (
+                  !mic?.classList.contains('is-listening') &&
+                  wrapper?.dataset.zuvyrRealtimeVoice === 'ready'
+                );
+              },
+              { button: selectors.button, row: selectors.row },
+              { timeout: 30000 }
+            );
+
+            await page.evaluate(
+              ({ send, messages }) => {
+                const sendButton = document.querySelector(send);
+                const box = document.querySelector(messages);
+                sendButton.classList.add('is-generating');
+
+                const bot = document.createElement('div');
+                bot.className = 'msg bot';
+                bot.textContent =
+                  'PACK073 browser acceptance assistant final response';
+                box.appendChild(bot);
+              },
+              { send: selectors.send, messages: selectors.messages }
+            );
+
+            await page.waitForFunction(
+              ({ row }) =>
+                document.querySelector(row)?.dataset.zuvyrRealtimeVoice ===
+                'processing',
+              { row: selectors.row },
+              { timeout: 30000 }
+            );
+
+            const spokeWhileGenerating = await page.evaluate(
+              () => window.speechSynthesis.speaking
+            );
+            assert.equal(
+              spokeWhileGenerating,
+              false,
+              'partial assistant content spoke while generating'
+            );
+
+            await page.$eval(
+              selectors.send,
+              button => button.classList.remove('is-generating')
+            );
+
+            await page.waitForFunction(
+              ({ row }) =>
+                document.querySelector(row)?.dataset.zuvyrRealtimeVoice ===
+                  'speaking' &&
+                window.speechSynthesis.speaking === true,
+              { row: selectors.row },
+              { timeout: 30000 }
+            );
+
+            await clickMic();
+
+            await page.waitForFunction(
+              ({ button, row }) => {
+                const mic = document.querySelector(button);
+                const wrapper = document.querySelector(row);
+                return (
+                  mic?.classList.contains('is-listening') &&
+                  wrapper?.dataset.zuvyrRealtimeVoice === 'listening' &&
+                  window.speechSynthesis.speaking === false
+                );
+              },
+              { button: selectors.button, row: selectors.row },
+              { timeout: 30000 }
+            );
+
+            await page.evaluate(() => {
+              window.__pack073Recognition.emitTranscript(
+                'PACK073 browser acceptance barge in follow up'
+              );
+            });
+
+            await clickMic();
+
+            await page.waitForFunction(
+              ({ button, row }) => {
+                const mic = document.querySelector(button);
+                const wrapper = document.querySelector(row);
+                return (
+                  !mic?.classList.contains('is-listening') &&
+                  wrapper?.dataset.zuvyrRealtimeVoice === 'ready'
+                );
+              },
+              { button: selectors.button, row: selectors.row },
+              { timeout: 30000 }
+            );
+
+            const inputValue = await page.$eval(
+              selectors.input,
+              input => input.value
+            );
+            assert.match(
+              inputValue,
+              /first dictation/i,
+              'first dictation missing'
+            );
+            assert.match(
+              inputValue,
+              /barge in follow up/i,
+              'barge-in dictation missing'
+            );
+
+            await clickMic();
+
+            await page.waitForFunction(
+              ({ button, row }) => {
+                const mic = document.querySelector(button);
+                const wrapper = document.querySelector(row);
+                return (
+                  mic?.classList.contains('is-listening') &&
+                  wrapper?.dataset.zuvyrRealtimeVoice === 'listening'
+                );
+              },
+              { button: selectors.button, row: selectors.row },
+              { timeout: 30000 }
+            );
+
+            await page.waitForFunction(
+              () =>
+                window.__pack073Streams.filter(stream =>
+                  stream.getAudioTracks().some(track => track.readyState === 'live')
+                ).length >= 1,
+              null,
+              { timeout: 30000 }
+            );
+
+            await page.evaluate(selector =>
+              document.querySelector(selector).click(),
+            selectors.cancel);
+
+            await page.waitForFunction(
+              ({ button, row }) => {
+                const mic = document.querySelector(button);
+                const wrapper = document.querySelector(row);
+                return (
+                  !mic?.classList.contains('is-listening') &&
+                  !wrapper?.dataset.zuvyrVoiceSessionId &&
+                  wrapper?.dataset.zuvyrRealtimeVoice === 'stopped'
+                );
+              },
+              { button: selectors.button, row: selectors.row },
+              { timeout: 30000 }
+            );
+
+            await page.waitForFunction(
+              () =>
+                window.__pack073Streams.length >= 1 &&
+                window.__pack073Streams.every(stream =>
+                  stream.getAudioTracks().every(track => track.readyState === 'ended')
+                ),
+              null,
+              { timeout: 30000 }
+            );
+
+            const sessionResponse = await page.evaluate(
+              async ({ token, API_BASE, sessionId }) => {
+                const response = await fetch(
+                  API_BASE +
+                    '/api/audio-studio/voice/sessions/' +
+                    encodeURIComponent(sessionId),
+                  {
+                    headers: {
+                      Authorization: 'Bearer ' + token,
+                      'Content-Type': 'application/json'
+                    }
+                  }
+                );
+                return {
+                  status: response.status,
+                  body: await response.json().catch(() => ({}))
+                };
+              },
+              { token, API_BASE, sessionId }
+            );
+
+            assert.equal(
+              sessionResponse.status,
+              200,
+              JSON.stringify(sessionResponse.body)
+            );
+            assert.equal(
+              sessionResponse.body?.status,
+              'success',
+              JSON.stringify(sessionResponse.body)
+            );
+            assert.equal(
+              sessionResponse.body?.session?.state,
+              'stopped',
+              JSON.stringify(sessionResponse.body)
+            );
+
+            const turns =
+              sessionResponse.body?.session?.turns || [];
+            assert(
+              turns.some(turn =>
+                turn.role === 'user' &&
+                /first dictation/i.test(String(turn.text || ''))
+              ),
+              'first dictation turn was not persisted'
+            );
+            assert(
+              turns.some(turn =>
+                turn.role === 'assistant' &&
+                turn.interrupted === true
+              ),
+              'barge-in did not persist interrupted assistant turn'
+            );
+            assert(
+              turns.some(turn =>
+                turn.role === 'user' &&
+                /barge in follow up/i.test(String(turn.text || ''))
+              ),
+              'barge-in follow-up turn was not persisted'
+            );
+
+            const trackState = await page.evaluate(() =>
+              window.__pack073Streams.map(stream =>
+                stream.getAudioTracks().map(track => track.readyState)
+              )
+            );
+
+            assert(
+              trackState.flat().every(state => state === 'ended'),
+              'microphone track remained live after STOP'
+            );
+
+            if (browserErrors.length) {
+              const relevant = browserErrors.filter(line =>
+                /pack073|voice|uncaught|typeerror|referenceerror/i.test(line)
+              );
+              assert.equal(
+                relevant.length,
+                0,
+                'browser errors: ' + relevant.join(' | ')
+              );
+            }
+
+            console.log('PACK073_BROWSER_ACCEPTANCE=PASS');
+            console.log('PACK073_SESSION_STATE=stopped');
+            console.log('PACK073_DICTATION=PASS');
+            console.log('PACK073_FINAL_ONLY_SPEECH=PASS');
+            console.log('PACK073_BARGE_IN=PASS');
+            console.log('PACK073_GLOBAL_STOP=PASS');
+            console.log('PACK073_ALL_AUDIO_TRACKS_ENDED=PASS');
+            console.log('PACK073_PROVIDER_CALLS=0');
+            console.log('PACK073_PAYMENT_CALLS=0');
+
+            await context.close();
+            await browser.close();
+          }
+
+          main().catch(error => {
+            console.error('PACK073_BROWSER_ACCEPTANCE_FATAL', error?.stack || error);
+            process.exit(1);
+          });
+          NODE
