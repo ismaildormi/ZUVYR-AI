@@ -45,7 +45,7 @@ function redact(value) {
   );
 
   return text.replace(
-    /\\b(?:sk|pk|vcp|sbp)_[A-Za-z0-9_-]{12,}\\b/g,
+    /\b(?:sk|pk|vcp|sbp)_[A-Za-z0-9_-]{12,}\b/g,
     '[redacted]'
   );
 }
