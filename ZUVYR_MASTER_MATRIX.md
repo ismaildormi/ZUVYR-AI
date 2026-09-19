@@ -767,3 +767,19 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - Next: `PACK066 — Text-to-Video`
 
 <!-- ZUVYR_PACK_065_ENGINEERING_FINALIZER_END -->
+
+
+## PACK094 — Learning Pipeline / Data Rights — 2026-09-19 checkpoint
+
+- Status: **LOCKED_ENGINEERING_VERIFIED**
+- Canonical LOCKED_VERIFIED: **NO**
+- Final main commit: `13b677a1d70bc541766b4f26c84ce381a054d999`
+- Backend/Release CI: **PASS / PASS**
+- Supabase: Learning Pipeline + Failure Bank + consent/rights/candidates/exclusions present; RLS ON; browser policy count 0.
+- Canonical consent authority: `zuvyr_user_preferences.training_consent`; canonical browser mutation is `PATCH /api/workspace/memory/preferences`.
+- Production DB smoke: consent ON→OFF/history PASS; Memory independent PASS; residue 0.
+- Railway backend/worker/maintenance exact final commit: **SUCCESS / SUCCESS / SUCCESS**
+- Vercel production: **STALE** at `60c4875d5f0b6f6ec7e11bbeaa66e5a977792ea4`; final PACK094 frontend not production-live.
+- Deferred: `DEFERRED_PRODUCTION_FRONTEND_GATE`, `PACK094_AUTHENTICATED_PRODUCTION_DATA_RIGHTS_UI_ACCEPTANCE`.
+- Receipt Git blob: `a14a37f7e7d1da33c012816d47b3ba4562e6088b`.
+- Model-first progression: **PACK095 active**; PACK096 next; PACK084–PACK093 deferred/not cancelled.
