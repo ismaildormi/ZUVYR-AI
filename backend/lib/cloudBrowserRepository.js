@@ -167,7 +167,7 @@ function createCloudBrowserRepository({db,storage}={}) {
     const record=await content.ensure({
       ownerId,
       projectId,
-      kind: kind === 'screenshot' ? 'image' : kind === 'dom' ? 'text' : 'file',
+      kind: kind === 'screenshot' ? 'image' : kind === 'dom' ? 'text' : 'document',
       title:name,
       sourceKind:'cloud_browser_' + kind,
       sourceSystem:'zuvyr_browser_pack081',
