@@ -252,7 +252,11 @@ assert(!JSON.stringify(redacted).includes('vault-secret-id-must-not-leak'));
 for (const marker of [
   "router.get('/capabilities'",
   "router.get('/summary'",
+  "router.get('/candidate-pool'",
+  "router.get('/failure-bank'",
   "router.post('/datasets'",
+  "router.post('/skills'",
+  "router.post('/curricula'",
   "router.post('/connectors'",
   "/credential'",
   "/verify-ownership'",
@@ -292,11 +296,28 @@ for (const marker of [
   'ZUVYR PACK095 MODEL LAB',
   'data-zuvyr-pack095-model-lab',
   '/api/model-lab/summary',
+  '/api/model-lab/candidate-pool?limit=50',
+  '/api/model-lab/failure-bank?limit=50',
+  '/api/model-lab/skills',
+  '/api/model-lab/curricula',
   '/api/model-lab/connectors',
   '/verify-ownership',
   '/health-check',
   '/credential',
   '/api/model-lab/training-runs',
+  '/api/model-lab/benchmarks',
+  '/api/model-lab/evaluations',
+  '/api/model-lab/synthetic-jobs',
+  '/rollback',
+  'data-zuvyr-pack095-rollback',
+  'data-zuvyr-pack095-skill-form',
+  'data-zuvyr-pack095-curriculum-form',
+  'data-zuvyr-pack095-curriculum-link-form',
+  'data-zuvyr-pack095-benchmark-form',
+  'data-zuvyr-pack095-evaluation-form',
+  'data-zuvyr-pack095-synthetic-form',
+  'Eligible candidates',
+  'Failure Bank',
   'LIVE EXECUTION OFF',
   'PACK096'
 ]) {
@@ -310,6 +331,11 @@ assert(!/credentialSecretId|credential_secret_id|vault-secret/i.test(
 assert(css.includes('ZUVYR PACK095 MODEL LAB'));
 assert(css.includes('@media (max-width:700px)'));
 assert(css.includes('html[dir="rtl"]'));
+assert(css.includes('.zuvyr-pack095-two-col'));
+assert(ux.includes("body:JSON.stringify({targetStage:'LAB',reason})"));
+assert(ux.includes("generationPolicy:{executionOwner:'PACK096',liveExecution:false}"));
+assert(!ux.includes('training payload content'));
+assert(ux.includes('Training payload content is not rendered here'));
 
 assert.equal(ownedPolicy.modelFirstPriority.activePriorityPack, '095');
 assert.deepEqual(ownedPolicy.modelFirstPriority.completedPriorityPacks, ['094']);
