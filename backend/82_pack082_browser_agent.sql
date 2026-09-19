@@ -26,7 +26,7 @@ create table if not exists public.browser_agent_runs (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references public.profiles(id) on delete cascade,
   browser_session_id uuid not null references public.browser_sessions(id) on delete cascade,
-  conversation_id uuid references public.conversations(id) on delete set null,
+  conversation_id uuid references public.shared_conversations(id) on delete set null,
   task_run_id uuid references public.zuvyr_task_runs(id) on delete set null,
   request_id text not null check (char_length(request_id) between 1 and 200),
   status text not null default 'planned' check (status in (
@@ -406,6 +406,36 @@ begin
   if v_session.id is null then
     raise exception 'pack082_browser_session_not_available';
   end if;
+
+  if p_conversation_id is not null then
+    if not exists (
+      select 1
+      from public.shared_conversations c
+      where c.id=p_conversation_id
+        and c.owner_id=p_owner_id
+    ) then
+      raise exception 'pack082_conversation_owner_mismatch';
+    end if;
+    if v_session.conversation_id is not null
+       and v_session.conversation_id <> p_conversation_id then
+      raise exception 'pack082_conversation_session_mismatch';
+    end if;
+  end if;
+
+  if p_task_run_id is not null then
+    if not exists (
+      select 1
+      from public.zuvyr_task_runs t
+      where t.id=p_task_run_id
+        and t.user_id=p_owner_id
+    ) then
+      raise exception 'pack082_task_owner_mismatch';
+    end if;
+    if v_session.task_run_id is not null
+       and v_session.task_run_id <> p_task_run_id then
+      raise exception 'pack082_task_session_mismatch';
+    end if;
+  end if;
   if char_length(coalesce(p_request_id,'')) not between 1 and 200 then
     raise exception 'pack082_request_id_invalid';
   end if;
@@ -417,8 +447,27 @@ begin
   end if;
   if jsonb_typeof(p_allowed_hosts) <> 'array'
      or jsonb_array_length(p_allowed_hosts) < 1
-     or jsonb_array_length(p_allowed_hosts) > 32 then
+     or jsonb_array_length(p_allowed_hosts) > 32
+     or exists (
+       select 1
+       from jsonb_array_elements(p_allowed_hosts) e(value)
+       where jsonb_typeof(e.value) <> 'string'
+          or nullif(lower(trim(e.value #>> '{}')),'') is null
+     ) then
     raise exception 'pack082_allowed_hosts_invalid';
+  end if;
+
+  if coalesce(jsonb_typeof(v_session.network_policy->'allowedHosts'),'') <> 'array'
+     or exists (
+       select 1
+       from jsonb_array_elements_text(p_allowed_hosts) h(host)
+       where not exists (
+         select 1
+         from jsonb_array_elements_text(v_session.network_policy->'allowedHosts') s(host)
+         where lower(trim(s.host)) = lower(trim(h.host))
+       )
+     ) then
+    raise exception 'pack082_allowed_hosts_outside_session_scope';
   end if;
   if p_max_steps not between 1 and 40 then
     raise exception 'pack082_max_steps_invalid';
