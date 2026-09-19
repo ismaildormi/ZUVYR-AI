@@ -303,15 +303,28 @@ function createVercelSandboxProvider({
     const id = providerSessionId(value);
     const spec = normalizedCommand(command);
     const cmdId = providerCommandId(commandValue);
-    const result = await request(
-      '/v2/sandboxes/sessions/' + encodeURIComponent(id) +
-        '/cmd?cmdId=' + encodeURIComponent(cmdId),
-      {
-        method: 'POST',
-        body: JSON.stringify(spec)
-      },
-      { timeoutMs: Math.min(30000, spec.timeout + 5000) }
-    );
+    let result;
+    try {
+      result = await request(
+        '/v2/sandboxes/sessions/' + encodeURIComponent(id) +
+          '/cmd?cmdId=' + encodeURIComponent(cmdId),
+        {
+          method: 'POST',
+          body: JSON.stringify(spec)
+        },
+        { timeoutMs: Math.min(30000, spec.timeout + 5000) }
+      );
+    } catch (error) {
+      if (Number(error?.providerStatus) !== 409) throw error;
+      const replay = await getCommand(id, cmdId);
+      return Object.freeze({
+        providerSessionId: id,
+        providerCommandId: cmdId,
+        command: spec.command,
+        startedAt: replay.startedAt || null,
+        replayed: true
+      });
+    }
 
     const returnedId = providerCommandId(result?.command?.id || cmdId);
     if (returnedId !== cmdId) {
@@ -321,7 +334,8 @@ function createVercelSandboxProvider({
       providerSessionId: id,
       providerCommandId: cmdId,
       command: String(result?.command?.name || spec.command),
-      startedAt: result?.command?.startedAt || null
+      startedAt: result?.command?.startedAt || null,
+      replayed: false
     });
   }
 
