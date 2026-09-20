@@ -12,6 +12,7 @@ const {
   normalizeEd25519PublicKey
 } = require('./lib/ipPairingProtocol');
 const { hashSecret, createIpPairingService } = require('./lib/ipPairingService');
+const agentProtocol = require('../device-agent/src/pairingProtocol');
 
 function e(code) {
   const error = new Error(code);
@@ -181,6 +182,33 @@ class FakeRepository {
   const pair = crypto.generateKeyPairSync('ed25519');
   const publicKeyPem = pair.publicKey.export({ type: 'spki', format: 'pem' });
   const normalized = normalizeEd25519PublicKey(publicKeyPem);
+
+  const parityPairing = {
+    challengeId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    challenge: 'A'.repeat(43),
+    ownerId,
+    backendDeviceId: '22222222-2222-4222-8222-222222222222',
+    agentDeviceId,
+    fingerprint: normalized.fingerprint,
+    expiresAt: '2026-09-20T20:05:00.000Z'
+  };
+  assert.deepEqual(
+    pairingProofMessage(parityPairing),
+    agentProtocol.pairingProofMessage(parityPairing)
+  );
+  const parityBody = { nested: { b: 2, a: 1 }, ok: true };
+  assert.equal(bodySha256(parityBody), agentProtocol.bodySha256(parityBody));
+  const parityRequest = {
+    sessionId: '33333333-3333-4333-8333-333333333333',
+    counter: 7,
+    method: 'POST',
+    path: '/api/device-agent/heartbeat',
+    bodySha256: bodySha256(parityBody)
+  };
+  assert.deepEqual(
+    sessionRequestMessage(parityRequest),
+    agentProtocol.sessionRequestMessage(parityRequest)
+  );
   const repo = new FakeRepository();
   const fixedNow = new Date('2026-09-20T20:00:00.000Z');
   const service = createIpPairingService({
@@ -318,6 +346,7 @@ class FakeRepository {
     { code: 'pack086_session_revoked' }
   );
 
+  console.log('PASS: PACK086 backend/device canonical signature protocol remains byte-identical');
   console.log('PASS: PACK086 pairing challenge is hash-only at rest and Ed25519 proof-of-possession bound');
   console.log('PASS: PACK086 session token is hash-only server-side, short-lived and heartbeat-scoped');
   console.log('PASS: PACK086 wrong token, wrong signature, replayed counter and revoked session are rejected');
