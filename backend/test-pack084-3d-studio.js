@@ -18,6 +18,8 @@ const read = file => fs.readFileSync(path.join(__dirname, file), 'utf8');
 const config = require('./config/model3d-studio.v1.json');
 const server = read('server.js');
 const frontend = read('../frontend/zuvyr-suite-v1.js');
+const css = read('../frontend/zuvyr-suite-v1.css');
+const packageJson = JSON.parse(read('package.json'));
 
 assert.equal(config.pack, 84);
 assert.equal(config.truthRules.exposeOnlyManifestBackedExports, true);
@@ -89,10 +91,33 @@ for (const marker of [
   '/api/3d/history',
   '/api/generate-3d',
   '/api/job-status/',
-  '/api/3d-jobs/'
+  '/api/3d-jobs/',
+  'data-zs-3d-model-viewer',
+  'data-zs-3d-camera-reset',
+  'data-zs-3d-exposure',
+  'ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js'
 ]) {
   assert(frontend.includes(marker), marker);
 }
+
+assert.equal(
+  frontend.includes('ajax.googleapis.com/ajax/libs/model-viewer/model-viewer.min.js'),
+  false,
+  'unversioned model-viewer CDN is forbidden'
+);
+for (const marker of [
+  '/* ZUVYR PACK084 3D STUDIO */',
+  '.zs-3d-model-viewer',
+  '.zs-3d-history-item',
+  '.zs-3d-detail-grid'
+]) {
+  assert(css.includes(marker), marker);
+}
+assert(
+  String(packageJson.scripts['test:media-checkpoint'] || '')
+    .includes('node test-pack084-3d-studio.js'),
+  'PACK084 must remain in the media checkpoint'
+);
 
 for (const prohibitedLiveControl of [
   'data-zs-3d-remesh-live',
@@ -108,4 +133,5 @@ console.log('PASS: PACK084 Studio inherits PACK083 generation gates and exposes 
 console.log('PASS: PACK084 export policy is manifest-backed; unsupported GLTF/STL/3MF remain blocked');
 console.log('PASS: PACK084 OBJ/FBX structural validation guards persisted export artifacts');
 console.log('PASS: PACK084 frontend wiring covers capabilities/history/generate/status/cancel/download with blocked unsupported operations');
+console.log('PASS: PACK084 pins the 3D viewer runtime to model-viewer 4.3.1 and ships responsive Studio CSS');
 console.log('LIVE 3D PROVIDER / PAYMENT / PRODUCTION MUTATION CALLS: NONE');
