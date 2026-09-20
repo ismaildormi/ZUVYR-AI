@@ -229,10 +229,11 @@ function collectChild(child, { input = null, signal, timeoutMs = DEFAULT_TIMEOUT
     let stdoutBytes = 0;
     let stderrBytes = 0;
     let done = false;
+    let timer = null;
     const finish = (error, result) => {
       if (done) return;
       done = true;
-      clearTimeout(timer);
+      if (timer) clearTimeout(timer);
       if (signal) signal.removeEventListener('abort', onAbort);
       if (error) reject(error);
       else resolve(result);
@@ -249,7 +250,7 @@ function collectChild(child, { input = null, signal, timeoutMs = DEFAULT_TIMEOUT
       if (signal.aborted) return onAbort();
       signal.addEventListener('abort', onAbort, { once: true });
     }
-    const timer = setTimeout(() => kill('pack087_action_timeout'), timeoutMs);
+    timer = setTimeout(() => kill('pack087_action_timeout'), timeoutMs);
     timer.unref?.();
 
     child.stdout?.on('data', chunk => {
