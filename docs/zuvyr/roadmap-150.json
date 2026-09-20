@@ -2515,7 +2515,7 @@
         "047"
       ],
       "systems": "Existing systems described in scope; exact paths must be grounded from the execution baseline",
-      "status": "PLANNED",
+      "status": "LOCKED_ENGINEERING_VERIFIED",
       "objective": "Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
       "architecture": "Reuse canonical Brain/Kernel, registry/router, content IDs, permissions and one usage ledger. Preserve historical implementation and receipt identity.",
       "ux": "For affected controls, verify loading, empty, error, cancel, retry and reopen states; keyboard, RTL and responsive behavior. Infrastructure-only work has no invented UI requirement.",
