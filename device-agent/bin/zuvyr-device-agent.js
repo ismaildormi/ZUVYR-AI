@@ -141,8 +141,23 @@ async function main() {
   }
 
   if (command === 'self-test') {
-    const child = spawn(process.execPath, [path.resolve(__dirname, '..', 'test', 'pack085-device-agent.test.js')], { stdio: 'inherit' });
-    child.once('exit', code => process.exit(code || 0));
+    const tests = [
+      path.resolve(__dirname, '..', 'test', 'pack085-device-agent.test.js'),
+      path.resolve(__dirname, '..', 'test', 'pack086-pairing.test.js')
+    ];
+    const runNext = index => {
+      if (index >= tests.length) {
+        process.exit(0);
+        return;
+      }
+      const child = spawn(process.execPath, [tests[index]], { stdio: 'inherit' });
+      child.once('exit', code => {
+        if (code) process.exit(code);
+        else runNext(index + 1);
+      });
+      child.once('error', () => process.exit(1));
+    };
+    runNext(0);
     return;
   }
 
