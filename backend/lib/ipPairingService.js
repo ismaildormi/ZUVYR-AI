@@ -10,8 +10,9 @@ const {
 } = require('./ipPairingProtocol');
 
 const PAIRING_TTL_MS = 5 * 60 * 1000;
-const SESSION_TTL_MS = 60 * 60 * 1000;
+const SESSION_TTL_MS = 10 * 60 * 1000;
 const HEARTBEAT_SCOPE = 'heartbeat';
+const SESSION_SCOPES = Object.freeze(['heartbeat','session_status','session_rotate']);
 
 function pairingError(code) {
   const error = new Error(code);
@@ -134,19 +135,28 @@ function createIpPairingService({
       sessionId: result.session_id,
       token,
       tokenExpiresAt: result.token_expires_at || tokenExpiresAt,
-      scopes: Array.isArray(result.scopes) ? result.scopes : [HEARTBEAT_SCOPE],
+      scopes: Array.isArray(result.scopes) ? result.scopes : SESSION_SCOPES,
       executionEnabled: false
     });
   }
 
-  async function rotateSessionToken({ ownerId, sessionId }) {
+  async function rotateSessionToken({ ownerId, sessionId, expectedTokenHash = null }) {
     const owner = uuid(ownerId, 'pack086_owner_id_invalid');
     const session = uuid(sessionId, 'pack086_session_id_invalid');
+    const context = await repository.getSessionContext({ sessionId: session });
+    if (context.session.owner_id !== owner) throw pairingError('pack086_wrong_session');
+    if (context.session.revoked_at || ['stopped','failed'].includes(context.session.state)) {
+      throw pairingError('pack086_session_revoked');
+    }
+    const currentHash = String(expectedTokenHash || context.session.token_hash || '').trim().toLowerCase();
+    if (!/^[0-9a-f]{64}$/.test(currentHash)) throw pairingError('pack086_token_invalid');
+
     const token = newToken(randomBytes);
     const tokenExpiresAt = new Date(clock().getTime() + SESSION_TTL_MS).toISOString();
     const result = await repository.rotateSessionToken({
       ownerId: owner,
       sessionId: session,
+      expectedTokenHash: currentHash,
       tokenHash: hashSecret(token),
       tokenExpiresAt
     });
@@ -155,7 +165,7 @@ function createIpPairingService({
       sessionId: result.session_id,
       token,
       tokenExpiresAt: result.token_expires_at || tokenExpiresAt,
-      scopes: Array.isArray(result.scopes) ? result.scopes : [HEARTBEAT_SCOPE],
+      scopes: Array.isArray(result.scopes) ? result.scopes : SESSION_SCOPES,
       executionEnabled: false
     });
   }
@@ -224,6 +234,7 @@ function createIpPairingService({
       tokenExpiresAt: advanced.token_expires_at || session.token_expires_at,
       scopes: Array.isArray(advanced.scopes) ? advanced.scopes : session.permission_scopes,
       heartbeatAt: advanced.heartbeat_at || clock().toISOString(),
+      tokenHash: session.token_hash,
       executionEnabled: false
     });
   }
@@ -241,6 +252,7 @@ module.exports = {
   PAIRING_TTL_MS,
   SESSION_TTL_MS,
   HEARTBEAT_SCOPE,
+  SESSION_SCOPES,
   pairingError,
   hashSecret,
   createIpPairingService
