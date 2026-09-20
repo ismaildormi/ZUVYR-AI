@@ -154,12 +154,26 @@ async function startSecureAgent({ stateDir, port = config.bind.port, onShutdown 
     paired: false
   };
   fs.writeFileSync(path.join(target, 'runtime.json'), JSON.stringify(runtime, null, 2) + '\n', { encoding: 'utf8', mode: 0o600 });
+  const runtimePath = path.join(target, 'runtime.json');
+  let cleaned = false;
+  const cleanupRuntime = () => {
+    if (cleaned) return;
+    cleaned = true;
+    try { fs.rmSync(runtimePath, { force: true }); } catch (_) {}
+  };
+  instance.server.once('close', cleanupRuntime);
   return Object.freeze({
     server: instance.server,
     address: Object.freeze({ host: address.address, port: address.port }),
     identity: instance.identity,
     runtime,
-    close: () => new Promise(resolve => instance.server.close(resolve))
+    close: () => new Promise((resolve, reject) => {
+      instance.server.close(error => {
+        cleanupRuntime();
+        if (error) reject(error);
+        else resolve();
+      });
+    })
   });
 }
 

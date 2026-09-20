@@ -54,9 +54,18 @@ function readJson(filePath, code) {
   }
 }
 
-function publicKeyFingerprint(publicKeyPem) {
+function publicKeyFingerprint(publicKeyInput) {
   try {
-    const key = crypto.createPublicKey(publicKeyPem);
+    const key =
+      publicKeyInput &&
+      typeof publicKeyInput === 'object' &&
+      publicKeyInput.type === 'public' &&
+      publicKeyInput.asymmetricKeyType
+        ? publicKeyInput
+        : crypto.createPublicKey(publicKeyInput);
+    if (key.asymmetricKeyType !== 'ed25519') {
+      throw new TypeError('expected Ed25519 public key');
+    }
     const der = key.export({ type: 'spki', format: 'der' });
     return crypto.createHash('sha256').update(der).digest('hex');
   } catch (cause) {

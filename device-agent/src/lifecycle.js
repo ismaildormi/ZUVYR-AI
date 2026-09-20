@@ -2,6 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const os = require('node:os');
 const config = require('../config.v1.json');
 const { ensurePrivateDir, ensureIdentity, ensureAuthToken, agentError } = require('./security');
 
@@ -12,19 +13,79 @@ const KNOWN_RUNTIME_FILES = Object.freeze([
   'zuvyr-device-agent'
 ]);
 
-function safeStateDir(value) {
+function isPathInside(base, target) {
+  const root = path.resolve(String(base || ''));
+  const candidate = path.resolve(String(target || ''));
+  const relative = path.relative(root, candidate);
+  return relative === '' || (
+    relative !== '..' &&
+    !relative.startsWith('..' + path.sep) &&
+    !path.isAbsolute(relative)
+  );
+}
+
+function assertLeastPrivilege({
+  platform = process.platform,
+  effectiveUid = typeof process.geteuid === 'function' ? process.geteuid() : null,
+  allowElevated = false
+} = {}) {
+  if (platform !== 'win32' && effectiveUid === 0 && allowElevated !== true) {
+    throw agentError('device_agent_elevation_forbidden');
+  }
+  return true;
+}
+
+function safeStateDir(value, {
+  platform = process.platform,
+  home = os.homedir(),
+  allowOutsideHome = false
+} = {}) {
   const resolved = path.resolve(String(value || ''));
   const root = path.parse(resolved).root;
   if (!resolved || resolved === root) throw agentError('device_agent_state_dir_unsafe');
+  if (allowOutsideHome !== true && !isPathInside(home, resolved)) {
+    throw agentError('device_agent_state_dir_outside_user_home');
+  }
   return resolved;
+}
+
+function runtimeProcessAlive(target) {
+  const runtimePath = path.join(target, 'runtime.json');
+  if (!fs.existsSync(runtimePath)) return false;
+  let runtime;
+  try { runtime = JSON.parse(fs.readFileSync(runtimePath, 'utf8')); }
+  catch (_) { throw agentError('device_agent_runtime_state_invalid'); }
+  const pid = Number(runtime && runtime.pid);
+  if (!Number.isInteger(pid) || pid <= 0) {
+    fs.rmSync(runtimePath, { force: true });
+    return false;
+  }
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    if (error && error.code === 'EPERM') return true;
+    fs.rmSync(runtimePath, { force: true });
+    return false;
+  }
 }
 
 function quoteSh(value) {
   return "'" + String(value).replace(/'/g, "'\\''") + "'";
 }
 
-function installUser({ stateDir, sourceDir, platform = process.platform, nodePath = process.execPath } = {}) {
-  const target = safeStateDir(stateDir);
+function installUser({
+  stateDir,
+  sourceDir,
+  platform = process.platform,
+  nodePath = process.execPath,
+  home = os.homedir(),
+  effectiveUid = typeof process.geteuid === 'function' ? process.geteuid() : null,
+  allowElevated = false,
+  allowOutsideHome = false
+} = {}) {
+  assertLeastPrivilege({ platform, effectiveUid, allowElevated });
+  const target = safeStateDir(stateDir, { platform, home, allowOutsideHome });
   const source = path.resolve(String(sourceDir || ''));
   if (!fs.existsSync(path.join(source, 'config.v1.json'))) throw agentError('device_agent_install_source_invalid');
 
@@ -67,8 +128,18 @@ function installUser({ stateDir, sourceDir, platform = process.platform, nodePat
   return Object.freeze(manifest);
 }
 
-function uninstallUser({ stateDir, purgeIdentity = false } = {}) {
-  const target = safeStateDir(stateDir);
+function uninstallUser({
+  stateDir,
+  purgeIdentity = false,
+  platform = process.platform,
+  home = os.homedir(),
+  effectiveUid = typeof process.geteuid === 'function' ? process.geteuid() : null,
+  allowElevated = false,
+  allowOutsideHome = false
+} = {}) {
+  assertLeastPrivilege({ platform, effectiveUid, allowElevated });
+  const target = safeStateDir(stateDir, { platform, home, allowOutsideHome });
+  if (runtimeProcessAlive(target)) throw agentError('device_agent_running_stop_first');
   fs.rmSync(path.join(target, 'app'), { recursive: true, force: true });
   for (const name of KNOWN_RUNTIME_FILES) fs.rmSync(path.join(target, name), { force: true });
   if (purgeIdentity === true) {
@@ -82,4 +153,4 @@ function uninstallUser({ stateDir, purgeIdentity = false } = {}) {
   });
 }
 
-module.exports = { KNOWN_RUNTIME_FILES, installUser, uninstallUser, safeStateDir };
+module.exports = { KNOWN_RUNTIME_FILES, isPathInside, assertLeastPrivilege, runtimeProcessAlive, installUser, uninstallUser, safeStateDir };

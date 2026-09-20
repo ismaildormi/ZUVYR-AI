@@ -14,7 +14,7 @@ const {
   ensureAuthToken,
   secureTokenEqual
 } = require('../src/security');
-const { installUser, uninstallUser } = require('../src/lifecycle');
+const { installUser, uninstallUser, safeStateDir, assertLeastPrivilege } = require('../src/lifecycle');
 const { verifySignedManifest, verifyArtifact } = require('../src/updateVerifier');
 const { startSecureAgent } = require('../src/server');
 const { assertIpExecutionAvailable, publicInventory } = require('../../backend/lib/ipCapabilityRegistry');
@@ -72,6 +72,19 @@ function request({ port, method = 'GET', route, token, origin, host } = {}) {
 
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'zuvyr-pack085-'));
   try {
+    assert.equal(assertLeastPrivilege({ platform: 'linux', effectiveUid: 1000 }), true);
+    assert.throws(
+      () => assertLeastPrivilege({ platform: 'linux', effectiveUid: 0 }),
+      { code: 'device_agent_elevation_forbidden' }
+    );
+    assert.equal(
+      safeStateDir(path.join(root, 'inside-home'), { home: root }),
+      path.join(root, 'inside-home')
+    );
+    assert.throws(
+      () => safeStateDir(path.resolve(root, '..', 'outside-home'), { home: root }),
+      { code: 'device_agent_state_dir_outside_user_home' }
+    );
     const identityDir = path.join(root, 'identity');
     const first = ensureIdentity(identityDir);
     const second = ensureIdentity(identityDir);
@@ -94,7 +107,9 @@ function request({ port, method = 'GET', route, token, origin, host } = {}) {
     const installed = installUser({
       stateDir: installDir,
       sourceDir: path.resolve(__dirname, '..'),
-      platform: process.platform
+      platform: process.platform,
+      home: root,
+      effectiveUid: 1000
     });
     assert.equal(installed.scope, 'user');
     assert.equal(installed.requiresAdmin, false);
@@ -102,7 +117,7 @@ function request({ port, method = 'GET', route, token, origin, host } = {}) {
     assert(fs.existsSync(path.join(installDir, 'app', 'bin', 'zuvyr-device-agent.js')));
     assert(fs.existsSync(installed.launcher));
     assert(fs.existsSync(path.join(installDir, 'identity.json')));
-    const removed = uninstallUser({ stateDir: installDir });
+    const removed = uninstallUser({ stateDir: installDir, home: root, effectiveUid: 1000 });
     assert.equal(removed.uninstalled, true);
     assert.equal(removed.identityPreserved, true);
     assert.equal(fs.existsSync(path.join(installDir, 'app')), false);
@@ -126,6 +141,39 @@ function request({ port, method = 'GET', route, token, origin, host } = {}) {
     });
     assert.equal(verified.version, '1.2.3');
     assert.equal(verifyArtifact(verified, artifact), true);
+    const credentialUrlBytes = Buffer.from(JSON.stringify({
+      version: '1.2.3',
+      sha256: crypto.createHash('sha256').update(artifact).digest('hex'),
+      sizeBytes: artifact.length,
+      url: 'https://user:secret@updates.example.test/zuvyr-device-agent.bin'
+    }));
+    const credentialSignature = crypto.sign(null, credentialUrlBytes, updateKeys.privateKey).toString('base64');
+    assert.throws(() => verifySignedManifest({
+      manifestBytes: credentialUrlBytes,
+      signatureBase64: credentialSignature,
+      publicKeyPem: updateKeys.publicKey.export({ type: 'spki', format: 'pem' }),
+      allowedHosts: ['updates.example.test']
+    }), { code: 'device_agent_update_url_credentials_forbidden' });
+
+    const ipUrlBytes = Buffer.from(JSON.stringify({
+      version: '1.2.3',
+      sha256: crypto.createHash('sha256').update(artifact).digest('hex'),
+      sizeBytes: artifact.length,
+      url: 'https://127.0.0.1/zuvyr-device-agent.bin'
+    }));
+    const ipSignature = crypto.sign(null, ipUrlBytes, updateKeys.privateKey).toString('base64');
+    assert.throws(() => verifySignedManifest({
+      manifestBytes: ipUrlBytes,
+      signatureBase64: ipSignature,
+      publicKeyPem: updateKeys.publicKey.export({ type: 'spki', format: 'pem' }),
+      allowedHosts: ['127.0.0.1']
+    }), { code: 'device_agent_update_host_forbidden' });
+    assert.throws(() => verifySignedManifest({
+      manifestBytes,
+      signatureBase64: '%%%not-base64%%%',
+      publicKeyPem: updateKeys.publicKey.export({ type: 'spki', format: 'pem' }),
+      allowedHosts: ['updates.example.test']
+    }), { code: 'device_agent_update_signature_invalid' });
     assert.throws(() => verifySignedManifest({
       manifestBytes: Buffer.concat([manifestBytes, Buffer.from(' ')]),
       signatureBase64: signature,
@@ -173,9 +221,13 @@ function request({ port, method = 'GET', route, token, origin, host } = {}) {
     assert.equal(execution.status, 404);
     assert.equal(execution.body.executionEnabled, false);
 
+    const runtimePath = path.join(serverDir, 'runtime.json');
+    assert.equal(fs.existsSync(runtimePath), true);
     const shutdown = await request({ port, method: 'POST', route: '/v1/shutdown', token: agent.token });
     assert.equal(shutdown.status, 202);
     await new Promise(resolve => agent.server.once('close', resolve));
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(fs.existsSync(runtimePath), false);
 
     console.log('PASS: PACK085 device identity and auth-token custody are local, private and stable');
     console.log('PASS: PACK085 user-scope install/uninstall works without admin and preserves identity by default');

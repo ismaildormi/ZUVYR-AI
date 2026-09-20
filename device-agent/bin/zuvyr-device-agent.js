@@ -7,7 +7,7 @@ const path = require('node:path');
 const { spawn } = require('node:child_process');
 const config = require('../config.v1.json');
 const { defaultStateDir, ensureIdentity, publicIdentity, ensureAuthToken } = require('../src/security');
-const { installUser, uninstallUser } = require('../src/lifecycle');
+const { installUser, uninstallUser, assertLeastPrivilege } = require('../src/lifecycle');
 const { startSecureAgent } = require('../src/server');
 
 function option(name) {
@@ -42,6 +42,9 @@ async function stopAgent(dir) {
 async function main() {
   const command = process.argv[2] || 'help';
   const dir = stateDir();
+  if (['install','uninstall','start','serve','init'].includes(command)) {
+    assertLeastPrivilege();
+  }
 
   if (command === 'init') {
     print({ status: 'success', stateDir: dir, identity: publicIdentity(ensureIdentity(dir)), executionEnabled: false });
