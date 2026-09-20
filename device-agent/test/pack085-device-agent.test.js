@@ -120,9 +120,13 @@ function request({ port, method = 'GET', route, token, origin, host } = {}) {
     const removed = uninstallUser({ stateDir: installDir, home: root, effectiveUid: 1000 });
     assert.equal(removed.uninstalled, true);
     assert.equal(removed.identityPreserved, true);
+    assert.equal(removed.localTokenRemoved, true);
     assert.equal(fs.existsSync(path.join(installDir, 'app')), false);
     assert.equal(fs.existsSync(path.join(installDir, 'identity.json')), true);
-    assert.equal(fs.existsSync(path.join(installDir, 'auth.token')), true);
+    assert.equal(fs.existsSync(path.join(installDir, 'auth.token')), false);
+    const rotatedToken = ensureAuthToken(installDir);
+    assert.notEqual(rotatedToken, token);
+    fs.rmSync(path.join(installDir, 'auth.token'), { force: true });
 
     const updateKeys = crypto.generateKeyPairSync('ed25519');
     const artifact = Buffer.from('zuvyr-device-agent-test-artifact');
