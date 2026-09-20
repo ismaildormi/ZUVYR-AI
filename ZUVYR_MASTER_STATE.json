@@ -1842,7 +1842,7 @@
     "effective_date": "2026-09-19",
     "current_inflight_pack": null,
     "current_inflight_may_finish": false,
-    "next_pack_after_current_inflight": "084",
+    "next_pack_after_current_inflight": "085",
     "priority_sequence": [
       "094 - Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
       "095 - ZUVYR Model Lab",
