@@ -137,11 +137,13 @@ function buildSignedSessionRequest(stateDir, { method, path: route, body = {} } 
   const nextCounter = Number(session.counter || 0) + 1;
   if (!Number.isSafeInteger(nextCounter) || nextCounter <= 0) throw agentError('pack086_session_counter_invalid');
   const digest = bodySha256(body);
+  const tokenHash = crypto.createHash('sha256').update(session.token, 'utf8').digest('hex');
   const message = sessionRequestMessage({
     sessionId: session.sessionId,
     counter: nextCounter,
     method,
     path: route,
+    tokenHash,
     bodySha256: digest
   });
   const privateKey = crypto.createPrivateKey(identity.privateKeyPem);
