@@ -63,11 +63,12 @@ function sessionRequestMessage(input = {}) {
   const route = String(input.path || '').trim();
   if (!route.startsWith('/api/device-agent/') || route.length > 200) throw protocolError('pack086_path_invalid');
   const payload = {
-    version: 'pack086.session-request.v1',
+    version: 'pack086.session-request.v2',
     sessionId: uuid(input.sessionId, 'pack086_session_id_invalid'),
     counter,
     method,
     path: route,
+    tokenHash: hex64(input.tokenHash, 'pack086_token_hash_invalid'),
     bodySha256: hex64(input.bodySha256, 'pack086_body_hash_invalid')
   };
   return Buffer.from(canonicalJson(payload), 'utf8');
