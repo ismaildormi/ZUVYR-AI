@@ -96,13 +96,27 @@ assert.throws(
   () => validateObj(Buffer.from('this is not an obj mesh')),
   error => error.code === 'model3d_obj_structure_invalid'
 );
-validateFbx(Buffer.concat([
-  Buffer.from('Kaydara FBX Binary'),
-  Buffer.alloc(32)
-]));
+const validFbxHeader=Buffer.from([
+  0x4b,0x61,0x79,0x64,0x61,0x72,0x61,0x20,
+  0x46,0x42,0x58,0x20,0x42,0x69,0x6e,0x61,
+  0x72,0x79,0x20,0x20,0x00,0x1a,0x00
+]);
+validateFbx(Buffer.concat([validFbxHeader,Buffer.alloc(32)]));
 assert.throws(
   () => validateFbx(Buffer.from('not-an-fbx-file-with-padding-000000')),
   error => error.code === 'model3d_fbx_structure_invalid'
+);
+
+const validUsdz=Buffer.concat([
+  Buffer.from([0x50,0x4b,0x03,0x04]),
+  Buffer.alloc(32),
+  Buffer.from([0x50,0x4b,0x05,0x06]),
+  Buffer.alloc(18)
+]);
+validateUsdz(validUsdz);
+assert.throws(
+  () => validateUsdz(Buffer.concat([Buffer.from([0x50,0x4b,0x03,0x04]),Buffer.alloc(32)])),
+  error => error.code === 'model3d_usdz_zip_footer_invalid'
 );
 
 const minimalUsdz=Buffer.alloc(40);
