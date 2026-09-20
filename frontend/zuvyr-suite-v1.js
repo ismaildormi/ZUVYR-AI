@@ -972,13 +972,22 @@
     error:null,
     modelUrl:null,
     thumbnailUrl:null,
-    viewerLoad:null
+    viewerLoad:null,
+    pollTimer:null
   };
 
   function model3dStudioView(){
     return heading('3d')+
       '<div class="zs-banner" data-zs-3d-banner><span>⬡</span><div><b>3D Studio is loading verified capabilities.</b> Paid generation remains owned by the PACK083/M18 gate.</div></div>'+
       '<div class="zs-grid">'+
+        '<div class="zs-card half"><h2>Create 3D</h2><form data-zs-3d-form>'+
+          '<div class="zs-field"><label>Prompt</label><textarea name="prompt" maxlength="1200" required placeholder="A clean stylized ceramic robot with rounded edges"></textarea></div>'+
+          '<div class="zs-field"><label>Geometry mode</label><select name="generateType"><option value="Normal">Normal + texture</option><option value="Geometry">Geometry only</option></select></div>'+
+          '<div class="zs-field"><label>Face count</label><input name="faceCount" type="number" min="40000" max="1500000" step="10000" value="500000"></div>'+
+          '<label class="zs-consent"><input name="enablePbr" type="checkbox" checked> Generate PBR material when supported by the selected geometry mode.</label>'+
+          '<div class="zs-actions"><button type="submit" class="zs-primary" data-zs-3d-generate disabled>Generate 3D</button><span class="zs-hint" data-zs-3d-generate-hint>Checking M18 and PACK083 execution gates.</span></div>'+
+        '</form></div>'+
+        '<div class="zs-card half"><h2>Generation policy</h2><p>Text-to-3D uses the existing PACK083 executor, exact pricing and canonical reserve/settle/refund path. Image and multiview inputs remain outside this Studio until the canonical asset picker is bound.</p><p class="zs-note">Opening the Studio performs zero AI-provider calls and spends zero credits.</p></div>'+
         '<div class="zs-card wide"><div class="zs-actions" style="justify-content:space-between;align-items:center"><div><h2 style="margin:0">Canonical 3D history</h2><p style="margin:.35rem 0 0">Owner-scoped models. Reopen and export never rerun the provider.</p></div><button type="button" class="zs-secondary" data-zs-3d-refresh>Refresh</button></div><div class="zs-3d-history" data-zs-3d-history><div class="zs-muted">Open 3D Studio to load history.</div></div></div>'+
         '<div class="zs-card wide"><h2>Viewer & exports</h2><div data-zs-3d-detail><div class="zs-empty"><div><strong>No model selected</strong><span>Choose an existing canonical 3D job to reopen it.</span></div></div></div></div>'+
         '<div class="zs-card half"><h2>Operation truth</h2><div class="zs-chip-row" data-zs-3d-operations><span class="zs-chip">Loading…</span></div><p class="zs-note">Post-generation remesh, retopo, rig, animation and retarget controls stay blocked until a verified executor exists.</p></div>'+
@@ -1082,6 +1091,37 @@
       status.classList.add('ready');
       status.textContent=generation.liveExecution===true?'Studio ready · Generation live':'Studio ready · Generation gated';
     }
+    var form=view.querySelector('[data-zs-3d-form]');
+    var generateButton=view.querySelector('[data-zs-3d-generate]');
+    var generateHint=view.querySelector('[data-zs-3d-generate-hint]');
+    if(form&&generation.options){
+      var options=generation.options;
+      if(form.elements.faceCount){
+        form.elements.faceCount.min=String(options.minFaceCount||40000);
+        form.elements.faceCount.max=String(options.maxFaceCount||1500000);
+        if(!form.elements.faceCount.dataset.pack084Init){
+          form.elements.faceCount.value=String(options.defaultFaceCount||500000);
+          form.elements.faceCount.dataset.pack084Init='true';
+        }
+      }
+      if(form.elements.generateType&&Array.isArray(options.generateTypes)){
+        var currentType=form.elements.generateType.value;
+        form.elements.generateType.innerHTML=options.generateTypes.map(function(value){
+          return '<option value="'+esc(value)+'">'+esc(value==='Geometry'?'Geometry only':'Normal + texture')+'</option>';
+        }).join('');
+        if(options.generateTypes.indexOf(currentType)>-1)form.elements.generateType.value=currentType;
+      }
+      if(form.elements.enablePbr&&!form.elements.enablePbr.dataset.pack084Init){
+        form.elements.enablePbr.checked=options.defaultEnablePbr===true;
+        form.elements.enablePbr.dataset.pack084Init='true';
+      }
+    }
+    if(generateButton)generateButton.disabled=generation.liveExecution!==true;
+    if(generateHint){
+      generateHint.textContent=generation.liveExecution===true
+        ?'Generation is live through PACK083 exact pricing; submitting can reserve credits.'
+        :'Generation is disabled before request creation, so this control cannot call the provider or reserve credits.';
+    }
     if(banner){
       var blockers=Array.isArray(generation.blockers)?generation.blockers:[];
       banner.innerHTML='<span>⬡</span><div><b>PACK084 Studio controls are zero-provider.</b> '+
@@ -1138,16 +1178,27 @@
       return;
     }
     if(!model3dStudioState.history.length){
-      list.innerHTML='<div class="zs-empty"><div><strong>No canonical 3D results yet</strong><span>Paid generation is not started from this Studio while M18 remains unverified.</span></div></div>';
+      list.innerHTML='<div class="zs-empty"><div><strong>No canonical 3D results yet</strong><span>Generation stays fail-closed until M18 and PACK083 execution gates are verified.</span></div></div>';
       return;
     }
     list.innerHTML=model3dStudioState.history.map(function(item){
       var manifest=Array.isArray(item.manifest)?item.manifest:[];
-      var formats=manifest.filter(function(entry){return /^model_glb$|^export_(glb|obj|fbx|usdz)$/.test(String(entry.role||''));}).map(function(entry){return model3dFormatRole(entry.role);});
-      return '<button type="button" class="zs-3d-history-item" data-zs-3d-open="'+esc(item.jobId)+'">'+
-        '<span><strong>'+esc(model3dHumanOperation(item.operation))+'</strong><small>'+esc(item.prompt||'Generated 3D model')+'</small></span>'+
-        '<span><small>'+esc(String(item.status||'unknown'))+' · '+esc(model3dStudioDate(item.completedAt||item.createdAt))+'</small><small>'+esc(formats.join(' · ')||'No validated export')+'</small></span>'+
-      '</button>';
+      var downloads=manifest.filter(function(entry){
+        return /^model_glb$|^export_(glb|obj|fbx|usdz)$/.test(String(entry.role||''))&&entry.assetId;
+      });
+      var formats=downloads.map(function(entry){return model3dFormatRole(entry.role);});
+      var status=String(item.status||'unknown').toLowerCase();
+      var canOpen=status==='done'&&manifest.some(function(entry){return entry.role==='model_glb'&&entry.assetId;});
+      var canCancel=['queued','processing','running'].indexOf(status)>-1;
+      return '<article class="zs-3d-history-item" data-zs-3d-job="'+esc(item.jobId)+'">'+
+        '<div><strong>'+esc(model3dHumanOperation(item.operation))+'</strong><small>'+esc(item.prompt||'Generated 3D model')+'</small></div>'+
+        '<div><small>'+esc(status)+' · '+esc(model3dStudioDate(item.completedAt||item.createdAt))+'</small><small>'+esc(formats.join(' · ')||'No validated export')+'</small></div>'+
+        '<div class="zs-actions">'+
+          (canOpen?'<button type="button" class="zs-primary" data-zs-3d-open="'+esc(item.jobId)+'">Open</button>':'')+
+          downloads.map(function(entry){return '<button type="button" class="zs-secondary" data-zs-3d-download="'+esc(item.jobId)+'" data-role="'+esc(entry.role)+'">'+esc(model3dFormatRole(entry.role))+'</button>';}).join('')+
+          (canCancel?'<button type="button" class="zs-secondary" data-zs-3d-cancel="'+esc(item.jobId)+'">Cancel</button>':'')+
+        '</div>'+
+      '</article>';
     }).join('');
   }
 
@@ -1233,9 +1284,84 @@
     }catch(error){toast(error.message);}
   }
 
-  async function loadModel3dStudio(){
+
+  function model3dTerminal(status){
+    return ['done','failed','cancelled'].indexOf(String(status||'').toLowerCase())>-1;
+  }
+
+  function clearModel3dPoll(){
+    if(model3dStudioState.pollTimer){
+      clearTimeout(model3dStudioState.pollTimer);
+      model3dStudioState.pollTimer=null;
+    }
+  }
+
+  async function cancelModel3dStudioJob(jobId){
+    try{
+      await model3dStudioRequest(
+        '/api/3d-jobs/'+encodeURIComponent(jobId)+'/cancel',
+        {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}
+      );
+      toast('3D job cancellation recorded.');
+      await loadModel3dStudio(true);
+    }catch(error){toast(error.message);}
+  }
+
+  async function pollModel3dStudioJob(jobId,attempt){
+    attempt=Number(attempt)||0;
+    var view=model3dStudioNode();
+    if(!view||view.dataset.active!=='true'||attempt>90)return;
+    try{
+      var data=await model3dStudioRequest('/api/job-status/'+encodeURIComponent(jobId));
+      if(model3dTerminal(data.status)){
+        clearModel3dPoll();
+        await loadModel3dStudio(true);
+        if(String(data.status).toLowerCase()==='done')await openModel3dStudioItem(jobId);
+        return;
+      }
+    }catch(_){}
+    clearModel3dPoll();
+    model3dStudioState.pollTimer=setTimeout(function(){
+      pollModel3dStudioJob(jobId,attempt+1);
+    },2000);
+  }
+
+  async function submitModel3dStudio(form){
+    var caps=model3dStudioState.capabilities||{};
+    var generation=caps.generation||{};
+    if(generation.liveExecution!==true){
+      toast('3D generation is fail-closed until M18 and PACK083 paid-execution gates are live.');
+      return;
+    }
+    var button=form.querySelector('[data-zs-3d-generate]');
+    if(button)button.disabled=true;
+    try{
+      var generateType=String(form.elements.generateType.value||'Normal');
+      var data=await model3dStudioRequest('/api/generate-3d',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          prompt:String(form.elements.prompt.value||'').trim(),
+          model3dOperation:'text_to_3d',
+          model3dViews:{},
+          model3dOptions:{
+            generateType:generateType,
+            enablePbr:generateType==='Geometry'?false:form.elements.enablePbr.checked===true,
+            faceCount:Number(form.elements.faceCount.value)
+          }
+        })
+      });
+      toast('3D job queued through the canonical ledger.');
+      await loadModel3dStudio(true);
+      if(data.jobId)pollModel3dStudioJob(data.jobId,0);
+    }catch(error){toast(error.message);}
+    finally{renderModel3dStudioTruth();}
+  }
+
+  async function loadModel3dStudio(force){
     var view=model3dStudioNode();
     if(!view)return;
+    if(model3dStudioState.loading&&!force)return;
     model3dStudioState.loading=true;
     model3dStudioState.error=null;
     renderModel3dStudioHistory();
@@ -1263,12 +1389,28 @@
     var view=model3dStudioNode();
     if(!view||view.dataset.model3dStudioBound==='true')return;
     view.dataset.model3dStudioBound='true';
+    var form=view.querySelector('[data-zs-3d-form]');
+    if(form){
+      form.addEventListener('submit',function(event){
+        event.preventDefault();
+        submitModel3dStudio(form);
+      });
+      form.addEventListener('change',function(event){
+        if(!event.target||event.target.name!=='generateType')return;
+        var pbr=form.elements.enablePbr;
+        if(!pbr)return;
+        var geometry=event.target.value==='Geometry';
+        pbr.disabled=geometry;
+        if(geometry)pbr.checked=false;
+      });
+    }
     view.addEventListener('click',function(event){
-      var target=event.target&&event.target.closest?event.target.closest('[data-zs-3d-refresh],[data-zs-3d-open],[data-zs-3d-download],[data-zs-3d-camera-reset]'):null;
+      var target=event.target&&event.target.closest?event.target.closest('[data-zs-3d-refresh],[data-zs-3d-open],[data-zs-3d-download],[data-zs-3d-cancel],[data-zs-3d-camera-reset]'):null;
       if(!target)return;
       if(target.hasAttribute('data-zs-3d-refresh')){loadModel3dStudio();return;}
       if(target.hasAttribute('data-zs-3d-open')){openModel3dStudioItem(target.getAttribute('data-zs-3d-open'));return;}
       if(target.hasAttribute('data-zs-3d-download')){downloadModel3dStudioRole(target.getAttribute('data-zs-3d-download'),target.getAttribute('data-role'));return;}
+      if(target.hasAttribute('data-zs-3d-cancel')){cancelModel3dStudioJob(target.getAttribute('data-zs-3d-cancel'));return;}
       if(target.hasAttribute('data-zs-3d-camera-reset')){
         var viewer=view.querySelector('[data-zs-3d-model-viewer]');
         if(viewer){
