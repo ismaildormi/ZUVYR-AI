@@ -73,6 +73,10 @@ function capabilities(paired = false, { env = process.env } = {}) {
       permissionsActionsStopUndo: 'PACK087',
       permissionRequired: true,
       signedSessionRequired: true
+    }),
+    nextAuthority: Object.freeze({
+      pairing: 'PACK086',
+      actions: 'PACK087'
     })
   });
 }
