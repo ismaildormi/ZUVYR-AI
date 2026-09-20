@@ -110,7 +110,14 @@ function loadSession(stateDir) {
   data.agentDeviceId = strictUuid(data.agentDeviceId, 'pack086_agent_device_id_invalid');
   if (!/^zst_[A-Za-z0-9_-]{40,80}$/.test(String(data.token || ''))) throw agentError('pack086_session_token_invalid');
   data.tokenExpiresAt = futureIso(data.tokenExpiresAt);
-  if (!Array.isArray(data.scopes) || data.scopes.length !== 1 || data.scopes[0] !== 'heartbeat') {
+  const allowedScopes = new Set(['heartbeat','session_status','session_rotate']);
+  if (
+    !Array.isArray(data.scopes) ||
+    data.scopes.length < 1 ||
+    data.scopes.length > allowedScopes.size ||
+    new Set(data.scopes).size !== data.scopes.length ||
+    data.scopes.some(scope => !allowedScopes.has(scope))
+  ) {
     throw agentError('pack086_session_scope_invalid');
   }
   if (!Number.isSafeInteger(Number(data.counter)) || Number(data.counter) < 0) throw agentError('pack086_session_counter_invalid');
