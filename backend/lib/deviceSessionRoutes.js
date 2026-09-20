@@ -82,7 +82,7 @@ function createDeviceSessionRouter({ db, service, env = process.env } = {}) {
     tokenExpiresAt: session.tokenExpiresAt,
     scopes: session.scopes,
     heartbeatAt: session.heartbeatAt,
-    executionEnabled: false
+    executionEnabled: session.executionEnabled === true
   });
 
   router.post('/heartbeat', async (req, res) => {
