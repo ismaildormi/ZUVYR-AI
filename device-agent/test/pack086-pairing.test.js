@@ -29,7 +29,8 @@ try {
   assert.equal(config.execution.pairingEnabled, true);
   assert.equal(config.execution.computerControlEnabled, false);
   assert.equal(config.session.transport, 'https_only');
-  assert.deepEqual(config.session.allowedScopes, ['heartbeat']);
+  assert.equal(config.session.tokenTtlSeconds, 600);
+  assert.deepEqual(config.session.allowedScopes, ['heartbeat','session_status','session_rotate']);
   assert.equal(config.session.rawIpTrust, false);
 
   const identity = ensureIdentity(root);
@@ -64,13 +65,14 @@ try {
     deviceId: challenge.backendDeviceId,
     sessionId: '33333333-3333-4333-8333-333333333333',
     token,
-    tokenExpiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-    scopes: ['heartbeat']
+    tokenExpiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+    scopes: ['heartbeat','session_status','session_rotate']
   });
 
   const stored = loadSession(root);
   assert.equal(stored.token, token);
   assert.equal(stored.counter, 0);
+  assert.deepEqual(stored.scopes, ['heartbeat','session_status','session_rotate']);
   if (process.platform !== 'win32') {
     assert.equal(fs.statSync(path.join(root, 'session.json')).mode & 0o077, 0);
   }
@@ -107,6 +109,28 @@ try {
   });
   assert.equal(second.headers['X-ZUVYR-Device-Counter'], '2');
 
+  const statusProof = buildSignedSessionRequest(root, {
+    method: 'POST',
+    path: '/api/device-agent/status',
+    body: {}
+  });
+  assert.equal(statusProof.headers['X-ZUVYR-Device-Counter'], '3');
+  assert.equal(
+    crypto.verify(
+      null,
+      sessionRequestMessage({
+        sessionId: stored.sessionId,
+        counter: 3,
+        method: 'POST',
+        path: '/api/device-agent/status',
+        bodySha256: bodySha256({})
+      }),
+      crypto.createPublicKey(identity.publicKeyPem),
+      Buffer.from(statusProof.headers['X-ZUVYR-Device-Signature'], 'base64')
+    ),
+    true
+  );
+
   const localServer = createAgentServer({ stateDir: root });
   assert.equal(Object.hasOwn(localServer, 'token'), false);
   localServer.server.close();
@@ -133,7 +157,7 @@ try {
   assert.equal(fs.existsSync(path.join(root, 'session.json')), false);
 
   console.log('PASS: PACK086 agent signs pairing proof with its PACK085 Ed25519 identity');
-  console.log('PASS: PACK086 stores short-lived session token privately and emits monotonic signed heartbeat proofs');
+  console.log('PASS: PACK086 stores 10-minute bounded-scope session state privately and emits monotonic signed proofs');
   console.log('PASS: PACK086 agent requires HTTPS origin and rejects raw IP/local backend origins');
   console.log('PASS: PACK087 computer-control actions remain disabled');
 } finally {
