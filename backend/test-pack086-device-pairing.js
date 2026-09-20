@@ -155,6 +155,7 @@ class FakeRepository {
 
 (async () => {
   const sql = fs.readFileSync(path.join(__dirname, '86_pack086_device_pairing_secure_session.sql'), 'utf8');
+  const foundationSql = fs.readFileSync(path.join(__dirname, '35_zuvyr_ip_safety_foundation.sql'), 'utf8');
   const roxRoutes = fs.readFileSync(path.join(__dirname, 'lib', 'roxIpRoutes.js'), 'utf8');
   const deviceRoutes = fs.readFileSync(path.join(__dirname, 'lib', 'deviceSessionRoutes.js'), 'utf8');
   const server = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8');
@@ -172,7 +173,7 @@ class FakeRepository {
     'agent_device_id uuid',
     'token_hash text',
     'last_client_counter bigint',
-    'execution_enabled boolean not null default false',
+
     'start_ip_pairing_pack086',
     'complete_ip_pairing_pack086',
     'advance_ip_session_counter_pack086',
@@ -180,6 +181,14 @@ class FakeRepository {
     'revoke all on table public.ip_pairing_challenges from public,anon,authenticated',
     'grant execute on function public.advance_ip_session_counter_pack086'
   ]) assert(sql.includes(marker), marker);
+  assert(
+    foundationSql.includes(
+      'execution_enabled boolean not null default false check (execution_enabled = false)'
+    ),
+    'PACK08 must remain the canonical fail-closed execution authority'
+  );
+  assert.equal(/execution_enabled\s*=\s*true/i.test(sql), false);
+  assert(sql.includes("'execution_enabled',false"));
 
   assert(roxRoutes.includes("router.post('/pairing/start'"));
   assert(roxRoutes.includes("router.post('/pairing/complete'"));
