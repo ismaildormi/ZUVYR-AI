@@ -84,7 +84,13 @@ function saveSession(stateDir, input) {
   if (!Number.isFinite(Date.parse(data.tokenExpiresAt)) || Date.parse(data.tokenExpiresAt) <= Date.now()) {
     throw agentError('pack086_session_token_expired');
   }
-  if (data.scopes.length !== 1 || data.scopes[0] !== 'heartbeat') throw agentError('pack086_session_scope_invalid');
+  const allowedScopes = new Set(['heartbeat','session_status','session_rotate']);
+  if (
+    data.scopes.length < 1 ||
+    data.scopes.length > allowedScopes.size ||
+    new Set(data.scopes).size !== data.scopes.length ||
+    data.scopes.some(scope => !allowedScopes.has(scope))
+  ) throw agentError('pack086_session_scope_invalid');
   const target = sessionPath(stateDir);
   const temp = target + '.tmp-' + process.pid + '-' + crypto.randomBytes(6).toString('hex');
   fs.writeFileSync(temp, JSON.stringify(data, null, 2) + '\n', { encoding: 'utf8', mode: 0o600 });
