@@ -887,3 +887,108 @@ body[data-zuvyr-native-navigation="true"] .sidebar .nav-list {
     max-height:180px;
   }
 }
+
+
+/* ZUVYR PACK084 3D STUDIO */
+.zs-3d-history{
+  display:grid;
+  gap:10px;
+  margin-top:14px;
+}
+.zs-3d-history-item{
+  width:100%;
+  min-width:0;
+  padding:12px 13px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  text-align:left;
+  color:var(--zs-text,#f7f5ed);
+  background:rgba(255,255,255,.025);
+  border:1px solid var(--zs-line,rgba(226,220,207,.19));
+  border-radius:13px;
+  cursor:pointer;
+}
+.zs-3d-history-item:hover,
+.zs-3d-history-item:focus-visible{
+  background:rgba(255,107,22,.07);
+  border-color:rgba(255,107,22,.34);
+  outline:none;
+}
+.zs-3d-history-item>span{
+  min-width:0;
+  display:grid;
+  gap:4px;
+}
+.zs-3d-history-item>span:last-child{
+  text-align:right;
+}
+.zs-3d-history-item strong,
+.zs-3d-history-item small{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.zs-3d-history-item small{
+  color:var(--zs-muted,#b4b1a7);
+  font-size:11px;
+}
+.zs-3d-detail-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1.25fr) minmax(260px,.75fr);
+  gap:18px;
+  align-items:start;
+}
+.zs-3d-model-viewer,
+.zs-3d-poster{
+  width:100%;
+  min-height:420px;
+  max-height:620px;
+  display:block;
+  object-fit:contain;
+  background:
+    radial-gradient(circle at 50% 32%,rgba(255,255,255,.08),transparent 42%),
+    #090908;
+  border:1px solid var(--zs-line,rgba(226,220,207,.19));
+  border-radius:16px;
+}
+.zs-3d-view-controls{
+  margin-top:10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.zs-3d-view-controls label{
+  min-width:190px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:var(--zs-muted,#b4b1a7);
+  font-size:11px;
+}
+.zs-3d-view-controls input[type="range"]{
+  flex:1;
+}
+.zs-3d-downloads{
+  margin-top:16px;
+  flex-wrap:wrap;
+}
+@media (max-width:820px){
+  .zs-3d-detail-grid{
+    grid-template-columns:1fr;
+  }
+  .zs-3d-model-viewer,
+  .zs-3d-poster{
+    min-height:320px;
+  }
+  .zs-3d-history-item{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .zs-3d-history-item>span:last-child{
+    text-align:left;
+  }
+}
