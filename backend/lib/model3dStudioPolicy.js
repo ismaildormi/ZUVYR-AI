@@ -33,8 +33,7 @@ function studioCapabilities(pack083Availability = {}) {
     ),
     exports: Object.freeze({
       verifiedWhenPresent: Object.freeze({...config.exports.verifiedWhenPresent}),
-      blocked: Object.freeze({...config.exports.blocked)
-      })
+      blocked: Object.freeze({...config.exports.blocked})
     }),
     truthRules: Object.freeze({...config.truthRules})
   });
