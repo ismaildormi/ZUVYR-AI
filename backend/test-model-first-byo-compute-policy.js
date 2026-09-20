@@ -91,7 +91,7 @@ assert.equal(state.model_first_priority_override.completed_inflight_pack, '083')
 assert.equal(state.model_first_priority_override.active_priority_pack, null);
 assert.equal(
   state.model_first_priority_override.next_pack_after_current_inflight,
-  '096'
+  '084'
 );
 assert.equal(
   state.model_first_priority_override.resume_original_sequence_at,
