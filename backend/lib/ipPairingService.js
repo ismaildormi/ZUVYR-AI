@@ -10,9 +10,9 @@ const {
 } = require('./ipPairingProtocol');
 
 const PAIRING_TTL_MS = 5 * 60 * 1000;
-const SESSION_TTL_MS = 10 * 60 * 1000;
+const SESSION_TTL_MS = 60 * 60 * 1000;
 const HEARTBEAT_SCOPE = 'heartbeat';
-const SESSION_SCOPES = Object.freeze(['heartbeat','session_status','session_rotate']);
+const SESSION_SCOPES = Object.freeze(['heartbeat']);
 
 function pairingError(code) {
   const error = new Error(code);
@@ -140,7 +140,7 @@ function createIpPairingService({
     });
   }
 
-  async function rotateSessionToken({ ownerId, sessionId, expectedTokenHash = null }) {
+  async function rotateSessionToken({ ownerId, sessionId }) {
     const owner = uuid(ownerId, 'pack086_owner_id_invalid');
     const session = uuid(sessionId, 'pack086_session_id_invalid');
     const context = await repository.getSessionContext({ sessionId: session });
@@ -148,15 +148,15 @@ function createIpPairingService({
     if (context.session.revoked_at || ['stopped','failed'].includes(context.session.state)) {
       throw pairingError('pack086_session_revoked');
     }
-    const currentHash = String(expectedTokenHash || context.session.token_hash || '').trim().toLowerCase();
-    if (!/^[0-9a-f]{64}$/.test(currentHash)) throw pairingError('pack086_token_invalid');
+    if (context.device.status !== 'paired' || context.device.revoked_at) {
+      throw pairingError('pack086_device_not_paired');
+    }
 
     const token = newToken(randomBytes);
     const tokenExpiresAt = new Date(clock().getTime() + SESSION_TTL_MS).toISOString();
     const result = await repository.rotateSessionToken({
       ownerId: owner,
       sessionId: session,
-      expectedTokenHash: currentHash,
       tokenHash: hashSecret(token),
       tokenExpiresAt
     });
