@@ -1,0 +1,45 @@
+{
+  "version": "pack-085.device-agent.v1",
+  "protocolVersion": 1,
+  "status": "engineering_ready_m19_deferred",
+  "bind": {
+    "host": "127.0.0.1",
+    "port": 47831,
+    "allowedHostnames": ["127.0.0.1", "localhost"],
+    "browserOriginsAllowed": false,
+    "requestBodyMaxBytes": 16384,
+    "requestTimeoutMs": 5000
+  },
+  "identity": {
+    "algorithm": "Ed25519",
+    "fingerprint": "sha256-spki",
+    "privateFileMode": "0600",
+    "stateDirectoryMode": "0700",
+    "tokenBytes": 32
+  },
+  "execution": {
+    "pairingEnabled": false,
+    "computerControlEnabled": false,
+    "screenCapture": false,
+    "pointerControl": false,
+    "keyboardControl": false,
+    "applicationControl": false,
+    "filesystemControl": false,
+    "shellControl": false,
+    "rawIpTrust": false
+  },
+  "update": {
+    "enabled": false,
+    "signatureAlgorithm": "Ed25519",
+    "releasePublicKeyPem": null,
+    "allowedHosts": [],
+    "maxArtifactBytes": 134217728
+  },
+  "install": {
+    "scope": "user",
+    "requiresAdmin": false,
+    "autoStartEnabledByDefault": false,
+    "preserveIdentityOnUninstall": true
+  },
+  "externalGate": "M19"
+}

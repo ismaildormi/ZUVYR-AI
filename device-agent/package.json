@@ -1,0 +1,17 @@
+{
+  "name": "@zuvyr/device-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ZUVYR PACK085 least-privilege local device agent foundation.",
+  "type": "commonjs",
+  "bin": {
+    "zuvyr-device-agent": "./bin/zuvyr-device-agent.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node test/pack085-device-agent.test.js",
+    "self-test": "node bin/zuvyr-device-agent.js self-test"
+  }
+}
