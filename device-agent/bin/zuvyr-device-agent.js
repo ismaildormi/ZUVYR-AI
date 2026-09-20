@@ -216,7 +216,8 @@ async function main() {
   if (command === 'self-test') {
     const tests = [
       path.resolve(__dirname, '..', 'test', 'pack085-device-agent.test.js'),
-      path.resolve(__dirname, '..', 'test', 'pack086-pairing.test.js')
+      path.resolve(__dirname, '..', 'test', 'pack086-pairing.test.js'),
+      path.resolve(__dirname, '..', 'test', 'pack087-actions.test.js')
     ];
     const runNext = index => {
       if (index >= tests.length) {
