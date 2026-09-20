@@ -49,9 +49,11 @@
     "transport": "https_only",
     "proofAlgorithm": "Ed25519",
     "tokenStorage": "local_private_file",
-    "tokenTtlSeconds": 3600,
+    "tokenTtlSeconds": 600,
     "allowedScopes": [
-      "heartbeat"
+      "heartbeat",
+      "session_status",
+      "session_rotate"
     ],
     "monotonicCounterRequired": true,
     "tokenStoredServerSide": false,
