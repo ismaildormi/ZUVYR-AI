@@ -833,3 +833,28 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - Receipt Git blob: `594a21363d9e8f27979e23f37fae5873a9456e2a`
 - Progression: **USER_APPROVED_DEFERRED_GATE_CONTINUATION**
 - Original sequence resumed at **PACK084 — 3D Studio**
+
+
+## PACK084 — 3D Studio — 2026-09-20 checkpoint
+
+- Status: **LOCKED_ENGINEERING_VERIFIED**
+- Canonical LOCKED_VERIFIED: **NO — M18 / real asset acceptance deferred**
+- Implementation PR: **#44**
+- Merge commit: `5c1f6e2898bef5d44a6786450d1608e07397a869`
+- Backend/Release CI: **PASS / PASS** — run `35534610462`
+- Database migration: **NONE**
+- Vercel production exact merge commit: **READY** — `dpl_8PKPxTqqN573rWKUzNZYw1B1qzPD`
+- Railway exact merge commit: backend / worker / maintenance **SUCCESS / SUCCESS / SUCCESS**
+- Canonical 3D history/reopen/signed downloads: **WIRED**
+- Self-hosted WebGL GLB viewer: **WIRED / PRODUCTION-PUBLISHED**
+- Third-party viewer runtime: **NONE**
+- Generate/status/cancel: **WIRED; generation fail-closed behind PACK083/M18**
+- Export validation: **GLB / OBJ / FBX / USDZ**
+- Blocked export formats: **GLTF / STL / 3MF**
+- Blocked post-processing without executor: **remesh / retopo / rig / animation / retarget**
+- Production 3D jobs/assets at checkpoint: **0 / 0**
+- Paid provider/payment calls during verification: **0 / 0**
+- Deferred: `M18_LIVE_3D_GENERATION`, `PACK084_AUTHENTICATED_REAL_ASSET_VIEWER_EXPORT_ACCEPTANCE`
+- Receipt Git blob: `d689a2364d0a9370b4a4fabd0bddfcd3f32d7aa1`
+- Progression: **USER_APPROVED_DEFERRED_GATE_CONTINUATION**
+- Next: **PACK085 — ZUVYR Device Agent Build**
