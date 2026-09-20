@@ -12,6 +12,7 @@ const {
   secureTokenEqual
 } = require('./security');
 const { sessionPath } = require('./pairingSession');
+const { detectActionCapabilities } = require('./actionExecutor');
 
 function isLoopbackAddress(value) {
   return value === '127.0.0.1' || value === '::1' || value === '::ffff:127.0.0.1';
@@ -47,24 +48,31 @@ function sendJson(res, statusCode, payload) {
   res.end(body);
 }
 
-function capabilities(paired = false) {
+function capabilities(paired = false, { env = process.env } = {}) {
+  const detected = detectActionCapabilities({ env });
   return Object.freeze({
     version: config.version,
     protocolVersion: config.protocolVersion,
     paired: paired === true,
     pairingEnabled: true,
+    executionEngineBuilt: true,
     executionEnabled: false,
     actions: Object.freeze({
-      screenCapture: false,
-      pointerControl: false,
-      keyboardControl: false,
-      applicationControl: false,
-      filesystemControl: false,
-      shellControl: false
+      screenCapture: detected.observe_screen,
+      pointerControl: detected.move_pointer && detected.click,
+      keyboardControl: detected.type_text,
+      applicationControl: detected.open_application,
+      clipboardRead: detected.read_clipboard,
+      clipboardWrite: detected.write_clipboard,
+      fileRead: detected.read_file,
+      fileWrite: detected.write_file,
+      shellControl: detected.run_command
     }),
-    nextAuthority: Object.freeze({
+    authority: Object.freeze({
       pairing: 'PACK086',
-      actions: 'PACK087'
+      permissionsActionsStopUndo: 'PACK087',
+      permissionRequired: true,
+      signedSessionRequired: true
     })
   });
 }
@@ -101,6 +109,7 @@ function createAgentServer({ stateDir, onShutdown } = {}) {
         protocolVersion: config.protocolVersion,
         paired: isPaired(),
         pairingEnabled: true,
+        executionEngineBuilt: true,
         executionEnabled: false
       });
     }
