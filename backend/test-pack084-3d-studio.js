@@ -34,6 +34,10 @@ assert.equal(blocked.pack, 84);
 assert.equal(blocked.generation.liveExecution, false);
 assert.equal(blocked.generation.externalGate, 'M18');
 assert(blocked.generation.blockers.includes('pack083_m18_unverified'));
+assert.equal(blocked.generation.options.defaultFaceCount, 500000);
+assert.equal(blocked.generation.options.minFaceCount, 40000);
+assert.equal(blocked.generation.options.maxFaceCount, 1500000);
+assert.equal(config.viewer.version, '4.3.1');
 assert.equal(blocked.operations.remesh.status, 'blocked_no_verified_executor');
 assert.equal(blocked.operations.retopo.status, 'blocked_no_verified_executor');
 assert.equal(blocked.operations.rig.status, 'blocked_no_verified_executor');
@@ -75,7 +79,8 @@ for (const marker of [
 
 for (const marker of [
   'ZUVYR PACK084 3D STUDIO',
-  "data-zuvyr-section=\"3d\"",
+  "['3d','⬡','3D Studio','ready']",
+  "var nativeIds=['3d'",
   'data-zs-3d-form',
   'data-zs-3d-history',
   'data-zs-3d-download',
