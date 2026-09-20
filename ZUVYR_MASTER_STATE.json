@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "source_fix": "005-FIX6",
   "selected_strategy": "railway_internal_route",
-  "previous_pack": "096",
+  "previous_pack": "084",
   "tests": {
     "maintenance": "PASS",
     "runtime_safety": "PASS",
@@ -589,7 +589,7 @@
   "status": "PACK095_OPEN",
   "next_pack_allowed": true,
   "next_external_gate": null,
-  "next_pack": "084 - 3D Studio",
+  "next_pack": "085 - ZUVYR Device Agent Build",
   "pack042": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "258ce1f4df2e3a4630cfc87069668f073c0dee79",
@@ -835,7 +835,7 @@
     "previous_plan_preserved": true,
     "priority_override": "MODEL_FIRST_BYO_COMPUTE_2026_09_19"
   },
-  "active_pack": "084",
+  "active_pack": "085",
   "pack061": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
@@ -2216,5 +2216,83 @@
     "next_pack_title": "3D Studio",
     "receipt_path": "zuvyr-pack-evidence/pack-096/2026-09-20-engineering-checkpoint/receipt.json",
     "receipt_git_blob": "594a21363d9e8f27979e23f37fae5873a9456e2a"
+  },
+  "pack084": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "3D Studio",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "Production source/runtime/UI are verified, but M18 paid 3D execution is disabled and production contains zero 3D jobs/assets, so a real owner-scoped GLB viewer/export journey cannot be truthfully live-proven without a new paid generation.",
+    "implementation_pr": 44,
+    "candidate_head": "d644882d50da98265ebab2bc083d2b2e0dca3de8",
+    "merge_commit": "5c1f6e2898bef5d44a6786450d1608e07397a869",
+    "github_ci_run": 35534610462,
+    "backend_quality": "PASS",
+    "release_quality": "PASS",
+    "migration": null,
+    "runtime": {
+      "generation_inherits_pack083": true,
+      "local_webgl_viewer": true,
+      "viewer_runtime": "/zuvyr-model3d-viewer.js?v=pack084-1",
+      "history_reopen": true,
+      "signed_downloads": true,
+      "status_polling": true,
+      "cancellation": true,
+      "validated_exports": [
+        "glb",
+        "obj",
+        "fbx",
+        "usdz"
+      ],
+      "blocked_exports": [
+        "gltf",
+        "stl",
+        "3mf"
+      ],
+      "blocked_operations": [
+        "remesh",
+        "retopo",
+        "rig",
+        "animation",
+        "retarget"
+      ]
+    },
+    "production": {
+      "vercel": {
+        "deployment": "dpl_8PKPxTqqN573rWKUzNZYw1B1qzPD",
+        "status": "READY",
+        "exact_commit": "5c1f6e2898bef5d44a6786450d1608e07397a869"
+      },
+      "railway": {
+        "exact_commit": "5c1f6e2898bef5d44a6786450d1608e07397a869",
+        "backend": {
+          "deployment": "9d3b3316-53d9-42bc-a7df-187e7cf5e73d",
+          "status": "SUCCESS"
+        },
+        "worker": {
+          "deployment": "b29df1fe-e056-4f89-932d-d5ee8c9fe1f6",
+          "status": "SUCCESS"
+        },
+        "maintenance": {
+          "deployment": "35c8589d-84bf-484e-8bdb-4bc3a9489281",
+          "status": "SUCCESS"
+        }
+      }
+    },
+    "production_rows": {
+      "model3d_jobs_total": 0,
+      "model3d_jobs_done": 0,
+      "model3d_assets": 0
+    },
+    "paid_execution_default": false,
+    "deferred_gates": [
+      "M18_LIVE_3D_GENERATION",
+      "PACK084_AUTHENTICATED_REAL_ASSET_VIEWER_EXPORT_ACCEPTANCE"
+    ],
+    "provider_calls_during_verification": 0,
+    "payment_calls_during_verification": 0,
+    "receipt_path": "zuvyr-pack-evidence/pack-084/2026-09-20-engineering-checkpoint/receipt.json",
+    "receipt_git_blob": "d689a2364d0a9370b4a4fabd0bddfcd3f32d7aa1",
+    "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+    "next_pack": "085"
   }
 }
