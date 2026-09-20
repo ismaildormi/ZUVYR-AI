@@ -184,7 +184,7 @@ class FakeRepository {
     'revoke all on table public.ip_pairing_challenges from public,anon,authenticated',
     'grant execute on function public.advance_ip_session_counter_pack086'
   ]) assert(sql.includes(marker), marker);
-  assert(pack08Sql.includes('execution_enabled boolean not null default false'), 'PACK08 execution_enabled authority');
+  assert(foundationSql.includes('execution_enabled boolean not null default false'), 'PACK08 execution_enabled authority');
   assert(
     foundationSql.includes(
       'execution_enabled boolean not null default false check (execution_enabled = false)'
