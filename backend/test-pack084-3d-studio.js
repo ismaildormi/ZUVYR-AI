@@ -18,6 +18,7 @@ const read = file => fs.readFileSync(path.join(__dirname, file), 'utf8');
 const config = require('./config/model3d-studio.v1.json');
 const server = read('server.js');
 const frontend = read('../frontend/zuvyr-suite-v1.js');
+const viewerRuntime = read('../frontend/zuvyr-model3d-viewer.js');
 const css = read('../frontend/zuvyr-suite-v1.css');
 const packageJson = JSON.parse(read('package.json'));
 
@@ -25,6 +26,11 @@ assert.equal(config.pack, 84);
 assert.equal(config.truthRules.exposeOnlyManifestBackedExports, true);
 assert.equal(config.truthRules.unsupportedControlsHiddenOrBlocked, true);
 assert.equal(config.truthRules.generationRemainsOwnedByPack083M18, true);
+assert.equal(config.viewer.engine, 'zuvyr-local-webgl-glb');
+assert.equal(config.viewer.scriptUrl, '/zuvyr-model3d-viewer.js?v=pack084-1');
+assert.equal(config.truthRules.thirdPartyViewerRuntime, false);
+assert.equal(config.truthRules.viewerFetchCredentials, 'omit');
+assert.equal(config.truthRules.viewerReferrerPolicy, 'no-referrer');
 
 const blocked = studioCapabilities({
   live: false,
@@ -119,6 +125,25 @@ assert(
   'PACK084 must remain in the media checkpoint'
 );
 
+
+assert(frontend.includes('<zuvyr-model3d-viewer'));
+assert(frontend.includes('/zuvyr-model3d-viewer.js?v=pack084-1'));
+assert.equal(frontend.includes('ajax.googleapis.com'), false);
+assert.equal(frontend.includes('<model-viewer'), false);
+
+for (const marker of [
+  "customElements.define('zuvyr-model3d-viewer'",
+  "credentials:'omit'",
+  "referrerPolicy:'no-referrer'",
+  "GLB_MAGIC = 0x46546c67",
+  "getContext('webgl2'",
+  "viewer_model_too_large",
+  "resetCamera()"
+]) {
+  assert(viewerRuntime.includes(marker), marker);
+}
+assert.equal(/https:\/\//i.test(viewerRuntime), false, 'viewer runtime must not embed third-party https origins');
+
 for (const prohibitedLiveControl of [
   'data-zs-3d-remesh-live',
   'data-zs-3d-retopo-live',
@@ -133,5 +158,6 @@ console.log('PASS: PACK084 Studio inherits PACK083 generation gates and exposes 
 console.log('PASS: PACK084 export policy is manifest-backed; unsupported GLTF/STL/3MF remain blocked');
 console.log('PASS: PACK084 OBJ/FBX structural validation guards persisted export artifacts');
 console.log('PASS: PACK084 frontend wiring covers capabilities/history/generate/status/cancel/download with blocked unsupported operations');
+console.log('PASS: PACK084 viewer is self-hosted and does not execute third-party runtime code');
 console.log('PASS: PACK084 pins the 3D viewer runtime to model-viewer 4.3.1 and ships responsive Studio CSS');
 console.log('LIVE 3D PROVIDER / PAYMENT / PRODUCTION MUTATION CALLS: NONE');
