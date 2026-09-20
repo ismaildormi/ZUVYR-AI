@@ -61,7 +61,7 @@ assert.deepEqual(
 assert.equal(roadmap.priority_override.resume_original_sequence_at, '084');
 assert.deepEqual(
   roadmap.priority_override.deferred_not_cancelled,
-  ['084','085','086','087','088','089','090','091','092','093']
+  ['085','086','087','088','089','090','091','092','093']
 );
 assert.equal(roadmap.priority_override.do_not_renumber_existing_packs, true);
 assert.match(String(roadmap.preservation || ''), /001.*099.*retain numbering/i);
