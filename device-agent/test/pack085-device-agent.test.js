@@ -187,6 +187,7 @@ function request({ port, method = 'GET', route, token, origin, host } = {}) {
     const serverDir = path.join(root, 'server');
     const agent = await startSecureAgent({ stateDir: serverDir, port: 0 });
     const port = agent.address.port;
+    const localToken = ensureAuthToken(serverDir);
     assert.equal(agent.address.host, '127.0.0.1');
 
     const health = await request({ port, route: '/healthz' });
@@ -197,7 +198,7 @@ function request({ port, method = 'GET', route, token, origin, host } = {}) {
     const unauthorized = await request({ port, route: '/v1/capabilities' });
     assert.equal(unauthorized.status, 401);
 
-    const capabilities = await request({ port, route: '/v1/capabilities', token: agent.token });
+    const capabilities = await request({ port, route: '/v1/capabilities', token: localToken });
     assert.equal(capabilities.status, 200);
     assert.equal(capabilities.body.capabilities.executionEnabled, false);
     assert.equal(capabilities.body.capabilities.paired, false);
@@ -208,7 +209,7 @@ function request({ port, method = 'GET', route, token, origin, host } = {}) {
     const browserOrigin = await request({
       port,
       route: '/v1/capabilities',
-      token: agent.token,
+      token: localToken,
       origin: 'https://rox-ai-sepia.vercel.app'
     });
     assert.equal(browserOrigin.status, 403);
@@ -217,13 +218,13 @@ function request({ port, method = 'GET', route, token, origin, host } = {}) {
     const badHost = await request({ port, route: '/healthz', host: 'evil.example' });
     assert.equal(badHost.status, 421);
 
-    const execution = await request({ port, method: 'POST', route: '/v1/execute', token: agent.token });
+    const execution = await request({ port, method: 'POST', route: '/v1/execute', token: localToken });
     assert.equal(execution.status, 404);
     assert.equal(execution.body.executionEnabled, false);
 
     const runtimePath = path.join(serverDir, 'runtime.json');
     assert.equal(fs.existsSync(runtimePath), true);
-    const shutdown = await request({ port, method: 'POST', route: '/v1/shutdown', token: agent.token });
+    const shutdown = await request({ port, method: 'POST', route: '/v1/shutdown', token: localToken });
     assert.equal(shutdown.status, 202);
     await new Promise(resolve => agent.server.once('close', resolve));
     await new Promise(resolve => setImmediate(resolve));
