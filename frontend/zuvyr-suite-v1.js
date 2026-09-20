@@ -1041,37 +1041,36 @@
   }
 
   function ensureModel3dViewer(){
-    if(window.customElements&&window.customElements.get('model-viewer')){
+    if(window.customElements&&window.customElements.get('zuvyr-model3d-viewer')){
       return Promise.resolve(true);
     }
     if(model3dStudioState.viewerLoad)return model3dStudioState.viewerLoad;
     var url=model3dViewerScript();
-    if(!/^https:\/\/ajax\.googleapis\.com\/ajax\/libs\/model-viewer\/4\.3\.1\/model-viewer\.min\.js$/.test(url)){
-      return Promise.reject(new Error('Pinned 3D viewer runtime is unavailable.'));
+    if(url!=='/zuvyr-model3d-viewer.js?v=pack084-1'){
+      return Promise.reject(new Error('Pinned local 3D viewer runtime is unavailable.'));
     }
     model3dStudioState.viewerLoad=new Promise(function(resolve,reject){
-      var existing=document.querySelector('script[data-zuvyr-model-viewer="4.3.1"]');
+      var existing=document.querySelector('script[data-zuvyr-model3d-viewer="pack084-v1"]');
       if(existing){
-        if(window.customElements&&window.customElements.get('model-viewer')){resolve(true);return;}
+        if(window.customElements&&window.customElements.get('zuvyr-model3d-viewer')){resolve(true);return;}
         existing.addEventListener('load',function(){
-          if(window.customElements&&window.customElements.get('model-viewer'))resolve(true);
-          else reject(new Error('3D viewer did not initialize.'));
+          if(window.customElements&&window.customElements.get('zuvyr-model3d-viewer'))resolve(true);
+          else reject(new Error('Local 3D viewer did not initialize.'));
         },{once:true});
-        existing.addEventListener('error',function(){reject(new Error('3D viewer failed to load.'));},{once:true});
+        existing.addEventListener('error',function(){reject(new Error('Local 3D viewer failed to load.'));},{once:true});
         return;
       }
       var script=document.createElement('script');
-      script.type='module';
       script.src=url;
-      script.crossOrigin='anonymous';
       script.referrerPolicy='no-referrer';
-      script.dataset.zuvyrModelViewer='4.3.1';
+      script.dataset.zuvyrModel3dViewer='pack084-v1';
       script.addEventListener('load',function(){
         if(window.customElements&&window.customElements.whenDefined){
-          window.customElements.whenDefined('model-viewer').then(function(){resolve(true);}).catch(reject);
-        }else resolve(true);
+          window.customElements.whenDefined('zuvyr-model3d-viewer').then(function(){resolve(true);}).catch(reject);
+        }else if(window.customElements&&window.customElements.get('zuvyr-model3d-viewer'))resolve(true);
+        else reject(new Error('Local 3D viewer did not initialize.'));
       },{once:true});
-      script.addEventListener('error',function(){reject(new Error('3D viewer failed to load.'));},{once:true});
+      script.addEventListener('error',function(){reject(new Error('Local 3D viewer failed to load.'));},{once:true});
       document.head.appendChild(script);
     }).catch(function(error){
       model3dStudioState.viewerLoad=null;
@@ -1221,7 +1220,7 @@
       return /^model_glb$|^export_(glb|obj|fbx|usdz)$/.test(String(entry.role||''))&&entry.assetId;
     });
     var viewer=model3dStudioState.modelUrl
-      ?'<model-viewer class="zs-3d-model-viewer" data-zs-3d-model-viewer src="'+esc(model3dStudioState.modelUrl)+'" camera-controls environment-image="neutral" shadow-intensity="1" exposure="1" interaction-prompt="none" touch-action="pan-y" alt="Interactive canonical 3D model"></model-viewer>'
+      ?'<zuvyr-model3d-viewer class="zs-3d-model-viewer" data-zs-3d-model-viewer src="'+esc(model3dStudioState.modelUrl)+'" exposure="1" aria-label="Interactive canonical 3D model"></zuvyr-model3d-viewer>'
       :(model3dStudioState.thumbnailUrl
         ?'<img class="zs-3d-poster" src="'+esc(model3dStudioState.thumbnailUrl)+'" alt="Canonical 3D thumbnail">'
         :'<div class="zs-empty"><div><strong>Viewer unavailable</strong><span>A fresh signed GLB is required.</span></div></div>');
@@ -1415,7 +1414,7 @@
         var viewer=view.querySelector('[data-zs-3d-model-viewer]');
         if(viewer){
           viewer.setAttribute('camera-orbit','0deg 75deg 105%');
-          if(typeof viewer.jumpCameraToGoal==='function')viewer.jumpCameraToGoal();
+          if(typeof viewer.resetCamera==='function')viewer.resetCamera();
         }
       }
     });
@@ -1495,6 +1494,7 @@
     suite.querySelectorAll('[data-zs-view]').forEach(function(view){
       var title=view.querySelector('h1');if(title)title.textContent=sectionLabel(view.dataset.zsView);
       if(view.dataset.zsView==='3d'){renderModel3dStudioTruth();return;}
+      if(view.dataset.zsView==='3d')return;
       if(['documents','spreadsheets','presentations'].indexOf(view.dataset.zsView)>-1){
         var liveStatus=view.querySelector('.zs-status');if(liveStatus){liveStatus.textContent=language()==='ar'?'مفعّل':language()==='fr'?'Actif':'Live';liveStatus.classList.add('ready');}
         return;
