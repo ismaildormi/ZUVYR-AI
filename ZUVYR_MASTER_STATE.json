@@ -2213,6 +2213,8 @@
     ],
     "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
     "next_pack": "084",
-    "next_pack_title": "3D Studio"
+    "next_pack_title": "3D Studio",
+    "receipt_path": "zuvyr-pack-evidence/pack-096/2026-09-20-engineering-checkpoint/receipt.json",
+    "receipt_git_blob": "594a21363d9e8f27979e23f37fae5873a9456e2a"
   }
 }
