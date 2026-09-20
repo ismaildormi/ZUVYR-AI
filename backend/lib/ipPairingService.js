@@ -193,6 +193,7 @@ function createIpPairingService({
     const sessionUuid = uuid(sessionId, 'pack086_session_id_invalid');
     const rawToken = String(token || '').trim();
     if (!/^zst_[A-Za-z0-9_-]{40,80}$/.test(rawToken)) throw pairingError('pack086_token_invalid');
+    const requestTokenHash = hashSecret(rawToken);
     const numericCounter = Number(counter);
     if (!Number.isSafeInteger(numericCounter) || numericCounter <= 0) throw pairingError('pack086_counter_invalid');
 
@@ -204,7 +205,7 @@ function createIpPairingService({
     if (session.execution_enabled !== false) throw pairingError('pack086_execution_invariant_failed');
     if (session.revoked_at || ['stopped','failed'].includes(session.state)) throw pairingError('pack086_session_revoked');
     if (parseTime(session.token_expires_at, 'pack086_token_expiry_invalid') <= clock().getTime()) throw pairingError('pack086_token_expired');
-    if (!timingSafeHexEqual(hashSecret(rawToken), session.token_hash)) throw pairingError('pack086_token_invalid');
+    if (!timingSafeHexEqual(requestTokenHash, session.token_hash)) throw pairingError('pack086_token_invalid');
     if (device.id !== session.device_id || device.owner_id !== session.owner_id) throw pairingError('pack086_wrong_device');
     if (device.status !== 'paired' || device.revoked_at) throw pairingError('pack086_device_not_paired');
 
@@ -219,6 +220,7 @@ function createIpPairingService({
       counter: numericCounter,
       method,
       path,
+      tokenHash: requestTokenHash,
       bodySha256: digest
     });
     if (!verifySignature(normalizedKey.publicKeyPem, message, signature)) {
@@ -227,7 +229,7 @@ function createIpPairingService({
 
     const advanced = await repository.advanceSessionCounter({
       sessionId: sessionUuid,
-      tokenHash: session.token_hash,
+      tokenHash: requestTokenHash,
       counter: numericCounter
     });
     return Object.freeze({
@@ -238,7 +240,7 @@ function createIpPairingService({
       tokenExpiresAt: advanced.token_expires_at || session.token_expires_at,
       scopes: Array.isArray(advanced.scopes) ? advanced.scopes : session.permission_scopes,
       heartbeatAt: advanced.heartbeat_at || clock().toISOString(),
-      tokenHash: session.token_hash,
+      tokenHash: requestTokenHash,
       executionEnabled: false
     });
   }
