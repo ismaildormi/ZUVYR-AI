@@ -93,6 +93,33 @@ function validateGlb(buffer) {
   }
 }
 
+function validateObj(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length<8) {
+    throw repositoryError('model3d_obj_invalid',502);
+  }
+  const text=buffer.toString('utf8');
+  if (text.includes('\u0000')) {
+    throw repositoryError('model3d_obj_binary_invalid',502);
+  }
+  const hasVertex=/(?:^|\r?\n)\s*v\s+-?\d/m.test(text);
+  const hasFace=/(?:^|\r?\n)\s*f\s+\d/m.test(text);
+  if (!hasVertex || !hasFace) {
+    throw repositoryError('model3d_obj_structure_invalid',502);
+  }
+}
+
+function validateFbx(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length<24) {
+    throw repositoryError('model3d_fbx_invalid',502);
+  }
+  const head=buffer.subarray(0,Math.min(buffer.length,4096)).toString('utf8');
+  const binary=buffer.subarray(0,18).toString('ascii')==='Kaydara FBX Binary';
+  const ascii=/FBXHeaderExtension|;\s*FBX\s+\d/i.test(head);
+  if (!binary && !ascii) {
+    throw repositoryError('model3d_fbx_structure_invalid',502);
+  }
+}
+
 async function fetchArtifactBytes(artifact,{fetchImpl=globalThis.fetch}={}) {
   const policy=ROLE_POLICY[artifact?.role];
   if (!policy) throw repositoryError('model3d_artifact_role_unsupported',502);
@@ -134,6 +161,12 @@ async function fetchArtifactBytes(artifact,{fetchImpl=globalThis.fetch}={}) {
 
   if (artifact.role==='model_glb' || artifact.role==='export_glb') {
     validateGlb(buffer);
+  }
+  if (artifact.role==='export_obj') {
+    validateObj(buffer);
+  }
+  if (artifact.role==='export_fbx') {
+    validateFbx(buffer);
   }
   if (artifact.role==='thumbnail') {
     try {
@@ -465,6 +498,8 @@ module.exports={
   SOURCE_SYSTEM,
   ROLE_POLICY,
   validateGlb,
+  validateObj,
+  validateFbx,
   fetchArtifactBytes,
   createModel3dGenerationRepository
 };
