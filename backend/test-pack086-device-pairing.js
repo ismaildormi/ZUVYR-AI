@@ -80,14 +80,14 @@ class FakeRepository {
       token_expires_at: input.tokenExpiresAt,
       revoked_at: null,
       last_client_counter: 0,
-      permission_scopes: ['heartbeat','session_status','session_rotate']
+      permission_scopes: ['heartbeat']
     };
     return {
       success: true,
       device_id: this.deviceId,
       session_id: this.sessionId,
       token_expires_at: input.tokenExpiresAt,
-      scopes: ['heartbeat','session_status','session_rotate'],
+      scopes: ['heartbeat'],
       execution_enabled: false
     };
   }
@@ -97,7 +97,6 @@ class FakeRepository {
       throw e('pack086_session_not_found');
     }
     if (this.device.status !== 'paired') throw e('pack086_device_not_paired');
-    if (input.expectedTokenHash !== this.session.token_hash) throw e('pack086_token_invalid');
     this.session.token_hash = input.tokenHash;
     this.session.token_expires_at = input.tokenExpiresAt;
     this.session.last_client_counter = 0;
@@ -106,7 +105,7 @@ class FakeRepository {
       device_id: this.deviceId,
       session_id: this.sessionId,
       token_expires_at: input.tokenExpiresAt,
-      scopes: ['heartbeat','session_status','session_rotate']
+      scopes: ['heartbeat']
     };
   }
 
@@ -146,7 +145,7 @@ class FakeRepository {
       session_id: this.sessionId,
       counter,
       token_expires_at: this.session.token_expires_at,
-      scopes: ['heartbeat','session_status','session_rotate'],
+      scopes: ['heartbeat'],
       heartbeat_at: new Date().toISOString(),
       execution_enabled: false
     };
@@ -159,10 +158,10 @@ class FakeRepository {
   const deviceRoutes = fs.readFileSync(path.join(__dirname, 'lib', 'deviceSessionRoutes.js'), 'utf8');
   const server = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8');
 
-  assert.equal(SESSION_TTL_MS, 10 * 60 * 1000);
-  assert(sql.includes("array['heartbeat','session_status','session_rotate']::text[]"));
-  assert(sql.includes("interval '15 minutes'"));
-  assert(sql.includes('p_expected_token_hash text'));
+  assert.equal(SESSION_TTL_MS, 60 * 60 * 1000);
+  assert(sql.includes("array['heartbeat']::text[]"));
+  assert(sql.includes("interval '1 hour'"));
+  assert.equal(sql.includes('p_expected_token_hash text'), false);
   assert.equal(sql.includes("'session_heartbeat'"), false, 'heartbeat must not create one audit row per ping');
 
   for (const marker of [
@@ -250,7 +249,7 @@ class FakeRepository {
     signature
   });
   assert.equal(paired.sessionId, repo.sessionId);
-  assert.deepEqual(paired.scopes, ['heartbeat','session_status','session_rotate']);
+  assert.deepEqual(paired.scopes, ['heartbeat']);
   assert.equal(paired.executionEnabled, false);
   assert.notEqual(repo.session.token_hash, paired.token);
   assert.equal(repo.session.token_hash, hashSecret(paired.token));
@@ -326,22 +325,13 @@ class FakeRepository {
     { code: 'pack086_session_signature_invalid' }
   );
 
-  const preRotateHash = repo.session.token_hash;
   const rotated = await service.rotateSessionToken({
     ownerId,
-    sessionId: paired.sessionId,
-    expectedTokenHash: preRotateHash
+    sessionId: paired.sessionId
   });
   assert.notEqual(rotated.token, paired.token);
+  assert.deepEqual(rotated.scopes, ['heartbeat']);
   assert.equal(repo.session.last_client_counter, 0);
-  await assert.rejects(
-    () => service.rotateSessionToken({
-      ownerId,
-      sessionId: paired.sessionId,
-      expectedTokenHash: preRotateHash
-    }),
-    { code: 'pack086_token_invalid' }
-  );
 
   await assert.rejects(
     () => service.authenticateSessionRequest({
