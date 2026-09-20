@@ -25,12 +25,12 @@ function workerError(code, cause) {
   return error;
 }
 
-async function rotateIfNeeded(stateDir) {
+async function rotateIfNeeded(stateDir, { post = signedPost } = {}) {
   const session = loadSession(stateDir);
   const expiresIn = Date.parse(session.tokenExpiresAt) - Date.now();
   if (expiresIn > TOKEN_ROTATE_BEFORE_MS) return { rotated: false };
 
-  const response = await signedPost(stateDir, '/api/device-agent/rotate-token', {});
+  const response = await post(stateDir, '/api/device-agent/rotate-token', {});
   if (!response.token || !response.tokenExpiresAt) {
     throw workerError('pack087_token_rotation_response_invalid');
   }
@@ -42,28 +42,30 @@ async function rotateIfNeeded(stateDir) {
   return { rotated: true };
 }
 
-async function pullStop(stateDir) {
-  const response = await signedPost(stateDir, '/api/device-agent/stop/next', {});
+async function pullStop(stateDir, { post = signedPost } = {}) {
+  const response = await post(stateDir, '/api/device-agent/stop/next', {});
   return response.stop || null;
 }
 
-async function acknowledgeStop(stateDir, stop) {
+async function acknowledgeStop(stateDir, stop, { post = signedPost } = {}) {
   if (!stop || !stop.id) return null;
-  return signedPost(stateDir, '/api/device-agent/stop/ack', {
+  return post(stateDir, '/api/device-agent/stop/ack', {
     signalId: stop.id
   });
 }
 
-async function drainImmediateStop(stateDir) {
-  const stop = await pullStop(stateDir);
+async function drainImmediateStop(stateDir, { post = signedPost } = {}) {
+  const stop = await pullStop(stateDir, { post });
   if (!stop) return false;
-  await acknowledgeStop(stateDir, stop);
+  await acknowledgeStop(stateDir, stop, { post });
   return true;
 }
 
 async function runActionWithStop(stateDir, action, {
   env = process.env,
-  stopPollMs = STOP_POLL_MS
+  stopPollMs = STOP_POLL_MS,
+  post = signedPost,
+  execute = executeAction
 } = {}) {
   const controller = new AbortController();
   let active = true;
@@ -73,11 +75,11 @@ async function runActionWithStop(stateDir, action, {
   const watcher = (async () => {
     while (active) {
       try {
-        const candidate = await pullStop(stateDir);
+        const candidate = await pullStop(stateDir, { post });
         if (candidate) {
           stop = candidate;
           controller.abort();
-          await acknowledgeStop(stateDir, candidate);
+          await acknowledgeStop(stateDir, candidate, { post });
           return;
         }
       } catch (error) {
@@ -87,7 +89,7 @@ async function runActionWithStop(stateDir, action, {
     }
   })();
 
-  const execution = await executeAction(action, {
+  const execution = await execute(action, {
     stateDir,
     env,
     signal: controller.signal
@@ -109,17 +111,20 @@ async function runActionWithStop(stateDir, action, {
   }
 
   if (pollFailure && execution.success === true) {
-    execution.result = {
-      ...(execution.result || {}),
-      stopPollWarning: String(pollFailure.code || pollFailure.message || 'pack087_stop_poll_failed')
-    };
+    return Object.freeze({
+      ...execution,
+      result: {
+        ...(execution.result || {}),
+        stopPollWarning: String(pollFailure.code || pollFailure.message || 'pack087_stop_poll_failed')
+      }
+    });
   }
 
   return execution;
 }
 
-async function reportAction(stateDir, action, result) {
-  return signedPost(stateDir, '/api/device-agent/actions/report', {
+async function reportAction(stateDir, action, result, { post = signedPost } = {}) {
+  return post(stateDir, '/api/device-agent/actions/report', {
     actionId: action.id,
     attemptId: action.attemptId,
     success: result.success === true,
@@ -132,9 +137,13 @@ async function reportAction(stateDir, action, result) {
   });
 }
 
-async function runUndo(stateDir, undo, { env = process.env } = {}) {
-  const result = await executeUndo(undo, { stateDir, env });
-  await signedPost(stateDir, '/api/device-agent/undo/report', {
+async function runUndo(stateDir, undo, {
+  env = process.env,
+  post = signedPost,
+  undoExecute = executeUndo
+} = {}) {
+  const result = await undoExecute(undo, { stateDir, env });
+  await post(stateDir, '/api/device-agent/undo/report', {
     undoId: undo.id,
     attemptId: undo.attemptId,
     success: result.success === true,
@@ -147,27 +156,30 @@ async function runUndo(stateDir, undo, { env = process.env } = {}) {
 }
 
 async function runOneCycle(stateDir, {
-  env = process.env
+  env = process.env,
+  post = signedPost,
+  execute = executeAction,
+  undoExecute = executeUndo
 } = {}) {
-  await rotateIfNeeded(stateDir);
+  await rotateIfNeeded(stateDir, { post });
 
-  if (await drainImmediateStop(stateDir)) {
+  if (await drainImmediateStop(stateDir, { post })) {
     return { kind: 'stop', handled: true };
   }
 
-  const undoResponse = await signedPost(stateDir, '/api/device-agent/undo/next', {});
+  const undoResponse = await post(stateDir, '/api/device-agent/undo/next', {});
   if (undoResponse.undo) {
-    const result = await runUndo(stateDir, undoResponse.undo, { env });
+    const result = await runUndo(stateDir, undoResponse.undo, { env, post, undoExecute });
     return { kind: 'undo', id: undoResponse.undo.id, result };
   }
 
-  const actionResponse = await signedPost(stateDir, '/api/device-agent/actions/next', {});
+  const actionResponse = await post(stateDir, '/api/device-agent/actions/next', {});
   if (!actionResponse.action) {
     return { kind: 'idle' };
   }
 
-  const result = await runActionWithStop(stateDir, actionResponse.action, { env });
-  await reportAction(stateDir, actionResponse.action, result);
+  const result = await runActionWithStop(stateDir, actionResponse.action, { env, post, execute });
+  await reportAction(stateDir, actionResponse.action, result, { post });
   return { kind: 'action', id: actionResponse.action.id, result };
 }
 
