@@ -142,13 +142,14 @@ function uninstallUser({
   if (runtimeProcessAlive(target)) throw agentError('device_agent_running_stop_first');
   fs.rmSync(path.join(target, 'app'), { recursive: true, force: true });
   for (const name of KNOWN_RUNTIME_FILES) fs.rmSync(path.join(target, name), { force: true });
+  fs.rmSync(path.join(target, 'auth.token'), { force: true });
   if (purgeIdentity === true) {
     fs.rmSync(path.join(target, 'identity.json'), { force: true });
-    fs.rmSync(path.join(target, 'auth.token'), { force: true });
   }
   return Object.freeze({
     uninstalled: true,
     identityPreserved: purgeIdentity !== true,
+    localTokenRemoved: true,
     stateDir: target
   });
 }
