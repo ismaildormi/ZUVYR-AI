@@ -858,3 +858,32 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - Receipt Git blob: `d689a2364d0a9370b4a4fabd0bddfcd3f32d7aa1`
 - Progression: **USER_APPROVED_DEFERRED_GATE_CONTINUATION**
 - Next: **PACK085 — ZUVYR Device Agent Build**
+
+
+<!-- ZUVYR_PACK_084_ENGINEERING_FINALIZER_20260920_BEGIN -->
+## PACK084 — 3D Studio — 2026-09-20 engineering finalizer
+
+- Status: **LOCKED_ENGINEERING_VERIFIED**
+- Canonical LOCKED_VERIFIED: **NO**
+- Implementation PR: **#44**
+- Merge commit: `5c1f6e2898bef5d44a6786450d1608e07397a869`
+- Candidate CI run `35534610462`: **Backend Quality PASS / Release Quality PASS**
+- Vercel production: `dpl_8PKPxTqqN573rWKUzNZYw1B1qzPD` — **READY** on exact merge commit.
+- Railway exact merge commit:
+  - backend `9d3b3316-53d9-42bc-a7df-187e7cf5e73d` — **SUCCESS**
+  - worker `b29df1fe-e056-4f89-932d-d5ee8c9fe1f6` — **SUCCESS**
+  - maintenance `35c8589d-84bf-484e-8bdb-4bc3a9489281` — **SUCCESS**
+- 3D Studio production assets: **PASS**; local `zuvyr-model3d-viewer` + WebGL2 published; no Google/third-party viewer runtime.
+- Canonical history, owner-scoped signed downloads, status polling and cancel: **WIRED**.
+- Manifest-backed export validation: **GLB / OBJ / FBX / USDZ**.
+- GLTF / STL / 3MF: **BLOCKED — no canonical converter**.
+- Remesh / retopo / rig / animation / retarget: **BLOCKED — no verified executor**.
+- PACK083 generation authority reused; no duplicate generation/billing authority.
+- Production gates: `LIVE_BILLING_ALLOWED`, `ZUVYR_M18_VERIFIED`, `PACK083_3D_PAID_EXECUTION_ENABLED` are absent.
+- Production 3D jobs: **0**; paid provider calls during verification: **0**; payment calls: **0**.
+- No PACK084 migration required.
+- Canonical gate remains deferred: **M18 live 3D generation + authenticated real-asset viewer/export acceptance**.
+- Receipt: `zuvyr-pack-evidence/pack-084/2026-09-20-engineering-checkpoint/receipt.json` — Git blob `d689a2364d0a9370b4a4fabd0bddfcd3f32d7aa1`.
+- Progression: **USER_APPROVED_DEFERRED_GATE_CONTINUATION**
+- Next active pack: **PACK085 — ZUVYR Device Agent Build**; external gate **M19**.
+<!-- ZUVYR_PACK_084_ENGINEERING_FINALIZER_20260920_END -->
