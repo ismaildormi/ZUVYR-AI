@@ -15,6 +15,20 @@ function sessionPath(stateDir) {
   return path.join(stateDir, 'session.json');
 }
 
+function strictUuid(value, code = 'pack086_session_identity_invalid') {
+  const text = String(value || '').trim().toLowerCase();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(text)) {
+    throw agentError(code);
+  }
+  return text;
+}
+
+function futureIso(value, code = 'pack086_session_token_expired') {
+  const ms = Date.parse(String(value || ''));
+  if (!Number.isFinite(ms) || ms <= Date.now()) throw agentError(code);
+  return new Date(ms).toISOString();
+}
+
 function strictHttpsOrigin(value) {
   let url;
   try { url = new URL(String(value || '')); }
@@ -56,19 +70,16 @@ function saveSession(stateDir, input) {
   const data = {
     version: 'pack086.device-session.v1',
     backendOrigin: strictHttpsOrigin(input.backendOrigin),
-    backendDeviceId: String(input.deviceId || '').trim().toLowerCase(),
-    sessionId: String(input.sessionId || '').trim().toLowerCase(),
+    backendDeviceId: strictUuid(input.deviceId),
+    sessionId: strictUuid(input.sessionId),
     token: String(input.token || '').trim(),
-    tokenExpiresAt: new Date(String(input.tokenExpiresAt || '')).toISOString(),
+    tokenExpiresAt: futureIso(input.tokenExpiresAt),
     scopes: Array.isArray(input.scopes) ? input.scopes.map(String) : [],
     counter: 0,
-    agentDeviceId: identity.deviceId,
+    agentDeviceId: strictUuid(identity.deviceId, 'pack086_agent_device_id_invalid'),
     fingerprint: identity.fingerprint,
     importedAt: new Date().toISOString()
   };
-  if (!/^[0-9a-f-]{36}$/.test(data.backendDeviceId) || !/^[0-9a-f-]{36}$/.test(data.sessionId)) {
-    throw agentError('pack086_session_identity_invalid');
-  }
   if (!/^zst_[A-Za-z0-9_-]{40,80}$/.test(data.token)) throw agentError('pack086_session_token_invalid');
   if (!Number.isFinite(Date.parse(data.tokenExpiresAt)) || Date.parse(data.tokenExpiresAt) <= Date.now()) {
     throw agentError('pack086_session_token_expired');
@@ -87,8 +98,17 @@ function loadSession(stateDir) {
   try { data = JSON.parse(fs.readFileSync(sessionPath(stateDir), 'utf8')); }
   catch (cause) { throw agentError('pack086_session_read_failed', cause); }
   if (data.version !== 'pack086.device-session.v1') throw agentError('pack086_session_version_invalid');
+  data.backendOrigin = strictHttpsOrigin(data.backendOrigin);
+  data.backendDeviceId = strictUuid(data.backendDeviceId);
+  data.sessionId = strictUuid(data.sessionId);
+  data.agentDeviceId = strictUuid(data.agentDeviceId, 'pack086_agent_device_id_invalid');
   if (!/^zst_[A-Za-z0-9_-]{40,80}$/.test(String(data.token || ''))) throw agentError('pack086_session_token_invalid');
-  if (Date.parse(String(data.tokenExpiresAt || '')) <= Date.now()) throw agentError('pack086_session_token_expired');
+  data.tokenExpiresAt = futureIso(data.tokenExpiresAt);
+  if (!Array.isArray(data.scopes) || data.scopes.length !== 1 || data.scopes[0] !== 'heartbeat') {
+    throw agentError('pack086_session_scope_invalid');
+  }
+  if (!Number.isSafeInteger(Number(data.counter)) || Number(data.counter) < 0) throw agentError('pack086_session_counter_invalid');
+  data.counter = Number(data.counter);
   return data;
 }
 
@@ -119,6 +139,7 @@ function buildSignedSessionRequest(stateDir, { method, path: route, body = {} } 
   const temp = target + '.tmp-' + process.pid + '-' + crypto.randomBytes(6).toString('hex');
   fs.writeFileSync(temp, JSON.stringify(session, null, 2) + '\n', { encoding: 'utf8', mode: 0o600 });
   fs.renameSync(temp, target);
+  try { fs.chmodSync(target, 0o600); } catch (_) {}
 
   return Object.freeze({
     backendOrigin: session.backendOrigin,
@@ -143,6 +164,8 @@ function clearSession(stateDir) {
 
 module.exports = {
   sessionPath,
+  strictUuid,
+  futureIso,
   strictHttpsOrigin,
   signPairingChallenge,
   saveSession,
