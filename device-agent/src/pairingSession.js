@@ -172,6 +172,34 @@ function buildSignedSessionRequest(stateDir, { method, path: route, body = {} } 
   });
 }
 
+function replaceSessionToken(stateDir, input = {}) {
+  const session = loadSession(stateDir);
+  const token = String(input.token || '').trim();
+  if (!/^zst_[A-Za-z0-9_-]{40,80}$/.test(token)) throw agentError('pack086_session_token_invalid');
+  const tokenExpiresAt = futureIso(input.tokenExpiresAt);
+  const scopes = Array.isArray(input.scopes) ? input.scopes.map(String) : session.scopes;
+  const allowedScopes = new Set(['heartbeat','session_status','session_rotate']);
+  if (
+    scopes.length < 1 ||
+    scopes.length > allowedScopes.size ||
+    new Set(scopes).size !== scopes.length ||
+    scopes.some(scope => !allowedScopes.has(scope))
+  ) throw agentError('pack086_session_scope_invalid');
+
+  session.token = token;
+  session.tokenExpiresAt = tokenExpiresAt;
+  session.scopes = scopes;
+  session.counter = 0;
+  session.rotatedAt = new Date().toISOString();
+
+  const target = sessionPath(stateDir);
+  const temp = target + '.tmp-' + process.pid + '-' + crypto.randomBytes(6).toString('hex');
+  fs.writeFileSync(temp, JSON.stringify(session, null, 2) + '\n', { encoding: 'utf8', mode: 0o600 });
+  fs.renameSync(temp, target);
+  try { fs.chmodSync(target, 0o600); } catch (_) {}
+  return Object.freeze({ ...session, token: '[stored-private]' });
+}
+
 function clearSession(stateDir) {
   fs.rmSync(sessionPath(stateDir), { force: true });
   return Object.freeze({ cleared: true });
@@ -186,5 +214,6 @@ module.exports = {
   saveSession,
   loadSession,
   buildSignedSessionRequest,
+  replaceSessionToken,
   clearSession
 };
