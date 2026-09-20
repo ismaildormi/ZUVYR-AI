@@ -54,7 +54,21 @@ function request({ port, method = 'GET', route, token, origin, host } = {}) {
   assert.throws(() => assertIpExecutionAvailable(), { code: 'roxip_execution_disabled' });
   const ip = publicInventory();
   assert.equal(ip.execution.enabled, false);
-  for (const capability of Object.values(ip.capabilities)) assert.equal(capability.enabled, false);
+  for (const capabilityName of [
+    'device_connection',
+    'screen_capture',
+    'pointer_control',
+    'keyboard_control',
+    'application_control',
+    'filesystem_control',
+    'shell_control'
+  ]) {
+    assert.equal(ip.capabilities[capabilityName].enabled, false, capabilityName);
+  }
+  assert.equal(ip.capabilities.planning.enabled, true);
+  assert.equal(ip.capabilities.permission_validation.enabled, true);
+  assert.equal(ip.capabilities.audit_contract.enabled, true);
+  assert.equal(ip.capabilities.stop_contract.enabled, true);
 
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'zuvyr-pack085-'));
   try {
