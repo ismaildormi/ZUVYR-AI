@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "source_fix": "005-FIX6",
   "selected_strategy": "railway_internal_route",
-  "previous_pack": "083",
+  "previous_pack": "096",
   "tests": {
     "maintenance": "PASS",
     "runtime_safety": "PASS",
@@ -589,7 +589,7 @@
   "status": "PACK095_OPEN",
   "next_pack_allowed": true,
   "next_external_gate": null,
-  "next_pack": "095 - ZUVYR Model Lab",
+  "next_pack": "084 - 3D Studio",
   "pack042": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "258ce1f4df2e3a4630cfc87069668f073c0dee79",
@@ -835,7 +835,7 @@
     "previous_plan_preserved": true,
     "priority_override": "MODEL_FIRST_BYO_COMPUTE_2026_09_19"
   },
-  "active_pack": "096",
+  "active_pack": "084",
   "pack061": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
@@ -1842,7 +1842,7 @@
     "effective_date": "2026-09-19",
     "current_inflight_pack": null,
     "current_inflight_may_finish": false,
-    "next_pack_after_current_inflight": "096",
+    "next_pack_after_current_inflight": "084",
     "priority_sequence": [
       "094 - Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
       "095 - ZUVYR Model Lab",
@@ -1850,7 +1850,6 @@
     ],
     "resume_original_sequence_at": "084",
     "deferred_not_cancelled": [
-      "084",
       "085",
       "086",
       "087",
@@ -1916,10 +1915,11 @@
       "primary_eval_objective": "task_success_and_total_cost_per_successful_task"
     },
     "completed_inflight_pack": "083",
-    "active_priority_pack": "096",
+    "active_priority_pack": null,
     "completed_priority_packs": [
       "094",
-      "095"
+      "095",
+      "096"
     ]
   },
   "pack083": {
@@ -2137,5 +2137,84 @@
     "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
     "next_pack": "096",
     "next_pack_title": "ZUVYR 7 Manager / Operator — V1 Production Model + V2 Bridge"
+  },
+  "pack096": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "ZUVYR 7 Manager / Operator — V1 Production Model + V2 Bridge",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "PACK096 source, CI, Supabase control plane, exact Railway deployment and exact Vercel production deployment are verified. Canonical acceptance remains deferred because M21 requires at least one real rights-approved ZUVYR-owned checkpoint serving a bounded workload on a registered user/org-funded BYOC target plus one complete learning loop; production currently has zero connectors, checkpoints, evaluations, owned deployments and route receipts.",
+    "implementation_pr": 42,
+    "implementation_candidate_commit": "85695cf79783598626e39705dd3d95342a536b32",
+    "implementation_merge_commit": "b24094109093ce9fedbd1664e6bcce8ac8836344",
+    "github_ci_run": 35481256488,
+    "backend_quality": "PASS",
+    "release_quality": "PASS",
+    "migration": {
+      "version": "20260920012400",
+      "name": "pack096_owned_model_runtime",
+      "status": "APPLIED_VERIFIED"
+    },
+    "database": {
+      "control_plane_tables_expected": 3,
+      "control_plane_tables_present": 3,
+      "all_new_tables_rls": true,
+      "direct_browser_policy_count": 0,
+      "security_definer_functions_expected": 5,
+      "security_definer_functions_present": 5
+    },
+    "production": {
+      "railway": {
+        "exact_commit": "b24094109093ce9fedbd1664e6bcce8ac8836344",
+        "backend": {
+          "deployment": "7695254a-925d-4537-82f0-50a5cb02beae",
+          "status": "SUCCESS"
+        },
+        "worker": {
+          "deployment": "e0bcd8fd-1b1b-400b-a33c-acab13e96ce3",
+          "status": "SUCCESS"
+        },
+        "maintenance": {
+          "deployment": "cc97fc77-fc4b-417c-8b3a-57933091dd32",
+          "status": "SUCCESS"
+        }
+      },
+      "vercel": {
+        "production_deployment": "dpl_DK7QwdQrkrjww11yzH7tt6UjDstg",
+        "production_status": "READY",
+        "production_commit": "b24094109093ce9fedbd1664e6bcce8ac8836344"
+      }
+    },
+    "owned_model_runtime": {
+      "teacher_gateway": true,
+      "byoc_runtime_bridge": true,
+      "shadow_canary_fallback_rollback": true,
+      "m21_env_gate": true,
+      "active_compute_connectors": 0,
+      "checkpoints": 0,
+      "evaluations": 0,
+      "active_owned_deployments": 0,
+      "route_receipts": 0,
+      "teacher_records": 0,
+      "live_owned_model_claim": false
+    },
+    "economics": {
+      "live_billing_allowed": false,
+      "live_paid_training_calls": 0,
+      "live_paid_compute_calls": 0,
+      "zuvyr_owned_model_api_software_fee_usd": 0,
+      "zuvyr_owned_model_usage_fee_usd": 0,
+      "inference_markup_usd": 0,
+      "customer_compute_billed_directly": true,
+      "zuvyr_paid_gpu_required": false,
+      "external_fallback_separately_accounted": true
+    },
+    "deferred_gates": [
+      "M21_REAL_BYOC_OWNED_MODEL_PRODUCTION_ACCEPTANCE"
+    ],
+    "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+    "next_pack": "084",
+    "next_pack_title": "3D Studio",
+    "receipt_path": "zuvyr-pack-evidence/pack-096/2026-09-20-engineering-checkpoint/receipt.json",
+    "receipt_git_blob": "594a21363d9e8f27979e23f37fae5873a9456e2a"
   }
 }

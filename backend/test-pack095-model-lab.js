@@ -338,8 +338,8 @@ assert(ux.includes("generationPolicy:{executionOwner:'PACK096',liveExecution:fal
 assert(!ux.includes('training payload content'));
 assert(ux.includes('Training payload content is not rendered here'));
 
-assert.equal(ownedPolicy.execution_priority.active_priority_pack, '096');
-assert.deepEqual(ownedPolicy.execution_priority.completed_priority_packs, ['094','095']);
+assert.equal(ownedPolicy.execution_priority.active_priority_pack, null);
+assert.deepEqual(ownedPolicy.execution_priority.completed_priority_packs, ['094','095','096']);
 assert.deepEqual(ownedPolicy.execution_priority.immediate_sequence, ['094','095','096']);
 
 console.log('PASS: PACK095 Model Lab schema is admin/service-role only with 15 durable control-plane tables');

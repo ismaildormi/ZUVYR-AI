@@ -1513,3 +1513,49 @@ After Vercel rolling capacity opens, trigger one production deploy of current ma
 - PACK096 canonical acceptance still requires M21: at least one real ZUVYR-owned checkpoint serving a bounded production workload on registered BYOC plus one complete rights-approved learning loop.
 - No fabricated live training or owned-model production proof. If M21 cannot be truthfully executed in this tool/account context, complete the engineering plane, preserve the external gate, and continue only under the user's explicit deferred-gate progression rule.
 - After PACK096 is truthfully gated, resume the deferred original sequence at PACK084; PACK084–PACK093 were deferred, not cancelled.
+
+
+### PACK096 ENGINEERING FINALIZED — 2026-09-20
+
+- **PACK096 — ZUVYR 7 Manager / Operator — V1 Production Model + V2 Bridge** is `LOCKED_ENGINEERING_VERIFIED`.
+- Canonical `LOCKED_VERIFIED` remains **NO** because **M21** is still external and unproven.
+- Implementation PR: `#42`; merge commit: `b24094109093ce9fedbd1664e6bcce8ac8836344`.
+- CI run `35481256488`: Backend Quality PASS, Release Quality PASS.
+- Supabase migration `20260920012400 pack096_owned_model_runtime`: APPLIED_VERIFIED.
+- 3/3 PACK096 control-plane tables present; RLS ON; direct browser policies = 0; 5/5 SECURITY DEFINER control functions present.
+- Railway exact merge commit:
+  - backend `7695254a-925d-4537-82f0-50a5cb02beae` — SUCCESS
+  - worker `e0bcd8fd-1b1b-400b-a33c-acab13e96ce3` — SUCCESS
+  - maintenance `cc97fc77-fc4b-417c-8b3a-57933091dd32` — SUCCESS
+- Vercel production `dpl_DK7QwdQrkrjww11yzH7tt6UjDstg` — READY on exact merge commit.
+- Owned-model economics remain canonical: ZUVYR API/software fee $0; owned-model usage fee $0; inference markup $0; customer BYOC compute billed directly.
+- M21 live evidence is intentionally **not fabricated**: production currently has 0 compute connectors, 0 checkpoints, 0 evaluations, 0 owned deployments, 0 route receipts, 0 teacher records and no M21 environment gate.
+- Deferred gate: `M21_REAL_BYOC_OWNED_MODEL_PRODUCTION_ACCEPTANCE`.
+- Receipt: `zuvyr-pack-evidence/pack-096/2026-09-20-engineering-checkpoint/receipt.json`.
+- Receipt Git blob: `594a21363d9e8f27979e23f37fae5873a9456e2a`.
+- Progression remains `USER_APPROVED_DEFERRED_GATE_CONTINUATION`.
+
+### PACK084 OPEN — 3D Studio
+
+- **PACK084 — 3D Studio is now the active Pack.**
+- Resume the original sequence here exactly as required by the 2026-09-19 Model-First override.
+- Extend PACK083 3D generation into truthful 3D Studio capabilities: mesh/polycount/remesh/retopo, texture/PBR, rig/animation/retarget only where provider/runtime proof exists, lighting/camera/viewer and validated export policy.
+- Reuse canonical content IDs, storage, lineage, one usage ledger, existing 3D provider/runtime foundation and cross-feature handoffs.
+- Every exposed operation must either have verified executor proof or remain hidden/blocked. Do not simulate unsupported 3D editing.
+- PACK085–PACK093 remain deferred/not-cancelled and follow after PACK084 in original order.
+
+
+## PACK096 FINAL RECONCILIATION — 2026-09-20
+
+- PACK096 engineering state: `LOCKED_ENGINEERING_VERIFIED`; canonical `LOCKED_VERIFIED`: NO.
+- M21 remains deferred and truthful: production has zero registered compute connectors, checkpoints, independent passed evaluations, owned-model deployments, route receipts, Teacher Gateway records, training candidates and learning events.
+- Railway does not expose `ZUVYR_M21_VERIFIED` on backend or worker; no live owned-model routing is claimed.
+- Vercel production is READY on exact PACK096 runtime commit `b24094109093ce9fedbd1664e6bcce8ac8836344`.
+- Supabase migration `20260920012400 pack096_owned_model_runtime` is present.
+- Read-only PACK076 drift audit after later migration replay:
+  - canonical SQL blob on main and historical PACK076 branch is identical: `4dd71bb0630bad32e334387e674aaf1de6f9c56e`;
+  - `code_sandbox_sessions` exists exactly once;
+  - each PACK076 sandbox RPC exists exactly once;
+  - no duplicate PACK076 authority was observed.
+- Cross-project isolation finding: the same Supabase project currently also contains four `nova8_*` tables from migration `20260920044227 nova8_online_competition_v1`. No direct ZUVYR object-name collision was observed, but future ZUVYR DDL must preserve namespace isolation and must not mutate NOVA8 objects.
+- Resume rule after this reconciliation: PACK084 — 3D Studio.
