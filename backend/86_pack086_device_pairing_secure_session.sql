@@ -340,127 +340,14 @@ as $pack086_rotate$
 declare
   v_session public.ip_sessions%rowtype;
   v_device public.ip_devices%rowtype;
+  v_expected text := lower(btrim(coalesce(p_expected_token_hash,'')));
   v_hash text := lower(btrim(coalesce(p_token_hash,'')));
 begin
-  if v_hash !~ '^[0-9a-f]{64}
-     or p_token_expires_at <= now()
-     or p_token_expires_at > now() + interval '15 minutes' then
-    raise exception 'pack086_token_expiry_invalid';
-  end if;
-
-  select * into v_session
-  from public.ip_sessions
-  where id=p_session_id and owner_id=p_owner_id
-  for update;
-
-  if not found then raise exception 'pack086_session_not_found'; end if;
-  if v_session.revoked_at is not null or v_session.state in ('stopped','failed') then
-    raise exception 'pack086_session_revoked';
-  end if;
-  if v_session.token_hash is null
-     or v_session.token_hash <> lower(btrim(p_expected_token_hash))
-     or v_session.token_expires_at is null
-     or v_session.token_expires_at <= now() then
-    raise exception 'pack086_token_invalid';
-  end if;
-
-  select * into v_device
-  from public.ip_devices
-  where id=v_session.device_id and owner_id=p_owner_id
-  for update;
-
-  if not found
-     or v_device.status <> 'paired'
-     or v_device.revoked_at is not null then
-    raise exception 'pack086_device_not_paired';
-  end if;
-
-  update public.ip_sessions
-    set token_hash=v_hash,
-        token_expires_at=p_token_expires_at,
-        last_client_counter=0,
-        updated_at=now()
-    where id=v_session.id;
-
-  insert into public.ip_audit_events(owner_id,session_id,event_type,details)
-  values (
-    p_owner_id,v_session.id,'session_token_rotated',
-    jsonb_build_object(
-      'deviceId',v_session.device_id,
-      'scopes',to_jsonb(v_session.permission_scopes)
-    )
-  );
-
-  return jsonb_build_object(
-    'success',true,
-    'device_id',v_session.device_id,
-    'session_id',v_session.id,
-    'token_expires_at',p_token_expires_at,
-    'scopes',to_jsonb(v_session.permission_scopes),
-    'execution_enabled',false
-  );
-end;
-$pack086_rotate$;
-
- then
-    raise exception 'pack086_token_hash_invalid';
-  end if;
-  if lower(btrim(coalesce(p_expected_token_hash,''))) !~ '^[0-9a-f]{64}
-     or p_token_expires_at <= now()
-     or p_token_expires_at > now() + interval '15 minutes' then
-    raise exception 'pack086_token_expiry_invalid';
-  end if;
-
-  select * into v_session
-  from public.ip_sessions
-  where id=p_session_id and owner_id=p_owner_id
-  for update;
-
-  if not found then raise exception 'pack086_session_not_found'; end if;
-  if v_session.revoked_at is not null or v_session.state in ('stopped','failed') then
-    raise exception 'pack086_session_revoked';
-  end if;
-
-  select * into v_device
-  from public.ip_devices
-  where id=v_session.device_id and owner_id=p_owner_id
-  for update;
-
-  if not found
-     or v_device.status <> 'paired'
-     or v_device.revoked_at is not null then
-    raise exception 'pack086_device_not_paired';
-  end if;
-
-  update public.ip_sessions
-    set token_hash=v_hash,
-        token_expires_at=p_token_expires_at,
-        last_client_counter=0,
-        updated_at=now()
-    where id=v_session.id;
-
-  insert into public.ip_audit_events(owner_id,session_id,event_type,details)
-  values (
-    p_owner_id,v_session.id,'session_token_rotated',
-    jsonb_build_object(
-      'deviceId',v_session.device_id,
-      'scopes',to_jsonb(v_session.permission_scopes)
-    )
-  );
-
-  return jsonb_build_object(
-    'success',true,
-    'device_id',v_session.device_id,
-    'session_id',v_session.id,
-    'token_expires_at',p_token_expires_at,
-    'scopes',to_jsonb(v_session.permission_scopes),
-    'execution_enabled',false
-  );
-end;
-$pack086_rotate$;
-
- then
+  if v_expected !~ '^[0-9a-f]{64}$' then
     raise exception 'pack086_expected_token_hash_invalid';
+  end if;
+  if v_hash !~ '^[0-9a-f]{64}$' then
+    raise exception 'pack086_token_hash_invalid';
   end if;
   if p_token_expires_at is null
      or p_token_expires_at <= now()
@@ -476,6 +363,12 @@ $pack086_rotate$;
   if not found then raise exception 'pack086_session_not_found'; end if;
   if v_session.revoked_at is not null or v_session.state in ('stopped','failed') then
     raise exception 'pack086_session_revoked';
+  end if;
+  if v_session.token_hash is null
+     or v_session.token_hash <> v_expected
+     or v_session.token_expires_at is null
+     or v_session.token_expires_at <= now() then
+    raise exception 'pack086_token_invalid';
   end if;
 
   select * into v_device
