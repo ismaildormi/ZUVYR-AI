@@ -3,6 +3,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const {
   studioCapabilities,
@@ -10,8 +11,10 @@ const {
   blockedExportReason
 } = require('./lib/model3dStudioPolicy');
 const {
+  validateGlb,
   validateObj,
-  validateFbx
+  validateFbx,
+  validateUsdz
 } = require('./lib/model3dGenerationRepository');
 
 const read = file => fs.readFileSync(path.join(__dirname, file), 'utf8');
@@ -60,6 +63,34 @@ assert.equal(blockedExportReason('gltf'), 'no_canonical_converter');
 assert.equal(blockedExportReason('stl'), 'no_canonical_converter');
 assert.equal(blockedExportReason('3mf'), 'no_canonical_converter');
 
+function makeMinimalGlb() {
+  const jsonRaw = Buffer.from(JSON.stringify({asset:{version:'2.0'},meshes:[{}]}),'utf8');
+  const jsonLength = Math.ceil(jsonRaw.length / 4) * 4;
+  const json = Buffer.alloc(jsonLength,0x20);
+  jsonRaw.copy(json);
+  const bin = Buffer.alloc(4);
+  const total = 12 + 8 + json.length + 8 + bin.length;
+  const out = Buffer.alloc(total);
+  out.write('glTF',0,'ascii');
+  out.writeUInt32LE(2,4);
+  out.writeUInt32LE(total,8);
+  let offset=12;
+  out.writeUInt32LE(json.length,offset);
+  out.writeUInt32LE(0x4e4f534a,offset+4);
+  json.copy(out,offset+8);
+  offset += 8 + json.length;
+  out.writeUInt32LE(bin.length,offset);
+  out.writeUInt32LE(0x004e4942,offset+4);
+  bin.copy(out,offset+8);
+  return out;
+}
+
+validateGlb(makeMinimalGlb());
+assert.throws(
+  () => validateGlb(Buffer.from('glTF-not-a-real-container')),
+  error => String(error.code||'').startsWith('model3d_glb_')
+);
+
 validateObj(Buffer.from('v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n'));
 assert.throws(
   () => validateObj(Buffer.from('this is not an obj mesh')),
@@ -72,6 +103,15 @@ validateFbx(Buffer.concat([
 assert.throws(
   () => validateFbx(Buffer.from('not-an-fbx-file-with-padding-000000')),
   error => error.code === 'model3d_fbx_structure_invalid'
+);
+
+const minimalUsdz=Buffer.alloc(40);
+minimalUsdz.writeUInt32LE(0x04034b50,0);
+minimalUsdz.writeUInt32LE(0x06054b50,18);
+validateUsdz(minimalUsdz);
+assert.throws(
+  () => validateUsdz(Buffer.alloc(40)),
+  error => String(error.code||'').startsWith('model3d_usdz_')
 );
 
 for (const marker of [
@@ -143,6 +183,9 @@ for (const marker of [
   assert(viewerRuntime.includes(marker), marker);
 }
 assert.equal(/https:\/\//i.test(viewerRuntime), false, 'viewer runtime must not embed third-party https origins');
+new vm.Script(viewerRuntime,{filename:'zuvyr-model3d-viewer.js'});
+assert(frontend.includes('model3dPromptUtf8Bytes'));
+assert(frontend.includes('maxlength="1024"'));
 
 for (const prohibitedLiveControl of [
   'data-zs-3d-remesh-live',
@@ -159,5 +202,6 @@ console.log('PASS: PACK084 export policy is manifest-backed; unsupported GLTF/ST
 console.log('PASS: PACK084 OBJ/FBX structural validation guards persisted export artifacts');
 console.log('PASS: PACK084 frontend wiring covers capabilities/history/generate/status/cancel/download with blocked unsupported operations');
 console.log('PASS: PACK084 viewer is self-hosted and does not execute third-party runtime code');
+console.log('PASS: PACK084 GLB/OBJ/FBX/USDZ validation and viewer syntax guards pass');
 console.log('PASS: PACK084 pins the self-hosted WebGL viewer runtime and ships responsive Studio CSS');
 console.log('LIVE 3D PROVIDER / PAYMENT / PRODUCTION MUTATION CALLS: NONE');
