@@ -40,13 +40,21 @@ function request({ port, method = 'GET', route, token, origin, host } = {}) {
 }
 
 (async () => {
-  assert.equal(config.version, 'pack-085.device-agent.v1');
+  assert.match(config.version, /^pack-08[56]\.device-agent\.v1$/);
   assert.equal(config.bind.host, '127.0.0.1');
   assert.equal(config.bind.browserOriginsAllowed, false);
   assert.equal(config.install.scope, 'user');
   assert.equal(config.install.requiresAdmin, false);
   assert.equal(config.execution.rawIpTrust, false);
-  for (const value of Object.values(config.execution)) assert.equal(value, false);
+  assert.equal(config.execution.pairingEnabled, true);
+  assert.equal(config.execution.computerControlEnabled, false);
+  assert.equal(config.execution.screenCapture, false);
+  assert.equal(config.execution.pointerControl, false);
+  assert.equal(config.execution.keyboardControl, false);
+  assert.equal(config.execution.applicationControl, false);
+  assert.equal(config.execution.filesystemControl, false);
+  assert.equal(config.execution.shellControl, false);
+  assert.equal(config.execution.rawIpTrust, false);
   assert.equal(config.update.enabled, false);
   assert.equal(config.update.releasePublicKeyPem, null);
   assert.deepEqual(config.update.allowedHosts, []);

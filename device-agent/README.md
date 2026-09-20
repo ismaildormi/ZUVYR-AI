@@ -32,3 +32,24 @@ The verifier supports signed Ed25519 manifests, HTTPS-only artifact URLs, host a
 ## Verification status
 
 CI can prove the local security/lifecycle contract with an ephemeral loopback server and temporary user directory. A real installation/uninstallation/start test on an actual target device is an external **M19** acceptance gate and must not be claimed from CI alone.
+
+
+## PACK086 — Pairing & secure session
+
+PACK086 adds user-authenticated pairing and a device-authenticated heartbeat session while keeping all computer-control execution disabled.
+
+- Pairing uses Ed25519 proof of possession; the backend stores only the public key/fingerprint.
+- Pairing challenges are single-use and expire quickly; only their SHA-256 hashes are stored.
+- Session tokens are returned once, stored privately on-device, and stored server-side only as SHA-256 hashes.
+- Every device heartbeat requires the short-lived token, an Ed25519 request signature and a strictly increasing counter.
+- Device revocation invalidates all open sessions and pending pairing challenges.
+- Raw IP addresses never identify or authorize a device.
+- Session transport is HTTPS-only by contract.
+- PACK087 owns screen, pointer, keyboard, application, clipboard, filesystem and shell execution.
+
+CLI helpers:
+
+    zuvyr-device-agent pair-proof challenge.json
+    zuvyr-device-agent session-import session.json --backend-origin https://<zuvyr-api-host>
+    zuvyr-device-agent session-proof POST /api/device-agent/heartbeat
+    zuvyr-device-agent session-clear

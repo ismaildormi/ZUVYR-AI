@@ -70,6 +70,7 @@ const {
 const {
   createRoxIpRouter
 } = require('./lib/roxIpRoutes');
+const { createDeviceSessionRouter } = require('./lib/deviceSessionRoutes');
 const {
   createCodeStudioRouter
 } = require('./lib/codeStudioRoutes');
@@ -366,10 +367,14 @@ app.use(
   createConversationRouter()
 );
 app.use(
+  '/api/device-agent',
+  createDeviceSessionRouter({ db: supabaseAdmin })
+);
+app.use(
   '/api/roxip',
   requireAuth,
   rateLimit('roxip'),
-  createRoxIpRouter()
+  createRoxIpRouter({ db: supabaseAdmin })
 );
 // PACK076 preview transport is authenticated by a short-lived, owner-issued
 // preview credential rather than a Supabase bearer token so browser preview
