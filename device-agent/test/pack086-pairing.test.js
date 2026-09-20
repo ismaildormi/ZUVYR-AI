@@ -1,0 +1,125 @@
+'use strict';
+
+const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+
+const config = require('../config.v1.json');
+const { ensureIdentity } = require('../src/security');
+const {
+  pairingProofMessage,
+  sessionRequestMessage,
+  bodySha256
+} = require('../src/pairingProtocol');
+const {
+  strictHttpsOrigin,
+  signPairingChallenge,
+  saveSession,
+  loadSession,
+  buildSignedSessionRequest,
+  clearSession
+} = require('../src/pairingSession');
+const { capabilities } = require('../src/server');
+
+const root = fs.mkdtempSync(path.join(os.tmpdir(), 'zuvyr-pack086-agent-'));
+try {
+  assert.equal(config.version, 'pack-086.device-agent.v1');
+  assert.equal(config.execution.pairingEnabled, true);
+  assert.equal(config.execution.computerControlEnabled, false);
+  assert.equal(config.session.transport, 'https_only');
+  assert.deepEqual(config.session.allowedScopes, ['heartbeat']);
+  assert.equal(config.session.rawIpTrust, false);
+
+  const identity = ensureIdentity(root);
+  const challenge = {
+    challengeId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    challenge: crypto.randomBytes(32).toString('base64url'),
+    ownerId: '11111111-1111-4111-8111-111111111111',
+    backendDeviceId: '22222222-2222-4222-8222-222222222222',
+    agentDeviceId: identity.deviceId,
+    fingerprint: identity.fingerprint,
+    expiresAt: new Date(Date.now() + 120000).toISOString()
+  };
+  const proof = signPairingChallenge(root, challenge);
+  assert.equal(proof.agentDeviceId, identity.deviceId);
+  assert.equal(
+    crypto.verify(
+      null,
+      pairingProofMessage(challenge),
+      crypto.createPublicKey(identity.publicKeyPem),
+      Buffer.from(proof.signature, 'base64')
+    ),
+    true
+  );
+
+  assert.equal(strictHttpsOrigin('https://api.zuvyr.example'), 'https://api.zuvyr.example');
+  assert.throws(() => strictHttpsOrigin('http://api.zuvyr.example'), { code: 'pack086_backend_origin_invalid' });
+  assert.throws(() => strictHttpsOrigin('https://127.0.0.1'), { code: 'pack086_backend_origin_forbidden' });
+
+  const token = 'zst_' + crypto.randomBytes(32).toString('base64url');
+  saveSession(root, {
+    backendOrigin: 'https://api.zuvyr.example',
+    deviceId: challenge.backendDeviceId,
+    sessionId: '33333333-3333-4333-8333-333333333333',
+    token,
+    tokenExpiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+    scopes: ['heartbeat']
+  });
+
+  const stored = loadSession(root);
+  assert.equal(stored.token, token);
+  assert.equal(stored.counter, 0);
+  if (process.platform !== 'win32') {
+    assert.equal(fs.statSync(path.join(root, 'session.json')).mode & 0o077, 0);
+  }
+
+  const body = { status: 'ok' };
+  const first = buildSignedSessionRequest(root, {
+    method: 'POST',
+    path: '/api/device-agent/heartbeat',
+    body
+  });
+  assert.equal(first.headers.Authorization, 'Bearer ' + token);
+  assert.equal(first.headers['X-ZUVYR-Device-Counter'], '1');
+  assert.equal(first.bodySha256, bodySha256(body));
+  assert.equal(
+    crypto.verify(
+      null,
+      sessionRequestMessage({
+        sessionId: stored.sessionId,
+        counter: 1,
+        method: 'POST',
+        path: '/api/device-agent/heartbeat',
+        bodySha256: first.bodySha256
+      }),
+      crypto.createPublicKey(identity.publicKeyPem),
+      Buffer.from(first.headers['X-ZUVYR-Device-Signature'], 'base64')
+    ),
+    true
+  );
+
+  const second = buildSignedSessionRequest(root, {
+    method: 'POST',
+    path: '/api/device-agent/heartbeat',
+    body
+  });
+  assert.equal(second.headers['X-ZUVYR-Device-Counter'], '2');
+
+  const caps = capabilities(true);
+  assert.equal(caps.paired, true);
+  assert.equal(caps.pairingEnabled, true);
+  assert.equal(caps.executionEnabled, false);
+  for (const enabled of Object.values(caps.actions)) assert.equal(enabled, false);
+
+  assert.equal(clearSession(root).cleared, true);
+  assert.equal(fs.existsSync(path.join(root, 'session.json')), false);
+
+  console.log('PASS: PACK086 agent signs pairing proof with its PACK085 Ed25519 identity');
+  console.log('PASS: PACK086 stores short-lived session token privately and emits monotonic signed heartbeat proofs');
+  console.log('PASS: PACK086 agent requires HTTPS origin and rejects raw IP/local backend origins');
+  console.log('PASS: PACK087 computer-control actions remain disabled');
+} finally {
+  fs.rmSync(root, { recursive: true, force: true });
+}
