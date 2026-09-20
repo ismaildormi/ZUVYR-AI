@@ -202,7 +202,6 @@ function createIpPairingService({
     const device = context.device;
 
     if (session.id !== sessionUuid) throw pairingError('pack086_wrong_session');
-    if (session.execution_enabled !== false) throw pairingError('pack086_execution_invariant_failed');
     if (session.revoked_at || ['stopped','failed'].includes(session.state)) throw pairingError('pack086_session_revoked');
     if (parseTime(session.token_expires_at, 'pack086_token_expiry_invalid') <= clock().getTime()) throw pairingError('pack086_token_expired');
     if (!timingSafeHexEqual(requestTokenHash, session.token_hash)) throw pairingError('pack086_token_invalid');
@@ -241,7 +240,7 @@ function createIpPairingService({
       scopes: Array.isArray(advanced.scopes) ? advanced.scopes : session.permission_scopes,
       heartbeatAt: advanced.heartbeat_at || clock().toISOString(),
       tokenHash: requestTokenHash,
-      executionEnabled: false
+      executionEnabled: session.execution_enabled === true
     });
   }
 
