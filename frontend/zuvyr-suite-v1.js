@@ -981,7 +981,7 @@
       '<div class="zs-banner" data-zs-3d-banner><span>⬡</span><div><b>3D Studio is loading verified capabilities.</b> Paid generation remains owned by the PACK083/M18 gate.</div></div>'+
       '<div class="zs-grid">'+
         '<div class="zs-card half"><h2>Create 3D</h2><form data-zs-3d-form>'+
-          '<div class="zs-field"><label>Prompt</label><textarea name="prompt" maxlength="1200" required placeholder="A clean stylized ceramic robot with rounded edges"></textarea></div>'+
+          '<div class="zs-field"><label>Prompt</label><textarea name="prompt" maxlength="1024" required placeholder="A clean stylized ceramic robot with rounded edges"></textarea></div>'+
           '<div class="zs-field"><label>Geometry mode</label><select name="generateType"><option value="Normal">Normal + texture</option><option value="Geometry">Geometry only</option></select></div>'+
           '<div class="zs-field"><label>Face count</label><input name="faceCount" type="number" min="40000" max="1500000" step="10000" value="500000"></div>'+
           '<label class="zs-consent"><input name="enablePbr" type="checkbox" checked> Generate PBR material when supported by the selected geometry mode.</label>'+
@@ -1325,11 +1325,23 @@
     },2000);
   }
 
+  function model3dPromptUtf8Bytes(value){
+    var text=String(value||'');
+    if(typeof TextEncoder==='function')return new TextEncoder().encode(text).length;
+    return unescape(encodeURIComponent(text)).length;
+  }
+
   async function submitModel3dStudio(form){
     var caps=model3dStudioState.capabilities||{};
     var generation=caps.generation||{};
     if(generation.liveExecution!==true){
       toast('3D generation is fail-closed until M18 and PACK083 paid-execution gates are live.');
+      return;
+    }
+    var prompt=String(form.elements.prompt.value||'').trim();
+    var promptBytes=model3dPromptUtf8Bytes(prompt);
+    if(!promptBytes||promptBytes>1024){
+      toast('3D prompt must be between 1 and 1024 UTF-8 bytes.');
       return;
     }
     var button=form.querySelector('[data-zs-3d-generate]');
@@ -1340,7 +1352,7 @@
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
-          prompt:String(form.elements.prompt.value||'').trim(),
+          prompt:prompt,
           model3dOperation:'text_to_3d',
           model3dViews:{},
           model3dOptions:{
