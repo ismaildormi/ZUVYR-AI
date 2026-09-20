@@ -149,6 +149,7 @@ const { normalizeModel3dRequest } = require('./lib/model3dRequestContract');
 const { createModel3dInputResolver } = require('./lib/model3dInputResolver');
 const { createModel3dGenerationRepository } = require('./lib/model3dGenerationRepository');
 const { model3dAvailability } = require('./lib/model3dPolicy');
+const { studioCapabilities } = require('./lib/model3dStudioPolicy');
 // New, additive-only: stub routes for every not-yet-built feature (see
 // ARCHITECTURE.md). Each route is flag-gated and returns a clear
 // "not enabled" response until the feature is actually implemented ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â
@@ -2427,6 +2428,14 @@ app.get('/api/3d/capabilities', requireAuth, (req, res) => {
     externalGate: availability.externalGate,
     provider: availability.provider,
     blockers: availability.blockers
+  });
+});
+
+app.get('/api/3d/studio-capabilities', requireAuth, (req, res) => {
+  const availability = model3dAvailability(process.env);
+  return res.json({
+    status: 'success',
+    ...studioCapabilities(availability)
   });
 });
 

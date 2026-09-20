@@ -1,0 +1,68 @@
+{
+  "version": "pack-084.3d-studio.v1",
+  "pack": 84,
+  "title": "3D Studio",
+  "viewer": {
+    "engine": "zuvyr-local-webgl-glb",
+    "version": "pack084-v1",
+    "scriptUrl": "/zuvyr-model3d-viewer.js?v=pack084-1",
+    "providerCalls": 0,
+    "signedRole": "model_glb",
+    "controls": [
+      "camera_controls",
+      "orbit",
+      "zoom",
+      "local_lighting",
+      "keyboard",
+      "reset_camera"
+    ]
+  },
+  "operations": {
+    "mesh_polycount": {
+      "status": "generation_time_only",
+      "authority": "PACK083 model3d_options.faceCount"
+    },
+    "pbr_texture": {
+      "status": "generation_time_only",
+      "authority": "PACK083 model3d_options.enablePbr"
+    },
+    "remesh": {
+      "status": "blocked_no_verified_executor"
+    },
+    "retopo": {
+      "status": "blocked_no_verified_executor"
+    },
+    "rig": {
+      "status": "blocked_no_verified_executor"
+    },
+    "animation": {
+      "status": "blocked_no_verified_executor"
+    },
+    "retarget": {
+      "status": "blocked_no_verified_executor"
+    }
+  },
+  "exports": {
+    "verifiedWhenPresent": {
+      "glb": "export_glb",
+      "obj": "export_obj",
+      "fbx": "export_fbx",
+      "usdz": "export_usdz"
+    },
+    "blocked": {
+      "gltf": "no_canonical_converter",
+      "stl": "no_canonical_converter",
+      "3mf": "no_canonical_converter"
+    }
+  },
+  "truthRules": {
+    "exposeOnlyManifestBackedExports": true,
+    "unsupportedControlsHiddenOrBlocked": true,
+    "viewerRequiresFreshOwnerSignedGlb": true,
+    "viewerDoesNotCreateProviderUsage": true,
+    "generationRemainsOwnedByPack083M18": true,
+    "thirdPartyViewerRuntime": false,
+    "viewerFetchCredentials": "omit",
+    "viewerReferrerPolicy": "no-referrer"
+  }
+}
