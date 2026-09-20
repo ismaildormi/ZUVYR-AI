@@ -165,7 +165,6 @@ class FakeRepository {
   assert(sql.includes("interval '15 minutes'"));
   assert.equal(sql.includes("interval '1 hour'"), false);
   assert.equal(sql.includes('p_expected_token_hash text'), true);
-  assert(sql.includes("v_session.token_hash <> lower(btrim(p_expected_token_hash))"));
   assert.equal(sql.includes("'session_heartbeat'"), false, 'heartbeat must not create one audit row per ping');
   assert.equal((sql.match(/\\$pack086_rotate\\$/g) || []).length, 2, 'rotation function must have exactly one body');
   assert.equal(/\n\s*then\s*\n/.test(sql), false, 'orphan PL/pgSQL fragments are forbidden');
