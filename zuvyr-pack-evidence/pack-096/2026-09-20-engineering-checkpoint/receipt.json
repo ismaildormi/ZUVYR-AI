@@ -1,0 +1,93 @@
+{
+  "schema_version": "zuvyr.pack096.engineering-checkpoint.v1",
+  "pack": "096",
+  "title": "ZUVYR 7 Manager / Operator — V1 Production Model + V2 Bridge",
+  "date": "2026-09-20",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonical_locked_verified": false,
+  "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+  "baseline_main_commit": "89a8083dd885de899465194196ed5ca1ce8d64f1",
+  "implementation_pr": 42,
+  "implementation_candidate_commit": "85695cf79783598626e39705dd3d95342a536b32",
+  "implementation_merge_commit": "b24094109093ce9fedbd1664e6bcce8ac8836344",
+  "ci": {
+    "final_run": 35481256488,
+    "backend_quality": "PASS",
+    "release_quality": "PASS"
+  },
+  "database": {
+    "migration_version": "20260920012400",
+    "migration_name": "pack096_owned_model_runtime",
+    "migration_status": "APPLIED_VERIFIED",
+    "control_plane_tables_expected": 3,
+    "control_plane_tables_present": 3,
+    "all_new_tables_rls": true,
+    "direct_browser_policy_count": 0,
+    "security_definer_functions_expected": 5,
+    "security_definer_functions_present": 5
+  },
+  "capabilities": {
+    "owned_model_deployment_authority": true,
+    "byoc_compute_connector_bridge": true,
+    "teacher_gateway_rights_enforcement": true,
+    "shadow_canary_secondary_primary_stages": true,
+    "automatic_external_fallback": true,
+    "rollback_authority": true,
+    "bounded_low_risk_chat_workload_policy": true,
+    "m21_live_gate": true
+  },
+  "production": {
+    "railway": {
+      "exact_commit": "b24094109093ce9fedbd1664e6bcce8ac8836344",
+      "backend": {
+        "deployment": "7695254a-925d-4537-82f0-50a5cb02beae",
+        "status": "SUCCESS"
+      },
+      "worker": {
+        "deployment": "e0bcd8fd-1b1b-400b-a33c-acab13e96ce3",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deployment": "cc97fc77-fc4b-417c-8b3a-57933091dd32",
+        "status": "SUCCESS"
+      }
+    },
+    "vercel": {
+      "production_deployment": "dpl_DK7QwdQrkrjww11yzH7tt6UjDstg",
+      "production_status": "READY",
+      "production_commit": "b24094109093ce9fedbd1664e6bcce8ac8836344"
+    }
+  },
+  "live_m21_evidence": {
+    "compute_connectors_total": 0,
+    "checkpoints_total": 0,
+    "evaluations_total": 0,
+    "owned_deployments_total": 0,
+    "owned_deployments_active": 0,
+    "route_receipts_total": 0,
+    "teacher_records_total": 0,
+    "railway_m21_variables_present": 0,
+    "real_byoc_owned_model_production_proven": false
+  },
+  "economics": {
+    "live_billing_allowed": false,
+    "live_paid_training_calls": 0,
+    "live_paid_compute_calls": 0,
+    "zuvyr_owned_model_api_software_fee_usd": 0,
+    "zuvyr_owned_model_usage_fee_usd": 0,
+    "inference_markup_usd": 0,
+    "customer_compute_billed_directly": true,
+    "zuvyr_paid_gpu_required": false,
+    "external_paid_fallback_separate": true
+  },
+  "omissions": [
+    "M21 is not satisfied: no real registered BYOC compute connector/checkpoint/evaluation/owned deployment exists in production.",
+    "No claim is made that a ZUVYR-owned model is serving production traffic.",
+    "No live paid training, compute or provider call was made during verification."
+  ],
+  "deferred_gates": [
+    "M21_REAL_BYOC_OWNED_MODEL_PRODUCTION_ACCEPTANCE"
+  ],
+  "next_pack": "084",
+  "next_pack_title": "3D Studio"
+}
