@@ -1,5 +1,34 @@
 begin;
 
+alter table public.ip_sessions
+  add column if not exists execution_context_type text,
+  add column if not exists execution_context_id text;
+
+alter table public.ip_sessions
+  drop constraint if exists ip_session_execution_context;
+
+do $pack087_session_context_constraint$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname='ip_session_execution_context_pack087'
+      and conrelid='public.ip_sessions'::regclass
+  ) then
+    alter table public.ip_sessions
+      add constraint ip_session_execution_context_pack087
+      check (
+        not execution_enabled
+        or (
+          started_at is not null
+          and execution_context_type in ('device_agent','sandbox')
+          and execution_context_id is not null
+          and char_length(execution_context_id) between 1 and 200
+        )
+      );
+  end if;
+end
+$pack087_session_context_constraint$;
+
 alter table public.ip_actions
   add column if not exists target text,
   add column if not exists input_text text,
@@ -104,6 +133,174 @@ grant select on table public.ip_permission_grants to service_role;
 grant select,insert,update on table public.ip_stop_signals to service_role;
 grant select,insert,update on table public.ip_undo_receipts to service_role;
 grant select,insert on table public.ip_audit_events to service_role;
+
+create or replace function public.grant_ip_permissions_pack087(
+  p_owner_id uuid,
+  p_session_id uuid,
+  p_scopes text[],
+  p_expires_at timestamptz
+) returns jsonb
+language plpgsql
+security definer
+set search_path=public,pg_temp
+as $pack087_grant$
+declare
+  v_session public.ip_sessions%rowtype;
+  v_grant_id uuid;
+  v_scope text;
+  v_max_seconds integer;
+begin
+  select * into v_session
+  from public.ip_sessions
+  where id=p_session_id and owner_id=p_owner_id
+  for update;
+
+  if not found then raise exception 'pack087_session_not_found'; end if;
+  if v_session.revoked_at is not null or v_session.state in ('stopped','failed') then
+    raise exception 'pack087_session_unavailable';
+  end if;
+  if not exists (
+    select 1 from public.ip_devices d
+    where d.id=v_session.device_id
+      and d.owner_id=p_owner_id
+      and d.status='paired'
+      and d.revoked_at is null
+  ) then
+    raise exception 'pack087_device_not_paired';
+  end if;
+
+  if p_scopes is null
+     or cardinality(p_scopes) < 1
+     or cardinality(p_scopes) > 9
+     or '*' = any(p_scopes)
+     or exists (
+       select 1 from unnest(p_scopes) s
+       where s not in (
+         'screen.view','pointer.control','keyboard.type','application.open',
+         'clipboard.read','clipboard.write','file.read','file.write','shell.execute'
+       )
+     )
+     or (select count(*) from unnest(p_scopes) s)
+        <> (select count(distinct s) from unnest(p_scopes) s)
+  then
+    raise exception 'pack087_permission_scopes_invalid';
+  end if;
+
+  if p_expires_at is null or p_expires_at <= now() then
+    raise exception 'pack087_permission_expiry_invalid';
+  end if;
+
+  foreach v_scope in array p_scopes loop
+    v_max_seconds := case v_scope
+      when 'screen.view' then 900
+      when 'pointer.control' then 900
+      when 'keyboard.type' then 600
+      when 'application.open' then 900
+      when 'clipboard.read' then 300
+      when 'clipboard.write' then 300
+      when 'file.read' then 300
+      when 'file.write' then 180
+      when 'shell.execute' then 120
+      else 0
+    end;
+    if p_expires_at > now() + make_interval(secs=>v_max_seconds) then
+      raise exception 'pack087_permission_expiry_too_long';
+    end if;
+  end loop;
+
+  update public.ip_permission_grants
+    set revoked_at=coalesce(revoked_at,now())
+    where owner_id=p_owner_id
+      and session_id=p_session_id
+      and revoked_at is null;
+
+  insert into public.ip_permission_grants(
+    owner_id,session_id,scopes,explicit_consent,issued_at,expires_at
+  ) values (
+    p_owner_id,p_session_id,p_scopes,true,now(),p_expires_at
+  ) returning id into v_grant_id;
+
+  update public.ip_sessions
+    set execution_enabled=true,
+        execution_context_type='device_agent',
+        execution_context_id=v_session.device_id::text,
+        started_at=coalesce(started_at,now()),
+        state=case when state='blocked' then 'ready' else state end,
+        updated_at=now()
+    where id=p_session_id;
+
+  insert into public.ip_audit_events(owner_id,session_id,event_type,details)
+  values (
+    p_owner_id,p_session_id,'permission_granted',
+    jsonb_build_object('grantId',v_grant_id,'scopes',to_jsonb(p_scopes),'expiresAt',p_expires_at)
+  );
+
+  return jsonb_build_object(
+    'success',true,
+    'grant_id',v_grant_id,
+    'session_id',p_session_id,
+    'scopes',to_jsonb(p_scopes),
+    'expires_at',p_expires_at,
+    'execution_enabled',true
+  );
+end;
+$pack087_grant$;
+
+create or replace function public.revoke_ip_permissions_pack087(
+  p_owner_id uuid,
+  p_session_id uuid
+) returns jsonb
+language plpgsql
+security definer
+set search_path=public,pg_temp
+as $pack087_revoke_permissions$
+declare
+  v_count integer := 0;
+begin
+  if not exists (
+    select 1 from public.ip_sessions
+    where id=p_session_id and owner_id=p_owner_id
+  ) then
+    raise exception 'pack087_session_not_found';
+  end if;
+
+  update public.ip_permission_grants
+    set revoked_at=coalesce(revoked_at,now())
+    where owner_id=p_owner_id
+      and session_id=p_session_id
+      and revoked_at is null;
+  get diagnostics v_count = row_count;
+
+  update public.ip_sessions
+    set execution_enabled=false,
+        execution_context_type=null,
+        execution_context_id=null,
+        updated_at=now()
+    where id=p_session_id and owner_id=p_owner_id;
+
+  update public.ip_actions
+    set status='cancelled',
+        error_code=coalesce(error_code,'pack087_permission_revoked'),
+        completed_at=coalesce(completed_at,now()),
+        updated_at=now()
+    where owner_id=p_owner_id
+      and session_id=p_session_id
+      and status in ('ready','pending_confirmation');
+
+  insert into public.ip_audit_events(owner_id,session_id,event_type,details)
+  values (
+    p_owner_id,p_session_id,'permission_revoked',
+    jsonb_build_object('grantsRevoked',v_count)
+  );
+
+  return jsonb_build_object(
+    'success',true,
+    'session_id',p_session_id,
+    'grants_revoked',v_count,
+    'execution_enabled',false
+  );
+end;
+$pack087_revoke_permissions$;
 
 create or replace function public.prepare_ip_action_pack087(
   p_owner_id uuid,
