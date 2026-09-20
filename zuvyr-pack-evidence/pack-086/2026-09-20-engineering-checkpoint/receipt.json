@@ -1,0 +1,91 @@
+{
+  "schema": "zuvyr-pack-engineering-checkpoint.v1",
+  "pack": "086",
+  "title": "Device Pairing & Secure Session",
+  "recorded_at_utc": "2026-09-20T21:32:39Z",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonical_locked_verified": false,
+  "canonical_gate": {
+    "status": "DEFERRED_REAL_DEVICE_ACCEPTANCE",
+    "requirement": "Real physical-device pairing/session journey proving wrong device/session rejection, revocation, heartbeat/status and token rotation against production.",
+    "reason": "CI, migration, production deployment and security invariants are verified, but no real physical device was used in this session. No live-device success is fabricated."
+  },
+  "source": {
+    "implementation_pr": 48,
+    "candidate_head": "3beb7a956ff91d60167af650f88ebb1914b064a0",
+    "merge_commit": "8466251829b518eba7f19027f09262ece4ee6d02"
+  },
+  "ci": {
+    "workflow": "ZUVYR Release Quality Gate",
+    "run_id": 35538034453,
+    "conclusion": "SUCCESS"
+  },
+  "supabase": {
+    "project_id": "tqoqsgaymygmqrzddvtu",
+    "migration": "pack086_device_pairing_secure_session",
+    "sql_blob_sha": "00ef7d8183138c9028d2840f21a17493c553a3eb",
+    "applied": true,
+    "postconditions": {
+      "pairing_table": true,
+      "ip_devices": true,
+      "ip_sessions": true,
+      "required_columns": true,
+      "required_functions": true,
+      "rls_all_three": true,
+      "devices_count": 0,
+      "sessions_count": 0,
+      "challenges_count": 0,
+      "execution_true_count": 0,
+      "scopes_out_of_contract": 0
+    }
+  },
+  "production": {
+    "vercel": {
+      "deployment": "dpl_c79LwbFYdpyF1bSTBUvHMnLH8D6F",
+      "status": "READY",
+      "exact_commit": "8466251829b518eba7f19027f09262ece4ee6d02"
+    },
+    "railway": {
+      "exact_commit": "8466251829b518eba7f19027f09262ece4ee6d02",
+      "service_8b9b895c": {
+        "deployment": "f137b68d-5b04-4fc0-a228-20878ebcda88",
+        "status": "SUCCESS"
+      },
+      "service_b093dbfd": {
+        "deployment": "b87421bc-7fa5-4d8d-bcae-fe24d853e496",
+        "status": "SUCCESS"
+      },
+      "service_65161b7e": {
+        "deployment": "5c2c40d5-064d-4da5-a2cb-ac3b2f0c6838",
+        "status": "SUCCESS",
+        "startup": "ROX AI backend listening on port 8080"
+      }
+    }
+  },
+  "implementation": {
+    "ed25519_proof_of_possession": true,
+    "single_use_hash_only_pairing_challenges": true,
+    "short_lived_session_tokens": true,
+    "server_side_token_hash_only": true,
+    "signed_monotonic_requests": true,
+    "heartbeat": true,
+    "session_status": true,
+    "token_rotation": true,
+    "compare_and_swap_rotation": true,
+    "device_revocation": true,
+    "https_required_in_production": true,
+    "raw_ip_trust": false,
+    "service_role_persistence": true,
+    "computer_control_enabled": false,
+    "pack087_execution_boundary_preserved": true
+  },
+  "live_calls": {
+    "provider_calls": 0,
+    "payment_calls": 0,
+    "computer_control_calls": 0
+  },
+  "progression": {
+    "mode": "USER_APPROVED_DEFERRED_REAL_DEVICE_CONTINUATION",
+    "next_pack": "087"
+  }
+}

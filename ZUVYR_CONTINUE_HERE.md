@@ -1628,3 +1628,24 @@ Do **not** reopen PACK084 merely because M18 is deferred. M18 stays a launch/liv
 - Receipt: `zuvyr-pack-evidence/pack-085/2026-09-20-engineering-checkpoint/receipt.json` (Git blob `10772b2dcdce58f5b6fcb8bf348c885d2f657709`).
 - Progression: user-approved deferred-gate continuation.
 - **Active pack is now PACK086 — Device Pairing & Secure Session.**
+
+
+### PACK086 ENGINEERING FINALIZED — 2026-09-20
+
+- **PACK086 — Device Pairing & Secure Session** is `LOCKED_ENGINEERING_VERIFIED`; canonical `LOCKED_VERIFIED` remains **NO** until a real physical-device production journey is evidenced.
+- Implementation PR `#48`; candidate head `3beb7a956ff91d60167af650f88ebb1914b064a0`; merge commit `8466251829b518eba7f19027f09262ece4ee6d02`.
+- GitHub Release Quality Gate run `35538034453` = **SUCCESS**.
+- Supabase migration `pack086_device_pairing_secure_session` applied successfully from SQL blob `00ef7d8183138c9028d2840f21a17493c553a3eb`.
+- Supabase postconditions: pairing/device/session tables + required columns/functions present, RLS ON, `execution_enabled=true` count = 0, scopes outside contract = 0.
+- Production exact-commit evidence:
+  - Vercel `dpl_c79LwbFYdpyF1bSTBUvHMnLH8D6F` = **READY**.
+  - Railway `f137b68d-5b04-4fc0-a228-20878ebcda88` = **SUCCESS**.
+  - Railway `b87421bc-7fa5-4d8d-bcae-fe24d853e496` = **SUCCESS**.
+  - Railway `5c2c40d5-064d-4da5-a2cb-ac3b2f0c6838` = **SUCCESS**; backend startup confirmed on port 8080.
+- Verified engineering contract: Ed25519 proof-of-possession; single-use hash-only pairing challenge; short-lived hash-only server session token; signed monotonic heartbeat/status/rotation; CAS token rotation; revocation; production HTTPS; no raw-IP trust.
+- **PACK087 computer-control execution remains disabled.**
+- No provider, payment or real computer-control calls were made during verification.
+- Deferred acceptance: real physical-device production pairing/session journey. No live-device success is fabricated.
+- Receipt: `zuvyr-pack-evidence/pack-086/2026-09-20-engineering-checkpoint/receipt.json` (Git blob `b68d45aba645ad4af96ca132cef2f71e5f64f00d`).
+- Progression: user-approved deferred-real-device continuation.
+- **Active pack is now PACK087 — IP Actions / STOP / Undo.**

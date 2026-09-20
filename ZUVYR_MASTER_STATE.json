@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "source_fix": "005-FIX6",
   "selected_strategy": "railway_internal_route",
-  "previous_pack": "085",
+  "previous_pack": "086",
   "tests": {
     "maintenance": "PASS",
     "runtime_safety": "PASS",
@@ -589,7 +589,7 @@
   "status": "PACK095_OPEN",
   "next_pack_allowed": true,
   "next_external_gate": "M19",
-  "next_pack": "085 - ZUVYR Device Agent Build",
+  "next_pack": "087 - IP Actions / STOP / Undo",
   "pack042": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "258ce1f4df2e3a4630cfc87069668f073c0dee79",
@@ -835,7 +835,7 @@
     "previous_plan_preserved": true,
     "priority_override": "MODEL_FIRST_BYO_COMPUTE_2026_09_19"
   },
-  "active_pack": "086",
+  "active_pack": "087",
   "pack061": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
@@ -1842,7 +1842,7 @@
     "effective_date": "2026-09-19",
     "current_inflight_pack": null,
     "current_inflight_may_finish": false,
-    "next_pack_after_current_inflight": "086",
+    "next_pack_after_current_inflight": "087",
     "priority_sequence": [
       "094 - Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
       "095 - ZUVYR Model Lab",
@@ -1850,7 +1850,6 @@
     ],
     "resume_original_sequence_at": "084",
     "deferred_not_cancelled": [
-      "087",
       "088",
       "089",
       "090",
@@ -2350,5 +2349,79 @@
     "receipt_git_blob": "10772b2dcdce58f5b6fcb8bf348c885d2f657709",
     "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
     "next_pack": "086"
+  },
+  "pack086": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "Device Pairing & Secure Session",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "CI, migration, production deployment and security invariants are verified, but no real physical device was used in this session. No live-device success is fabricated.",
+    "implementation_pr": 48,
+    "candidate_head": "3beb7a956ff91d60167af650f88ebb1914b064a0",
+    "merge_commit": "8466251829b518eba7f19027f09262ece4ee6d02",
+    "github_ci_run": 35538034453,
+    "github_ci": "SUCCESS",
+    "supabase_migration": "pack086_device_pairing_secure_session",
+    "supabase_sql_blob_sha": "00ef7d8183138c9028d2840f21a17493c553a3eb",
+    "supabase_postconditions": {
+      "pairing_table": true,
+      "ip_devices": true,
+      "ip_sessions": true,
+      "required_columns": true,
+      "required_functions": true,
+      "rls_all_three": true,
+      "devices_count": 0,
+      "sessions_count": 0,
+      "challenges_count": 0,
+      "execution_true_count": 0,
+      "scopes_out_of_contract": 0
+    },
+    "runtime": {
+      "ed25519_pairing": true,
+      "session_token_ttl_seconds": 600,
+      "session_scopes": [
+        "heartbeat",
+        "session_status",
+        "session_rotate"
+      ],
+      "signed_monotonic_requests": true,
+      "cas_token_rotation": true,
+      "revocation": true,
+      "https_required": true,
+      "raw_ip_trust": false,
+      "computer_control_enabled": false
+    },
+    "production": {
+      "vercel": {
+        "deployment": "dpl_c79LwbFYdpyF1bSTBUvHMnLH8D6F",
+        "status": "READY",
+        "exact_commit": "8466251829b518eba7f19027f09262ece4ee6d02"
+      },
+      "railway": {
+        "exact_commit": "8466251829b518eba7f19027f09262ece4ee6d02",
+        "service_8b9b895c": {
+          "deployment": "f137b68d-5b04-4fc0-a228-20878ebcda88",
+          "status": "SUCCESS"
+        },
+        "service_b093dbfd": {
+          "deployment": "b87421bc-7fa5-4d8d-bcae-fe24d853e496",
+          "status": "SUCCESS"
+        },
+        "service_65161b7e": {
+          "deployment": "5c2c40d5-064d-4da5-a2cb-ac3b2f0c6838",
+          "status": "SUCCESS",
+          "startup": "ROX AI backend listening on port 8080"
+        }
+      }
+    },
+    "deferred_gates": [
+      "PACK086_REAL_DEVICE_PAIRING_SESSION_ACCEPTANCE"
+    ],
+    "provider_calls_during_verification": 0,
+    "payment_calls_during_verification": 0,
+    "device_control_calls_during_verification": 0,
+    "receipt_path": "zuvyr-pack-evidence/pack-086/2026-09-20-engineering-checkpoint/receipt.json",
+    "receipt_git_blob": "b68d45aba645ad4af96ca132cef2f71e5f64f00d",
+    "progression": "USER_APPROVED_DEFERRED_REAL_DEVICE_CONTINUATION",
+    "next_pack": "087"
   }
 }
