@@ -445,7 +445,7 @@ async function executePointer(type, target, tools, options) {
       throw actionError('pack087_pointer_target_invalid');
     }
     if (process.platform === 'win32') {
-      const script = 'Add-Type -TypeDefinition \\'using System.Runtime.InteropServices; public class C{[DllImport("user32.dll")] public static extern bool SetCursorPos(int X,int Y);}\\';[C]::SetCursorPos([int]$args[0],[int]$args[1]) | Out-Null';
+      const script = `Add-Type -TypeDefinition 'using System.Runtime.InteropServices; public class C{[DllImport("user32.dll")] public static extern bool SetCursorPos(int X,int Y);}' ;[C]::SetCursorPos([int]$args[0],[int]$args[1]) | Out-Null`;
       const result = await spawnCaptured(tools.pointer, ['-NoProfile','-NonInteractive','-Command',script,String(x),String(y)], options);
       if (result.code !== 0) throw actionError('pack087_pointer_move_failed');
     } else if (process.platform === 'darwin') {
@@ -462,7 +462,7 @@ async function executePointer(type, target, tools, options) {
   if (![1,2,3].includes(button)) throw actionError('pack087_pointer_button_invalid');
   if (process.platform === 'win32') {
     const flags = button === 1 ? [2,4] : button === 2 ? [32,64] : [8,16];
-    const script = 'Add-Type -TypeDefinition \\'using System.Runtime.InteropServices; public class C{[DllImport("user32.dll")] public static extern void mouse_event(uint f,uint dx,uint dy,uint d,uint e);}\\';[C]::mouse_event([uint32]$args[0],0,0,0,0);[C]::mouse_event([uint32]$args[1],0,0,0,0)';
+    const script = `Add-Type -TypeDefinition 'using System.Runtime.InteropServices; public class C{[DllImport("user32.dll")] public static extern void mouse_event(uint f,uint dx,uint dy,uint d,uint e);}' ;[C]::mouse_event([uint32]$args[0],0,0,0,0);[C]::mouse_event([uint32]$args[1],0,0,0,0)`;
     const result = await spawnCaptured(tools.pointer, ['-NoProfile','-NonInteractive','-Command',script,String(flags[0]),String(flags[1])], options);
     if (result.code !== 0) throw actionError('pack087_pointer_click_failed');
   } else if (process.platform === 'darwin') {
