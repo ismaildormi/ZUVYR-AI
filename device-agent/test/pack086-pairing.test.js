@@ -94,6 +94,7 @@ try {
         counter: 1,
         method: 'POST',
         path: '/api/device-agent/heartbeat',
+        tokenHash: crypto.createHash('sha256').update(token, 'utf8').digest('hex'),
         bodySha256: first.bodySha256
       }),
       crypto.createPublicKey(identity.publicKeyPem),
@@ -123,6 +124,7 @@ try {
         counter: 3,
         method: 'POST',
         path: '/api/device-agent/status',
+        tokenHash: crypto.createHash('sha256').update(token, 'utf8').digest('hex'),
         bodySha256: bodySha256({})
       }),
       crypto.createPublicKey(identity.publicKeyPem),
