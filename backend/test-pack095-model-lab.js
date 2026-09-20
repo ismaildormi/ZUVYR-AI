@@ -290,7 +290,8 @@ const mountSegment = server.slice(Math.max(0,modelMount-450),modelMount+800);
 assert(mountSegment.includes('requireAuth'));
 assert(mountSegment.includes('requireAdmin'));
 assert(mountSegment.includes("rateLimit('workspace')"));
-assert(mountSegment.includes('createModelLabRouter({ db: supabaseAdmin })'));
+assert(/createModelLabRouter\s*\(\s*\{[\s\S]*?db\s*:\s*supabaseAdmin[\s\S]*?\}\s*\)/.test(mountSegment));
+assert(/env\s*:\s*process\.env/.test(mountSegment));
 
 for (const marker of [
   'ZUVYR PACK095 MODEL LAB',
