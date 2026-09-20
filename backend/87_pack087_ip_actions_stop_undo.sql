@@ -174,14 +174,14 @@ begin
      or cardinality(p_scopes) > 9
      or '*' = any(p_scopes)
      or exists (
-       select 1 from unnest(p_scopes) s
-       where s not in (
+       select 1 from unnest(p_scopes) as x(scope_name)
+       where scope_name not in (
          'screen.view','pointer.control','keyboard.type','application.open',
          'clipboard.read','clipboard.write','file.read','file.write','shell.execute'
        )
      )
-     or (select count(*) from unnest(p_scopes) s)
-        <> (select count(distinct s) from unnest(p_scopes) s)
+     or (select count(*) from unnest(p_scopes) as x(scope_name))
+        <> (select count(distinct scope_name) from unnest(p_scopes) as x(scope_name))
   then
     raise exception 'pack087_permission_scopes_invalid';
   end if;
@@ -756,7 +756,7 @@ begin
         error_code=coalesce(error_code,'pack087_stopped'),
         completed_at=coalesce(completed_at,now()),
         updated_at=now()
-    where session_id=p_session_id and status in ('ready','running','pending_confirmation');
+    where session_id=p_session_id and status in ('ready','pending_confirmation');
 
   update public.ip_sessions
     set state='ready',updated_at=now()
