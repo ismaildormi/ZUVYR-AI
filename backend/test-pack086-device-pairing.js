@@ -161,7 +161,7 @@ class FakeRepository {
   const server = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8');
 
   assert.equal(SESSION_TTL_MS, 10 * 60 * 1000);
-  assert(sql.includes("array['heartbeat','session_status','session_rotate']::text[]"));
+  assert.match(sql, /array\s*\[\s*'heartbeat'\s*,\s*'session_status'\s*,\s*'session_rotate'\s*\]::text\[\]/m);
   assert(sql.includes("interval '15 minutes'"));
   assert.equal(sql.includes("interval '1 hour'"), false);
   assert.equal(sql.includes('p_expected_token_hash text'), true);
@@ -185,6 +185,7 @@ class FakeRepository {
     'revoke all on table public.ip_pairing_challenges from public,anon,authenticated',
     'grant execute on function public.advance_ip_session_counter_pack086'
   ]) assert(sql.includes(marker), marker);
+  assert(pack08Sql.includes('execution_enabled boolean not null default false'), 'PACK08 execution_enabled authority');
   assert(
     foundationSql.includes(
       'execution_enabled boolean not null default false check (execution_enabled = false)'
@@ -231,6 +232,7 @@ class FakeRepository {
     counter: 7,
     method: 'POST',
     path: '/api/device-agent/heartbeat',
+    tokenHash: '1'.repeat(64),
     bodySha256: bodySha256(parityBody)
   };
   assert.deepEqual(
@@ -277,6 +279,7 @@ class FakeRepository {
     counter: 1,
     method: 'POST',
     path: '/api/device-agent/heartbeat',
+    tokenHash: hashSecret(paired.token),
     bodySha256: digest
   });
   const heartbeatSignature = crypto.sign(null, heartbeatMessage, pair.privateKey).toString('base64');
@@ -325,6 +328,7 @@ class FakeRepository {
     counter: 2,
     method: 'POST',
     path: '/api/device-agent/heartbeat',
+    tokenHash: hashSecret(paired.token),
     bodySha256: digest
   }), wrong.privateKey).toString('base64');
 
@@ -342,6 +346,22 @@ class FakeRepository {
   );
 
   const preRotateHash = repo.session.token_hash;
+  const originalDeviceId = repo.device.id;
+  repo.device.id = '55555555-5555-4555-8555-555555555555';
+  await assert.rejects(
+    () => service.authenticateSessionRequest({
+      sessionId: paired.sessionId,
+      token: paired.token,
+      counter: 2,
+      signature: heartbeatSignature,
+      method: 'POST',
+      path: '/api/device-agent/heartbeat',
+      body
+    }),
+    { code: 'pack086_wrong_device' }
+  );
+  repo.device.id = originalDeviceId;
+
   const rotated = await service.rotateSessionToken({
     ownerId,
     sessionId: paired.sessionId,
@@ -357,6 +377,20 @@ class FakeRepository {
       expectedTokenHash: preRotateHash
     }),
     { code: 'pack086_token_invalid' }
+  );
+
+  // old proof must not survive token rotation, even when the counter restarts
+  await assert.rejects(
+    () => service.authenticateSessionRequest({
+      sessionId: paired.sessionId,
+      token: rotated.token,
+      counter: 1,
+      signature: heartbeatSignature,
+      method: 'POST',
+      path: '/api/device-agent/heartbeat',
+      body
+    }),
+    { code: 'pack086_session_signature_invalid' }
   );
 
   await assert.rejects(
