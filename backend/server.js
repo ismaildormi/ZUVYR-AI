@@ -34,7 +34,8 @@ const { validateChatBody, validatePromptBody, validateImageBody, validateVideoBo
 /* ZUVYR_PACK031_UNIVERSAL_REQUEST */
 const { normalizeSurfaceRequest } = require('./lib/universalRequest');
 const { loadRoxUserMiddleware, gatekeeperMiddleware, reserveCredits, refundCredits, settleCredits, logCreditEvent, reportRefundFailure } = require('./gatekeeper');
-const { routeRequest } = require('./aiRouter');
+const { routeRequest: externalRouteRequest } = require('./aiRouter');
+const { createOwnedModelRuntime } = require('./lib/ownedModelRuntime');
 const { imageQueue, videoQueue, audioQueue, model3dQueue, defaultJobOptions, connection: queueConnection } = require('./lib/queue');
 const {
   normalizeAiPreferences,
@@ -188,6 +189,24 @@ const model3dRepository = createModel3dGenerationRepository({
 const codeSandboxProvider = createVercelSandboxProvider({
   env: process.env
 });
+
+const ownedModelRuntime = createOwnedModelRuntime({
+  db: supabaseAdmin,
+  env: process.env,
+  externalRoute: externalRouteRequest
+});
+
+// Preserve the canonical routeRequest call shape used across Chat, Code Studio
+// and Browser Agent. PACK096 only intercepts bounded owner-scoped text Chat;
+// every other caller falls through to the legacy Router unchanged.
+const routeRequest = (feature, messages, options = {}) =>
+  ownedModelRuntime.route(feature, messages, {
+    ownerId: options.ownerId || null,
+    requestId: options.requestId || options.idempotencyKey || null,
+    chatMode: options.chatMode || 'chat',
+    hasAttachments: options.hasAttachments === true,
+    routerOptions: options
+  });
 
 const app = express();
 
@@ -453,7 +472,10 @@ app.use(
   requireAuth,
   requireAdmin,
   rateLimit('workspace'),
-  createModelLabRouter({ db: supabaseAdmin })
+  createModelLabRouter({
+    db: supabaseAdmin,
+    env: process.env
+  })
 );
 
 app.use(
@@ -1414,6 +1436,9 @@ app.post('/api/chat', requireAuth, rateLimit('chat'), validateChatBody, loadRoxU
       loadLevel,
       isPro,
       requestId,
+      ownerId: userId,
+      chatMode,
+      hasAttachments: hasDurableAttachments,
       language: req.zuvyrLanguageContext?.routingLanguage || null
     });
     let settlement = null;
@@ -1487,6 +1512,7 @@ app.post('/api/chat', requireAuth, rateLimit('chat'), validateChatBody, loadRoxU
         margin_usd: margin,
         load_level: loadLevel,
         chain_reordered: result.chain_reordered,
+        owned_model: result.owned_model || null,
         chat_core: chatCoreBinding ? chatCoreEvidence(chatCoreBinding, result) : null,
         attachment_ids:
           attachmentContext.attachmentIds,
@@ -1671,6 +1697,7 @@ app.post('/api/chat', requireAuth, rateLimit('chat'), validateChatBody, loadRoxU
           : undefined,
       sources: responseSources,
       chatMode,
+      ownedModel: result.owned_model || undefined,
     });
   } catch (err) {
     // Only refund if this request actually charged credits (Pro path).
