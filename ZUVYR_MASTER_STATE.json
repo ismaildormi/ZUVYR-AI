@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "source_fix": "005-FIX6",
   "selected_strategy": "railway_internal_route",
-  "previous_pack": "083",
+  "previous_pack": "096",
   "tests": {
     "maintenance": "PASS",
     "runtime_safety": "PASS",
@@ -589,7 +589,7 @@
   "status": "PACK095_OPEN",
   "next_pack_allowed": true,
   "next_external_gate": null,
-  "next_pack": "095 - ZUVYR Model Lab",
+  "next_pack": "084 - 3D Studio",
   "pack042": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "258ce1f4df2e3a4630cfc87069668f073c0dee79",
