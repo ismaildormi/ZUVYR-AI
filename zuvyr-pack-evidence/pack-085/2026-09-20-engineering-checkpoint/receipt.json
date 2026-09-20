@@ -1,0 +1,76 @@
+{
+  "schema": "zuvyr-pack-engineering-checkpoint.v1",
+  "pack": "085",
+  "title": "ZUVYR Device Agent Build",
+  "recorded_at_utc": "2026-09-20T20:40:00Z",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonical_locked_verified": false,
+  "canonical_gate": {
+    "id": "M19",
+    "status": "DEFERRED_EXTERNAL",
+    "requirement": "Real test-device install, start and uninstall without admin/root unless specifically required.",
+    "reason": "CI, source and exact production deployment are verified, but no real user device was available to produce truthful M19 acceptance evidence."
+  },
+  "source": {
+    "implementation_pr": 46,
+    "candidate_head": "d132a14b84bf539e1a050fdace930f336922c2fe",
+    "merge_commit": "8d6ef42ce21f8747c3abaadf8de1e2852631415d"
+  },
+  "ci": {
+    "workflow": "ZUVYR Release Quality Gate",
+    "run_id": 35535838847,
+    "backend_quality": "PASS",
+    "release_quality": "PASS"
+  },
+  "production": {
+    "vercel": {
+      "deployment": "dpl_4r3CXZeq2dThxP8sfrPLDoSaPgsM",
+      "status": "READY",
+      "exact_commit": "8d6ef42ce21f8747c3abaadf8de1e2852631415d"
+    },
+    "railway": {
+      "exact_commit": "8d6ef42ce21f8747c3abaadf8de1e2852631415d",
+      "backend": {
+        "deployment": "1731cf22-7488-497a-b5f3-111466294f59",
+        "status": "SUCCESS"
+      },
+      "worker": {
+        "deployment": "aa7f7916-8bcf-4baa-864a-acd6cc0d63b4",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deployment": "5fafc7e4-d43d-4cb2-966e-b65b20468bc5",
+        "status": "SUCCESS"
+      }
+    }
+  },
+  "implementation": {
+    "least_privilege_user_scope": true,
+    "root_admin_required_by_default": false,
+    "ed25519_device_identity": true,
+    "private_token_custody": true,
+    "loopback_only_service": true,
+    "host_and_origin_defense": true,
+    "signed_update_verification": true,
+    "update_https_and_host_allowlist": true,
+    "raw_ip_trust": false,
+    "pairing_enabled": false,
+    "computer_control_enabled": false,
+    "pack086_pairing_boundary_preserved": true,
+    "pack087_action_boundary_preserved": true,
+    "local_token_rotated_on_uninstall": true
+  },
+  "migrations": {
+    "applied": false,
+    "reason": "PACK085 required no database migration."
+  },
+  "live_calls": {
+    "provider_calls": 0,
+    "payment_calls": 0,
+    "device_control_calls": 0
+  },
+  "progression": {
+    "mode": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+    "next_pack": "086"
+  }
+}

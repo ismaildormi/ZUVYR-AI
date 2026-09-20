@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "source_fix": "005-FIX6",
   "selected_strategy": "railway_internal_route",
-  "previous_pack": "084",
+  "previous_pack": "085",
   "tests": {
     "maintenance": "PASS",
     "runtime_safety": "PASS",
@@ -835,7 +835,7 @@
     "previous_plan_preserved": true,
     "priority_override": "MODEL_FIRST_BYO_COMPUTE_2026_09_19"
   },
-  "active_pack": "085",
+  "active_pack": "086",
   "pack061": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
@@ -1842,7 +1842,7 @@
     "effective_date": "2026-09-19",
     "current_inflight_pack": null,
     "current_inflight_may_finish": false,
-    "next_pack_after_current_inflight": "085",
+    "next_pack_after_current_inflight": "086",
     "priority_sequence": [
       "094 - Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
       "095 - ZUVYR Model Lab",
@@ -1850,7 +1850,6 @@
     ],
     "resume_original_sequence_at": "084",
     "deferred_not_cancelled": [
-      "086",
       "087",
       "088",
       "089",
@@ -2293,5 +2292,63 @@
     "receipt_git_blob": "d689a2364d0a9370b4a4fabd0bddfcd3f32d7aa1",
     "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
     "next_pack": "085"
+  },
+  "pack085": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "ZUVYR Device Agent Build",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "Source, CI and exact production deployment are verified. M19 still requires a real test-device install/start/uninstall journey without admin/root unless specifically required, so canonical LOCKED_VERIFIED is not claimed.",
+    "implementation_pr": 46,
+    "candidate_head": "d132a14b84bf539e1a050fdace930f336922c2fe",
+    "merge_commit": "8d6ef42ce21f8747c3abaadf8de1e2852631415d",
+    "github_ci_run": 35535838847,
+    "backend_quality": "PASS",
+    "release_quality": "PASS",
+    "migration": null,
+    "runtime": {
+      "user_scope_install": true,
+      "requires_admin_root_by_default": false,
+      "ed25519_identity": true,
+      "loopback_only_service": true,
+      "bearer_token_private": true,
+      "signed_update_verification": true,
+      "raw_ip_trust": false,
+      "pairing_enabled": false,
+      "computer_control_enabled": false,
+      "pairing_deferred_to": "086",
+      "computer_control_deferred_to": "087"
+    },
+    "production": {
+      "vercel": {
+        "deployment": "dpl_4r3CXZeq2dThxP8sfrPLDoSaPgsM",
+        "status": "READY",
+        "exact_commit": "8d6ef42ce21f8747c3abaadf8de1e2852631415d"
+      },
+      "railway": {
+        "exact_commit": "8d6ef42ce21f8747c3abaadf8de1e2852631415d",
+        "backend": {
+          "deployment": "1731cf22-7488-497a-b5f3-111466294f59",
+          "status": "SUCCESS"
+        },
+        "worker": {
+          "deployment": "aa7f7916-8bcf-4baa-864a-acd6cc0d63b4",
+          "status": "SUCCESS"
+        },
+        "maintenance": {
+          "deployment": "5fafc7e4-d43d-4cb2-966e-b65b20468bc5",
+          "status": "SUCCESS"
+        }
+      }
+    },
+    "deferred_gates": [
+      "M19_REAL_TEST_DEVICE_INSTALL_START_UNINSTALL"
+    ],
+    "provider_calls_during_verification": 0,
+    "payment_calls_during_verification": 0,
+    "device_control_calls_during_verification": 0,
+    "receipt_path": "zuvyr-pack-evidence/pack-085/2026-09-20-engineering-checkpoint/receipt.json",
+    "receipt_git_blob": "10772b2dcdce58f5b6fcb8bf348c885d2f657709",
+    "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+    "next_pack": "086"
   }
 }
