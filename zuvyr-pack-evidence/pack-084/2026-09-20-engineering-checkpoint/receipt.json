@@ -1,0 +1,97 @@
+{
+  "pack": "084",
+  "title": "3D Studio",
+  "date": "2026-09-20",
+  "status": "LOCKED_ENGINEERING_VERIFIED",
+  "canonical_locked_verified": false,
+  "canonical_gate_reason": "Production source/runtime/UI are verified, but M18 paid 3D execution is disabled and production contains zero 3D jobs/assets, so a real owner-scoped GLB viewer/export journey cannot be truthfully live-proven without a new paid generation.",
+  "implementation": {
+    "pull_request": 44,
+    "candidate_head": "d644882d50da98265ebab2bc083d2b2e0dca3de8",
+    "merge_commit": "5c1f6e2898bef5d44a6786450d1608e07397a869",
+    "github_ci_run": 35534610462,
+    "backend_quality": "PASS",
+    "release_quality": "PASS",
+    "database_migration_required": false
+  },
+  "capabilities": {
+    "canonical_history": true,
+    "signed_owner_scoped_downloads": true,
+    "local_webgl_glb_viewer": true,
+    "viewer_runtime": "/zuvyr-model3d-viewer.js?v=pack084-1",
+    "third_party_viewer_runtime": false,
+    "generation_inherits_pack083": true,
+    "status_polling": true,
+    "cancellation": true,
+    "export_validation": [
+      "glb",
+      "obj",
+      "fbx",
+      "usdz"
+    ],
+    "blocked_exports": [
+      "gltf",
+      "stl",
+      "3mf"
+    ],
+    "blocked_operations": [
+      "remesh",
+      "retopo",
+      "rig",
+      "animation",
+      "retarget"
+    ],
+    "generation_time_controls": [
+      "faceCount",
+      "enablePbr",
+      "generateType"
+    ]
+  },
+  "production": {
+    "vercel": {
+      "deployment": "dpl_8PKPxTqqN573rWKUzNZYw1B1qzPD",
+      "status": "READY",
+      "exact_commit": "5c1f6e2898bef5d44a6786450d1608e07397a869",
+      "published_suite_markers": true,
+      "published_local_viewer": true,
+      "external_viewer_runtime": false
+    },
+    "railway": {
+      "exact_commit": "5c1f6e2898bef5d44a6786450d1608e07397a869",
+      "backend": {
+        "deployment": "9d3b3316-53d9-42bc-a7df-187e7cf5e73d",
+        "status": "SUCCESS"
+      },
+      "worker": {
+        "deployment": "b29df1fe-e056-4f89-932d-d5ee8c9fe1f6",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deployment": "35c8589d-84bf-484e-8bdb-4bc3a9489281",
+        "status": "SUCCESS"
+      }
+    },
+    "database": {
+      "model3d_jobs_total": 0,
+      "model3d_jobs_done": 0,
+      "model3d_jobs_active": 0,
+      "model3d_jobs_with_content": 0,
+      "model3d_assets": 0
+    }
+  },
+  "gates": {
+    "ZUVYR_M18_VERIFIED_present": false,
+    "PACK083_3D_PAID_EXECUTION_ENABLED_present": false,
+    "LIVE_BILLING_ALLOWED_present": false,
+    "FAL_KEY_present_by_name": true,
+    "live_paid_provider_calls_during_verification": 0,
+    "payment_calls_during_verification": 0
+  },
+  "deferred_gates": [
+    "M18_LIVE_3D_GENERATION",
+    "PACK084_AUTHENTICATED_REAL_ASSET_VIEWER_EXPORT_ACCEPTANCE"
+  ],
+  "progression": "USER_APPROVED_DEFERRED_GATE_CONTINUATION",
+  "next_pack": "085",
+  "next_pack_title": "ZUVYR Device Agent Build"
+}

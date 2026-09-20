@@ -1,7 +1,7 @@
 {
   "schema_version": "zuvyr.roadmap.150.v1",
   "date": "2026-09-19",
-  "active_pack": "084",
+  "active_pack": "085",
   "total_packs": 150,
   "authority": "Latest user MASTER EXECUTION PROMPT plus 2026-09-19 Model-First BYO Compute priority override",
   "source_sha256": "148699a2a98439391bf4a3b656a09c42fc9fd8e42779a98bdab68ed84e7a1a5f",
@@ -2234,7 +2234,7 @@
         "083"
       ],
       "systems": "Existing systems described in scope; exact paths must be grounded from the execution baseline",
-      "status": "OPEN",
+      "status": "LOCKED_ENGINEERING_VERIFIED",
       "objective": "3D Studio",
       "architecture": "Reuse canonical Brain/Kernel, registry/router, content IDs, permissions and one usage ledger. Preserve historical implementation and receipt identity.",
       "ux": "For affected controls, verify loading, empty, error, cancel, retry and reopen states; keyboard, RTL and responsive behavior. Infrastructure-only work has no invented UI requirement.",
@@ -2264,7 +2264,7 @@
         "084"
       ],
       "systems": "Existing systems described in scope; exact paths must be grounded from the execution baseline",
-      "status": "PLANNED",
+      "status": "OPEN",
       "objective": "ZUVYR Device Agent Build",
       "architecture": "Reuse canonical Brain/Kernel, registry/router, content IDs, permissions and one usage ledger. Preserve historical implementation and receipt identity.",
       "ux": "For affected controls, verify loading, empty, error, cancel, retry and reopen states; keyboard, RTL and responsive behavior. Infrastructure-only work has no invented UI requirement.",
@@ -4066,7 +4066,6 @@
     ],
     "resume_original_sequence_at": "084",
     "deferred_not_cancelled": [
-      "085",
       "086",
       "087",
       "088",

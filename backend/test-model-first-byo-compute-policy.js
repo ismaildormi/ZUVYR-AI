@@ -33,7 +33,11 @@ assert.equal(policy.learning_flywheel.global_training_content_default, 'opt_in_o
 assert.equal(policy.learning_flywheel.memory_permission_separate_from_training_permission, true);
 assert.equal(policy.owned_model_rollout.automatic_rollback_required, true);
 
-assert.equal(roadmap.active_pack, '084');
+assert.equal(roadmap.active_pack, '085');
+const pack084Roadmap = roadmap.packs.find(item => item.id === '084');
+const pack085Roadmap = roadmap.packs.find(item => item.id === '085');
+assert.equal(pack084Roadmap?.status, 'LOCKED_ENGINEERING_VERIFIED', 'Pack084 finalizer must lock 084 and open 085');
+assert.equal(pack085Roadmap?.status, 'OPEN', 'Pack085 must be the active open original-sequence pack');
 
 const expectedPackIds = Array.from(
   { length: 150 },
@@ -61,7 +65,7 @@ assert.deepEqual(
 assert.equal(roadmap.priority_override.resume_original_sequence_at, '084');
 assert.deepEqual(
   roadmap.priority_override.deferred_not_cancelled,
-  ['085','086','087','088','089','090','091','092','093']
+  ['086','087','088','089','090','091','092','093']
 );
 assert.equal(roadmap.priority_override.do_not_renumber_existing_packs, true);
 assert.match(String(roadmap.preservation || ''), /001.*099.*retain numbering/i);
@@ -83,7 +87,7 @@ assert(pack('096').scope.includes('BYOC'));
 assert(pack('096').scope.includes('usage fee $0'));
 assert(pack('096').acceptance.includes('user/org-funded BYOC'));
 
-assert.equal(state.active_pack, '084');
+assert.equal(state.active_pack, '085');
 assert.equal(state.model_first_priority_override.status, 'CANONICAL');
 assert.equal(state.model_first_priority_override.current_inflight_pack, null);
 assert.equal(state.model_first_priority_override.current_inflight_may_finish, false);
@@ -91,7 +95,7 @@ assert.equal(state.model_first_priority_override.completed_inflight_pack, '083')
 assert.equal(state.model_first_priority_override.active_priority_pack, null);
 assert.equal(
   state.model_first_priority_override.next_pack_after_current_inflight,
-  '084'
+  '085'
 );
 assert.equal(
   state.model_first_priority_override.resume_original_sequence_at,
@@ -109,6 +113,13 @@ assert.equal(state.pack095.next_pack, '096');
 assert.equal(state.pack096.status, 'LOCKED_ENGINEERING_VERIFIED');
 assert.equal(state.pack096.canonical_locked_verified, false);
 assert.equal(state.pack096.next_pack, '084');
+assert.equal(state.pack084.status, 'LOCKED_ENGINEERING_VERIFIED');
+assert.equal(state.pack084.canonical_locked_verified, false);
+assert.equal(state.pack084.next_pack, '085');
+assert(state.pack084.deferred_gates.includes('M18_LIVE_3D_GENERATION'));
+assert.equal(state.pack084.provider_calls_during_verification, 0);
+assert.equal(state.pack084.payment_calls_during_verification, 0);
+
 
 assert.equal(
   state.model_first_priority_override.economics.zuvyr_owned_model_usage_fee_usd,
@@ -127,7 +138,7 @@ assert(roadmapMd.includes('MODEL-FIRST PRIORITY OVERRIDE — 2026-09-19'));
 assert(roadmapMd.includes('PACK094 → PACK095 → PACK096 before PACK084–PACK093'));
 assert(roadmapMd.includes('ZUVYR-owned model usage fee: $0'));
 assert(continueHere.includes('LATEST CANONICAL OVERRIDE — MODEL-FIRST + BYO COMPUTE — 2026-09-19'));
-assert(continueHere.includes('PACK084 — 3D Studio is now the active Pack'));
+assert(continueHere.includes('PACK085 — ZUVYR Device Agent Build'));
 assert(continueHere.includes('### PACK096 ENGINEERING FINALIZED — 2026-09-20'));
 assert(continueHere.includes('M21_REAL_BYOC_OWNED_MODEL_PRODUCTION_ACCEPTANCE'));
 assert(continueHere.includes('PACK150 is the final V1 release/recovery gate'));
@@ -135,7 +146,7 @@ assert(continueHere.includes('PACK150 is the final V1 release/recovery gate'));
 console.log('PASS: Model-First priority is canonical across policy, roadmap, state and continuation files');
 console.log('PASS: ZUVYR-owned model API/software fee = $0 and model usage fee = $0');
 console.log('PASS: BYOC user/org-funded compute is the default serving model');
-console.log('PASS: PACK096 is engineering-finalized and PACK084 resumes the original sequence');
+console.log('PASS: PACK096 priority sequence is complete, PACK084 is engineering-finalized, and PACK085 is active');
 console.log('PASS: PACK094 → PACK095 → PACK096 precede PACK084–PACK093');
 console.log('PASS: V1 coverage guard preserves every canonical PACK001–PACK150 in Markdown + JSON');
-console.log('PASS: PACK084–PACK093 are deferred, never cancelled; PACK150 remains the final V1 release gate');
+console.log('PASS: PACK086–PACK093 remain deferred, never cancelled; PACK150 remains the final V1 release gate');

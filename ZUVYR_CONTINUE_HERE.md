@@ -1559,3 +1559,53 @@ After Vercel rolling capacity opens, trigger one production deploy of current ma
   - no duplicate PACK076 authority was observed.
 - Cross-project isolation finding: the same Supabase project currently also contains four `nova8_*` tables from migration `20260920044227 nova8_online_competition_v1`. No direct ZUVYR object-name collision was observed, but future ZUVYR DDL must preserve namespace isolation and must not mutate NOVA8 objects.
 - Resume rule after this reconciliation: PACK084 — 3D Studio.
+
+
+### PACK084 ENGINEERING FINALIZED — 2026-09-20
+
+- **PACK084 — 3D Studio** is `LOCKED_ENGINEERING_VERIFIED`; canonical `LOCKED_VERIFIED` remains **NO**.
+- Implementation PR: `#44`; candidate head `d644882d50da98265ebab2bc083d2b2e0dca3de8`; merge commit `5c1f6e2898bef5d44a6786450d1608e07397a869`.
+- GitHub CI run `35534610462`: Backend Quality PASS / Release Quality PASS.
+- No database migration was required.
+- Production Vercel `dpl_8PKPxTqqN573rWKUzNZYw1B1qzPD`: READY on exact merge commit.
+- Railway exact merge commit:
+  - backend `9d3b3316-53d9-42bc-a7df-187e7cf5e73d` — SUCCESS
+  - worker `b29df1fe-e056-4f89-932d-d5ee8c9fe1f6` — SUCCESS
+  - maintenance `35c8589d-84bf-484e-8bdb-4bc3a9489281` — SUCCESS
+- Published production frontend contains PACK084 Studio, gated create/status/cancel, canonical history/download wiring and the self-hosted `/zuvyr-model3d-viewer.js?v=pack084-1` WebGL viewer.
+- Viewer runtime embeds no third-party HTTPS origin; viewer/history/download controls create zero provider calls.
+- Export validation covers GLB / OBJ / FBX / USDZ. GLTF / STL / 3MF remain blocked because no canonical converter is verified.
+- Remesh / retopo / rig / animation / retarget remain hidden/blocked because no verified executor exists.
+- Generation reuses PACK083 pricing, reserve/settle/refund and worker runtime; it remains fail-closed because `ZUVYR_M18_VERIFIED`, `PACK083_3D_PAID_EXECUTION_ENABLED` and `LIVE_BILLING_ALLOWED` are absent in production.
+- Production DB at verification: 0 3D jobs, 0 completed 3D jobs, 0 canonical 3D assets.
+- Therefore real owner-scoped generated-asset viewer/export acceptance is deferred rather than fabricated.
+- Paid provider/payment calls during verification: 0 / 0.
+- Deferred gates: `M18_LIVE_3D_GENERATION`, `PACK084_AUTHENTICATED_REAL_ASSET_VIEWER_EXPORT_ACCEPTANCE`.
+- Receipt: `zuvyr-pack-evidence/pack-084/2026-09-20-engineering-checkpoint/receipt.json`.
+- Progression: `USER_APPROVED_DEFERRED_GATE_CONTINUATION`.
+
+### PACK085 OPEN — ZUVYR Device Agent Build
+
+- **PACK085 — ZUVYR Device Agent Build is now the active Pack.**
+- Build the signed/updatable device-agent architecture with least privilege, secure local service, explicit device identity and installer/uninstaller foundation.
+- Never trust raw IP as device identity.
+- Reuse canonical intent/task, permissions, STOP/cancel, audit and one usage ledger; do not build a parallel authority.
+- M19 remains the physical-device acceptance gate. Do not claim install/start/uninstall proof until exercised on a real test device.
+- Exactly one next step: reconcile existing ZUVYR IP/device-control foundations and define the smallest cross-platform agent/service + enrollment contract that can be packaged without admin/root for the default path.
+
+
+<!-- ZUVYR_PACK_084_ENGINEERING_FINALIZER_20260920_CONTINUE_BEGIN -->
+## Continue here — PACK085 OPEN after PACK084 — 2026-09-20
+
+PACK084 is **LOCKED_ENGINEERING_VERIFIED**, not canonical live-verified. Its exact production merge commit is `5c1f6e2898bef5d44a6786450d1608e07397a869`; Vercel and all three Railway services are verified on that commit. The Studio uses a ZUVYR-owned local WebGL GLB viewer, canonical history/download/cancel paths, strict manifest-backed GLB/OBJ/FBX/USDZ validation, and keeps unsupported 3D editing/export controls blocked.
+
+Do **not** reopen PACK084 merely because M18 is deferred. M18 stays a launch/live-acceptance gate: production currently has zero 3D jobs and paid generation is fail-closed.
+
+**Active work is PACK085 — ZUVYR Device Agent Build.**
+- Start from exact current `main`, not old handoffs.
+- Reconcile existing device/IP/agent foundations before adding new code.
+- Build signed/updatable least-privilege device-agent architecture with secure local service, device identity and installer/uninstaller.
+- No raw-IP trust.
+- M19 remains external; no real-device/install claim without dated device evidence.
+- Preserve canonical Brain/Kernel, permissions, durable task/STOP/rollback rules and one usage ledger.
+<!-- ZUVYR_PACK_084_ENGINEERING_FINALIZER_20260920_CONTINUE_END -->
