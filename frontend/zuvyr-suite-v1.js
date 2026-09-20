@@ -5,7 +5,7 @@
 
   var sections = [
     ['dashboard','⌂','Dashboard','ready'],['images','◇','Images','ready'],['video','▷','Video','connect'],
-    ['code','</>','Code Studio','ready'],['voice','◉','Voice','connect'],['music','♫','Music','connect'],
+    ['3d','⬡','3D Studio','ready'],['code','</>','Code Studio','ready'],['voice','◉','Voice','connect'],['music','♫','Music','connect'],
     ['ip','✦','ZUVYR IP','plan'],['research','⌕','Research','ready'],['library','▦','Library','ready'],
     ['projects','▣','Projects','ready'],['documents','▤','Documents','ready'],['spreadsheets','▥','Spreadsheets','ready'],
     ['presentations','▧','Presentations','ready'],['scheduled','◷','Scheduled','blocked'],['plugins','⌘','Plugins','blocked'],
@@ -15,6 +15,7 @@
     dashboard:['Work','Continue projects, assets, research, code and history from one coordinated workspace.'],
     images:['Image Studio','Reopen canonical image history, export owned assets, inspect versions and Send-To without pretending blocked image operations are live.'],
     video:['Video','Plan text-to-video, image-to-video, editing, subtitles and export in one job surface.'],
+    '3d':['3D Studio','Reopen canonical 3D assets, inspect them with a signed GLB viewer, and export only formats that passed validation.'],
     code:['Code Studio','Build multi-file projects and request approved image or video assets when the experience needs them.'],
     voice:['Voice','Prepare transcription, speech and voice conversations with transparent minute usage.'],
     music:['Music & Audio','Create music, effects, cleanup and remix workflows after pricing is verified.'],
@@ -35,7 +36,7 @@
   function esc(value) { return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char]; }); }
   function statusLabel(state) { return state === 'ready' ? 'Foundation ready' : state === 'plan' ? 'Planning only' : state === 'validate' ? 'Validate data' : state === 'blocked' ? 'Safety blocked' : 'Connect provider'; }
   function navHtml() {
-    var groups = [['Workspace',sections.slice(0,10)],['Create & manage',sections.slice(10,15)],['Account',sections.slice(15)]];
+    var groups = [['Workspace',sections.slice(0,11)],['Create & manage',sections.slice(11,16)],['Account',sections.slice(16)]];
     return groups.map(function (group) {
       return '<div class="zs-nav-title">'+group[0]+'</div><nav class="zs-nav">'+group[1].map(function (s) {
         return '<button type="button" data-zs-nav="'+s[0]+'"><span class="zs-nav-icon">'+s[1]+'</span><span>'+s[2]+'</span>'+(s[3] === 'connect' || s[3] === 'blocked' ? '<i class="zs-nav-badge" aria-hidden="true"></i>' : '')+'</button>';
@@ -961,17 +962,339 @@
     );
   }
 
+
+  /* ZUVYR PACK084 3D STUDIO */
+  var model3dStudioState={
+    capabilities:null,
+    history:[],
+    selected:null,
+    loading:false,
+    error:null,
+    modelUrl:null,
+    thumbnailUrl:null,
+    viewerLoad:null
+  };
+
+  function model3dStudioView(){
+    return heading('3d')+
+      '<div class="zs-banner" data-zs-3d-banner><span>⬡</span><div><b>3D Studio is loading verified capabilities.</b> Paid generation remains owned by the PACK083/M18 gate.</div></div>'+
+      '<div class="zs-grid">'+
+        '<div class="zs-card wide"><div class="zs-actions" style="justify-content:space-between;align-items:center"><div><h2 style="margin:0">Canonical 3D history</h2><p style="margin:.35rem 0 0">Owner-scoped models. Reopen and export never rerun the provider.</p></div><button type="button" class="zs-secondary" data-zs-3d-refresh>Refresh</button></div><div class="zs-3d-history" data-zs-3d-history><div class="zs-muted">Open 3D Studio to load history.</div></div></div>'+
+        '<div class="zs-card wide"><h2>Viewer & exports</h2><div data-zs-3d-detail><div class="zs-empty"><div><strong>No model selected</strong><span>Choose an existing canonical 3D job to reopen it.</span></div></div></div></div>'+
+        '<div class="zs-card half"><h2>Operation truth</h2><div class="zs-chip-row" data-zs-3d-operations><span class="zs-chip">Loading…</span></div><p class="zs-note">Post-generation remesh, retopo, rig, animation and retarget controls stay blocked until a verified executor exists.</p></div>'+
+        '<div class="zs-card half"><h2>Export policy</h2><div class="zs-chip-row" data-zs-3d-export-policy><span class="zs-chip">Loading…</span></div><p class="zs-note">A format appears as a download only when that exact canonical artifact exists and passed server-side validation.</p></div>'+
+      '</div>';
+  }
+
+  function model3dStudioNode(){
+    return suite.querySelector('[data-zs-view="3d"]');
+  }
+
+  async function model3dStudioRequest(path,options){
+    if(typeof window.authFetch!=='function'){
+      throw new Error('Authenticated workspace is unavailable.');
+    }
+    var response=await window.authFetch(path,options||{method:'GET',cache:'no-store'});
+    var data={};
+    try{data=await response.json();}catch(_){}
+    if(!response.ok||data.status==='error'){
+      var error=new Error(data.message||data.code||'3D Studio request failed.');
+      error.code=data.code||'model3d_studio_request_failed';
+      throw error;
+    }
+    return data;
+  }
+
+  function model3dStudioDate(value){
+    if(!value)return '';
+    var date=new Date(value);
+    return Number.isFinite(date.getTime())?date.toLocaleString():'';
+  }
+
+  function model3dFormatRole(role){
+    var value=String(role||'').toLowerCase();
+    if(value==='model_glb'||value==='export_glb')return 'GLB';
+    if(value==='export_obj')return 'OBJ';
+    if(value==='export_fbx')return 'FBX';
+    if(value==='export_usdz')return 'USDZ';
+    if(value==='thumbnail')return 'Preview';
+    return value.replace(/^export_/,'').toUpperCase();
+  }
+
+  function model3dHumanOperation(value){
+    return String(value||'3d').replace(/_/g,' ');
+  }
+
+  function model3dViewerScript(){
+    var capabilities=model3dStudioState.capabilities||{};
+    var viewer=capabilities.viewer||{};
+    return String(viewer.scriptUrl||'');
+  }
+
+  function ensureModel3dViewer(){
+    if(window.customElements&&window.customElements.get('model-viewer')){
+      return Promise.resolve(true);
+    }
+    if(model3dStudioState.viewerLoad)return model3dStudioState.viewerLoad;
+    var url=model3dViewerScript();
+    if(!/^https:\/\/ajax\.googleapis\.com\/ajax\/libs\/model-viewer\/4\.3\.1\/model-viewer\.min\.js$/.test(url)){
+      return Promise.reject(new Error('Pinned 3D viewer runtime is unavailable.'));
+    }
+    model3dStudioState.viewerLoad=new Promise(function(resolve,reject){
+      var existing=document.querySelector('script[data-zuvyr-model-viewer="4.3.1"]');
+      if(existing){
+        if(window.customElements&&window.customElements.get('model-viewer')){resolve(true);return;}
+        existing.addEventListener('load',function(){
+          if(window.customElements&&window.customElements.get('model-viewer'))resolve(true);
+          else reject(new Error('3D viewer did not initialize.'));
+        },{once:true});
+        existing.addEventListener('error',function(){reject(new Error('3D viewer failed to load.'));},{once:true});
+        return;
+      }
+      var script=document.createElement('script');
+      script.type='module';
+      script.src=url;
+      script.crossOrigin='anonymous';
+      script.referrerPolicy='no-referrer';
+      script.dataset.zuvyrModelViewer='4.3.1';
+      script.addEventListener('load',function(){
+        if(window.customElements&&window.customElements.whenDefined){
+          window.customElements.whenDefined('model-viewer').then(function(){resolve(true);}).catch(reject);
+        }else resolve(true);
+      },{once:true});
+      script.addEventListener('error',function(){reject(new Error('3D viewer failed to load.'));},{once:true});
+      document.head.appendChild(script);
+    }).catch(function(error){
+      model3dStudioState.viewerLoad=null;
+      throw error;
+    });
+    return model3dStudioState.viewerLoad;
+  }
+
+  function renderModel3dStudioTruth(){
+    var view=model3dStudioNode();
+    if(!view)return;
+    var caps=model3dStudioState.capabilities||{};
+    var generation=caps.generation||{};
+    var banner=view.querySelector('[data-zs-3d-banner]');
+    var status=view.querySelector('.zs-status');
+    if(status){
+      status.classList.add('ready');
+      status.textContent=generation.liveExecution===true?'Studio ready · Generation live':'Studio ready · Generation gated';
+    }
+    if(banner){
+      var blockers=Array.isArray(generation.blockers)?generation.blockers:[];
+      banner.innerHTML='<span>⬡</span><div><b>PACK084 Studio controls are zero-provider.</b> '+
+        (generation.liveExecution===true
+          ?'PACK083 generation gate is currently open; generation remains separately metered.'
+          :'PACK083 paid generation remains fail-closed'+(blockers.length?' ('+esc(blockers.join(', '))+')':'')+'.')+
+        ' Viewer, history and signed downloads do not create a provider call.</div>';
+    }
+    var ops=view.querySelector('[data-zs-3d-operations]');
+    if(ops){
+      var operations=caps.operations||{};
+      var labels={
+        mesh_polycount:'Mesh / polycount',
+        pbr_texture:'PBR texture',
+        remesh:'Remesh',
+        retopo:'Retopo',
+        rig:'Rig',
+        animation:'Animation',
+        retarget:'Retarget'
+      };
+      ops.innerHTML=Object.keys(labels).map(function(key){
+        var spec=operations[key]||{};
+        var state=String(spec.status||'blocked');
+        var human=state==='generation_time_only'?'generation-time only':'blocked';
+        return '<span class="zs-chip">'+esc(labels[key])+' · '+esc(human)+'</span>';
+      }).join('');
+    }
+    var policy=view.querySelector('[data-zs-3d-export-policy]');
+    if(policy){
+      var exports=caps.exports||{};
+      var verified=exports.verifiedWhenPresent||{};
+      var blocked=exports.blocked||{};
+      var live=Object.keys(verified).map(function(format){
+        return '<span class="zs-chip">'+esc(format.toUpperCase())+' · validated when present</span>';
+      });
+      var unavailable=Object.keys(blocked).map(function(format){
+        return '<span class="zs-chip">'+esc(format.toUpperCase())+' · blocked</span>';
+      });
+      policy.innerHTML=live.concat(unavailable).join('');
+    }
+  }
+
+  function renderModel3dStudioHistory(){
+    var view=model3dStudioNode();
+    if(!view)return;
+    var list=view.querySelector('[data-zs-3d-history]');
+    if(!list)return;
+    if(model3dStudioState.loading){
+      list.innerHTML='<div class="zs-muted">Loading 3D history…</div>';
+      return;
+    }
+    if(model3dStudioState.error){
+      list.innerHTML='<div class="zs-empty"><div><strong>3D history needs attention</strong><span>'+esc(model3dStudioState.error)+'</span></div></div>';
+      return;
+    }
+    if(!model3dStudioState.history.length){
+      list.innerHTML='<div class="zs-empty"><div><strong>No canonical 3D results yet</strong><span>Paid generation is not started from this Studio while M18 remains unverified.</span></div></div>';
+      return;
+    }
+    list.innerHTML=model3dStudioState.history.map(function(item){
+      var manifest=Array.isArray(item.manifest)?item.manifest:[];
+      var formats=manifest.filter(function(entry){return /^model_glb$|^export_(glb|obj|fbx|usdz)$/.test(String(entry.role||''));}).map(function(entry){return model3dFormatRole(entry.role);});
+      return '<button type="button" class="zs-3d-history-item" data-zs-3d-open="'+esc(item.jobId)+'">'+
+        '<span><strong>'+esc(model3dHumanOperation(item.operation))+'</strong><small>'+esc(item.prompt||'Generated 3D model')+'</small></span>'+
+        '<span><small>'+esc(String(item.status||'unknown'))+' · '+esc(model3dStudioDate(item.completedAt||item.createdAt))+'</small><small>'+esc(formats.join(' · ')||'No validated export')+'</small></span>'+
+      '</button>';
+    }).join('');
+  }
+
+  async function signModel3dRole(jobId,role){
+    return model3dStudioRequest('/api/3d-jobs/'+encodeURIComponent(jobId)+'/download/'+encodeURIComponent(role));
+  }
+
+  function renderModel3dStudioDetail(){
+    var view=model3dStudioNode();
+    if(!view)return;
+    var box=view.querySelector('[data-zs-3d-detail]');
+    if(!box)return;
+    var item=model3dStudioState.selected;
+    if(!item){
+      box.innerHTML='<div class="zs-empty"><div><strong>No model selected</strong><span>Choose an item from history to reopen it.</span></div></div>';
+      return;
+    }
+    var manifest=Array.isArray(item.manifest)?item.manifest:[];
+    var downloadRoles=manifest.filter(function(entry){
+      return /^model_glb$|^export_(glb|obj|fbx|usdz)$/.test(String(entry.role||''))&&entry.assetId;
+    });
+    var viewer=model3dStudioState.modelUrl
+      ?'<model-viewer class="zs-3d-model-viewer" data-zs-3d-model-viewer src="'+esc(model3dStudioState.modelUrl)+'" camera-controls environment-image="neutral" shadow-intensity="1" exposure="1" interaction-prompt="none" touch-action="pan-y" alt="Interactive canonical 3D model"></model-viewer>'
+      :(model3dStudioState.thumbnailUrl
+        ?'<img class="zs-3d-poster" src="'+esc(model3dStudioState.thumbnailUrl)+'" alt="Canonical 3D thumbnail">'
+        :'<div class="zs-empty"><div><strong>Viewer unavailable</strong><span>A fresh signed GLB is required.</span></div></div>');
+    box.innerHTML='<div class="zs-3d-detail-grid">'+
+      '<div>'+viewer+
+        '<div class="zs-3d-view-controls">'+
+          '<label>Lighting <input type="range" min="0.5" max="2" step="0.1" value="1" data-zs-3d-exposure></label>'+
+          '<button type="button" class="zs-secondary" data-zs-3d-camera-reset>Reset camera</button>'+
+        '</div>'+
+        '<p class="zs-note">Interactive viewer uses a fresh owner-scoped signed GLB. Viewer controls create 0 provider calls.</p>'+
+      '</div>'+
+      '<div><h3>'+esc(item.prompt||'Generated 3D model')+'</h3>'+
+        '<p>'+esc(model3dHumanOperation(item.operation))+' · '+esc(String(item.status||'unknown'))+'</p>'+
+        '<div class="zs-chip-row">'+
+          '<span class="zs-chip">Content '+esc(item.contentId||'pending')+'</span>'+
+          '<span class="zs-chip">Face target '+esc(String(item.options&&item.options.faceCount||'default'))+'</span>'+
+          '<span class="zs-chip">PBR '+esc(item.options&&item.options.enablePbr===true?'on':'off')+'</span>'+
+        '</div>'+
+        '<div class="zs-actions zs-3d-downloads">'+
+          downloadRoles.map(function(entry){return '<button type="button" class="zs-secondary" data-zs-3d-download="'+esc(item.jobId)+'" data-role="'+esc(entry.role)+'">Download '+esc(model3dFormatRole(entry.role))+'</button>';}).join('')+
+        '</div>'+
+        '<p class="zs-note">GLTF / STL / 3MF remain unavailable because no canonical converter is verified. Remesh / retopo / rig / animation / retarget are not exposed.</p>'+
+      '</div>'+
+    '</div>';
+    if(model3dStudioState.modelUrl){
+      ensureModel3dViewer().catch(function(error){
+        var viewerNode=view.querySelector('[data-zs-3d-model-viewer]');
+        if(viewerNode){
+          viewerNode.replaceWith(Object.assign(document.createElement('div'),{className:'zs-empty',textContent:error.message}));
+        }
+      });
+    }
+  }
+
+  async function openModel3dStudioItem(jobId){
+    var item=model3dStudioState.history.find(function(entry){return entry.jobId===jobId;});
+    if(!item)return;
+    model3dStudioState.selected=item;
+    model3dStudioState.modelUrl=null;
+    model3dStudioState.thumbnailUrl=null;
+    renderModel3dStudioDetail();
+    if(String(item.status||'')!=='done')return;
+    var roles=Array.isArray(item.manifest)?item.manifest.map(function(entry){return entry.role;}):[];
+    var jobs=[];
+    if(roles.indexOf('model_glb')>-1){
+      jobs.push(signModel3dRole(item.jobId,'model_glb').then(function(data){model3dStudioState.modelUrl=data.signedUrl||null;}));
+    }
+    if(roles.indexOf('thumbnail')>-1){
+      jobs.push(signModel3dRole(item.jobId,'thumbnail').then(function(data){model3dStudioState.thumbnailUrl=data.signedUrl||null;}));
+    }
+    try{await Promise.all(jobs);}catch(error){toast(error.message);}
+    renderModel3dStudioDetail();
+  }
+
+  async function downloadModel3dStudioRole(jobId,role){
+    try{
+      var data=await signModel3dRole(jobId,role);
+      if(!data.signedUrl)throw new Error('Signed 3D download is unavailable.');
+      window.open(data.signedUrl,'_blank','noopener,noreferrer');
+    }catch(error){toast(error.message);}
+  }
+
+  async function loadModel3dStudio(){
+    var view=model3dStudioNode();
+    if(!view)return;
+    model3dStudioState.loading=true;
+    model3dStudioState.error=null;
+    renderModel3dStudioHistory();
+    try{
+      var results=await Promise.all([
+        model3dStudioRequest('/api/3d/studio-capabilities'),
+        model3dStudioRequest('/api/3d/history?limit=50')
+      ]);
+      model3dStudioState.capabilities=results[0];
+      model3dStudioState.history=Array.isArray(results[1].history)?results[1].history:[];
+      if(model3dStudioState.selected){
+        model3dStudioState.selected=model3dStudioState.history.find(function(item){return item.jobId===model3dStudioState.selected.jobId;})||null;
+      }
+    }catch(error){
+      model3dStudioState.error=error.message;
+    }finally{
+      model3dStudioState.loading=false;
+      renderModel3dStudioTruth();
+      renderModel3dStudioHistory();
+      renderModel3dStudioDetail();
+    }
+  }
+
+  function bindModel3dStudio(){
+    var view=model3dStudioNode();
+    if(!view||view.dataset.model3dStudioBound==='true')return;
+    view.dataset.model3dStudioBound='true';
+    view.addEventListener('click',function(event){
+      var target=event.target&&event.target.closest?event.target.closest('[data-zs-3d-refresh],[data-zs-3d-open],[data-zs-3d-download],[data-zs-3d-camera-reset]'):null;
+      if(!target)return;
+      if(target.hasAttribute('data-zs-3d-refresh')){loadModel3dStudio();return;}
+      if(target.hasAttribute('data-zs-3d-open')){openModel3dStudioItem(target.getAttribute('data-zs-3d-open'));return;}
+      if(target.hasAttribute('data-zs-3d-download')){downloadModel3dStudioRole(target.getAttribute('data-zs-3d-download'),target.getAttribute('data-role'));return;}
+      if(target.hasAttribute('data-zs-3d-camera-reset')){
+        var viewer=view.querySelector('[data-zs-3d-model-viewer]');
+        if(viewer){
+          viewer.setAttribute('camera-orbit','0deg 75deg 105%');
+          if(typeof viewer.jumpCameraToGoal==='function')viewer.jumpCameraToGoal();
+        }
+      }
+    });
+    view.addEventListener('input',function(event){
+      if(!event.target||!event.target.matches('[data-zs-3d-exposure]'))return;
+      var viewer=view.querySelector('[data-zs-3d-model-viewer]');
+      if(viewer)viewer.setAttribute('exposure',String(event.target.value||1));
+    });
+  }
+
   function genericView(id) {
     var state=sections.find(function(s){return s[0]===id;})[3];
     var extra=id==='code'?orchestrator('code'):toolCards(id);
     return heading(id)+'<div class="zs-banner"><span>◎</span><div><b>'+(state==='ready'?'Interface foundation is ready.':'Ready to connect safely.')+'</b> '+(state==='ready'?'Use the existing backend foundation and connect verified data next.':'Provider execution stays off until pricing, limits and settlement pass verification.')+'</div></div>'+extra;
   }
-  function viewHtml(id) { if(id==='dashboard')return dashboard(); if(id==='images')return imageStudioView(); if(id==='ip')return ipView(); if(id==='usage')return usageView(); if(id==='research')return researchView(); if(id==='documents')return documentsView(); if(id==='spreadsheets')return spreadsheetsView(); if(id==='presentations')return presentationsView(); return genericView(id); }
+  function viewHtml(id) { if(id==='dashboard')return dashboard(); if(id==='images')return imageStudioView(); if(id==='3d')return model3dStudioView(); if(id==='ip')return ipView(); if(id==='usage')return usageView(); if(id==='research')return researchView(); if(id==='documents')return documentsView(); if(id==='spreadsheets')return spreadsheetsView(); if(id==='presentations')return presentationsView(); return genericView(id); }
 
   // Native navigation integration 01. Existing Chat, Images, Video, Code,
   // IP, Projects, History, Settings and payment handlers retain ownership.
   // Only sections without a native entry are added to the original shell.
-  var nativeIds=['voice','music','research','library','documents','spreadsheets','presentations','scheduled','plugins','usage','analytics'];
+  var nativeIds=['3d','voice','music','research','library','documents','spreadsheets','presentations','scheduled','plugins','usage','analytics'];
   var home=document.getElementById('screen-home');
   var nativeNav=document.querySelector('.sidebar .nav-list');
   var more=document.querySelector('#screen-more .project-list');
@@ -995,13 +1318,13 @@
     fr:{more:'Autres outils',back:'Retour',unavailable:'Pas encore actif',notice:'Cette section n’est pas encore opérationnelle. Les outils restent à connecter ; ouvrir cette page ne lance aucune tâche et ne consomme aucun crédit.'}
   };
   var sectionNames={
-    ar:{voice:'الصوت',music:'الموسيقى',research:'البحث',library:'المكتبة',documents:'المستندات',spreadsheets:'الجداول',presentations:'العروض التقديمية',scheduled:'المهام المجدولة',plugins:'الإضافات',usage:'الاستخدام والفوترة',analytics:'التحليلات'},
-    fr:{voice:'Voix',music:'Musique',research:'Recherche',library:'Bibliothèque',documents:'Documents',spreadsheets:'Tableurs',presentations:'Présentations',scheduled:'Tâches planifiées',plugins:'Extensions',usage:'Utilisation et facturation',analytics:'Statistiques'}
+    ar:{'3d':'استوديو 3D',voice:'الصوت',music:'الموسيقى',research:'البحث',library:'المكتبة',documents:'المستندات',spreadsheets:'الجداول',presentations:'العروض التقديمية',scheduled:'المهام المجدولة',plugins:'الإضافات',usage:'الاستخدام والفوترة',analytics:'التحليلات'},
+    fr:{'3d':'Studio 3D',voice:'Voix',music:'Musique',research:'Recherche',library:'Bibliothèque',documents:'Documents',spreadsheets:'Tableurs',presentations:'Présentations',scheduled:'Tâches planifiées',plugins:'Extensions',usage:'Utilisation et facturation',analytics:'Statistiques'}
   };
   function language(){var lang=(document.documentElement.lang||'en').split('-')[0];return languageCopy[lang]?lang:'en';}
   function sectionLabel(id){var lang=language();var item=sections.find(function(s){return s[0]===id;});return sectionNames[lang]&&sectionNames[lang][id]||item[2];}
   function nativeIcon(id){
-    var paths={voice:'M12 3v12M8 6v6a4 4 0 0 0 8 0V6M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8',music:'M9 18V5l11-2v13M9 18a3 3 0 1 1-3-3h3M20 16a3 3 0 1 1-3-3h3',research:'M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14M15 15l6 6',library:'M4 3v18M8 3v18M12 3v18M16 4l5 16',documents:'M5 3h10l4 4v14H5ZM14 3v5h5M8 12h8M8 16h8',spreadsheets:'M3 4h18v16H3ZM3 9h18M3 14h18M9 4v16',presentations:'M3 4h18v12H3ZM12 16v5M7 21l5-5 5 5',scheduled:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 7v5l4 2',plugins:'M8 3v5M16 3v5M6 8h12v3a6 6 0 0 1-12 0ZM12 17v4',usage:'M3 5h18v15H3ZM15 10h6v5h-6Z',analytics:'M4 20V10M10 20V4M16 20v-7M22 20H2'};
+    var paths={'3d':'M12 2 21 7v10l-9 5-9-5V7ZM3 7l9 5 9-5M12 12v10',voice:'M12 3v12M8 6v6a4 4 0 0 0 8 0V6M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8',music:'M9 18V5l11-2v13M9 18a3 3 0 1 1-3-3h3M20 16a3 3 0 1 1-3-3h3',research:'M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14M15 15l6 6',library:'M4 3v18M8 3v18M12 3v18M16 4l5 16',documents:'M5 3h10l4 4v14H5ZM14 3v5h5M8 12h8M8 16h8',spreadsheets:'M3 4h18v16H3ZM3 9h18M3 14h18M9 4v16',presentations:'M3 4h18v12H3ZM12 16v5M7 21l5-5 5 5',scheduled:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 7v5l4 2',plugins:'M8 3v5M16 3v5M6 8h12v3a6 6 0 0 1-12 0ZM12 17v4',usage:'M3 5h18v15H3ZM15 10h6v5h-6Z',analytics:'M4 20V10M10 20V4M16 20v-7M22 20H2'};
     return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="'+paths[id]+'"/></svg>';
   }
   function entry(id,className){
@@ -1029,6 +1352,7 @@
     document.querySelectorAll('[data-zuvyr-section-label]').forEach(function(el){el.textContent=sectionLabel(el.dataset.zuvyrSectionLabel);});
     suite.querySelectorAll('[data-zs-view]').forEach(function(view){
       var title=view.querySelector('h1');if(title)title.textContent=sectionLabel(view.dataset.zsView);
+      if(view.dataset.zsView==='3d'){renderModel3dStudioTruth();return;}
       if(['documents','spreadsheets','presentations'].indexOf(view.dataset.zsView)>-1){
         var liveStatus=view.querySelector('.zs-status');if(liveStatus){liveStatus.textContent=language()==='ar'?'مفعّل':language()==='fr'?'Actif':'Live';liveStatus.classList.add('ready');}
         return;
@@ -1075,6 +1399,10 @@
     if(id==='images'){
       bindImageStudio();
       loadImageStudioHistory();
+    }
+    if(id==='3d'){
+      bindModel3dStudio();
+      loadModel3dStudio();
     }
     if(id==='spreadsheets'||id==='presentations')loadOfficeItems(id);
     suite.querySelectorAll('[data-zs-view]').forEach(function(v){v.dataset.active=String(v.dataset.zsView===id);});
