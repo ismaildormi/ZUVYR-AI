@@ -1,11 +1,14 @@
 {
-  "version": "pack-085.device-agent.v1",
+  "version": "pack-086.device-agent.v1",
   "protocolVersion": 1,
-  "status": "engineering_ready_m19_deferred",
+  "status": "pairing_session_engineering_ready",
   "bind": {
     "host": "127.0.0.1",
     "port": 47831,
-    "allowedHostnames": ["127.0.0.1", "localhost"],
+    "allowedHostnames": [
+      "127.0.0.1",
+      "localhost"
+    ],
     "browserOriginsAllowed": false,
     "requestBodyMaxBytes": 16384,
     "requestTimeoutMs": 5000
@@ -18,7 +21,7 @@
     "tokenBytes": 32
   },
   "execution": {
-    "pairingEnabled": false,
+    "pairingEnabled": true,
     "computerControlEnabled": false,
     "screenCapture": false,
     "pointerControl": false,
@@ -41,5 +44,17 @@
     "autoStartEnabledByDefault": false,
     "preserveIdentityOnUninstall": true
   },
-  "externalGate": "M19"
+  "externalGate": null,
+  "session": {
+    "transport": "https_only",
+    "proofAlgorithm": "Ed25519",
+    "tokenStorage": "local_private_file",
+    "tokenTtlSeconds": 3600,
+    "allowedScopes": [
+      "heartbeat"
+    ],
+    "monotonicCounterRequired": true,
+    "tokenStoredServerSide": false,
+    "rawIpTrust": false
+  }
 }
