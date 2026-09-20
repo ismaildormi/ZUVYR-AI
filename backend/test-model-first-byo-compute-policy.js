@@ -33,7 +33,11 @@ assert.equal(policy.learning_flywheel.global_training_content_default, 'opt_in_o
 assert.equal(policy.learning_flywheel.memory_permission_separate_from_training_permission, true);
 assert.equal(policy.owned_model_rollout.automatic_rollback_required, true);
 
-assert.equal(roadmap.active_pack, '084');
+assert.equal(roadmap.active_pack, '085');
+const pack084Roadmap = roadmap.packs.find(item => item.id === '084');
+const pack085Roadmap = roadmap.packs.find(item => item.id === '085');
+assert.equal(pack084Roadmap?.status, 'LOCKED_ENGINEERING_VERIFIED', 'Pack084 finalizer must lock 084 and open 085');
+assert.equal(pack085Roadmap?.status, 'OPEN', 'Pack085 must be the active open original-sequence pack');
 
 const expectedPackIds = Array.from(
   { length: 150 },
