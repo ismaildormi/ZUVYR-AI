@@ -73,7 +73,7 @@ function createAgentServer({ stateDir, onShutdown } = {}) {
   ensurePrivateDir(stateDir);
   const identity = ensureIdentity(stateDir);
   const expectedToken = ensureAuthToken(stateDir);
-  const paired = fs.existsSync(sessionPath(stateDir));
+  const isPaired = () => fs.existsSync(sessionPath(stateDir));
   let server;
 
   server = http.createServer({
@@ -99,7 +99,7 @@ function createAgentServer({ stateDir, onShutdown } = {}) {
         status: 'ok',
         version: config.version,
         protocolVersion: config.protocolVersion,
-        paired,
+        paired: isPaired(),
         pairingEnabled: true,
         executionEnabled: false
       });
@@ -113,7 +113,7 @@ function createAgentServer({ stateDir, onShutdown } = {}) {
       return sendJson(res, 200, { status: 'success', identity: publicIdentity(identity) });
     }
     if (req.method === 'GET' && req.url === '/v1/capabilities') {
-      return sendJson(res, 200, { status: 'success', capabilities: capabilities(paired) });
+      return sendJson(res, 200, { status: 'success', capabilities: capabilities(isPaired()) });
     }
     if (req.method === 'POST' && req.url === '/v1/shutdown') {
       sendJson(res, 202, { status: 'accepted', executionEnabled: false });
@@ -130,7 +130,7 @@ function createAgentServer({ stateDir, onShutdown } = {}) {
     });
   });
 
-  return { server, identity: publicIdentity(identity), token: expectedToken };
+  return { server, identity: publicIdentity(identity) };
 }
 
 async function startSecureAgent({ stateDir, port = config.bind.port, onShutdown } = {}) {
@@ -154,7 +154,7 @@ async function startSecureAgent({ stateDir, port = config.bind.port, onShutdown 
     port: address.port,
     startedAt: new Date().toISOString(),
     executionEnabled: false,
-    paired
+    paired: fs.existsSync(sessionPath(target))
   };
   fs.writeFileSync(path.join(target, 'runtime.json'), JSON.stringify(runtime, null, 2) + '\n', { encoding: 'utf8', mode: 0o600 });
   const runtimePath = path.join(target, 'runtime.json');
