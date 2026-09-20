@@ -1543,3 +1543,19 @@ After Vercel rolling capacity opens, trigger one production deploy of current ma
 - Reuse canonical content IDs, storage, lineage, one usage ledger, existing 3D provider/runtime foundation and cross-feature handoffs.
 - Every exposed operation must either have verified executor proof or remain hidden/blocked. Do not simulate unsupported 3D editing.
 - PACK085–PACK093 remain deferred/not-cancelled and follow after PACK084 in original order.
+
+
+## PACK096 FINAL RECONCILIATION — 2026-09-20
+
+- PACK096 engineering state: `LOCKED_ENGINEERING_VERIFIED`; canonical `LOCKED_VERIFIED`: NO.
+- M21 remains deferred and truthful: production has zero registered compute connectors, checkpoints, independent passed evaluations, owned-model deployments, route receipts, Teacher Gateway records, training candidates and learning events.
+- Railway does not expose `ZUVYR_M21_VERIFIED` on backend or worker; no live owned-model routing is claimed.
+- Vercel production is READY on exact PACK096 runtime commit `b24094109093ce9fedbd1664e6bcce8ac8836344`.
+- Supabase migration `20260920012400 pack096_owned_model_runtime` is present.
+- Read-only PACK076 drift audit after later migration replay:
+  - canonical SQL blob on main and historical PACK076 branch is identical: `4dd71bb0630bad32e334387e674aaf1de6f9c56e`;
+  - `code_sandbox_sessions` exists exactly once;
+  - each PACK076 sandbox RPC exists exactly once;
+  - no duplicate PACK076 authority was observed.
+- Cross-project isolation finding: the same Supabase project currently also contains four `nova8_*` tables from migration `20260920044227 nova8_online_competition_v1`. No direct ZUVYR object-name collision was observed, but future ZUVYR DDL must preserve namespace isolation and must not mutate NOVA8 objects.
+- Resume rule after this reconciliation: PACK084 — 3D Studio.
