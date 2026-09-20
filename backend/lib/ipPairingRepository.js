@@ -67,7 +67,6 @@ function createSupabaseIpPairingRepository(db) {
       return unwrapRpc(await db.rpc('rotate_ip_session_token_pack086', {
         p_owner_id: input.ownerId,
         p_session_id: input.sessionId,
-        p_expected_token_hash: input.expectedTokenHash,
         p_token_hash: input.tokenHash,
         p_token_expires_at: input.tokenExpiresAt
       }), 'pack086_rotate_token_failed');
