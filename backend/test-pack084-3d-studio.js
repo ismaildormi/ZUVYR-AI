@@ -45,7 +45,7 @@ assert(blocked.generation.blockers.includes('pack083_m18_unverified'));
 assert.equal(blocked.generation.options.defaultFaceCount, 500000);
 assert.equal(blocked.generation.options.minFaceCount, 40000);
 assert.equal(blocked.generation.options.maxFaceCount, 1500000);
-assert.equal(config.viewer.version, '4.3.1');
+assert.equal(config.viewer.version, 'pack084-v1');
 assert.equal(blocked.operations.remesh.status, 'blocked_no_verified_executor');
 assert.equal(blocked.operations.retopo.status, 'blocked_no_verified_executor');
 assert.equal(blocked.operations.rig.status, 'blocked_no_verified_executor');
@@ -101,7 +101,7 @@ for (const marker of [
   'data-zs-3d-model-viewer',
   'data-zs-3d-camera-reset',
   'data-zs-3d-exposure',
-  'ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js'
+  '/zuvyr-model3d-viewer.js?v=pack084-1'
 ]) {
   assert(frontend.includes(marker), marker);
 }
@@ -159,5 +159,5 @@ console.log('PASS: PACK084 export policy is manifest-backed; unsupported GLTF/ST
 console.log('PASS: PACK084 OBJ/FBX structural validation guards persisted export artifacts');
 console.log('PASS: PACK084 frontend wiring covers capabilities/history/generate/status/cancel/download with blocked unsupported operations');
 console.log('PASS: PACK084 viewer is self-hosted and does not execute third-party runtime code');
-console.log('PASS: PACK084 pins the 3D viewer runtime to model-viewer 4.3.1 and ships responsive Studio CSS');
+console.log('PASS: PACK084 pins the self-hosted WebGL viewer runtime and ships responsive Studio CSS');
 console.log('LIVE 3D PROVIDER / PAYMENT / PRODUCTION MUTATION CALLS: NONE');
