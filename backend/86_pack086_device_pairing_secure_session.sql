@@ -63,8 +63,8 @@ begin
     alter table public.ip_sessions
       add constraint ip_sessions_pack086_scopes_bounded
       check (
-        cardinality(permission_scopes) between 1 and 4
-        and permission_scopes <@ array['heartbeat']::text[]
+        cardinality(permission_scopes) between 1 and 3
+        and permission_scopes <@ array['heartbeat','session_status','session_rotate']::text[]
       );
   end if;
 end
@@ -240,7 +240,7 @@ begin
   end if;
   if p_token_expires_at is null
      or p_token_expires_at <= now()
-     or p_token_expires_at > now() + interval '1 hour' then
+     or p_token_expires_at > now() + interval '15 minutes' then
     raise exception 'pack086_token_expiry_invalid';
   end if;
 
@@ -297,13 +297,13 @@ begin
   ) values (
     p_owner_id,v_device.id,'ready',false,
     v_hash,p_token_expires_at,0,
-    array['heartbeat']::text[],now(),now()
+    array['heartbeat','session_status','session_rotate']::text[],now(),now()
   ) returning id into v_session_id;
 
   insert into public.ip_audit_events(owner_id,session_id,event_type,details)
   values (
     p_owner_id,v_session_id,'pairing_completed',
-    jsonb_build_object('deviceId',v_device.id,'scopes',jsonb_build_array('heartbeat'))
+    jsonb_build_object('deviceId',v_device.id,'scopes',jsonb_build_array('heartbeat','session_status','session_rotate'))
   );
 
   return jsonb_build_object(
@@ -320,6 +320,7 @@ $pack086_complete$;
 create or replace function public.rotate_ip_session_token_pack086(
   p_owner_id uuid,
   p_session_id uuid,
+  p_expected_token_hash text,
   p_token_hash text,
   p_token_expires_at timestamptz
 ) returns jsonb
@@ -332,10 +333,117 @@ declare
   v_device public.ip_devices%rowtype;
   v_hash text := lower(btrim(coalesce(p_token_hash,'')));
 begin
-  if v_hash !~ '^[0-9a-f]{64}$' then raise exception 'pack086_token_hash_invalid'; end if;
+  if v_hash !~ '^[0-9a-f]{64}
+     or p_token_expires_at <= now()
+     or p_token_expires_at > now() + interval '15 minutes' then
+    raise exception 'pack086_token_expiry_invalid';
+  end if;
+
+  select * into v_session
+  from public.ip_sessions
+  where id=p_session_id and owner_id=p_owner_id
+  for update;
+
+  if not found then raise exception 'pack086_session_not_found'; end if;
+  if v_session.revoked_at is not null or v_session.state in ('stopped','failed') then
+    raise exception 'pack086_session_revoked';
+  end if;
+  if v_session.token_hash is null
+     or v_session.token_hash <> lower(btrim(p_expected_token_hash))
+     or v_session.token_expires_at is null
+     or v_session.token_expires_at <= now() then
+    raise exception 'pack086_token_invalid';
+  end if;
+
+  select * into v_device
+  from public.ip_devices
+  where id=v_session.device_id and owner_id=p_owner_id
+  for update;
+
+  if not found or v_device.status <> 'paired' or v_device.revoked_at is not null then
+    raise exception 'pack086_device_not_paired';
+  end if;
+
+  update public.ip_sessions
+    set token_hash=v_hash,
+        token_expires_at=p_token_expires_at,
+        last_client_counter=0,
+        updated_at=now()
+    where id=v_session.id;
+
+  insert into public.ip_audit_events(owner_id,session_id,event_type,details)
+  values (
+    p_owner_id,v_session.id,'session_token_rotated',
+    jsonb_build_object('deviceId',v_session.device_id,'scopes',to_jsonb(v_session.permission_scopes))
+  );
+
+  return jsonb_build_object(
+    'success',true,
+    'device_id',v_session.device_id,
+    'session_id',v_session.id,
+    'token_expires_at',p_token_expires_at,
+    'scopes',to_jsonb(v_session.permission_scopes),
+    'execution_enabled',false
+  );
+end;
+$pack086_rotate$;
+
+ then raise exception 'pack086_token_hash_invalid'; end if;
+  if lower(btrim(coalesce(p_expected_token_hash,''))) !~ '^[0-9a-f]{64}
+     or p_token_expires_at <= now()
+     or p_token_expires_at > now() + interval '15 minutes' then
+    raise exception 'pack086_token_expiry_invalid';
+  end if;
+
+  select * into v_session
+  from public.ip_sessions
+  where id=p_session_id and owner_id=p_owner_id
+  for update;
+
+  if not found then raise exception 'pack086_session_not_found'; end if;
+  if v_session.revoked_at is not null or v_session.state in ('stopped','failed') then
+    raise exception 'pack086_session_revoked';
+  end if;
+
+  select * into v_device
+  from public.ip_devices
+  where id=v_session.device_id and owner_id=p_owner_id
+  for update;
+
+  if not found or v_device.status <> 'paired' or v_device.revoked_at is not null then
+    raise exception 'pack086_device_not_paired';
+  end if;
+
+  update public.ip_sessions
+    set token_hash=v_hash,
+        token_expires_at=p_token_expires_at,
+        last_client_counter=0,
+        updated_at=now()
+    where id=v_session.id;
+
+  insert into public.ip_audit_events(owner_id,session_id,event_type,details)
+  values (
+    p_owner_id,v_session.id,'session_token_rotated',
+    jsonb_build_object('deviceId',v_session.device_id,'scopes',to_jsonb(v_session.permission_scopes))
+  );
+
+  return jsonb_build_object(
+    'success',true,
+    'device_id',v_session.device_id,
+    'session_id',v_session.id,
+    'token_expires_at',p_token_expires_at,
+    'scopes',to_jsonb(v_session.permission_scopes),
+    'execution_enabled',false
+  );
+end;
+$pack086_rotate$;
+
+ then
+    raise exception 'pack086_expected_token_hash_invalid';
+  end if;
   if p_token_expires_at is null
      or p_token_expires_at <= now()
-     or p_token_expires_at > now() + interval '1 hour' then
+     or p_token_expires_at > now() + interval '15 minutes' then
     raise exception 'pack086_token_expiry_invalid';
   end if;
 
@@ -441,11 +549,6 @@ begin
     set last_seen_at=now(),updated_at=now()
     where id=v_device.id;
 
-  insert into public.ip_audit_events(owner_id,session_id,event_type,details)
-  values (
-    v_session.owner_id,v_session.id,'session_heartbeat',
-    jsonb_build_object('deviceId',v_device.id,'counter',p_counter)
-  );
 
   return jsonb_build_object(
     'success',true,
@@ -521,7 +624,7 @@ revoke all on function public.start_ip_pairing_pack086(uuid,uuid,text,text,text,
   from public,anon,authenticated;
 revoke all on function public.complete_ip_pairing_pack086(uuid,uuid,text,timestamptz)
   from public,anon,authenticated;
-revoke all on function public.rotate_ip_session_token_pack086(uuid,uuid,text,timestamptz)
+revoke all on function public.rotate_ip_session_token_pack086(uuid,uuid,text,text,timestamptz)
   from public,anon,authenticated;
 revoke all on function public.advance_ip_session_counter_pack086(uuid,text,bigint)
   from public,anon,authenticated;
@@ -532,7 +635,7 @@ grant execute on function public.start_ip_pairing_pack086(uuid,uuid,text,text,te
   to service_role;
 grant execute on function public.complete_ip_pairing_pack086(uuid,uuid,text,timestamptz)
   to service_role;
-grant execute on function public.rotate_ip_session_token_pack086(uuid,uuid,text,timestamptz)
+grant execute on function public.rotate_ip_session_token_pack086(uuid,uuid,text,text,timestamptz)
   to service_role;
 grant execute on function public.advance_ip_session_counter_pack086(uuid,text,bigint)
   to service_role;
