@@ -809,3 +809,27 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - Receipt Git blob: `3ac15fbf56938bd77ced04d992a5abd2ec197e87`
 - Progression: **USER_APPROVED_DEFERRED_GATE_CONTINUATION**
 - Next active model-first Pack: **PACK096 — ZUVYR 7 Manager / Operator — V1 Production Model + V2 Bridge**
+
+
+## PACK096 — ZUVYR 7 Manager / Operator — 2026-09-20 checkpoint
+
+- Status: **LOCKED_ENGINEERING_VERIFIED**
+- Canonical LOCKED_VERIFIED: **NO — M21 deferred**
+- Implementation merge commit: `b24094109093ce9fedbd1664e6bcce8ac8836344`
+- Final Backend/Release CI: **PASS / PASS** — run `35481256488`
+- Supabase migration: `20260920012400 pack096_owned_model_runtime` — **APPLIED_VERIFIED**
+- PACK096 control-plane tables: **3/3 present**
+- RLS: **ON for all 3**
+- Direct browser policy count: **0**
+- SECURITY DEFINER control functions: **5/5**
+- Railway exact merge commit: backend/worker/maintenance **SUCCESS / SUCCESS / SUCCESS**
+- Vercel production exact merge commit: **READY**
+- Teacher Gateway, BYOC runtime bridge, bounded rollout/fallback/rollback authority: **WIRED**
+- ZUVYR owned-model API/software fee: **$0**
+- ZUVYR owned-model usage fee: **$0**
+- Inference markup: **$0**
+- M21 production proof: **NOT PRESENT** — zero connector/checkpoint/eval/deployment/route evidence; no fabricated claim.
+- Deferred: `M21_REAL_BYOC_OWNED_MODEL_PRODUCTION_ACCEPTANCE`
+- Receipt Git blob: `594a21363d9e8f27979e23f37fae5873a9456e2a`
+- Progression: **USER_APPROVED_DEFERRED_GATE_CONTINUATION**
+- Original sequence resumed at **PACK084 — 3D Studio**
