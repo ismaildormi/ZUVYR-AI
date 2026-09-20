@@ -30,13 +30,20 @@ function sendDeviceError(res, error) {
   });
 }
 
-function createDeviceSessionRouter({ db, service } = {}) {
+function createDeviceSessionRouter({ db, service, env = process.env } = {}) {
   const router = express.Router();
   const runtime = service || createIpPairingService({
     repository: createSupabaseIpPairingRepository(db)
   });
 
   router.post('/heartbeat', async (req, res) => {
+    if (String(env.NODE_ENV || '').toLowerCase() === 'production' && req.secure !== true) {
+      return res.status(426).json({
+        status: 'error',
+        code: 'pack086_https_required',
+        executionEnabled: false
+      });
+    }
     try {
       const session = await runtime.authenticateSessionRequest({
         sessionId: req.headers['x-zuvyr-session-id'],
