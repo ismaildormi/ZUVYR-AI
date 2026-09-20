@@ -21,7 +21,7 @@ const {
   buildSignedSessionRequest,
   clearSession
 } = require('../src/pairingSession');
-const { capabilities } = require('../src/server');
+const { capabilities, createAgentServer } = require('../src/server');
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'zuvyr-pack086-agent-'));
 try {
@@ -106,6 +106,22 @@ try {
     body
   });
   assert.equal(second.headers['X-ZUVYR-Device-Counter'], '2');
+
+  const localServer = createAgentServer({ stateDir: root });
+  assert.equal(Object.hasOwn(localServer, 'token'), false);
+  localServer.server.close();
+
+  assert.throws(
+    () => saveSession(root, {
+      backendOrigin: 'https://api.zuvyr.example',
+      deviceId: 'not-a-uuid',
+      sessionId: '33333333-3333-4333-8333-333333333333',
+      token,
+      tokenExpiresAt: new Date(Date.now() + 10000).toISOString(),
+      scopes: ['heartbeat']
+    }),
+    { code: 'pack086_session_identity_invalid' }
+  );
 
   const caps = capabilities(true);
   assert.equal(caps.paired, true);
