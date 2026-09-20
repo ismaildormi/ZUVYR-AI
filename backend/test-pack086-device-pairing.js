@@ -4,6 +4,8 @@ const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
+const http = require('node:http');
+const express = require('express');
 
 const {
   pairingProofMessage,
@@ -12,6 +14,7 @@ const {
   normalizeEd25519PublicKey
 } = require('./lib/ipPairingProtocol');
 const { hashSecret, createIpPairingService } = require('./lib/ipPairingService');
+const { createDeviceSessionRouter } = require('./lib/deviceSessionRoutes');
 const agentProtocol = require('../device-agent/src/pairingProtocol');
 
 function e(code) {
@@ -345,6 +348,50 @@ class FakeRepository {
     }),
     { code: 'pack086_session_revoked' }
   );
+
+  const app = express();
+  app.use(express.json());
+  let insecureReachedAuth = false;
+  app.use('/api/device-agent', createDeviceSessionRouter({
+    env: { NODE_ENV: 'production' },
+    service: {
+      authenticateSessionRequest: async () => {
+        insecureReachedAuth = true;
+        throw e('unexpected_auth_call');
+      }
+    }
+  }));
+  const listener = await new Promise(resolve => {
+    const server = app.listen(0, '127.0.0.1', () => resolve(server));
+  });
+  try {
+    const address = listener.address();
+    const response = await new Promise((resolve, reject) => {
+      const req = http.request({
+        host: '127.0.0.1',
+        port: address.port,
+        method: 'POST',
+        path: '/api/device-agent/heartbeat',
+        headers: { 'Content-Type': 'application/json' }
+      }, res => {
+        const chunks = [];
+        res.on('data', chunk => chunks.push(chunk));
+        res.on('end', () => {
+          resolve({
+            status: res.statusCode,
+            body: JSON.parse(Buffer.concat(chunks).toString('utf8'))
+          });
+        });
+      });
+      req.on('error', reject);
+      req.end('{}');
+    });
+    assert.equal(response.status, 426);
+    assert.equal(response.body.code, 'pack086_https_required');
+    assert.equal(insecureReachedAuth, false);
+  } finally {
+    await new Promise(resolve => listener.close(resolve));
+  }
 
   console.log('PASS: PACK086 backend/device canonical signature protocol remains byte-identical');
   console.log('PASS: PACK086 pairing challenge is hash-only at rest and Ed25519 proof-of-possession bound');
