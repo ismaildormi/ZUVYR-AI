@@ -19,7 +19,9 @@ function sendDeviceError(res, error) {
     'pack086_device_not_paired',
     'pack086_device_key_mismatch',
     'pack086_wrong_device',
-    'pack086_wrong_session'
+    'pack086_wrong_session',
+    'pack086_session_not_found',
+    'pack086_device_not_found'
   ].includes(code);
   const replay = code === 'pack086_counter_replay';
   const forbidden = code === 'pack086_session_scope_forbidden';
