@@ -13,7 +13,7 @@ const {
   bodySha256,
   normalizeEd25519PublicKey
 } = require('./lib/ipPairingProtocol');
-const { hashSecret, createIpPairingService } = require('./lib/ipPairingService');
+const { hashSecret, createIpPairingService, SESSION_TTL_MS } = require('./lib/ipPairingService');
 const { createDeviceSessionRouter } = require('./lib/deviceSessionRoutes');
 const agentProtocol = require('../device-agent/src/pairingProtocol');
 
@@ -80,14 +80,14 @@ class FakeRepository {
       token_expires_at: input.tokenExpiresAt,
       revoked_at: null,
       last_client_counter: 0,
-      permission_scopes: ['heartbeat']
+      permission_scopes: ['heartbeat','session_status','session_rotate']
     };
     return {
       success: true,
       device_id: this.deviceId,
       session_id: this.sessionId,
       token_expires_at: input.tokenExpiresAt,
-      scopes: ['heartbeat'],
+      scopes: ['heartbeat','session_status','session_rotate'],
       execution_enabled: false
     };
   }
@@ -97,6 +97,7 @@ class FakeRepository {
       throw e('pack086_session_not_found');
     }
     if (this.device.status !== 'paired') throw e('pack086_device_not_paired');
+    if (input.expectedTokenHash !== this.session.token_hash) throw e('pack086_token_invalid');
     this.session.token_hash = input.tokenHash;
     this.session.token_expires_at = input.tokenExpiresAt;
     this.session.last_client_counter = 0;
@@ -105,7 +106,7 @@ class FakeRepository {
       device_id: this.deviceId,
       session_id: this.sessionId,
       token_expires_at: input.tokenExpiresAt,
-      scopes: ['heartbeat']
+      scopes: ['heartbeat','session_status','session_rotate']
     };
   }
 
@@ -145,7 +146,7 @@ class FakeRepository {
       session_id: this.sessionId,
       counter,
       token_expires_at: this.session.token_expires_at,
-      scopes: ['heartbeat'],
+      scopes: ['heartbeat','session_status','session_rotate'],
       heartbeat_at: new Date().toISOString(),
       execution_enabled: false
     };
@@ -157,6 +158,12 @@ class FakeRepository {
   const roxRoutes = fs.readFileSync(path.join(__dirname, 'lib', 'roxIpRoutes.js'), 'utf8');
   const deviceRoutes = fs.readFileSync(path.join(__dirname, 'lib', 'deviceSessionRoutes.js'), 'utf8');
   const server = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8');
+
+  assert.equal(SESSION_TTL_MS, 10 * 60 * 1000);
+  assert(sql.includes("array['heartbeat','session_status','session_rotate']::text[]"));
+  assert(sql.includes("interval '15 minutes'"));
+  assert(sql.includes('p_expected_token_hash text'));
+  assert.equal(sql.includes("'session_heartbeat'"), false, 'heartbeat must not create one audit row per ping');
 
   for (const marker of [
     'ip_pairing_challenges',
@@ -177,6 +184,9 @@ class FakeRepository {
   assert(roxRoutes.includes("router.post('/devices/:deviceId/revoke'"));
   assert(roxRoutes.includes("router.post('/sessions/:sessionId/token/rotate'"));
   assert(deviceRoutes.includes("router.post('/heartbeat'"));
+  assert(deviceRoutes.includes("router.post('/status'"));
+  assert(deviceRoutes.includes("router.post('/rotate-token'"));
+  assert(deviceRoutes.includes("pack086_session_scope_forbidden"));
   assert(server.includes("'/api/device-agent'"));
   assert(server.includes("createRoxIpRouter({ db: supabaseAdmin })"));
 
@@ -240,7 +250,7 @@ class FakeRepository {
     signature
   });
   assert.equal(paired.sessionId, repo.sessionId);
-  assert.deepEqual(paired.scopes, ['heartbeat']);
+  assert.deepEqual(paired.scopes, ['heartbeat','session_status','session_rotate']);
   assert.equal(paired.executionEnabled, false);
   assert.notEqual(repo.session.token_hash, paired.token);
   assert.equal(repo.session.token_hash, hashSecret(paired.token));
@@ -316,9 +326,22 @@ class FakeRepository {
     { code: 'pack086_session_signature_invalid' }
   );
 
-  const rotated = await service.rotateSessionToken({ ownerId, sessionId: paired.sessionId });
+  const preRotateHash = repo.session.token_hash;
+  const rotated = await service.rotateSessionToken({
+    ownerId,
+    sessionId: paired.sessionId,
+    expectedTokenHash: preRotateHash
+  });
   assert.notEqual(rotated.token, paired.token);
   assert.equal(repo.session.last_client_counter, 0);
+  await assert.rejects(
+    () => service.rotateSessionToken({
+      ownerId,
+      sessionId: paired.sessionId,
+      expectedTokenHash: preRotateHash
+    }),
+    { code: 'pack086_token_invalid' }
+  );
 
   await assert.rejects(
     () => service.authenticateSessionRequest({
@@ -395,7 +418,7 @@ class FakeRepository {
 
   console.log('PASS: PACK086 backend/device canonical signature protocol remains byte-identical');
   console.log('PASS: PACK086 pairing challenge is hash-only at rest and Ed25519 proof-of-possession bound');
-  console.log('PASS: PACK086 session token is hash-only server-side, short-lived and heartbeat-scoped');
+  console.log('PASS: PACK086 session token is hash-only, 10-minute issued, scope-bounded and CAS-rotated');
   console.log('PASS: PACK086 wrong token, wrong signature, replayed counter and revoked session are rejected');
   console.log('PASS: PACK086 revocation invalidates device sessions while execution_enabled remains false');
   console.log('LIVE DEVICE / COMPUTER-CONTROL / PAYMENT / PROVIDER CALLS: NONE');
