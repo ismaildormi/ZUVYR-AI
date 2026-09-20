@@ -588,7 +588,7 @@
   "pack_title": "ZUVYR Model Lab",
   "status": "PACK095_OPEN",
   "next_pack_allowed": true,
-  "next_external_gate": null,
+  "next_external_gate": "M19",
   "next_pack": "085 - ZUVYR Device Agent Build",
   "pack042": {
     "status": "LOCKED_VERIFIED",
@@ -1842,7 +1842,7 @@
     "effective_date": "2026-09-19",
     "current_inflight_pack": null,
     "current_inflight_may_finish": false,
-    "next_pack_after_current_inflight": "084",
+    "next_pack_after_current_inflight": "085",
     "priority_sequence": [
       "094 - Learning Pipeline + V1 User Learning Flywheel + Data Rights + Failure Bank",
       "095 - ZUVYR Model Lab",
@@ -1850,7 +1850,6 @@
     ],
     "resume_original_sequence_at": "084",
     "deferred_not_cancelled": [
-      "085",
       "086",
       "087",
       "088",
