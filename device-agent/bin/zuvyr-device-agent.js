@@ -9,6 +9,12 @@ const config = require('../config.v1.json');
 const { defaultStateDir, ensureIdentity, publicIdentity, ensureAuthToken } = require('../src/security');
 const { installUser, uninstallUser, assertLeastPrivilege } = require('../src/lifecycle');
 const { startSecureAgent } = require('../src/server');
+const {
+  signPairingChallenge,
+  saveSession,
+  buildSignedSessionRequest,
+  clearSession
+} = require('../src/pairingSession');
 
 function option(name) {
   const i = process.argv.indexOf(name);
@@ -42,7 +48,7 @@ async function stopAgent(dir) {
 async function main() {
   const command = process.argv[2] || 'help';
   const dir = stateDir();
-  if (['install','uninstall','start','serve','init'].includes(command)) {
+  if (['install','uninstall','start','serve','init','pair-proof','session-import','session-proof','session-clear'].includes(command)) {
     assertLeastPrivilege();
   }
 
@@ -98,6 +104,42 @@ async function main() {
     print({ status: code === 202 ? 'accepted' : 'error', httpStatus: code, executionEnabled: false });
     return;
   }
+  if (command === 'pair-proof') {
+    const challengeFile = process.argv[3];
+    if (!challengeFile) throw new Error('usage: pair-proof <challenge.json>');
+    const challenge = JSON.parse(fs.readFileSync(path.resolve(challengeFile), 'utf8'));
+    print({ status: 'success', proof: signPairingChallenge(dir, challenge), executionEnabled: false });
+    return;
+  }
+  if (command === 'session-import') {
+    const sessionFile = process.argv[3];
+    const backendOrigin = option('--backend-origin');
+    if (!sessionFile || !backendOrigin) throw new Error('usage: session-import <session.json> --backend-origin https://api.example');
+    const session = JSON.parse(fs.readFileSync(path.resolve(sessionFile), 'utf8'));
+    print({ status: 'success', session: saveSession(dir, { ...session, backendOrigin }), executionEnabled: false });
+    return;
+  }
+  if (command === 'session-proof') {
+    const method = process.argv[3] || 'POST';
+    const route = process.argv[4] || '/api/device-agent/heartbeat';
+    const bodyFile = process.argv[5];
+    const body = bodyFile ? JSON.parse(fs.readFileSync(path.resolve(bodyFile), 'utf8')) : {};
+    const proof = buildSignedSessionRequest(dir, { method, path: route, body });
+    print({
+      status: 'success',
+      proof: {
+        ...proof,
+        headers: { ...proof.headers, Authorization: '[stored-private]' }
+      },
+      executionEnabled: false
+    });
+    return;
+  }
+  if (command === 'session-clear') {
+    print({ status: 'success', session: clearSession(dir), executionEnabled: false });
+    return;
+  }
+
   if (command === 'self-test') {
     const child = spawn(process.execPath, [path.resolve(__dirname, '..', 'test', 'pack085-device-agent.test.js')], { stdio: 'inherit' });
     child.once('exit', code => process.exit(code || 0));
@@ -105,9 +147,9 @@ async function main() {
   }
 
   process.stdout.write(
-    'ZUVYR Device Agent — PACK085\\n' +
-    'Commands: init | install | uninstall [--purge-identity] | start | serve | status | stop | self-test\\n' +
-    'All PACK085 computer-control actions remain disabled; pairing is owned by PACK086.\\n'
+    'ZUVYR Device Agent — PACK086\\n' +
+    'Commands: init | install | uninstall [--purge-identity] | start | serve | status | stop | pair-proof | session-import | session-proof | session-clear | self-test\\n' +
+    'PACK086 pairing/session proof is enabled; PACK087 computer-control actions remain disabled.\\n'
   );
 }
 main().catch(error => {
