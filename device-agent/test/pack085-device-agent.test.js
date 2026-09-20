@@ -117,6 +117,7 @@ function request({ port, method = 'GET', route, token, origin, host } = {}) {
     assert(fs.existsSync(path.join(installDir, 'app', 'bin', 'zuvyr-device-agent.js')));
     assert(fs.existsSync(installed.launcher));
     assert(fs.existsSync(path.join(installDir, 'identity.json')));
+    const installedToken = ensureAuthToken(installDir);
     const removed = uninstallUser({ stateDir: installDir, home: root, effectiveUid: 1000 });
     assert.equal(removed.uninstalled, true);
     assert.equal(removed.identityPreserved, true);
@@ -125,7 +126,7 @@ function request({ port, method = 'GET', route, token, origin, host } = {}) {
     assert.equal(fs.existsSync(path.join(installDir, 'identity.json')), true);
     assert.equal(fs.existsSync(path.join(installDir, 'auth.token')), false);
     const rotatedToken = ensureAuthToken(installDir);
-    assert.notEqual(rotatedToken, token);
+    assert.notEqual(rotatedToken, installedToken);
     fs.rmSync(path.join(installDir, 'auth.token'), { force: true });
 
     const updateKeys = crypto.generateKeyPairSync('ed25519');
