@@ -1609,3 +1609,22 @@ Do **not** reopen PACK084 merely because M18 is deferred. M18 stays a launch/liv
 - M19 remains external; no real-device/install claim without dated device evidence.
 - Preserve canonical Brain/Kernel, permissions, durable task/STOP/rollback rules and one usage ledger.
 <!-- ZUVYR_PACK_084_ENGINEERING_FINALIZER_20260920_CONTINUE_END -->
+
+
+### PACK085 ENGINEERING FINALIZED — 2026-09-20
+
+- **PACK085 — ZUVYR Device Agent Build** is `LOCKED_ENGINEERING_VERIFIED`; canonical `LOCKED_VERIFIED` remains **NO**.
+- Implementation PR: `#46`; candidate head `d132a14b84bf539e1a050fdace930f336922c2fe`; merge commit `8d6ef42ce21f8747c3abaadf8de1e2852631415d`.
+- GitHub Release Quality Gate run `35535838847`: **Backend Quality PASS + Release Quality PASS**.
+- Exact production deployment:
+  - Vercel `dpl_4r3CXZeq2dThxP8sfrPLDoSaPgsM` = **READY** on `8d6ef42c...`.
+  - Railway backend `1731cf22-7488-497a-b5f3-111466294f59` = **SUCCESS**.
+  - Railway worker `aa7f7916-8bcf-4baa-864a-acd6cc0d63b4` = **SUCCESS**.
+  - Railway maintenance `5fafc7e4-d43d-4cb2-966e-b65b20468bc5` = **SUCCESS**.
+- Verified engineering boundaries: per-user least privilege, no default root/admin, Ed25519 device identity, private local bearer token, loopback-only authenticated service, signed-update verification, no raw-IP trust, uninstall token rotation.
+- **PACK086 pairing remains disabled in PACK085; PACK087 computer-control actions remain disabled.**
+- No provider, payment, device-control or database-migration call was required for PACK085 verification.
+- Deferred external gate: **M19 — real test-device install/start/uninstall acceptance**. No real-device success is fabricated.
+- Receipt: `zuvyr-pack-evidence/pack-085/2026-09-20-engineering-checkpoint/receipt.json` (Git blob `10772b2dcdce58f5b6fcb8bf348c885d2f657709`).
+- Progression: user-approved deferred-gate continuation.
+- **Active pack is now PACK086 — Device Pairing & Secure Session.**
