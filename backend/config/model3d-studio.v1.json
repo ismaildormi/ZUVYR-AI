@@ -3,17 +3,18 @@
   "pack": 84,
   "title": "3D Studio",
   "viewer": {
-    "engine": "@google/model-viewer",
-    "version": "4.3.1",
-    "scriptUrl": "https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js",
+    "engine": "zuvyr-local-webgl-glb",
+    "version": "pack084-v1",
+    "scriptUrl": "/zuvyr-model3d-viewer.js?v=pack084-1",
     "providerCalls": 0,
     "signedRole": "model_glb",
     "controls": [
       "camera_controls",
       "orbit",
       "zoom",
-      "environment_neutral",
-      "shadow_intensity"
+      "local_lighting",
+      "keyboard",
+      "reset_camera"
     ]
   },
   "operations": {
@@ -59,6 +60,9 @@
     "unsupportedControlsHiddenOrBlocked": true,
     "viewerRequiresFreshOwnerSignedGlb": true,
     "viewerDoesNotCreateProviderUsage": true,
-    "generationRemainsOwnedByPack083M18": true
+    "generationRemainsOwnedByPack083M18": true,
+    "thirdPartyViewerRuntime": false,
+    "viewerFetchCredentials": "omit",
+    "viewerReferrerPolicy": "no-referrer"
   }
 }
