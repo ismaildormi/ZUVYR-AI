@@ -11,6 +11,7 @@ const {
   ensureAuthToken,
   secureTokenEqual
 } = require('./security');
+const { sessionPath } = require('./pairingSession');
 
 function isLoopbackAddress(value) {
   return value === '127.0.0.1' || value === '::1' || value === '::ffff:127.0.0.1';
@@ -46,12 +47,12 @@ function sendJson(res, statusCode, payload) {
   res.end(body);
 }
 
-function capabilities() {
+function capabilities(paired = false) {
   return Object.freeze({
     version: config.version,
     protocolVersion: config.protocolVersion,
-    paired: false,
-    pairingEnabled: false,
+    paired: paired === true,
+    pairingEnabled: true,
     executionEnabled: false,
     actions: Object.freeze({
       screenCapture: false,
@@ -72,6 +73,7 @@ function createAgentServer({ stateDir, onShutdown } = {}) {
   ensurePrivateDir(stateDir);
   const identity = ensureIdentity(stateDir);
   const expectedToken = ensureAuthToken(stateDir);
+  const paired = fs.existsSync(sessionPath(stateDir));
   let server;
 
   server = http.createServer({
@@ -97,7 +99,8 @@ function createAgentServer({ stateDir, onShutdown } = {}) {
         status: 'ok',
         version: config.version,
         protocolVersion: config.protocolVersion,
-        paired: false,
+        paired,
+        pairingEnabled: true,
         executionEnabled: false
       });
     }
@@ -110,7 +113,7 @@ function createAgentServer({ stateDir, onShutdown } = {}) {
       return sendJson(res, 200, { status: 'success', identity: publicIdentity(identity) });
     }
     if (req.method === 'GET' && req.url === '/v1/capabilities') {
-      return sendJson(res, 200, { status: 'success', capabilities: capabilities() });
+      return sendJson(res, 200, { status: 'success', capabilities: capabilities(paired) });
     }
     if (req.method === 'POST' && req.url === '/v1/shutdown') {
       sendJson(res, 202, { status: 'accepted', executionEnabled: false });
@@ -151,7 +154,7 @@ async function startSecureAgent({ stateDir, port = config.bind.port, onShutdown 
     port: address.port,
     startedAt: new Date().toISOString(),
     executionEnabled: false,
-    paired: false
+    paired
   };
   fs.writeFileSync(path.join(target, 'runtime.json'), JSON.stringify(runtime, null, 2) + '\n', { encoding: 'utf8', mode: 0o600 });
   const runtimePath = path.join(target, 'runtime.json');
