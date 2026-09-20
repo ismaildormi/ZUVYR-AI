@@ -1,7 +1,7 @@
 {
   "schema_version": "zuvyr.roadmap.150.v1",
   "date": "2026-09-19",
-  "active_pack": "096",
+  "active_pack": "084",
   "total_packs": 150,
   "authority": "Latest user MASTER EXECUTION PROMPT plus 2026-09-19 Model-First BYO Compute priority override",
   "source_sha256": "148699a2a98439391bf4a3b656a09c42fc9fd8e42779a98bdab68ed84e7a1a5f",
@@ -2234,7 +2234,7 @@
         "083"
       ],
       "systems": "Existing systems described in scope; exact paths must be grounded from the execution baseline",
-      "status": "PLANNED",
+      "status": "OPEN",
       "objective": "3D Studio",
       "architecture": "Reuse canonical Brain/Kernel, registry/router, content IDs, permissions and one usage ledger. Preserve historical implementation and receipt identity.",
       "ux": "For affected controls, verify loading, empty, error, cancel, retry and reopen states; keyboard, RTL and responsive behavior. Infrastructure-only work has no invented UI requirement.",
@@ -2576,7 +2576,7 @@
         "095"
       ],
       "systems": "Existing systems described in scope; exact paths must be grounded from the execution baseline",
-      "status": "OPEN",
+      "status": "LOCKED_ENGINEERING_VERIFIED",
       "objective": "ZUVYR 7 Manager / Operator — V1 Production Model + V2 Bridge",
       "architecture": "Reuse canonical Brain/Kernel, registry/router, content IDs, permissions and one usage ledger. Preserve historical implementation and receipt identity.",
       "ux": "For affected controls, verify loading, empty, error, cancel, retry and reopen states; keyboard, RTL and responsive behavior. Infrastructure-only work has no invented UI requirement.",
@@ -4066,7 +4066,6 @@
     ],
     "resume_original_sequence_at": "084",
     "deferred_not_cancelled": [
-      "084",
       "085",
       "086",
       "087",
@@ -4085,10 +4084,11 @@
     "default_compute_payer": "user_or_organization",
     "default_serving_mode": "bring_your_own_compute",
     "completed_inflight_pack": "083",
-    "active_priority_pack": "096",
+    "active_priority_pack": null,
     "completed_priority_packs": [
       "094",
-      "095"
+      "095",
+      "096"
     ]
   }
 }
