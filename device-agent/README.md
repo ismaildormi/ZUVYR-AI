@@ -53,3 +53,30 @@ CLI helpers:
     zuvyr-device-agent session-import session.json --backend-origin https://<zuvyr-api-host>
     zuvyr-device-agent session-proof POST /api/device-agent/heartbeat
     zuvyr-device-agent session-clear
+
+
+## PACK087 — IP Actions / STOP / Undo
+
+PACK087 adds a least-privilege action worker on top of PACK086 signed device sessions. The device opens no public inbound control port: it pulls authorized work over outbound HTTPS.
+
+Execution contract:
+
+- the backend remains the authority for owner, paired device, signed session, permission grant and confirmation;
+- file reads/writes are disabled until `ZUVYR_AGENT_FILE_ROOTS` explicitly scopes allowed roots;
+- shell execution is disabled until `ZUVYR_AGENT_ALLOWED_EXECUTABLES` explicitly allowlists executables; commands use argument arrays with `shell:false`;
+- application launch is disabled until `ZUVYR_AGENT_ALLOWED_APPLICATIONS` explicitly allowlists applications;
+- screen, pointer, keyboard and clipboard support is detected honestly from the current OS/tools and fails closed when unavailable;
+- write-file creates a private local opaque backup before mutation; Undo restores the prior bytes or removes a newly-created file;
+- STOP is polled independently while an action is running and aborts cancellable child processes;
+- device results are redacted locally and redacted again by the backend before persistence;
+- sensitive paths such as .ssh, .aws, .env, credentials and private-key locations remain blocked.
+
+Typical configuration:
+
+    ZUVYR_AGENT_FILE_ROOTS=/explicit/root
+    ZUVYR_AGENT_ALLOWED_EXECUTABLES=/absolute/or/path-resolved-command
+    ZUVYR_AGENT_ALLOWED_APPLICATIONS=ExplicitAppName
+
+The exact list separator for file roots follows the operating system path delimiter. Executable and application allowlists are comma-separated.
+
+The `start`/`serve` flow runs the local management server and PACK087 action worker together. `cycle` runs one pull/execute/report cycle and `work` runs the action worker in the foreground.
