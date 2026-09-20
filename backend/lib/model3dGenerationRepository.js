@@ -79,7 +79,7 @@ function assertFalArtifactUrl(raw) {
 }
 
 function validateGlb(buffer) {
-  if (!Buffer.isBuffer(buffer) || buffer.length<12) {
+  if (!Buffer.isBuffer(buffer) || buffer.length<20) {
     throw repositoryError('model3d_glb_invalid',502);
   }
   if (buffer.toString('ascii',0,4)!=='glTF') {
@@ -91,18 +91,65 @@ function validateGlb(buffer) {
   if (buffer.readUInt32LE(8)!==buffer.length) {
     throw repositoryError('model3d_glb_length_invalid',502);
   }
+
+  let offset=12;
+  let json=null;
+  let binaryChunk=false;
+  let chunkIndex=0;
+  while (offset+8<=buffer.length) {
+    const chunkLength=buffer.readUInt32LE(offset);
+    const chunkType=buffer.readUInt32LE(offset+4);
+    offset+=8;
+    if (!chunkLength || chunkLength%4!==0 || offset+chunkLength>buffer.length) {
+      throw repositoryError('model3d_glb_chunk_invalid',502);
+    }
+    if (chunkIndex===0 && chunkType!==0x4e4f534a) {
+      throw repositoryError('model3d_glb_json_chunk_missing',502);
+    }
+    if (chunkType===0x4e4f534a && json===null) {
+      try {
+        const text=buffer.subarray(offset,offset+chunkLength)
+          .toString('utf8').replace(/\u0000+$/g,'').trim();
+        json=JSON.parse(text);
+      } catch (cause) {
+        throw repositoryError('model3d_glb_json_invalid',502,cause);
+      }
+    } else if (chunkType===0x004e4942) {
+      binaryChunk=true;
+    }
+    offset+=chunkLength;
+    chunkIndex+=1;
+  }
+  if (offset!==buffer.length) {
+    throw repositoryError('model3d_glb_chunk_alignment_invalid',502);
+  }
+  if (
+    !json ||
+    String(json?.asset?.version||'')!=='2.0' ||
+    !Array.isArray(json.meshes) ||
+    json.meshes.length===0 ||
+    !binaryChunk
+  ) {
+    throw repositoryError('model3d_glb_structure_invalid',502);
+  }
 }
 
 function validateObj(buffer) {
   if (!Buffer.isBuffer(buffer) || buffer.length<8) {
     throw repositoryError('model3d_obj_invalid',502);
   }
-  const text=buffer.toString('utf8');
-  if (text.includes('\u0000')) {
+  const sampleSize=Math.min(buffer.length,8*1024*1024);
+  const head=buffer.subarray(0,sampleSize).toString('utf8');
+  const tail=buffer.length>sampleSize
+    ? buffer.subarray(Math.max(0,buffer.length-sampleSize)).toString('utf8')
+    : '';
+  const sample=head+'\n'+tail;
+  if (sample.includes('\u0000')) {
     throw repositoryError('model3d_obj_binary_invalid',502);
   }
-  const hasVertex=/(?:^|\r?\n)\s*v\s+-?\d/m.test(text);
-  const hasFace=/(?:^|\r?\n)\s*f\s+\d/m.test(text);
+  const number='[-+]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][-+]?\\d+)?';
+  const hasVertex=new RegExp('(?:^|\\r?\\n)\\s*v\\s+'+number+'\\s+'+number+'\\s+'+number,'m').test(sample);
+  const hasFace=/(?:^|\r?\n)\s*f\s+[-+]?\d+(?:\/[-+]?\d*)?(?:\/[-+]?\d+)?\s+[-+]?\d+/m.test(sample);
   if (!hasVertex || !hasFace) {
     throw repositoryError('model3d_obj_structure_invalid',502);
   }
@@ -112,11 +159,33 @@ function validateFbx(buffer) {
   if (!Buffer.isBuffer(buffer) || buffer.length<24) {
     throw repositoryError('model3d_fbx_invalid',502);
   }
-  const head=buffer.subarray(0,Math.min(buffer.length,4096)).toString('utf8');
-  const binary=buffer.subarray(0,18).toString('ascii')==='Kaydara FBX Binary';
-  const ascii=/FBXHeaderExtension|;\s*FBX\s+\d/i.test(head);
+  const binaryHeader=Buffer.from([
+    0x4b,0x61,0x79,0x64,0x61,0x72,0x61,0x20,
+    0x46,0x42,0x58,0x20,0x42,0x69,0x6e,0x61,
+    0x72,0x79,0x20,0x20,0x00,0x1a,0x00
+  ]);
+  const binary=buffer.length>=binaryHeader.length &&
+    buffer.subarray(0,binaryHeader.length).equals(binaryHeader);
+  const asciiHead=buffer.subarray(0,Math.min(buffer.length,2*1024*1024)).toString('utf8');
+  const ascii=/FBXHeaderExtension\s*:/i.test(asciiHead) &&
+    /(?:^|\r?\n)\s*Objects\s*:/m.test(asciiHead);
   if (!binary && !ascii) {
     throw repositoryError('model3d_fbx_structure_invalid',502);
+  }
+}
+
+function validateUsdz(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length<22) {
+    throw repositoryError('model3d_usdz_invalid',502);
+  }
+  if (buffer.readUInt32LE(0)!==0x04034b50) {
+    throw repositoryError('model3d_usdz_zip_header_invalid',502);
+  }
+  const tail=buffer.subarray(Math.max(0,buffer.length-65557));
+  const eocd=tail.indexOf(Buffer.from([0x50,0x4b,0x05,0x06]))>=0;
+  const zip64=tail.indexOf(Buffer.from([0x50,0x4b,0x06,0x06]))>=0;
+  if (!eocd && !zip64) {
+    throw repositoryError('model3d_usdz_zip_footer_invalid',502);
   }
 }
 
@@ -176,8 +245,8 @@ async function fetchArtifactBytes(artifact,{fetchImpl=globalThis.fetch}={}) {
       throw repositoryError('model3d_thumbnail_invalid',502,cause);
     }
   }
-  if (artifact.role==='export_usdz' && buffer.subarray(0,2).toString('ascii')!=='PK') {
-    throw repositoryError('model3d_usdz_invalid',502);
+  if (artifact.role==='export_usdz') {
+    validateUsdz(buffer);
   }
 
   return Object.freeze({buffer,mimeType,url});
@@ -500,6 +569,7 @@ module.exports={
   validateGlb,
   validateObj,
   validateFbx,
+  validateUsdz,
   fetchArtifactBytes,
   createModel3dGenerationRepository
 };
