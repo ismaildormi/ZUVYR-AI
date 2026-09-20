@@ -128,7 +128,8 @@ assert(roadmapMd.includes('PACK094 → PACK095 → PACK096 before PACK084–PACK
 assert(roadmapMd.includes('ZUVYR-owned model usage fee: $0'));
 assert(continueHere.includes('LATEST CANONICAL OVERRIDE — MODEL-FIRST + BYO COMPUTE — 2026-09-19'));
 assert(continueHere.includes('PACK084 — 3D Studio is now the active Pack'));
-assert(continueHere.includes('PACK096 engineering is finalized and M21 remains deferred'));
+assert(continueHere.includes('### PACK096 ENGINEERING FINALIZED — 2026-09-20'));
+assert(continueHere.includes('M21_REAL_BYOC_OWNED_MODEL_PRODUCTION_ACCEPTANCE'));
 assert(continueHere.includes('PACK150 is the final V1 release/recovery gate'));
 
 console.log('PASS: Model-First priority is canonical across policy, roadmap, state and continuation files');
