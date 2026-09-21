@@ -1126,3 +1126,73 @@ body[data-zuvyr-native-navigation="true"] .sidebar .nav-list {
   .zs-scheduled-notification{grid-template-columns:minmax(0,1fr) 8px}
   .zs-scheduled-notification time{grid-column:1/-1}
 }
+
+/* ZUVYR PACK089 / 89D — Skills, Plugins, MCP and Connections product UI */
+.zs-plugin-grid{align-items:start}
+.zs-plugin-title-row{justify-content:space-between;align-items:flex-start}
+.zs-plugin-title-row>div{min-width:0}
+.zs-plugin-title-row h2{margin-bottom:4px}
+.zs-plugin-banner b{color:var(--zs-text)}
+.zs-connection-item,.zs-skill-item,.zs-tool-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:13px 0;
+  border-bottom:1px solid var(--zs-line);
+}
+.zs-connection-item:last-child,.zs-skill-item:last-child,.zs-tool-row:last-child{border-bottom:0}
+.zs-connection-main{min-width:0;display:flex;align-items:flex-start;gap:11px;flex:1}
+.zs-connection-main>div:last-child,.zs-skill-item>div,.zs-tool-row>div{min-width:0}
+.zs-connection-main strong,.zs-skill-item strong,.zs-tool-row strong{display:block;color:var(--zs-text);font-size:13px;overflow-wrap:anywhere}
+.zs-connection-main small,.zs-skill-item small,.zs-tool-row small{display:block;margin-top:4px;color:var(--zs-muted);font-size:11px;line-height:1.45;overflow-wrap:anywhere}
+.zs-connection-icon{
+  width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;
+  border:1px solid var(--zs-line);border-radius:10px;
+  background:rgba(255,107,22,.08);color:var(--zs-cyan);font-weight:800
+}
+.zs-connection-item>.zs-actions{justify-content:flex-end;flex:0 0 auto}
+.zs-plugin-permission{outline:0}
+.zs-plugin-permission[data-pending="true"]{
+  border-color:rgba(255,132,56,.42);
+  box-shadow:0 0 0 2px rgba(255,107,22,.08)
+}
+.zs-permission-review{display:grid;gap:12px}
+.zs-permission-review>div:first-child strong{display:block;color:var(--zs-text);font-size:14px}
+.zs-permission-review>div:first-child small{display:block;margin-top:5px;color:var(--zs-muted);line-height:1.5}
+.zs-skill-tool-picker{
+  max-height:230px;overflow:auto;display:grid;gap:7px;
+  padding:9px;border:1px solid var(--zs-line);border-radius:12px;background:rgba(255,255,255,.018)
+}
+.zs-skill-tool-picker .zs-check{align-items:flex-start}
+.zs-skill-tool-picker .zs-check span{min-width:0}
+.zs-skill-tool-picker .zs-check strong,.zs-skill-tool-picker .zs-check small{display:block;overflow-wrap:anywhere}
+.zs-skill-tool-picker .zs-check small{margin-top:2px;color:var(--zs-muted);font-size:10px}
+.zs-skill-item{align-items:flex-start}
+.zs-skill-item>button{flex:0 0 auto}
+.zs-tool-row>.zs-chip{flex:0 0 auto}
+.zs-plugin-grid textarea[name="manifest"]{min-height:160px;font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:12px}
+.zs-plugin-grid textarea[name="instructions"]{min-height:130px}
+.zs-plugin-grid input[type="url"]{direction:ltr;text-align:left}
+.zs-plugin-grid .zs-chip.danger{border-color:rgba(255,96,96,.32);color:#ffc0c0;background:rgba(255,96,96,.08)}
+.zs-plugin-grid .zs-chip.ready{border-color:rgba(105,221,151,.28);color:#bdf6d1;background:rgba(105,221,151,.07)}
+[dir="rtl"] .zs-connection-item,[dir="rtl"] .zs-skill-item,[dir="rtl"] .zs-tool-row{text-align:right}
+[dir="rtl"] .zs-connection-item>.zs-actions{justify-content:flex-start}
+[dir="rtl"] .zs-plugin-title-row{direction:rtl}
+[dir="rtl"] .zs-plugin-grid input[type="url"]{direction:ltr;text-align:left}
+
+@media(max-width:820px){
+  .zs-plugin-title-row{align-items:stretch;flex-direction:column}
+  .zs-plugin-title-row>button{align-self:flex-start}
+  .zs-connection-item,.zs-skill-item,.zs-tool-row{align-items:flex-start;flex-direction:column}
+  .zs-connection-item>.zs-actions{width:100%;justify-content:flex-start}
+  .zs-connection-item>.zs-actions button,.zs-skill-item>button{min-height:42px}
+  .zs-connection-main{width:100%}
+  .zs-skill-tool-picker{max-height:280px}
+}
+@media(max-width:480px){
+  .zs-plugin-grid .zs-actions{display:grid;grid-template-columns:1fr}
+  .zs-plugin-grid .zs-actions button{width:100%}
+  .zs-connection-main{align-items:flex-start}
+}
+

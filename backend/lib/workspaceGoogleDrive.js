@@ -341,6 +341,11 @@ function createWorkspaceGoogleDriveRuntime({
     return connection;
   }
 
+  function assertOAuthConfigured() {
+    oauthConfig(env);
+    return true;
+  }
+
   async function startOAuth({ ownerId, connectionId }) {
     const config = oauthConfig(env);
     const connection = await getConnection(ownerId, connectionId);
@@ -733,6 +738,7 @@ function createWorkspaceGoogleDriveRuntime({
   }
 
   return Object.freeze({
+    assertOAuthConfigured,
     startOAuth,
     completeOAuth,
     disconnect,

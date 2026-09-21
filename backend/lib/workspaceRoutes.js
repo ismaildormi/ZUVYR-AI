@@ -1175,6 +1175,7 @@ function createWorkspaceRouter(options = {}) {
 
   router.post('/drive/connect', async (req, res) => {
     try {
+      googleDriveRuntime.assertOAuthConfigured();
       let connectionId;
       let created = false;
       if (req.body?.connectionId) {

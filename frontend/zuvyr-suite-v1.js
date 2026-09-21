@@ -8,7 +8,7 @@
     ['3d','⬡','3D Studio','ready'],['code','</>','Code Studio','ready'],['voice','◉','Voice','connect'],['music','♫','Music','connect'],
     ['ip','✦','ZUVYR IP','ready'],['research','⌕','Research','ready'],['library','▦','Library','ready'],
     ['projects','▣','Projects','ready'],['documents','▤','Documents','ready'],['spreadsheets','▥','Spreadsheets','ready'],
-    ['presentations','▧','Presentations','ready'],['scheduled','◷','Scheduled','ready'],['plugins','⌘','Plugins','blocked'],
+    ['presentations','▧','Presentations','ready'],['scheduled','◷','Scheduled','ready'],['plugins','⌘','Plugins','ready'],
     ['usage','◫','Usage & Billing','ready'],['analytics','⌁','Analytics','validate'],['settings','⚙','Settings','ready']
   ];
   var copy = {
@@ -27,7 +27,7 @@
     spreadsheets:['Spreadsheets','Structure data, formulas, analysis and chart-ready results.'],
     presentations:['Presentations','Turn approved outlines, documents and media into coherent slides.'],
     scheduled:['Scheduled Tasks','Create, activate, pause, resume and cancel durable tasks with live run history, funding gates and in-app notifications.'],
-    plugins:['Plugins','Discover integrations and inspect required permissions before installation is enabled.'],
+    plugins:['Plugins & Connections','Connect approved services, install scoped plugins or MCP tools, and build reusable Skills without exposing credentials.'],
     usage:['Usage & Billing','Keep subscription allowance, weekly limits and persistent top-up credits visibly separate.'],
     analytics:['Analytics','Review product usage and financial signals after production data validation.'],
     settings:['Settings','Manage language, appearance, privacy, devices, billing and data controls.']
@@ -373,6 +373,39 @@
     usageOwner = null;
     usageData = null;
     usageState = 'idle';
+  }
+
+  var pluginState={integrations:[],plugins:[],skills:[],tools:[],loading:false,error:null,toolsError:null,pendingPermission:null,oauthMessage:null};
+  function pluginsView(){
+    return heading('plugins')+
+      '<div class="zs-banner zs-plugin-banner"><span>⌘</span><div><b>Skills, Plugins and Connections are live.</b> Credentials stay server-side in Vault. Every connection is owner-scoped, and plugin/MCP installation passes through Permission Center before activation.</div></div>'+
+      '<div class="zs-grid zs-plugin-grid">'+
+        '<div class="zs-card wide"><div class="zs-actions zs-plugin-title-row"><div><h2>Connections</h2><p>Review current scopes, connection state and revocation controls.</p></div><button type="button" class="zs-secondary" data-zs-plugin-refresh>Refresh</button></div><div data-zs-connection-list><div class="zs-muted">Open Plugins &amp; Connections to load your connections.</div></div></div>'+
+        '<div class="zs-card half"><h2>Google Drive</h2><p>Start the server-side OAuth + PKCE flow. ZUVYR never asks you to paste Google access or refresh tokens here.</p><form data-zs-drive-form>'+
+          '<div class="zs-field"><label>Requested access</label><div class="zs-checks"><label class="zs-check"><input type="checkbox" name="driveScopes" value="drive.file.read" checked> Read Drive files</label><label class="zs-check"><input type="checkbox" name="driveScopes" value="drive.export" checked> Export Google files</label><label class="zs-check"><input type="checkbox" name="driveScopes" value="drive.file.write"> Write Drive files</label></div></div>'+
+          '<label class="zs-consent"><input type="checkbox" name="explicitConsent" required> I explicitly approve these Drive scopes. Google credentials stay in Vault and can be disconnected later.</label>'+
+          '<div class="zs-actions"><button type="submit" class="zs-primary" data-zs-drive-connect>Connect Google Drive</button><span class="zs-hint">0 credits · OAuth authorization only</span></div>'+
+        '</form><div class="zs-result" data-zs-drive-result></div></div>'+
+        '<div class="zs-card half"><h2>Add plugin or MCP server</h2><p>Manifests are declarative only. MCP endpoints must be HTTPS and private/local network targets are rejected server-side.</p><form data-zs-plugin-form>'+
+          '<div class="zs-document-row"><div class="zs-field"><label>Kind</label><select name="pluginKind"><option value="mcp">MCP server</option><option value="plugin">Built-in delegate plugin</option></select></div><div class="zs-field"><label>Key</label><input name="pluginKey" maxlength="120" required placeholder="my-tools"></div></div>'+
+          '<div class="zs-field"><label>Display name</label><input name="displayName" maxlength="120" required placeholder="My tools"></div>'+
+          '<div class="zs-field"><label>MCP endpoint <span class="zs-hint">required for MCP</span></label><input type="url" name="endpointUrl" maxlength="2048" placeholder="https://mcp.example.com/mcp" autocomplete="off"></div>'+
+          '<div class="zs-field"><label>Declared scopes</label><div class="zs-checks"><label class="zs-check"><input type="checkbox" name="pluginScopes" value="workspace.items.read" checked> Library read</label><label class="zs-check"><input type="checkbox" name="pluginScopes" value="workspace.items.write"> Library write</label><label class="zs-check"><input type="checkbox" name="pluginScopes" value="projects.read"> Projects read</label><label class="zs-check"><input type="checkbox" name="pluginScopes" value="projects.write"> Projects write</label><label class="zs-check"><input type="checkbox" name="pluginScopes" value="exports.create"> Export create</label></div></div>'+
+          '<div class="zs-field"><label>Declarative manifest JSON</label><textarea name="manifest" maxlength="24000" required spellcheck="false" placeholder="{ &quot;tools&quot;: [{ &quot;name&quot;: &quot;search&quot;, &quot;description&quot;: &quot;Search approved data&quot;, &quot;requiredScopes&quot;: [&quot;workspace.items.read&quot;], &quot;remoteToolName&quot;: &quot;search&quot; }] }"></textarea><span class="zs-hint">No scripts, tokens, passwords or executable code.</span></div>'+
+          '<label class="zs-consent"><input type="checkbox" name="explicitConsent" required> I approve creating this scoped connection. Installation still requires a separate Permission Center confirmation.</label>'+
+          '<div class="zs-actions"><button type="submit" class="zs-primary" data-zs-plugin-create>Create draft</button><span class="zs-hint">Draft only · no remote invocation</span></div>'+
+        '</form><div class="zs-result" data-zs-plugin-create-result></div></div>'+
+        '<div class="zs-card wide zs-plugin-permission" data-zs-plugin-permission tabindex="-1"><h2>Permission review</h2><div data-zs-plugin-permission-body><div class="zs-muted">No plugin installation is waiting for approval.</div></div></div>'+
+        '<div class="zs-card half"><h2>Create Skill</h2><p>Skills are declarative instructions plus references to tools you already own or connected.</p><form data-zs-skill-form>'+
+          '<div class="zs-field"><label>Name</label><input name="name" maxlength="120" required placeholder="Research brief"></div>'+
+          '<div class="zs-field"><label>Description</label><input name="description" maxlength="2000" placeholder="Reusable workflow guidance"></div>'+
+          '<div class="zs-field"><label>Instructions</label><textarea name="instructions" maxlength="12000" required placeholder="Use the approved tools to collect the requested information, then summarize it with sources."></textarea></div>'+
+          '<div class="zs-field"><label>Tools</label><div class="zs-skill-tool-picker" data-zs-skill-tools><div class="zs-muted">Connected tools will appear here.</div></div></div>'+
+          '<div class="zs-actions"><button type="submit" class="zs-primary">Create Skill</button><span class="zs-hint">No executable code is stored.</span></div>'+
+        '</form><div class="zs-result" data-zs-skill-result></div></div>'+
+        '<div class="zs-card half"><h2>Your Skills</h2><div data-zs-skill-list><div class="zs-muted">No Skills loaded yet.</div></div></div>'+
+        '<div class="zs-card wide"><h2>Available tools</h2><p>Discover built-in, Drive, plugin and MCP tools registered through the one owner-aware tool registry.</p><div data-zs-tool-list><div class="zs-muted">Open this surface to discover tools.</div></div></div>'+
+      '</div>';
   }
 
   var scheduledState={items:[],runs:[],notifications:[],selected:null,loading:false,error:null};
@@ -1487,7 +1520,7 @@
     var extra=id==='code'?orchestrator('code'):toolCards(id);
     return heading(id)+'<div class="zs-banner"><span>◎</span><div><b>'+(state==='ready'?'Interface foundation is ready.':'Ready to connect safely.')+'</b> '+(state==='ready'?'Use the existing backend foundation and connect verified data next.':'Provider execution stays off until pricing, limits and settlement pass verification.')+'</div></div>'+extra;
   }
-  function viewHtml(id) { if(id==='dashboard')return dashboard(); if(id==='images')return imageStudioView(); if(id==='3d')return model3dStudioView(); if(id==='ip')return ipView(); if(id==='usage')return usageView(); if(id==='research')return researchView(); if(id==='documents')return documentsView(); if(id==='spreadsheets')return spreadsheetsView(); if(id==='presentations')return presentationsView(); if(id==='scheduled')return scheduledView(); return genericView(id); }
+  function viewHtml(id) { if(id==='dashboard')return dashboard(); if(id==='images')return imageStudioView(); if(id==='3d')return model3dStudioView(); if(id==='ip')return ipView(); if(id==='usage')return usageView(); if(id==='research')return researchView(); if(id==='documents')return documentsView(); if(id==='spreadsheets')return spreadsheetsView(); if(id==='presentations')return presentationsView(); if(id==='scheduled')return scheduledView(); if(id==='plugins')return pluginsView(); return genericView(id); }
 
   // Native navigation integration 01. Existing Chat, Images, Video, Code,
   // IP, Projects, History, Settings and payment handlers retain ownership.
@@ -1552,7 +1585,7 @@
       var title=view.querySelector('h1');if(title)title.textContent=sectionLabel(view.dataset.zsView);
       if(view.dataset.zsView==='3d'){renderModel3dStudioTruth();return;}
       if(view.dataset.zsView==='3d')return;
-      if(['documents','spreadsheets','presentations','scheduled'].indexOf(view.dataset.zsView)>-1){
+      if(['documents','spreadsheets','presentations','scheduled','plugins'].indexOf(view.dataset.zsView)>-1){
         var liveStatus=view.querySelector('.zs-status');if(liveStatus){liveStatus.textContent=language()==='ar'?'مفعّل':language()==='fr'?'Actif':'Live';liveStatus.classList.add('ready');}
         return;
       }
@@ -1606,10 +1639,242 @@
     }
     if(id==='spreadsheets'||id==='presentations')loadOfficeItems(id);
     if(id==='scheduled')loadScheduledTasks();
+    if(id==='plugins')loadPluginSurface();
     suite.querySelectorAll('[data-zs-view]').forEach(function(v){v.dataset.active=String(v.dataset.zsView===id);});
     document.querySelectorAll('[data-zuvyr-section]').forEach(function(el){var active=el.dataset.zuvyrSection===id;el.classList.toggle('active',active);if(active)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});
   }
   function request(path, options){if(typeof window.authFetch==='function')return window.authFetch(path,options);return fetch(path,options);}
+
+  function pluginNode(){return suite.querySelector('[data-zs-view="plugins"]');}
+  async function pluginApi(path,options){
+    var response=await request(path,options||{method:'GET',cache:'no-store'}),data={};
+    try{data=await response.json();}catch(_){}
+    if(!response.ok||data.status==='error'){
+      var error=new Error(data.code||data.message||'workspace_connections_request_failed');
+      error.code=data.code||'workspace_connections_request_failed';
+      throw error;
+    }
+    return data;
+  }
+  function pluginDate(value){if(!value)return '—';var d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleString():'—';}
+  function pluginStatusClass(value){return ['active','installed','connected'].indexOf(String(value||''))>-1?'ready':(['revoked','error'].indexOf(String(value||''))>-1?'danger':'');}
+  function pluginSessionId(){return 'pack089-ui-'+randomRequestToken();}
+  function pluginScopesHtml(scopes){return (Array.isArray(scopes)?scopes:[]).map(function(scope){return '<span class="zs-chip">'+esc(scope)+'</span>';}).join('')||'<span class="zs-chip">No scopes</span>';}
+  function pluginConnectionName(item,kind){
+    if(kind==='integration')return item.integration_key==='google_drive'?'Google Drive':String(item.integration_key||'Integration');
+    return String(item.display_name||item.plugin_key||'Plugin');
+  }
+  function renderConnectionList(){
+    var view=pluginNode(),box=view&&view.querySelector('[data-zs-connection-list]');if(!box)return;
+    if(pluginState.loading){box.innerHTML='<div class="zs-muted" role="status">Loading connections…</div>';return;}
+    if(pluginState.error){box.innerHTML='<div class="zs-empty"><div><strong>Connections need attention</strong><span>'+esc(pluginState.error)+'</span><button type="button" data-zs-plugin-refresh>Retry</button></div></div>';return;}
+    var rows=[];
+    pluginState.integrations.forEach(function(item){
+      var active=item.status==='active'&&item.connected===true,revoked=item.status==='revoked';
+      var actions='';
+      if(!revoked&&!active&&item.integration_key==='google_drive')actions+='<button type="button" class="zs-primary" data-zs-drive-existing="'+esc(item.id)+'">Continue OAuth</button>';
+      if(active&&item.integration_key==='google_drive')actions+='<button type="button" data-zs-drive-disconnect="'+esc(item.id)+'">Disconnect</button>';
+      else if(!revoked)actions+='<button type="button" data-zs-integration-revoke="'+esc(item.id)+'">Revoke</button>';
+      rows.push('<article class="zs-connection-item"><div class="zs-connection-main"><div class="zs-connection-icon" aria-hidden="true">◈</div><div><strong>'+esc(pluginConnectionName(item,'integration'))+'</strong><small>'+esc(item.account_label||'External connection')+' · updated '+esc(pluginDate(item.updated_at))+'</small><div class="zs-chip-row"><span class="zs-chip '+pluginStatusClass(item.status)+'">'+esc(item.status||'draft')+'</span>'+pluginScopesHtml(item.scopes)+'</div></div></div><div class="zs-actions">'+actions+'</div></article>');
+    });
+    pluginState.plugins.forEach(function(item){
+      var active=item.status==='active'&&item.installed===true&&item.runtime_enabled===true,revoked=item.status==='revoked';
+      var actions='';
+      if(!revoked&&!active)actions+='<button type="button" class="zs-primary" data-zs-plugin-install-review="'+esc(item.id)+'">Review &amp; install</button>';
+      if(!revoked)actions+='<button type="button" data-zs-plugin-revoke="'+esc(item.id)+'">Revoke</button>';
+      rows.push('<article class="zs-connection-item"><div class="zs-connection-main"><div class="zs-connection-icon" aria-hidden="true">'+(item.plugin_kind==='mcp'?'M':'P')+'</div><div><strong>'+esc(pluginConnectionName(item,'plugin'))+'</strong><small>'+esc(item.plugin_kind||'plugin')+(item.endpoint_url?' · '+esc(item.endpoint_url):'')+' · updated '+esc(pluginDate(item.updated_at))+'</small><div class="zs-chip-row"><span class="zs-chip '+pluginStatusClass(item.status)+'">'+esc(item.status||'draft')+'</span>'+pluginScopesHtml(item.scopes)+'</div></div></div><div class="zs-actions">'+actions+'</div></article>');
+    });
+    box.innerHTML=rows.length?rows.join(''):'<div class="zs-empty"><div><strong>No connections yet</strong><span>Connect Google Drive or create a declarative plugin/MCP draft. Credentials are never requested in this screen.</span></div></div>';
+  }
+  function renderToolList(){
+    var view=pluginNode(),box=view&&view.querySelector('[data-zs-tool-list]'),picker=view&&view.querySelector('[data-zs-skill-tools]');if(!box)return;
+    if(pluginState.toolsError){box.innerHTML='<div class="zs-empty"><div><strong>Tool discovery needs attention</strong><span>'+esc(pluginState.toolsError)+'</span><button type="button" data-zs-plugin-refresh>Retry</button></div></div>';}
+    else if(!pluginState.tools.length){box.innerHTML='<div class="zs-empty"><div><strong>No connected tools yet</strong><span>Built-in owner-visible tools and activated connection tools will appear here.</span></div></div>';}
+    else box.innerHTML=pluginState.tools.map(function(tool){return '<div class="zs-tool-row"><div><strong>'+esc(tool.key||tool.name||'tool')+'</strong><small>'+esc(tool.description||tool.source||'Available tool')+'</small></div><span class="zs-chip">'+esc(tool.source||'builtin')+'</span></div>';}).join('');
+    if(picker){
+      picker.innerHTML=pluginState.tools.length?pluginState.tools.map(function(tool){var key=String(tool.key||'');return '<label class="zs-check"><input type="checkbox" name="skillTools" value="'+esc(key)+'"> <span><strong>'+esc(key)+'</strong><small>'+esc(tool.description||tool.source||'tool')+'</small></span></label>';}).join(''):'<div class="zs-muted">No tools are connected yet. A Skill may still contain instructions with no tool references.</div>';
+    }
+  }
+  function renderSkillList(){
+    var view=pluginNode(),box=view&&view.querySelector('[data-zs-skill-list]');if(!box)return;
+    if(pluginState.loading){box.innerHTML='<div class="zs-muted">Loading Skills…</div>';return;}
+    if(!pluginState.skills.length){box.innerHTML='<div class="zs-empty"><div><strong>No Skills yet</strong><span>Create a reusable declarative Skill. It stores instructions and tool references, never executable code.</span></div></div>';return;}
+    box.innerHTML=pluginState.skills.map(function(skill){return '<article class="zs-skill-item"><div><strong>'+esc(skill.name||'Skill')+'</strong><small>'+esc(skill.description||'No description')+'</small><div class="zs-chip-row"><span class="zs-chip '+(skill.enabled?'ready':'')+'">'+(skill.enabled?'enabled':'disabled')+'</span>'+pluginScopesHtml(skill.tool_keys)+'</div></div><button type="button" data-zs-skill-toggle="'+esc(skill.id)+'" data-enabled="'+(skill.enabled?'true':'false')+'">'+(skill.enabled?'Disable':'Enable')+'</button></article>';}).join('');
+  }
+  function renderPluginPermission(){
+    var view=pluginNode(),box=view&&view.querySelector('[data-zs-plugin-permission-body]'),panel=view&&view.querySelector('[data-zs-plugin-permission]');if(!box)return;
+    var pending=pluginState.pendingPermission;
+    if(!pending){box.innerHTML='<div class="zs-muted">No plugin installation is waiting for approval.</div>';return;}
+    var ch=pending.challenge||{},req=pending.permissionRequest||{};
+    box.innerHTML='<div class="zs-permission-review" role="group" aria-label="Plugin installation permission"><div><strong>'+esc(pending.name||'Plugin installation')+'</strong><small>'+esc(ch.consequence||'Review the requested action before allowing it.')+'</small></div><div class="zs-chip-row"><span class="zs-chip danger">'+esc(ch.risk||'high')+' risk</span><span class="zs-chip">'+esc(req.action||'plugin.install')+'</span><span class="zs-chip">expires '+esc(pluginDate(req.expiresAt))+'</span></div><p class="zs-note">Permission is bound to this exact connection, session and operation fingerprint. Approving this does not authorize later tool calls.</p><div class="zs-actions"><button type="button" class="zs-primary" data-zs-plugin-permission-approve>Approve once &amp; install</button><button type="button" data-zs-plugin-permission-cancel>Cancel</button></div>';
+    if(panel){panel.dataset.pending='true';panel.focus({preventScroll:true});}
+  }
+  function renderPluginOAuthMessage(){
+    var view=pluginNode(),box=view&&view.querySelector('[data-zs-drive-result]');if(!box||!pluginState.oauthMessage)return;
+    box.dataset.visible='true';
+    box.innerHTML='<div class="zs-result-title">'+esc(pluginState.oauthMessage.title||'Google Drive')+'</div><p>'+esc(pluginState.oauthMessage.message||'')+'</p>';
+  }
+  function renderPluginSurface(){renderConnectionList();renderToolList();renderSkillList();renderPluginPermission();renderPluginOAuthMessage();}
+  async function loadPluginSurface(force){
+    if(pluginState.loading&&!force)return;
+    pluginState.loading=true;pluginState.error=null;pluginState.toolsError=null;renderPluginSurface();
+    try{
+      var results=await Promise.all([
+        pluginApi('/api/workspace/connections?limit=100'),
+        pluginApi('/api/workspace/skills?limit=100')
+      ]);
+      pluginState.integrations=Array.isArray(results[0].integrations)?results[0].integrations:[];
+      pluginState.plugins=Array.isArray(results[0].plugins)?results[0].plugins:[];
+      pluginState.skills=Array.isArray(results[1].skills)?results[1].skills:[];
+      try{
+        var toolsData=await pluginApi('/api/workspace/tools');
+        pluginState.tools=Array.isArray(toolsData.tools)?toolsData.tools:[];
+      }catch(toolError){pluginState.tools=[];pluginState.toolsError=toolError.message;}
+    }catch(error){pluginState.error=error.message;}
+    finally{pluginState.loading=false;renderPluginSurface();}
+  }
+  function driveScopeValues(form){return checked(form,'driveScopes');}
+  function pluginScopeValues(form){return checked(form,'pluginScopes');}
+  function setPluginResult(selector,title,message){
+    var view=pluginNode(),box=view&&view.querySelector(selector);if(!box)return;
+    box.dataset.visible='true';box.innerHTML='<div class="zs-result-title">'+esc(title)+'</div><p>'+esc(message)+'</p>';
+  }
+  function oauthMarkerSet(value){try{if(value)sessionStorage.setItem('zuvyrPack089GoogleOAuth','1');else sessionStorage.removeItem('zuvyrPack089GoogleOAuth');}catch(_){}}
+  function oauthMarkerGet(){try{return sessionStorage.getItem('zuvyrPack089GoogleOAuth')==='1';}catch(_){return false;}}
+  function scrubDriveOAuthUrl(){
+    try{
+      var url=new URL(window.location.href);
+      ['code','state','scope','authuser','prompt','error','error_description'].forEach(function(key){url.searchParams.delete(key);});
+      history.replaceState(history.state,'',url.pathname+(url.search?url.search:'')+url.hash);
+    }catch(_){}
+  }
+  async function startDriveOAuth(form,connectionId,button){
+    var scopes=driveScopeValues(form);
+    if(!connectionId&&(!scopes.length||form.explicitConsent.checked!==true)){setPluginResult('[data-zs-drive-result]','Drive connection needs attention','Choose at least one scope and explicitly approve it.');return;}
+    if(button)button.disabled=true;
+    setPluginResult('[data-zs-drive-result]','Preparing Google authorization…','No credits are being charged and no Google token is stored in this browser.');
+    try{
+      var body=connectionId?{connectionId:connectionId}:{scopes:scopes,explicitConsent:true};
+      var data=await pluginApi('/api/workspace/drive/connect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      if(!data.authorizationUrl)throw new Error('workspace_google_authorization_url_missing');
+      oauthMarkerSet(true);
+      window.location.assign(data.authorizationUrl);
+    }catch(error){
+      oauthMarkerSet(false);
+      var message=error.code==='workspace_google_oauth_not_configured'
+        ?'Google OAuth is not configured on this deployment yet. No connection draft was created and no network authorization started.'
+        :error.message;
+      setPluginResult('[data-zs-drive-result]','Drive connection needs attention',message);
+      await loadPluginSurface(true);
+    }finally{if(button)button.disabled=false;}
+  }
+  async function handleDriveOAuthReturn(){
+    if(!oauthMarkerGet())return;
+    var params;try{params=new URLSearchParams(window.location.search);}catch(_){return;}
+    var code=params.get('code'),state=params.get('state'),oauthError=params.get('error');
+    if(!code&&!oauthError)return;
+    if(suite.dataset.open!=='true')open('plugins',null);
+    if(oauthError){
+      pluginState.oauthMessage={title:'Google Drive was not connected',message:params.get('error_description')||oauthError};
+      oauthMarkerSet(false);scrubDriveOAuthUrl();renderPluginOAuthMessage();return;
+    }
+    if(!state){pluginState.oauthMessage={title:'Google Drive callback blocked',message:'The OAuth state is missing, so the callback was not submitted.'};oauthMarkerSet(false);scrubDriveOAuthUrl();renderPluginOAuthMessage();return;}
+    pluginState.oauthMessage={title:'Finishing Google Drive connection…',message:'Validating the one-time OAuth state and storing credentials server-side in Vault.'};renderPluginOAuthMessage();
+    try{
+      await pluginApi('/api/workspace/drive/oauth/callback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code,state:state})});
+      pluginState.oauthMessage={title:'Google Drive connected',message:'The connection is active. Tokens remain server-side in Vault.'};
+    }catch(error){pluginState.oauthMessage={title:'Google Drive callback needs attention',message:error.message};}
+    finally{oauthMarkerSet(false);scrubDriveOAuthUrl();await loadPluginSurface(true);renderPluginOAuthMessage();}
+  }
+  async function createPluginDraft(form){
+    var button=form.querySelector('[data-zs-plugin-create]');if(button)button.disabled=true;
+    setPluginResult('[data-zs-plugin-create-result]','Creating draft…','The manifest is being validated. No plugin is installed yet.');
+    try{
+      var manifest;try{manifest=JSON.parse(form.manifest.value||'{}');}catch(_){throw new Error('invalid_workspace_plugin_manifest_json');}
+      var body={
+        pluginKind:form.pluginKind.value,
+        pluginKey:form.pluginKey.value,
+        displayName:form.displayName.value,
+        scopes:pluginScopeValues(form),
+        explicitConsent:form.explicitConsent.checked===true,
+        manifest:manifest
+      };
+      if(String(form.endpointUrl.value||'').trim())body.endpointUrl=form.endpointUrl.value.trim();
+      var data=await pluginApi('/api/workspace/connections/plugins',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      setPluginResult('[data-zs-plugin-create-result]','Draft created','Review the requested permission from the Connections list before installation.');
+      form.reset();form.pluginKind.value='mcp';
+      await loadPluginSurface(true);
+      return data.connection;
+    }catch(error){setPluginResult('[data-zs-plugin-create-result]','Plugin draft needs attention',error.message);}
+    finally{if(button)button.disabled=false;}
+  }
+  async function preparePluginInstall(button){
+    var id=button.getAttribute('data-zs-plugin-install-review');if(!id)return;
+    button.disabled=true;
+    try{
+      var sessionId=pluginSessionId();
+      var prepared=await pluginApi('/api/workspace/plugins/'+encodeURIComponent(id)+'/install/challenge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:sessionId})});
+      var challengeData=await pluginApi('/api/permissions/challenge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(prepared.permissionRequest)});
+      var connection=pluginState.plugins.find(function(item){return item.id===id;});
+      pluginState.pendingPermission={
+        connectionId:id,
+        name:pluginConnectionName(connection||{},'plugin'),
+        sessionId:sessionId,
+        requestId:randomRequestToken(),
+        operationFingerprint:prepared.operationFingerprint,
+        permissionRequest:prepared.permissionRequest,
+        challenge:challengeData.challenge
+      };
+      renderPluginPermission();
+    }catch(error){toast('Plugin permission: '+error.message);}
+    finally{button.disabled=false;}
+  }
+  async function approvePluginInstall(button){
+    var pending=pluginState.pendingPermission;if(!pending)return;
+    button.disabled=true;var grantId=null;
+    try{
+      var grantData=await pluginApi('/api/permissions/grants',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},pending.permissionRequest,{explicitConsent:true,confirmationFingerprint:pending.challenge.confirmationFingerprint}))});
+      grantId=grantData.grant&&grantData.grant.grant_id||grantData.grant&&grantData.grant.id||null;
+      await pluginApi('/api/workspace/plugins/install',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({connectionId:pending.connectionId,sessionId:pending.sessionId,requestId:pending.requestId,operationFingerprint:pending.operationFingerprint})});
+      pluginState.pendingPermission=null;toast('Plugin installed with one explicit scoped permission.');await loadPluginSurface(true);
+    }catch(error){
+      if(grantId){try{await pluginApi('/api/permissions/grants/'+encodeURIComponent(grantId)+'/revoke',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});}catch(_){}}
+      toast('Plugin install: '+error.message);
+    }finally{button.disabled=false;renderPluginPermission();}
+  }
+  function cancelPluginPermission(){pluginState.pendingPermission=null;renderPluginPermission();}
+  async function revokePluginConnection(id,button){
+    if(window.confirm&&!window.confirm('Revoke this plugin/MCP connection? Future tool calls will be blocked.'))return;
+    button.disabled=true;
+    try{await pluginApi('/api/workspace/connections/plugins/'+encodeURIComponent(id)+'/revoke',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});toast('Plugin connection revoked.');await loadPluginSurface(true);}
+    catch(error){toast('Revoke: '+error.message);}finally{button.disabled=false;}
+  }
+  async function revokeIntegrationConnection(id,button,useDriveDisconnect){
+    if(window.confirm&&!window.confirm('Disconnect this integration? Future access will be blocked immediately.'))return;
+    button.disabled=true;
+    try{
+      var path=useDriveDisconnect?'/api/workspace/drive/'+encodeURIComponent(id)+'/disconnect':'/api/workspace/connections/integrations/'+encodeURIComponent(id)+'/revoke';
+      await pluginApi(path,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+      toast('Integration disconnected.');await loadPluginSurface(true);
+    }catch(error){toast('Disconnect: '+error.message);}finally{button.disabled=false;}
+  }
+  async function createSkill(form){
+    var result=pluginNode().querySelector('[data-zs-skill-result]'),button=form.querySelector('button[type="submit"]');button.disabled=true;
+    if(result){result.dataset.visible='true';result.innerHTML='<div class="zs-result-title">Creating Skill…</div><p>Instructions and tool references only.</p>';}
+    try{
+      await pluginApi('/api/workspace/skills',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:form.name.value,description:form.description.value,instructions:form.instructions.value,toolKeys:checked(form,'skillTools')})});
+      if(result)result.innerHTML='<div class="zs-result-title">Skill created</div><p>The Skill is stored as declarative instructions and can be reopened safely.</p>';
+      form.name.value='';form.description.value='';form.instructions.value='';form.querySelectorAll('input[name="skillTools"]').forEach(function(x){x.checked=false;});
+      await loadPluginSurface(true);
+    }catch(error){if(result)result.innerHTML='<div class="zs-result-title">Skill needs attention</div><p>'+esc(error.message)+'</p>';}
+    finally{button.disabled=false;}
+  }
+  async function toggleSkill(button){
+    var id=button.getAttribute('data-zs-skill-toggle'),enabled=button.getAttribute('data-enabled')!=='true';button.disabled=true;
+    try{await pluginApi('/api/workspace/skills/'+encodeURIComponent(id)+'/enabled',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:enabled})});toast('Skill '+(enabled?'enabled':'disabled')+'.');await loadPluginSurface(true);}
+    catch(error){toast('Skill: '+error.message);}finally{button.disabled=false;}
+  }
+
   function scheduledNode(){return suite.querySelector('[data-zs-view="scheduled"]');}
   function scheduledDate(value){if(!value)return '—';var date=new Date(value);return Number.isFinite(date.getTime())?date.toLocaleString():'—';}
   async function scheduledRequest(path,options){
@@ -1859,6 +2124,9 @@
 
   document.addEventListener('submit',function(e){
     var form=e.target;
+    if(form&&form.matches&&form.matches('[data-zs-drive-form]')){e.preventDefault();startDriveOAuth(form,null,form.querySelector('[data-zs-drive-connect]'));return;}
+    if(form&&form.matches&&form.matches('[data-zs-plugin-form]')){e.preventDefault();createPluginDraft(form);return;}
+    if(form&&form.matches&&form.matches('[data-zs-skill-form]')){e.preventDefault();createSkill(form);return;}
     if(form&&form.matches&&form.matches('[data-zs-scheduled-form]')){e.preventDefault();createScheduledTask(form);return;}
     if(form&&form.matches&&form.matches('[data-zs-research-artifact-form]')){e.preventDefault();researchArtifactSubmit(form);return;}
     if(form&&form.matches&&form.matches('[data-zs-document-form]')){e.preventDefault();documentSubmit(form);return;}
@@ -1869,6 +2137,15 @@
   });
   document.addEventListener('click',function(e){
     if(!e.target.closest)return;
+    if(e.target.closest('[data-zs-plugin-refresh]')&&suite.contains(e.target)){loadPluginSurface(true);return;}
+    var driveExisting=e.target.closest('[data-zs-drive-existing]');if(driveExisting&&suite.contains(driveExisting)){var driveForm=pluginNode().querySelector('[data-zs-drive-form]');startDriveOAuth(driveForm,driveExisting.getAttribute('data-zs-drive-existing'),driveExisting);return;}
+    var driveDisconnect=e.target.closest('[data-zs-drive-disconnect]');if(driveDisconnect&&suite.contains(driveDisconnect)){revokeIntegrationConnection(driveDisconnect.getAttribute('data-zs-drive-disconnect'),driveDisconnect,true);return;}
+    var integrationRevoke=e.target.closest('[data-zs-integration-revoke]');if(integrationRevoke&&suite.contains(integrationRevoke)){revokeIntegrationConnection(integrationRevoke.getAttribute('data-zs-integration-revoke'),integrationRevoke,false);return;}
+    var pluginInstall=e.target.closest('[data-zs-plugin-install-review]');if(pluginInstall&&suite.contains(pluginInstall)){preparePluginInstall(pluginInstall);return;}
+    var pluginApprove=e.target.closest('[data-zs-plugin-permission-approve]');if(pluginApprove&&suite.contains(pluginApprove)){approvePluginInstall(pluginApprove);return;}
+    if(e.target.closest('[data-zs-plugin-permission-cancel]')&&suite.contains(e.target)){cancelPluginPermission();return;}
+    var pluginRevoke=e.target.closest('[data-zs-plugin-revoke]');if(pluginRevoke&&suite.contains(pluginRevoke)){revokePluginConnection(pluginRevoke.getAttribute('data-zs-plugin-revoke'),pluginRevoke);return;}
+    var skillToggle=e.target.closest('[data-zs-skill-toggle]');if(skillToggle&&suite.contains(skillToggle)){toggleSkill(skillToggle);return;}
     var scheduledAction=e.target.closest('[data-zs-scheduled-action]');if(scheduledAction&&suite.contains(scheduledAction)){controlScheduledTask(scheduledAction);return;}
     var scheduledOpen=e.target.closest('[data-zs-scheduled-open]');if(scheduledOpen&&suite.contains(scheduledOpen)){openScheduledTask(scheduledOpen.getAttribute('data-zs-scheduled-open'));return;}
     var scheduledNotification=e.target.closest('[data-zs-scheduled-notification]');if(scheduledNotification&&suite.contains(scheduledNotification)){markScheduledNotification(scheduledNotification.getAttribute('data-zs-scheduled-notification'));return;}
@@ -1890,8 +2167,9 @@
   suite.addEventListener('input',function(e){if(e.target&&e.target.matches('[data-zs-scheduled-run-at], [data-zs-scheduled-timezone]'))renderScheduledFormState();});
   window.addEventListener('focus',refreshVisibleUsage);
   document.addEventListener('visibilitychange',function(){if(document.hidden)clearUsage();else refreshVisibleUsage();});
-  if(typeof supa!=='undefined'&&supa.auth&&supa.auth.onAuthStateChange)supa.auth.onAuthStateChange(function(event){clearUsage();if(event!=='SIGNED_OUT')setTimeout(refreshVisibleUsage,0);});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&suite.dataset.open==='true'){e.preventDefault();close(true,true);}});
+  if(typeof supa!=='undefined'&&supa.auth&&supa.auth.onAuthStateChange)supa.auth.onAuthStateChange(function(event){clearUsage();if(event!=='SIGNED_OUT'){setTimeout(refreshVisibleUsage,0);if(oauthMarkerGet())setTimeout(handleDriveOAuthReturn,0);}});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&suite.dataset.open==='true'){e.preventDefault();if(pluginState.pendingPermission){cancelPluginPermission();var panel=pluginNode()&&pluginNode().querySelector('[data-zs-plugin-permission]');if(panel)panel.focus({preventScroll:true});return;}close(true,true);}});
+  if(oauthMarkerGet())setTimeout(handleDriveOAuthReturn,250);
 })();
 
 
