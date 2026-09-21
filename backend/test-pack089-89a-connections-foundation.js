@@ -150,6 +150,8 @@ for (const action of ['connection.read','connection.write','plugin.install','plu
 }
 
 const sql = fs.readFileSync('89_pack089_connections_permissions.sql', 'utf8');
+const hardeningSql = fs.readFileSync('89_pack089_89a_oauth_revoke_hardening.sql', 'utf8');
+const allSql = sql + '\n' + hardeningSql;
 const routes = fs.readFileSync('lib/workspaceRoutes.js', 'utf8');
 const repository = fs.readFileSync('lib/workspaceConnectionRepository.js', 'utf8');
 const contract = fs.readFileSync('lib/workspaceConnectionContract.js', 'utf8');
@@ -179,10 +181,10 @@ for (const marker of [
   "select s.pkce_verifier_secret_id",
   "update public.workspace_oauth_sessions",
   "set consumed_at=coalesce(consumed_at,now())"
-]) assert(sql.includes(marker), marker);
+]) assert(allSql.includes(marker), marker);
 
-assert(!/create table if not exists public\.plugin_installations/i.test(sql));
-assert(!/grant\s+.+\s+to\s+(?:anon|authenticated)/i.test(sql));
+assert(!/create table if not exists public\.plugin_installations/i.test(allSql));
+assert(!/grant\s+.+\s+to\s+(?:anon|authenticated)/i.test(allSql));
 
 for (const route of [
   "router.get('/connections'",
