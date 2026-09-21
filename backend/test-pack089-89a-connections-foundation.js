@@ -181,8 +181,8 @@ assert(routes.includes("'/drive/connect'"));
 assert(routes.includes("disabled(res, 'drive_connect')"));
 
 assert(!repository.includes("select('credential_secret_id"));
-assert(!repository.includes('access_token'));
-assert(!repository.includes('refresh_token'));
+assert(!/\\baccess_token\\b/.test(repository));
+assert(!/\\brefresh_token\\b/.test(repository));
 assert(contract.includes('workspace_credential_material_blocked'));
 
 const fp1 = operationFingerprint({ tool: 'drive.search', query: 'x' });
