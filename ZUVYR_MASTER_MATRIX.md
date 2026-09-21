@@ -927,3 +927,24 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - Receipt: `zuvyr-pack-evidence/pack-086/2026-09-20-engineering-checkpoint/receipt.json` (Git blob `b68d45aba645ad4af96ca132cef2f71e5f64f00d`).
 - Progression: user-approved deferred-real-device continuation.
 - **Active pack is now PACK087 — IP Actions / STOP / Undo.**
+
+### PACK087 CANONICAL FINALIZED — 2026-09-21
+
+- **PACK087 — IP Actions / STOP / Undo + Mission-Bound Full Computer Control** is now `LOCKED_VERIFIED`.
+- Final runtime/source main commit: `5426f6780049dae53fdbf58942b962372ca62dbb`.
+- Final candidate PR `#57`; candidate head `016430f856b3ddb1eed0df4d3a6a4bb8cb9a614a`; GitHub Release Quality Gate run `35560451434`: **Backend Quality PASS + Release Quality PASS**.
+- Supabase production migrations:
+  - `20260921022221 pack087_ip_actions_stop_undo`
+  - `20260921031005 pack087_full_computer_control`
+  - `20260921033204 pack087_full_control_device_runtime`
+- Real Windows device acceptance completed on device identity `c044102e-baea-4094-9327-744bc2468074` / backend device `50490dea-d2e9-49ba-b090-dde8dc56a78c`.
+- Verified end-to-end on the physical device: pairing + heartbeat, mission-bound Full Control grant, real file write with backup, Undo restoring `BEFORE`, independent STOP of a running process, secret redaction to `[REDACTED]`, PNG screen capture, pointer move, Notepad open, keyboard typing, clipboard write, clipboard clear and read-empty.
+- Full Control expands one explicit mission authorization into nine audited device scopes: screen, pointer, keyboard, apps, clipboard read/write, file read/write and shell execute. Exact grant ID + mission digest binding remains enforced.
+- Expired session tokens were **not** bypassed. When the original short-lived token expired during the long acceptance, the same Ed25519 device identity performed a cryptographic re-pair and established a fresh session.
+- Real-device testing found and closed production defects: UTF-8 BOM pair-proof issue; sensitive-path regex separator flaw; local allowlist mismatch for Full Control; Windows PowerShell argument bridges for screen/pointer/keyboard/app; clipboard empty-write failure; clipboard stdin hang. Final clipboard bridge uses Base64 environment transport + STA Windows Forms Clipboard API + bounded timeout.
+- Vercel Git auto-status remained blocked by deployment build-rate-limit, but the already verified Full Control preview was promoted to production without rebuild using authenticated `vercel promote`. Production deployment: `dpl_GJ6236uvW2Fd2Z6dG68cnGLTStGD` = **READY**. The promoted frontend blob was verified identical to the final Full Control frontend; later main commits touched Device Agent/tests only.
+- Railway backend, worker and maintenance final commit statuses are **SUCCESS**.
+- PACK086 deferred real-device pairing/session acceptance is now satisfied by this live journey. PACK085 remains engineering-only because real uninstall acceptance was not performed.
+- Final receipt: `zuvyr-pack-evidence/pack-087/2026-09-21-final/receipt.json` (Git blob `1c32be0e0a99b50443b753317b1920e885874a3b`).
+- **PACK088 is next but NOT STARTED. Explicit user instruction is required to begin Phase 2.**
+
