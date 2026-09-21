@@ -183,6 +183,7 @@ function createBrainKernelRuntime({
       idempotencyKey,
       enqueueTask = true,
       maxEstimatedCredits = null,
+      beforeReservation = null,
       afterReservation = null
     } = {}) {
       if (approved !== true || confirmCreditReservation !== true) {
@@ -222,8 +223,20 @@ function createBrainKernelRuntime({
         }
       }
 
+      if (beforeReservation != null && typeof beforeReservation !== 'function') {
+        throw runtimeError('PACK040_BEFORE_RESERVATION_HOOK_INVALID');
+      }
       if (afterReservation != null && typeof afterReservation !== 'function') {
         throw runtimeError('PACK040_AFTER_RESERVATION_HOOK_INVALID');
+      }
+
+      if (beforeReservation) {
+        await beforeReservation(Object.freeze({
+          request: bundle.request,
+          plan: bundle.plan,
+          quote: bundle.quote,
+          liveQuote: bundle.liveQuote
+        }));
       }
 
       const consent = createConsent({
