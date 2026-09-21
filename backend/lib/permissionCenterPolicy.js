@@ -295,7 +295,20 @@ function normalizeConstraints(action, value) {
     });
   }
 
-  if (['connection.write','plugin.install','plugin.invoke','mcp.invoke'].includes(action)) {
+  if (['connection.read','connection.write'].includes(action)) {
+    const toolKey = text(constraints.toolKey, 'permission_tool_key_required', 200).toLowerCase();
+    if (toolKey === '*') throw permissionError('permission_tool_key_required');
+    if (action === 'connection.write') {
+      const operationFingerprint = String(constraints.operationFingerprint || '').trim().toLowerCase();
+      if (!/^[0-9a-f]{64}$/.test(operationFingerprint)) {
+        throw permissionError('permission_operation_fingerprint_required');
+      }
+      return Object.freeze({ toolKey, operationFingerprint });
+    }
+    return Object.freeze({ toolKey });
+  }
+
+  if (['plugin.install','plugin.invoke','mcp.invoke'].includes(action)) {
     const operationFingerprint = String(constraints.operationFingerprint || '').trim().toLowerCase();
     if (!/^[0-9a-f]{64}$/.test(operationFingerprint)) {
       throw permissionError('permission_operation_fingerprint_required');
