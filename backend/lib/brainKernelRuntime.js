@@ -214,7 +214,10 @@ function createBrainKernelRuntime({
         if (Number(bundle.quote.aggregate.estimatedCredits) > cap) {
           throw runtimeError('PACK040_CREDIT_CAP_EXCEEDED', {
             estimatedCredits: Number(bundle.quote.aggregate.estimatedCredits),
-            maxEstimatedCredits: cap
+            estimatedCostMicroUsd: bundle.quote.aggregate.estimatedCostMicroUsd,
+            maxEstimatedCredits: cap,
+            planVersion: bundle.quote.planVersion,
+            quoteFingerprint: bundle.quote.quoteFingerprint
           });
         }
       }
