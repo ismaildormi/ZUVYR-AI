@@ -47,14 +47,7 @@ function inferSurface(capabilities = [], explicit = null) {
   return 'chat';
 }
 
-const WORKFLOW_TO_BRAIN_OUTPUT = Object.freeze({
-  chat: 'chat',
-  research: 'research',
-  image: 'image',
-  video: 'video',
-  audio: 'audio',
-  code: 'code'
-});
+const LIVE_BRAIN_WORKFLOW_CAPABILITIES = new Set(['chat']);
 
 const CODE_PLAN_CAPABILITIES = new Set(
   Object.keys(BRAIN_GRAPH.capabilities || {})
@@ -78,25 +71,20 @@ function workflowCapabilities(claim) {
 
 function workflowBrainOutputs(claim) {
   const capabilities = workflowCapabilities(claim);
-  const unsupported = capabilities.filter(capability =>
-    !Object.hasOwn(WORKFLOW_TO_BRAIN_OUTPUT, capability) &&
-    capability !== 'ip'
+  const unavailable = capabilities.filter(
+    capability => !LIVE_BRAIN_WORKFLOW_CAPABILITIES.has(capability)
   );
-  if (unsupported.length > 0) {
-    throw executionError('PACK088_PERMISSION_BRAIN_CAPABILITY_UNSUPPORTED', {
-      capabilities: unsupported
+
+  if (unavailable.length > 0) {
+    throw executionError('PACK088_BRAIN_LIVE_CAPABILITY_UNAVAILABLE', {
+      capabilities: unavailable,
+      liveCapabilities: [...LIVE_BRAIN_WORKFLOW_CAPABILITIES]
     });
   }
 
-  const outputs = capabilities
-    .map(capability => WORKFLOW_TO_BRAIN_OUTPUT[capability])
-    .filter(Boolean);
-
-  if (outputs.length === 0 && capabilities.includes('ip')) {
-    outputs.push('chat');
-  }
-
-  return Object.freeze([...new Set(outputs)]);
+  // The canonical live Brain executor currently requires the verified
+  // Checkpoint-D chain: chat.respond -> project.collect.
+  return Object.freeze(['chat', 'project']);
 }
 
 function allowedBrainPlanCapabilities(claim) {
@@ -311,8 +299,16 @@ const FUNDING_BLOCK_CODES = new Set([
   'weekly_anchor_is_in_the_future'
 ]);
 
+const CAPABILITY_BLOCK_CODES = new Set([
+  'PACK088_BRAIN_LIVE_CAPABILITY_UNAVAILABLE'
+]);
+
 function isFundingBlock(error) {
   return FUNDING_BLOCK_CODES.has(String(error && error.code || ''));
+}
+
+function isCapabilityBlock(error) {
+  return CAPABILITY_BLOCK_CODES.has(String(error && error.code || ''));
 }
 
 function isPermissionBlock(error) {
@@ -556,7 +552,29 @@ function createAutomationExecutionProcessor({
         });
       }
 
-      const request = buildAutomationRequest(claim);
+      let request;
+      try {
+        request = buildAutomationRequest(claim);
+      } catch (error) {
+        if (isCapabilityBlock(error)) {
+          await executionRepository.block({
+            runId,
+            claimToken: claim.claimToken,
+            state: 'failed',
+            errorCode: error.code,
+            pricingSnapshot: null,
+            permissionReceipt: claim.permissionReceipt,
+            now: now.toISOString()
+          });
+          return Object.freeze({
+            status: 'failed',
+            runId,
+            errorCode: error.code
+          });
+        }
+        throw error;
+      }
+
       let permissionReceipt = null;
       let pricingSnapshot = null;
 
@@ -689,6 +707,7 @@ function createAutomationExecutionProcessor({
 module.exports = {
   CONFIG,
   FUNDING_BLOCK_CODES,
+  CAPABILITY_BLOCK_CODES,
   executionError,
   inferSurface,
   workflowCapabilities,
@@ -701,6 +720,7 @@ module.exports = {
   pricingSnapshotFromTask,
   capErrorSnapshot,
   isFundingBlock,
+  isCapabilityBlock,
   isPermissionBlock,
   authorizeOccurrence,
   ensureBrainTaskQueued,
