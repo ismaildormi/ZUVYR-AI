@@ -959,3 +959,18 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - No migration, provider call, payment mutation or runtime deployment was performed during planning.
 - PACK089 remains blocked until PACK088 reaches canonical `LOCKED_VERIFIED`.
 
+### PACK088 / 88A LOCKED_VERIFIED — 2026-09-21
+
+- PACK088 overall status: `IN_PROGRESS`.
+- **88A — Schema + Invariants: LOCKED_VERIFIED.**
+- Implementation PR `#60`; implementation merge `bba73570d735d4801047e90635715eb7d4b3f9cc`.
+- Production now has workflow/schedule revision binding, stale authorization invalidation and durable `workspace_schedule_runs` occurrence identity.
+- RLS is ON across workflows, steps, schedules and schedule runs. The occurrence ledger has zero client grants; service-role access is limited to SELECT/INSERT/UPDATE.
+- Production acceptance used rollback-only test rows and verified revision bumps, duplicate occurrence rejection, timezone validation, and stale authorization rejection. Zero acceptance rows persisted.
+- Migration history contains two identical idempotent schema applications (`20260921051008` and `20260921051010`) with identical SHA256 `654ce05524e1547f9f10b9f385f5e61711abec8a9dc8f2d2ca5cefeb5b8c1813`; no divergence was found. History is preserved.
+- Privilege hardening migration: `20260921051244 pack088_88a_ledger_privilege_hardening`.
+- Railway backend/worker/maintenance on the exact implementation merge are SUCCESS.
+- No schedule was activated, no provider call occurred and no billing mutation occurred.
+- Receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88a/receipt.json`.
+- **88B–88E are NOT_STARTED. Do not start 88B without explicit user instruction.**
+
