@@ -130,6 +130,93 @@ function createWorkspaceConnectionStore(db) {
     return data == null ? null : String(data);
   }
 
+  async function getIntegrationConnection({ ownerId, connectionId }) {
+    const { data, error } = await db
+      .from('workspace_integration_connections')
+      .select('id,integration_key,scopes,explicit_consent,status,connected,read_enabled,write_enabled,provider_subject,account_label,token_expires_at,refresh_token_present,created_at,updated_at,revoked_at,last_error_code')
+      .eq('owner_id', ownerId)
+      .eq('id', connectionId)
+      .single();
+    if (error || !data) throw storeError('workspace_integration_connection_not_found', error?.message || null);
+    return data;
+  }
+
+  async function listActiveIntegrations(ownerId, { limit = 100 } = {}) {
+    const { data, error } = await db
+      .from('workspace_integration_connections')
+      .select('id,integration_key,scopes,status,connected,read_enabled,write_enabled,provider_subject,account_label,token_expires_at,refresh_token_present,created_at,updated_at,revoked_at,last_error_code')
+      .eq('owner_id', ownerId)
+      .eq('status', 'active')
+      .eq('connected', true)
+      .is('revoked_at', null)
+      .order('updated_at', { ascending: false })
+      .limit(normalizeLimit(limit, 100, 200));
+    if (error) throw storeError('workspace_integrations_read_failed', error.message);
+    return data || [];
+  }
+
+  async function createOAuthSession({
+    ownerId,
+    connectionId,
+    stateHash,
+    pkceVerifier,
+    redirectUri,
+    requestedScopes,
+    expiresAt
+  }) {
+    const { data, error } = await db.rpc('create_workspace_oauth_session_pack089', {
+      p_owner_id: ownerId,
+      p_connection_id: connectionId,
+      p_state_hash: stateHash,
+      p_pkce_verifier: pkceVerifier,
+      p_redirect_uri: redirectUri,
+      p_requested_scopes: requestedScopes,
+      p_expires_at: expiresAt
+    });
+    if (error) throw storeError('workspace_oauth_session_create_failed', error.message);
+    return data;
+  }
+
+  async function consumeOAuthSession({ ownerId, stateHash }) {
+    const { data, error } = await db.rpc('consume_workspace_oauth_session_owner_pack089', {
+      p_owner_id: ownerId,
+      p_state_hash: stateHash
+    });
+    if (error) throw storeError('workspace_oauth_session_consume_failed', error.message);
+    return data;
+  }
+
+  async function setIntegrationSecret({
+    ownerId,
+    connectionId,
+    secret,
+    tokenExpiresAt,
+    providerSubject = null,
+    accountLabel = null,
+    scopes
+  }) {
+    const { data, error } = await db.rpc('set_workspace_integration_secret_pack089', {
+      p_owner_id: ownerId,
+      p_connection_id: connectionId,
+      p_secret: secret,
+      p_token_expires_at: tokenExpiresAt,
+      p_provider_subject: providerSubject,
+      p_account_label: accountLabel,
+      p_scopes: scopes
+    });
+    if (error) throw storeError('workspace_integration_secret_write_failed', error.message);
+    return data;
+  }
+
+  async function getIntegrationSecret({ ownerId, connectionId }) {
+    const { data, error } = await db.rpc('get_workspace_integration_secret_pack089', {
+      p_owner_id: ownerId,
+      p_connection_id: connectionId
+    });
+    if (error) throw storeError('workspace_integration_secret_read_failed', error.message);
+    return data == null ? null : String(data);
+  }
+
   async function revokeIntegration({ ownerId, connectionId }) {
     const { data, error } = await db.rpc('revoke_workspace_integration_connection_pack089', {
       p_owner_id: ownerId,
@@ -208,6 +295,12 @@ function createWorkspaceConnectionStore(db) {
     list,
     createIntegration,
     createPlugin,
+    getIntegrationConnection,
+    listActiveIntegrations,
+    createOAuthSession,
+    consumeOAuthSession,
+    setIntegrationSecret,
+    getIntegrationSecret,
     getPluginConnection,
     listActivePlugins,
     installPlugin,
