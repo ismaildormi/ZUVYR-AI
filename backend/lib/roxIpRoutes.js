@@ -148,6 +148,37 @@ function createRoxIpRouter({
     });
   };
 
+  router.get('/devices', async (req, res) => {
+    if (!actions) return res.status(503).json({ status: 'error', code: 'pack087_action_runtime_unavailable' });
+    try {
+      const result = await actions.listDevices({ ownerId: req.userId });
+      return res.json({ status: 'success', ...result });
+    } catch (error) {
+      return sendPack087Error(res, error);
+    }
+  });
+
+  router.post('/permissions/full-control', async (req, res) => {
+    if (!actions) return res.status(503).json({ status: 'error', code: 'pack087_action_runtime_unavailable' });
+    const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    try {
+      const grant = await actions.grantFullControl({
+        ownerId: req.userId,
+        sessionId: body.sessionId,
+        mission: body.mission,
+        expiresAt: body.expiresAt,
+        explicitConsent: body.explicitConsent
+      });
+      return res.status(201).json({
+        status: 'success',
+        mode: 'full_control',
+        grant
+      });
+    } catch (error) {
+      return sendPack087Error(res, error);
+    }
+  });
+
   router.post('/permissions/grant', async (req, res) => {
     if (!actions) return res.status(503).json({ status: 'error', code: 'pack087_action_runtime_unavailable' });
     const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
