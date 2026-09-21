@@ -21,6 +21,10 @@ const repositorySource = fs.readFileSync(
   'utf8'
 );
 const privilegeHardening = fs.readFileSync(
+  path.join(__dirname, '88_pack088_88a_ledger_privilege_hardening.sql'),
+  'utf8'
+);
+const privilegeHardening = fs.readFileSync(
   path.join(__dirname, '88a_pack088_schedule_run_privilege_hardening.sql'),
   'utf8'
 );
@@ -84,6 +88,15 @@ for (const forbidden of [
 ]) {
   assert(!forbidden.test(migration), `forbidden destructive/client mutation marker: ${forbidden}`);
 }
+
+for (const marker of [
+  'revoke all on table public.workspace_schedule_runs from service_role',
+  'grant select, insert, update on table public.workspace_schedule_runs to service_role'
+]) {
+  assert(privilegeHardening.includes(marker), `missing PACK088 privilege hardening marker: ${marker}`);
+}
+assert(!/grant\s+.*delete.*service_role/i.test(privilegeHardening));
+assert(!/grant\s+.*truncate.*service_role/i.test(privilegeHardening));
 
 for (const forbiddenSource of [
   "require('./brainKernelRuntime')",
