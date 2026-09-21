@@ -1,0 +1,101 @@
+{
+  "pack": "089",
+  "phase": "89B_UNIFIED_TOOLS_SKILLS_PLUGIN_MCP",
+  "title": "Unified Skills / Plugin / MCP runtime",
+  "status": "LOCKED_VERIFIED",
+  "finalized_at": "2026-09-21T21:03:42.131Z",
+  "github": {
+    "implementation_main_commit": "62b82697aa3be0eaa38ebf7f6dc2931d2289395f",
+    "official_mcp_sdk_pr": 83,
+    "official_mcp_sdk_head": "20c249d14ccf1493401e41e66ea72fd317a727c3",
+    "official_mcp_sdk_merge": "92d4e05667c2f095e63b0410d0a81cad62e6d0a7",
+    "quality_run": 35654292803,
+    "backend_quality": "PASS",
+    "release_quality": "PASS"
+  },
+  "mcp_sdk": {
+    "package": "@modelcontextprotocol/client",
+    "version": "2.0.0",
+    "package_lock_generated_by": "GitHub Actions / Node 22 / npm resolver",
+    "npm_ci": "PASS",
+    "real_sdk_preflight_import_test": "PASS",
+    "transport": "StreamableHTTPClientTransport",
+    "remote_gate_variable": "PACK089_MCP_REMOTE_ENABLED",
+    "production_backend_gate_enabled": true
+  },
+  "database": {
+    "migration": "20260921204458 pack089_89b_tool_runtime_permissions",
+    "rpcs": {
+      "consume_workspace_tool_permission_pack089": {
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_role_execute": true
+      },
+      "install_workspace_plugin_pack089": {
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_role_execute": true
+      }
+    }
+  },
+  "architecture": {
+    "unified_tool_registry": "ai.tools",
+    "owner_scoped_dynamic_tools": true,
+    "skills_declarative_only": true,
+    "plugin_delegate_builtin_only": true,
+    "mcp_remote_adapter": true,
+    "permission_center_reused": true,
+    "exact_operation_fingerprint": true,
+    "exact_tool_key_binding": true,
+    "ssrf_private_network_blocking": true,
+    "redirect_blocking": true,
+    "direct_third_party_code_loading": false,
+    "separate_billing_system_created": false
+  },
+  "production_acceptance": {
+    "mode": "transaction_only_rollback_for_plugin_permission_lifecycle",
+    "install": "PASS",
+    "invoke": "PASS",
+    "replay_block": "PASS",
+    "fingerprint_mismatch_block": "PASS",
+    "revoke_block": "PASS",
+    "network_calls": 0,
+    "provider_calls": 0,
+    "billing_mutations": 0,
+    "rollback_only": true
+  },
+  "railway": {
+    "exact_commit": "92d4e05667c2f095e63b0410d0a81cad62e6d0a7",
+    "backend": {
+      "deployment": "1d160111-a3c6-4416-992d-2fb246d88e3d",
+      "status": "SUCCESS",
+      "mcp_remote_gate_enabled": true
+    },
+    "worker": {
+      "deployment": "e52a3d7e-1b59-4bd2-a4fe-e70e859c6fff",
+      "status": "SUCCESS"
+    },
+    "maintenance": {
+      "deployment": "eeffd642-031a-42e3-b7dd-d9507b553c91",
+      "status": "SUCCESS"
+    }
+  },
+  "production_cleanliness": {
+    "acceptance_plugin_rows": 0,
+    "acceptance_grants": 0,
+    "active_plugin_rows": 0,
+    "pack089_plugin_grants": 0
+  },
+  "external_network_acceptance": {
+    "real_mcp_server_call": "DEFERRED_TO_89E",
+    "reason": "89B proves package/transport/runtime/permission/SSRF boundaries; dated external third-party invocation belongs to final production acceptance."
+  },
+  "frontend": {
+    "runtime_changed": false,
+    "vercel_status": "BUILD_RATE_LIMIT_NOT_A_89B_RUNTIME_GATE"
+  },
+  "next": {
+    "phase": "89C_GOOGLE_DRIVE_OAUTH_TOOLS",
+    "allowed": true
+  }
+}
