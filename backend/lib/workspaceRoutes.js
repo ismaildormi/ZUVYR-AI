@@ -20,6 +20,15 @@ const {
   normalizeIntegrationRequest,
   assertNoCredentialMaterial
 } = require('./workspaceIntegrationContract');
+const {
+  normalizeIntegrationDraft,
+  normalizePluginDraft,
+  normalizeSkill,
+  uuid: connectionUuid
+} = require('./workspaceConnectionContract');
+const {
+  getDefaultWorkspaceConnectionStore
+} = require('./workspaceConnectionRepository');
 const { normalizeWorkflow } = require('./workspaceWorkflowContract');
 const { text, uuid, object, fail } = require('./workspaceValidation');
 const {
@@ -175,6 +184,7 @@ function createWorkspaceRouter(options = {}) {
   const officeStudio = options.officeStudio || getDefaultOfficeArtifactRepository({ projectStore });
   const researchCheckpoint = options.researchCheckpoint || getDefaultResearchArtifactCheckpointRepository({ documentStudio, officeStudio, libraryStore, projectStore });
   const imageGenerationStore = options.imageGenerationStore || getDefaultImageGenerationRepository();
+  const connectionStore = options.connectionStore || getDefaultWorkspaceConnectionStore();
   const memoryStore =
     options.memoryStore || getDefaultWorkspaceMemoryStore();
   const contextGraphStore =
@@ -855,6 +865,114 @@ function createWorkspaceRouter(options = {}) {
         request: normalizeIntegrationRequest(req.body?.request),
         connected: false
       });
+    } catch (error) {
+      return validation(res, error);
+    }
+  });
+
+  router.get('/connections', async (req, res) => {
+    try {
+      const connections = await connectionStore.list(req.userId, { limit: req.query?.limit });
+      res.set('Cache-Control', 'no-store');
+      return res.json({ status: 'success', ...connections });
+    } catch (error) {
+      return res.status(500).json({ status: 'error', code: error.code || 'workspace_connections_read_failed' });
+    }
+  });
+
+  router.post('/connections/integrations', async (req, res) => {
+    try {
+      const draft = normalizeIntegrationDraft(req.body);
+      const connection = await connectionStore.createIntegration({
+        ownerId: req.userId,
+        ...draft
+      });
+      res.set('Cache-Control', 'no-store');
+      return res.status(201).json({ status: 'success', connection });
+    } catch (error) {
+      return validation(res, error);
+    }
+  });
+
+  router.post('/connections/plugins', async (req, res) => {
+    try {
+      const draft = normalizePluginDraft(req.body);
+      const connection = await connectionStore.createPlugin({
+        ownerId: req.userId,
+        ...draft
+      });
+      res.set('Cache-Control', 'no-store');
+      return res.status(201).json({ status: 'success', connection });
+    } catch (error) {
+      return validation(res, error);
+    }
+  });
+
+  router.post('/connections/integrations/:id/revoke', async (req, res) => {
+    try {
+      const result = await connectionStore.revokeIntegration({
+        ownerId: req.userId,
+        connectionId: connectionUuid(req.params.id)
+      });
+      res.set('Cache-Control', 'no-store');
+      return res.json({ status: 'success', result });
+    } catch (error) {
+      const code = error.code || 'workspace_integration_revoke_failed';
+      const status = /invalid|not_found/.test(code) ? 400 : 500;
+      return res.status(status).json({ status: 'error', code });
+    }
+  });
+
+  router.post('/connections/plugins/:id/revoke', async (req, res) => {
+    try {
+      const result = await connectionStore.revokePlugin({
+        ownerId: req.userId,
+        connectionId: connectionUuid(req.params.id)
+      });
+      res.set('Cache-Control', 'no-store');
+      return res.json({ status: 'success', result });
+    } catch (error) {
+      const code = error.code || 'workspace_plugin_revoke_failed';
+      const status = /invalid|not_found/.test(code) ? 400 : 500;
+      return res.status(status).json({ status: 'error', code });
+    }
+  });
+
+  router.get('/skills', async (req, res) => {
+    try {
+      const skills = await connectionStore.listSkills(req.userId, { limit: req.query?.limit });
+      res.set('Cache-Control', 'no-store');
+      return res.json({ status: 'success', skills });
+    } catch (error) {
+      return res.status(500).json({ status: 'error', code: error.code || 'workspace_skills_read_failed' });
+    }
+  });
+
+  router.post('/skills', async (req, res) => {
+    try {
+      const skill = normalizeSkill(req.body);
+      const created = await connectionStore.createSkill({ ownerId: req.userId, ...skill });
+      res.set('Cache-Control', 'no-store');
+      return res.status(201).json({ status: 'success', skill: created });
+    } catch (error) {
+      return validation(res, error);
+    }
+  });
+
+  router.post('/skills/:id/enabled', async (req, res) => {
+    try {
+      if (typeof req.body?.enabled !== 'boolean') {
+        const error = new Error('invalid_workspace_skill_enabled');
+        error.code = 'invalid_workspace_skill_enabled';
+        throw error;
+      }
+      const skill = await connectionStore.setSkillEnabled({
+        ownerId: req.userId,
+        skillId: connectionUuid(req.params.id, 'invalid_workspace_skill_id'),
+        enabled: req.body.enabled
+      });
+      res.set('Cache-Control', 'no-store');
+      return res.json({ status: 'success', skill });
     } catch (error) {
       return validation(res, error);
     }
