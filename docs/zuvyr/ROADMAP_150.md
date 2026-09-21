@@ -1822,9 +1822,12 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 - **Evidence/receipt requirements:** Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.
 - **Final gate:** LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate.
 - **External gate:** —
-- **Recorded status:** PLANNING
+- **Recorded status:** IN_PROGRESS
 - **Execution plan:** `docs/zuvyr/PACK088_EXECUTION_PLAN.md`
 - **Planning note:** Phase 2 planning started from PACK087 canonical lock. No PACK088 runtime code or migration has been applied yet.
+- **88A status:** LOCKED_VERIFIED — schema/invariants production checkpoint complete.
+- **88A evidence:** `zuvyr-pack-evidence/pack-088/2026-09-21-88a/receipt.json`.
+- **Next phase:** 88B Scheduler + exactly-once dispatch = NOT_STARTED; explicit user instruction required.
 
 ## PACK089 — Skills / Plugins / MCP / Connections
 
