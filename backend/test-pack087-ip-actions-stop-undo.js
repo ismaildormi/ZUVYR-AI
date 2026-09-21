@@ -314,7 +314,7 @@ class FakeRepository {
     explicitConsent: true
   });
   assert.equal(grant.execution_enabled, true);
-  assert.deepEqual(repo.grants[0].scopes, ['file.write','shell.execute']);
+  assert.deepEqual(repo.grants.at(-1).scopes, ['file.write','shell.execute']);
 
   await assert.rejects(
     () => service.prepareAction({
