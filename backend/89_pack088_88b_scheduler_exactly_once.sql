@@ -68,7 +68,7 @@ immutable
 set search_path=public,pg_temp
 as $$
   select encode(
-    digest(
+    extensions.digest(
       p_schedule_id::text || '|' ||
       ((extract(epoch from p_scheduled_for) * 1000000)::bigint)::text,
       'sha256'
