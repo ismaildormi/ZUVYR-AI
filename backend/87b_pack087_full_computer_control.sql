@@ -194,6 +194,8 @@ declare
   v_confirmation_id uuid;
   v_grant_id uuid;
   v_mission_digest text;
+  v_grant_mode text;
+  v_pre_authorized boolean := false;
   v_status text;
 begin
   select * into v_session
@@ -216,8 +218,8 @@ begin
     raise exception 'pack087_device_not_paired';
   end if;
 
-  select g.id,g.mission_digest
-    into v_grant_id,v_mission_digest
+  select g.id,g.mission_digest,g.grant_mode
+    into v_grant_id,v_mission_digest,v_grant_mode
   from public.ip_permission_grants g
   where g.owner_id=p_owner_id
     and g.session_id=p_session_id
@@ -237,7 +239,11 @@ begin
     raise exception 'pack087_action_digest_invalid';
   end if;
 
-  v_status := case when p_requires_confirmation then 'pending_confirmation' else 'ready' end;
+  v_pre_authorized := coalesce(v_grant_mode='full_control',false);
+  v_status := case
+    when coalesce(p_requires_confirmation,false) and not v_pre_authorized then 'pending_confirmation'
+    else 'ready'
+  end;
 
   insert into public.ip_actions(
     owner_id,session_id,action_type,required_scope,risk,status,
@@ -245,11 +251,11 @@ begin
     permission_grant_id,mission_digest
   ) values (
     p_owner_id,p_session_id,p_action_type,p_required_scope,p_risk,v_status,
-    p_action_digest,nullif(p_target,''),p_input_text,coalesce(p_requires_confirmation,false),now(),
+    p_action_digest,nullif(p_target,''),p_input_text,(coalesce(p_requires_confirmation,false) and not v_pre_authorized),now(),
     v_grant_id,v_mission_digest
   ) returning id into v_action_id;
 
-  if p_requires_confirmation then
+  if coalesce(p_requires_confirmation,false) and not v_pre_authorized then
     if p_confirmation_expires_at is null
        or p_confirmation_expires_at <= now()
        or p_confirmation_expires_at > now() + interval '10 minutes' then
@@ -270,7 +276,9 @@ begin
       'actionType',p_action_type,
       'requiredScope',p_required_scope,
       'risk',p_risk,
-      'requiresConfirmation',coalesce(p_requires_confirmation,false),
+      'requiresConfirmation',(coalesce(p_requires_confirmation,false) and not v_pre_authorized),
+      'requestedConfirmation',coalesce(p_requires_confirmation,false),
+      'preAuthorizedByFullControl',v_pre_authorized,
       'permissionGrantId',v_grant_id,
       'missionDigest',v_mission_digest
     )
@@ -283,6 +291,7 @@ begin
     'confirmation_id',v_confirmation_id,
     'permission_grant_id',v_grant_id,
     'mission_digest',v_mission_digest,
+    'pre_authorized_by_full_control',v_pre_authorized,
     'device_action_executed',false
   );
 end;
