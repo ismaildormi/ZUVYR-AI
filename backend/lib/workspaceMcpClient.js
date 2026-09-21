@@ -141,6 +141,7 @@ function createMcpRemoteAdapter({
     authorization = null,
     signal = null
   }) {
+    if (!enabled) throw runtimeError('workspace_mcp_remote_disabled');
     const endpoint = validateEndpoint(endpointUrl);
     await assertPublicResolution(endpoint, lookup);
     const sdk = await loadSdkChecked();
