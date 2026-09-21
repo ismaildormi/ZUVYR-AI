@@ -1824,14 +1824,17 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 - **External gate:** —
 - **Recorded status:** IN_PROGRESS
 - **Execution plan:** `docs/zuvyr/PACK088_EXECUTION_PLAN.md`
-- **Planning note:** Planning is locked; 88A and 88B are complete and production-verified.
+- **Planning note:** Planning is locked; 88A, 88B and 88C are complete and production-verified.
 - **88A status:** LOCKED_VERIFIED — schema/invariants production checkpoint complete after FIX2.
 - **88A evidence:** `zuvyr-pack-evidence/pack-088/2026-09-21-88a/receipt.json`.
 - **88A final runtime commit:** `f3df3a881a01742b4f927ea9f986bc5d2c23c737`.
 - **88B status:** LOCKED_VERIFIED — scheduler/exactly-once production checkpoint complete.
 - **88B evidence:** `zuvyr-pack-evidence/pack-088/2026-09-21-88b/receipt.json`.
 - **88B final runtime commit:** `172e7d3dc56277461459f279ed8ffe7de5b5e608`.
-- **Next phase:** 88C Funding + Permissions + Brain Kernel = NOT_STARTED; explicit user instruction required.
+- **88C status:** LOCKED_VERIFIED — runtime funding, permissions and Brain Kernel binding checkpoint complete after FIX2/FIX3.
+- **88C evidence:** `zuvyr-pack-evidence/pack-088/2026-09-21-88c/receipt.json`.
+- **88C final runtime commit:** `6c6b6eb18c30a04343a21cbd5d53dea44fcb7613`.
+- **Next phase:** 88D UI + Notifications + Pause/Cancel = NOT_STARTED; explicit user instruction required.
 
 ## PACK089 — Skills / Plugins / MCP / Connections
 
