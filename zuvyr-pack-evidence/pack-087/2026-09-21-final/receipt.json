@@ -1,0 +1,207 @@
+{
+  "schema_version": "1.0",
+  "pack": "087",
+  "title": "IP Actions / STOP / Undo + Mission-Bound Full Computer Control",
+  "status": "LOCKED_VERIFIED",
+  "finalized_at": "2026-09-21T04:44:30Z",
+  "canonical_locked_verified": true,
+  "user_authorization_boundary": "PACK088_NOT_STARTED_AWAITING_USER_PHASE2",
+  "source": {
+    "final_main_commit": "5426f6780049dae53fdbf58942b962372ca62dbb",
+    "implementation_lineage": [
+      "f1d764753dc9c8b5d84b5d420cc829fa4914f6df",
+      "2b536601f7ff390c4c95fb7023e7ccfe7fd5e253",
+      "97c57696442d642bb82732816186c1f42c230ed4",
+      "68d0f213515d1b5cc2fe60d8c33700a17c3ba5e4",
+      "4acce3d6b2fed74ca39974bd220beea9f0742794",
+      "5426f6780049dae53fdbf58942b962372ca62dbb"
+    ],
+    "pull_requests": [
+      51,
+      53,
+      54,
+      55,
+      56,
+      57
+    ],
+    "final_candidate_ci": {
+      "pr": 57,
+      "head": "016430f856b3ddb1eed0df4d3a6a4bb8cb9a614a",
+      "workflow_run": 35560451434,
+      "backend_quality": "PASS",
+      "release_quality": "PASS"
+    }
+  },
+  "production": {
+    "supabase": {
+      "project": "tqoqsgaymygmqrzddvtu",
+      "migrations": [
+        "20260921022221 pack087_ip_actions_stop_undo",
+        "20260921031005 pack087_full_computer_control",
+        "20260921033204 pack087_full_control_device_runtime"
+      ],
+      "rls_and_rpc_postconditions": "PASS",
+      "service_role_only_sensitive_rpcs": "PASS"
+    },
+    "railway": {
+      "project": "ba460cdb-cc55-4203-bdd0-711846b7564c",
+      "final_main_combined_status": {
+        "backend": "SUCCESS",
+        "worker": "SUCCESS",
+        "maintenance": "SUCCESS"
+      },
+      "note": "Latest PACK087 clipboard hardening is device-agent-only; server runtime identity remained compatible and Railway commit statuses are success on final main."
+    },
+    "vercel": {
+      "project": "prj_P6VddfynJKniiK29clC6Epr9byPk",
+      "production_deployment": "dpl_GJ6236uvW2Fd2Z6dG68cnGLTStGD",
+      "status": "READY",
+      "promotion_source": "rox-52i0hqiv4-rox-ai.vercel.app",
+      "promotion_method": "vercel promote",
+      "automatic_git_status": "FAILED_BUILD_RATE_LIMIT",
+      "reconciliation": "Manual production promotion succeeded without rebuild. The promoted preview frontend blob was verified identical to final Full Computer Control frontend; subsequent main commits touched device-agent/tests only."
+    }
+  },
+  "real_device": {
+    "platform": "Windows",
+    "device_agent_commit": "5426f6780049dae53fdbf58942b962372ca62dbb",
+    "agent_device_id": "c044102e-baea-4094-9327-744bc2468074",
+    "backend_device_id": "50490dea-d2e9-49ba-b090-dde8dc56a78c",
+    "fingerprint": "da72e7390476713939000b89d4efb9686264a41cae36ea54000d668b5901a61b",
+    "paired": true,
+    "session_repair": {
+      "reason": "Original short-lived session token expired during extended acceptance and was not bypassed.",
+      "method": "Cryptographic re-pair with same Ed25519 device identity",
+      "new_session_id": "364dad7b-ac87-4552-8ac4-8493c872e118",
+      "heartbeat": "PASS",
+      "monotonic_counter": "PASS"
+    }
+  },
+  "full_control": {
+    "mode": "mission_bound",
+    "one_click_ux": true,
+    "max_grant_minutes": 15,
+    "scopes": [
+      "screen.view",
+      "pointer.control",
+      "keyboard.type",
+      "application.open",
+      "clipboard.read",
+      "clipboard.write",
+      "file.read",
+      "file.write",
+      "shell.execute"
+    ],
+    "exact_permission_grant_binding": true,
+    "mission_digest_binding": true,
+    "independent_stop": true,
+    "reversible_file_undo": true,
+    "secret_redaction": true
+  },
+  "real_device_acceptance": {
+    "file_write": {
+      "action_id": "42683be7-4778-4acc-8392-ac708462197b",
+      "status": "PASS",
+      "device_action_executed": true,
+      "backup_created": true
+    },
+    "undo": {
+      "receipt_id": "a7196118-367a-4754-ae92-2d9176152b06",
+      "status": "PASS",
+      "restored_content": "BEFORE",
+      "verification_action_id": "63dd5815-c521-4da4-817a-c193827eb9fa"
+    },
+    "stop": {
+      "action_id": "99757578-6c1d-4d51-addf-9d26f9acba8e",
+      "status": "PASS",
+      "result": "pack087_action_stopped",
+      "proof": "Long-running PowerShell command entered running state and was stopped through independent STOP channel."
+    },
+    "secret_redaction": {
+      "action_id": "9fecf4f2-3873-4573-8ba4-78fe75beaab6",
+      "status": "PASS",
+      "production_result": "[REDACTED]",
+      "secret_redacted": true
+    },
+    "screen": {
+      "action_id": "262e3dd5-c37f-482e-869c-79bb1e7f400a",
+      "status": "PASS",
+      "artifact_mime": "image/png",
+      "size_bytes": 749055,
+      "sha256": "2415542ad0a8839ebe7307b22f77faac07ae1042943014f9bc44212117458713"
+    },
+    "pointer": {
+      "action_id": "53e6255e-5f04-4051-afe6-e6c20f613a66",
+      "status": "PASS",
+      "result": "moved to 80,80"
+    },
+    "application_open": {
+      "action_id": "1dc5782a-4ee6-437a-87e0-ab5382ea3818",
+      "status": "PASS",
+      "application": "C:\\Windows\\System32\\notepad.exe"
+    },
+    "keyboard": {
+      "action_id": "2c827295-f142-4486-9780-98629c9de0af",
+      "status": "PASS",
+      "typed_chars": 40
+    },
+    "clipboard": {
+      "write_action_id": "275908db-f33f-4d83-8723-9e49cdfb4236",
+      "clear_action_id": "cfcef245-7ef3-4de3-afd7-4292b5b57359",
+      "read_empty_action_id": "4a2bb11b-a1ab-4ea9-9a79-0af32b6fa889",
+      "status": "PASS",
+      "write_result": {
+        "written": true,
+        "chars": 29
+      },
+      "clear_result": {
+        "written": true,
+        "chars": 0
+      },
+      "read_after_clear": ""
+    }
+  },
+  "defects_found_and_closed": [
+    {
+      "issue": "PowerShell UTF-8 BOM broke pair-proof JSON parsing",
+      "resolution": "Use explicit UTF-8 without BOM for challenge/session temp files"
+    },
+    {
+      "issue": "Sensitive path regex joined target and input with a synthetic newline",
+      "resolution": "Normalize and inspect target/input independently"
+    },
+    {
+      "issue": "Full Control server grant still depended on manual local allowlists",
+      "resolution": "Exact mission/grant metadata now enables mission-bound full-control runtime while preserving sensitive-path blocks"
+    },
+    {
+      "issue": "Windows screen/pointer/keyboard/app bridge used trailing PowerShell args unreliably",
+      "resolution": "Pass values via isolated environment variables"
+    },
+    {
+      "issue": "Windows clipboard empty write failed and stdin-based bridge could hang the Device Agent",
+      "resolution": "Use Base64 environment transport + STA Windows Forms Clipboard API + 5-second bounded timeout"
+    }
+  ],
+  "security": {
+    "ed25519_device_identity": "PASS",
+    "short_lived_session_token": "PASS",
+    "expired_token_bypass": "NOT_USED",
+    "re_pair_same_identity": "PASS",
+    "sensitive_path_blocking": "PASS",
+    "forged_full_control_metadata_blocked": "PASS",
+    "secret_redaction": "PASS",
+    "stop_independent": "PASS",
+    "owner_session_binding": "PASS"
+  },
+  "costs": {
+    "provider_calls": 0,
+    "billable_ai_calls": 0,
+    "payment_mutations": 0,
+    "note": "PACK087 acceptance used local device execution and project infrastructure only."
+  },
+  "remaining_pack087_blockers": [],
+  "next_pack": "088",
+  "next_pack_started": false,
+  "phase2_requires_explicit_user_instruction": true
+}
