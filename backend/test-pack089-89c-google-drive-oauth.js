@@ -197,6 +197,10 @@ function bytesResponse(buffer, mimeType = 'text/plain', status = 200) {
     env: {},
     now: () => nowMs
   });
+  assert.throws(
+    () => missing.assertOAuthConfigured(),
+    error => error.code === 'workspace_google_oauth_not_configured'
+  );
   await assert.rejects(
     missing.startOAuth({ ownerId: OWNER, connectionId: CONNECTION_ID }),
     error => error.code === 'workspace_google_oauth_not_configured'
@@ -390,8 +394,14 @@ function bytesResponse(buffer, mimeType = 'text/plain', status = 200) {
   for (const marker of [
     "router.post('/drive/connect'",
     "router.post('/drive/oauth/callback'",
-    "router.post('/drive/:id/disconnect'"
+    "router.post('/drive/:id/disconnect'",
+    "googleDriveRuntime.assertOAuthConfigured();"
   ]) assert(routes.includes(marker));
+  assert(
+    routes.indexOf("googleDriveRuntime.assertOAuthConfigured();") <
+    routes.indexOf("connectionStore.createIntegration({"),
+    'Drive OAuth config must fail closed before creating a draft connection'
+  );
 
   for (const marker of [
     'createOAuthSession',
