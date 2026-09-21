@@ -134,10 +134,12 @@ assert(state.pack085.deferred_gates.includes('M19_REAL_TEST_DEVICE_INSTALL_START
 assert.equal(state.pack085.provider_calls_during_verification, 0);
 assert.equal(state.pack085.payment_calls_during_verification, 0);
 assert.equal(state.pack085.device_control_calls_during_verification, 0);
-assert.equal(state.pack086.status, 'LOCKED_ENGINEERING_VERIFIED');
-assert.equal(state.pack086.canonical_locked_verified, false);
+assert.equal(state.pack086.status, 'LOCKED_VERIFIED');
+assert.equal(state.pack086.canonical_locked_verified, true);
 assert.equal(state.pack086.next_pack, '087');
-assert(state.pack086.deferred_gates.includes('PACK086_REAL_DEVICE_PAIRING_SESSION_ACCEPTANCE'));
+assert.deepEqual(state.pack086.deferred_gates, []);
+assert.equal(state.pack086.real_device_acceptance.status, 'PASS');
+assert.equal(state.pack086.real_device_acceptance.expired_token_bypass, 'NOT_USED');
 assert.equal(state.pack086.provider_calls_during_verification, 0);
 assert.equal(state.pack086.payment_calls_during_verification, 0);
 assert.equal(state.pack086.device_control_calls_during_verification, 0);
