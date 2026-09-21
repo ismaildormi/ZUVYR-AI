@@ -12,6 +12,7 @@ const {
 } = require('./permissionCenterRepository');
 const aiTools = require('../src/modules/ai/tools');
 const { createMcpRemoteAdapter } = require('./workspaceMcpClient');
+const { getDefaultGoogleDriveRuntime } = require('./googleDriveRuntime');
 
 const TOOL_NAME_RE = /^[a-z0-9][a-z0-9._-]{0,79}$/;
 const DELEGATE_KEY_RE = /^[a-z0-9][a-z0-9._:-]{0,199}$/;
@@ -105,9 +106,11 @@ function createWorkspaceToolRuntime({
   connectionStore = getDefaultWorkspaceConnectionStore(),
   permissionStore = getDefaultPermissionCenterStore(),
   mcpAdapter = createMcpRemoteAdapter(),
+  driveRuntime = getDefaultGoogleDriveRuntime(),
   tools = aiTools
 } = {}) {
   const hydratedByOwner = new Map();
+  driveRuntime.registerTools(tools);
 
   function clearOwner(ownerId) {
     const owner = String(ownerId || '').toLowerCase();
@@ -283,13 +286,21 @@ function createWorkspaceToolRuntime({
   async function prepareInvocation({ ownerId, toolKey, input, sessionId }) {
     const normalizedInput = normalizeToolInput(input);
     await hydrateOwnerTools(ownerId);
-    const definition = tools.getToolDefinition(toolKey);
+    const normalizedToolKey = String(toolKey || '').trim().toLowerCase();
+    const definition = tools.getToolDefinition(normalizedToolKey);
+    if (definition?.source === 'integration' && normalizedToolKey.startsWith('drive.')) {
+      return driveRuntime.prepareInvocation({
+        ownerId,
+        toolKey: normalizedToolKey,
+        input: normalizedInput,
+        sessionId
+      });
+    }
     if (!definition || definition.ownerId !== String(ownerId).toLowerCase() || !definition.connectionId) {
       throw toolRuntimeError('workspace_tool_not_found');
     }
     const connection = await freshConnection(ownerId, definition.connectionId);
     const action = connection.plugin_kind === 'mcp' ? 'mcp.invoke' : 'plugin.invoke';
-    const normalizedToolKey = String(toolKey || '').trim().toLowerCase();
     const fingerprint = operationFingerprint({
       action,
       connectionId: connection.id,
