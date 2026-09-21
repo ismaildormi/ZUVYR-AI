@@ -881,9 +881,9 @@
     "final_no_cost_receipt": "zuvyr-pack-evidence/pack-062/2026-09-18-no-cost-final/receipt.json"
   },
   "continuation_reconciliation": {
-    "date": "2026-09-21T04:44:30Z",
+    "date": "2026-09-21",
     "legacy_current_fields_preserved": true,
-    "note": "Fresh truth: PACK087 is canonical LOCKED_VERIFIED after real Windows-device Full Computer Control acceptance including mission-bound grant, screen, pointer, app open, keyboard, clipboard, file write/Undo, independent STOP and secret redaction. PACK086 real pairing/session gate is also satisfied. PACK085 remains engineering-only because real uninstall acceptance was not performed. PACK088 is next but has not started and requires explicit user Phase 2 instruction."
+    "note": "Fresh truth: Phase 1 / PACK087 remains canonical LOCKED_VERIFIED. PACK088 planning has started from the verified Phase 1 state without repeating PACK087 acceptance. No PACK088 runtime code, migration, provider call or billing mutation has been performed yet. Canonical execution plan is docs/zuvyr/PACK088_EXECUTION_PLAN.md. Implementation begins with 88A only after planning lock."
   },
   "pack063": {
     "status": "LOCKED_ENGINEERING_VERIFIED",
@@ -2515,5 +2515,56 @@
     "next_pack": "088",
     "next_pack_started": false,
     "phase2_requires_explicit_user_instruction": true
+  },
+  "phase2_planning_authorized": true,
+  "phase2_implementation_authorized": false,
+  "pack088": {
+    "status": "PLANNING",
+    "title": "Automations & Durable Workflows",
+    "plan_path": "docs/zuvyr/PACK088_EXECUTION_PLAN.md",
+    "planning_started_at": "2026-09-21",
+    "implementation_started": false,
+    "production_changes_applied": false,
+    "migrations_applied": [],
+    "provider_calls_during_planning": 0,
+    "payment_mutations_during_planning": 0,
+    "dependencies": [
+      "013",
+      "017",
+      "037",
+      "038",
+      "039",
+      "047",
+      "050",
+      "087"
+    ],
+    "current_foundations": {
+      "durable_task_kernel": true,
+      "bullmq_redis": true,
+      "workspace_workflows": true,
+      "workspace_workflow_steps": true,
+      "workspace_schedules": true,
+      "in_app_notifications": true,
+      "scheduled_ui_currently_safety_blocked": true
+    },
+    "planning_truth": {
+      "postgres_schedule_occurrence_source_of_truth": true,
+      "brain_kernel_reused": true,
+      "unified_usage_ledger_reused": true,
+      "run_time_pricing_and_funding": true,
+      "exactly_once_via_stable_occurrence_identity": true,
+      "pack087_short_lived_grants_not_replayed": true,
+      "external_notifications_not_claimed": true
+    },
+    "planned_phases": [
+      "88A_SCHEMA_INVARIANTS",
+      "88B_SCHEDULER_EXACTLY_ONCE",
+      "88C_FUNDING_PERMISSION_BRAIN_KERNEL",
+      "88D_UI_NOTIFICATIONS_PAUSE_CANCEL",
+      "88E_PRODUCTION_ACCEPTANCE_RECOVERY"
+    ],
+    "next_action": "IMPLEMENT_88A_ONLY_AFTER_PLAN_LOCK",
+    "next_pack": "089",
+    "next_pack_allowed": false
   }
 }
