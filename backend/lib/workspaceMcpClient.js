@@ -103,6 +103,37 @@ function createMcpRemoteAdapter({
 } = {}) {
   if (typeof fetchImpl !== 'function') throw runtimeError('workspace_mcp_fetch_unavailable');
 
+  let sdkPromise = null;
+  async function loadSdkChecked() {
+    if (!sdkPromise) {
+      sdkPromise = Promise.resolve()
+        .then(() => loadSdk())
+        .catch(error => {
+          sdkPromise = null;
+          if (
+            error?.code === 'ERR_MODULE_NOT_FOUND' ||
+            /modelcontextprotocol[/]client/i.test(String(error?.message || ''))
+          ) {
+            throw runtimeError('workspace_mcp_sdk_unavailable');
+          }
+          throw runtimeError('workspace_mcp_sdk_load_failed', error?.code || null);
+        });
+    }
+    const sdk = await sdkPromise;
+    if (typeof sdk?.Client !== 'function' || typeof sdk?.StreamableHTTPClientTransport !== 'function') {
+      throw runtimeError('workspace_mcp_sdk_invalid');
+    }
+    return sdk;
+  }
+
+  async function preflight({ endpointUrl }) {
+    if (!enabled) throw runtimeError('workspace_mcp_remote_disabled');
+    const endpoint = validateEndpoint(endpointUrl);
+    await assertPublicResolution(endpoint, lookup);
+    await loadSdkChecked();
+    return Object.freeze({ ready: true, endpoint: endpoint.toString() });
+  }
+
   async function invoke({
     endpointUrl,
     remoteToolName,
@@ -110,29 +141,11 @@ function createMcpRemoteAdapter({
     authorization = null,
     signal = null
   }) {
-    if (!enabled) throw runtimeError('workspace_mcp_remote_disabled');
-
     const endpoint = validateEndpoint(endpointUrl);
     await assertPublicResolution(endpoint, lookup);
-
-    let sdk;
-    try {
-      sdk = await loadSdk();
-    } catch (error) {
-      if (
-        error?.code === 'ERR_MODULE_NOT_FOUND' ||
-        /modelcontextprotocol[/]client/i.test(String(error?.message || ''))
-      ) {
-        throw runtimeError('workspace_mcp_sdk_unavailable');
-      }
-      throw runtimeError('workspace_mcp_sdk_load_failed', error?.code || null);
-    }
-
-    const Client = sdk?.Client;
-    const StreamableHTTPClientTransport = sdk?.StreamableHTTPClientTransport;
-    if (typeof Client !== 'function' || typeof StreamableHTTPClientTransport !== 'function') {
-      throw runtimeError('workspace_mcp_sdk_invalid');
-    }
+    const sdk = await loadSdkChecked();
+    const Client = sdk.Client;
+    const StreamableHTTPClientTransport = sdk.StreamableHTTPClientTransport;
 
     const safeFetch = async (resource, init = {}) => {
       const requestUrl =
@@ -180,7 +193,13 @@ function createMcpRemoteAdapter({
     }
   }
 
-  return Object.freeze({ invoke, validateEndpoint, assertPublicResolution });
+  return Object.freeze({
+    invoke,
+    preflight,
+    isEnabled: () => enabled === true,
+    validateEndpoint,
+    assertPublicResolution
+  });
 }
 
 module.exports = {
