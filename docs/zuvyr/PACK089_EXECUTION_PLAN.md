@@ -2,7 +2,7 @@
 
 Date: 2026-09-21
 Canonical predecessor: PACK088 `LOCKED_VERIFIED`
-Implementation status: `IN_PROGRESS` — 89A active
+Implementation status: `IN_PROGRESS` — 89A `LOCKED_VERIFIED`; 89B active
 
 ## 1. Objective
 
@@ -56,7 +56,7 @@ Historical source `plugin_installations` is NOT present in production and must n
 
 ## 4. Phases
 
-### 89A — Canonical schema + Vault + Permission Center
+### 89A — Canonical schema + Vault + Permission Center — LOCKED_VERIFIED
 - extend existing plugin/integration connection rows; do not create replacement tables;
 - add durable OAuth sessions with hashed state + PKCE verifier in Vault;
 - add owner-scoped declarative Skills;
@@ -122,3 +122,18 @@ PACK089 becomes `LOCKED_VERIFIED` only when:
 - receipts and canonical project state are reconciled.
 
 PACK090 must not start before this gate.
+
+
+#### 89A FINALIZED — LOCKED_VERIFIED
+
+- Existing `workspace_plugin_connections` and `workspace_integration_connections` were extended in place; legacy `plugin_installations` remains absent from production.
+- `workspace_oauth_sessions` and `workspace_skills` were added with RLS ON and zero anon/authenticated grants.
+- Supabase Vault is the canonical credential store; public rows persist only secret UUID references.
+- Permission Center now supports `integration_connection` / `plugin_connection`, resource scopes, and connection/plugin/MCP action classes while preserving prior code/browser hardening.
+- OAuth PKCE Vault roundtrip, cross-owner denial, integration/plugin grant + revoke + Vault deletion and declarative Skill persistence all passed in production transaction-only acceptance with ROLLBACK.
+- Migration: `20260921192642 pack089_89a_connections_permissions`.
+- PR #80 merged as `cf77c8a20a4a2da279ba6e7be1da1118a8a54dba`; GitHub run `35644690975`: Backend Quality PASS + Release Quality PASS.
+- Railway exact runtime commit is SUCCESS on backend `a57acbea-99ef-4f28-b09c-cdf2403720e3`, worker `61faf1b6-9eae-4df5-8b94-f83654a5dcc3`, maintenance `3ea73709-065e-428c-a888-00654b7eb745`.
+- No frontend runtime file changed in 89A.
+- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-21-89a/receipt.json`.
+- **89B Unified Tools / Skills / Plugin / MCP Runtime is now active.**
