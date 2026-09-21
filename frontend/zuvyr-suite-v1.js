@@ -8,7 +8,7 @@
     ['3d','⬡','3D Studio','ready'],['code','</>','Code Studio','ready'],['voice','◉','Voice','connect'],['music','♫','Music','connect'],
     ['ip','✦','ZUVYR IP','ready'],['research','⌕','Research','ready'],['library','▦','Library','ready'],
     ['projects','▣','Projects','ready'],['documents','▤','Documents','ready'],['spreadsheets','▥','Spreadsheets','ready'],
-    ['presentations','▧','Presentations','ready'],['scheduled','◷','Scheduled','blocked'],['plugins','⌘','Plugins','blocked'],
+    ['presentations','▧','Presentations','ready'],['scheduled','◷','Scheduled','ready'],['plugins','⌘','Plugins','blocked'],
     ['usage','◫','Usage & Billing','ready'],['analytics','⌁','Analytics','validate'],['settings','⚙','Settings','ready']
   ];
   var copy = {
@@ -26,7 +26,7 @@
     documents:['Documents','Draft, review and prepare export-ready documents with source awareness.'],
     spreadsheets:['Spreadsheets','Structure data, formulas, analysis and chart-ready results.'],
     presentations:['Presentations','Turn approved outlines, documents and media into coherent slides.'],
-    scheduled:['Scheduled Tasks','Prepare one-time and recurring tasks. Execution remains disabled until notification safety is verified.'],
+    scheduled:['Scheduled Tasks','Create, activate, pause, resume and cancel durable tasks with live run history, funding gates and in-app notifications.'],
     plugins:['Plugins','Discover integrations and inspect required permissions before installation is enabled.'],
     usage:['Usage & Billing','Keep subscription allowance, weekly limits and persistent top-up credits visibly separate.'],
     analytics:['Analytics','Review product usage and financial signals after production data validation.'],
@@ -66,7 +66,7 @@
   documents:[['Editor','Write, edit and comment'],['Sources','Citations and linked files'],['Delivery','Review and export']],
       spreadsheets:[['Data','Tables, imports and cleanup'],['Analysis','Formulas and validation'],['Charts','Visual summaries and export']],
       presentations:[['Outline','Narrative and slide structure'],['Design','Templates, media and layouts'],['Export','Review and delivery']],
-      scheduled:[['Schedule','Once or recurring'],['History','Runs and notifications'],['Controls','Pause and delete']],
+      scheduled:[['Schedule','Once or recurring'],['History','Runs and notifications'],['Controls','Activate, pause, resume and cancel']],
       plugins:[['Discover','Search the marketplace'],['Permissions','Inspect requested access'],['Connections','Connect or disconnect']],
       analytics:[['Usage','7 and 30 day views'],['Cost','Provider and feature cost'],['Margin','Revenue, profit and risk reserve']],
       settings:[['Account & preferences','Profile, language and appearance'],['Plans, credits & usage','Allowance, top-up credits and billing visibility'],['Privacy & permissions','Permission Center, Memory and data controls']]
@@ -373,6 +373,27 @@
     usageOwner = null;
     usageData = null;
     usageState = 'idle';
+  }
+
+  var scheduledState={items:[],runs:[],notifications:[],selected:null,loading:false,error:null};
+  function scheduledView(){
+    return heading('scheduled')+
+      '<div class="zs-banner zs-scheduled-banner"><span>◷</span><div><b>Durable Scheduled Tasks are live.</b> Creating a schedule never charges credits. Funding, permissions and the current credit cap are checked again only when an occurrence actually runs.</div></div>'+
+      '<div class="zs-grid zs-scheduled-grid">'+
+        '<div class="zs-card wide"><div class="zs-actions zs-scheduled-title-row"><div><h2>Create scheduled task</h2><p>Schedule a safe Chat task now. The same Brain, Router, usage ledger and permissions are reused at run time.</p></div><button type="button" class="zs-secondary" data-zs-scheduled-refresh>Refresh</button></div>'+
+          '<form data-zs-scheduled-form class="zs-scheduled-form">'+
+            '<div class="zs-document-row"><div class="zs-field"><label>Title</label><input name="title" maxlength="120" required placeholder="Morning research brief"></div><div class="zs-field"><label>Type</label><select name="scheduleType" data-zs-scheduled-type><option value="once">One time</option><option value="recurring">Recurring interval</option></select></div></div>'+
+            '<div class="zs-field"><label>Goal</label><textarea name="goal" maxlength="4000" required placeholder="Summarize the approved task and return the result in this workspace."></textarea></div>'+
+            '<div class="zs-document-row"><div class="zs-field"><label>First run</label><input type="datetime-local" name="runAt" required data-zs-scheduled-run-at></div><div class="zs-field"><label>Timezone</label><input name="timezone" maxlength="64" required data-zs-scheduled-timezone placeholder="Africa/Casablanca"></div></div>'+
+            '<div class="zs-document-row"><div class="zs-field" data-zs-scheduled-interval-wrap hidden><label>Repeat every</label><select name="intervalMinutes"><option value="60">1 hour</option><option value="360">6 hours</option><option value="720">12 hours</option><option value="1440">24 hours</option><option value="10080">7 days</option></select></div><div class="zs-field"><label>Maximum credits per run</label><input type="number" name="maxCreditsPerRun" min="0" max="10000000" step="1" value="25" required></div></div>'+
+            '<label class="zs-consent"><input type="checkbox" name="allowTopup"> Allow purchased top-up credits if included allowance is unavailable. This still cannot exceed the per-run cap.</label>'+
+            '<div class="zs-scheduled-preview" data-zs-scheduled-preview role="status">Choose the first run time. No credits are charged at schedule creation.</div>'+
+            '<div class="zs-actions"><button type="submit" class="zs-primary" data-zs-scheduled-create>Create draft</button><span class="zs-hint">Creation charge: 0 credits · Activation can be paused or cancelled</span></div>'+
+          '</form><div class="zs-result" data-zs-scheduled-result></div></div>'+
+        '<div class="zs-card wide"><div class="zs-actions zs-scheduled-title-row"><div><h2>Scheduled tasks</h2><p>Reopen any task to inspect durable occurrences and current control state.</p></div></div><div data-zs-scheduled-list><div class="zs-muted">Open Scheduled Tasks to load your schedules.</div></div></div>'+
+        '<div class="zs-card half"><h2>Run history</h2><div data-zs-scheduled-runs><div class="zs-empty"><div><strong>No task selected</strong><span>Open a scheduled task to inspect its occurrences.</span></div></div></div></div>'+
+        '<div class="zs-card half"><h2>Notifications</h2><div data-zs-scheduled-notifications><div class="zs-muted">Run notifications will appear here exactly once per event.</div></div></div>'+
+      '</div>';
   }
 
   var documentState={templates:[],documents:[],loading:false};
@@ -1466,7 +1487,7 @@
     var extra=id==='code'?orchestrator('code'):toolCards(id);
     return heading(id)+'<div class="zs-banner"><span>◎</span><div><b>'+(state==='ready'?'Interface foundation is ready.':'Ready to connect safely.')+'</b> '+(state==='ready'?'Use the existing backend foundation and connect verified data next.':'Provider execution stays off until pricing, limits and settlement pass verification.')+'</div></div>'+extra;
   }
-  function viewHtml(id) { if(id==='dashboard')return dashboard(); if(id==='images')return imageStudioView(); if(id==='3d')return model3dStudioView(); if(id==='ip')return ipView(); if(id==='usage')return usageView(); if(id==='research')return researchView(); if(id==='documents')return documentsView(); if(id==='spreadsheets')return spreadsheetsView(); if(id==='presentations')return presentationsView(); return genericView(id); }
+  function viewHtml(id) { if(id==='dashboard')return dashboard(); if(id==='images')return imageStudioView(); if(id==='3d')return model3dStudioView(); if(id==='ip')return ipView(); if(id==='usage')return usageView(); if(id==='research')return researchView(); if(id==='documents')return documentsView(); if(id==='spreadsheets')return spreadsheetsView(); if(id==='presentations')return presentationsView(); if(id==='scheduled')return scheduledView(); return genericView(id); }
 
   // Native navigation integration 01. Existing Chat, Images, Video, Code,
   // IP, Projects, History, Settings and payment handlers retain ownership.
@@ -1531,7 +1552,7 @@
       var title=view.querySelector('h1');if(title)title.textContent=sectionLabel(view.dataset.zsView);
       if(view.dataset.zsView==='3d'){renderModel3dStudioTruth();return;}
       if(view.dataset.zsView==='3d')return;
-      if(['documents','spreadsheets','presentations'].indexOf(view.dataset.zsView)>-1){
+      if(['documents','spreadsheets','presentations','scheduled'].indexOf(view.dataset.zsView)>-1){
         var liveStatus=view.querySelector('.zs-status');if(liveStatus){liveStatus.textContent=language()==='ar'?'مفعّل':language()==='fr'?'Actif':'Live';liveStatus.classList.add('ready');}
         return;
       }
@@ -1584,10 +1605,83 @@
       loadModel3dStudio();
     }
     if(id==='spreadsheets'||id==='presentations')loadOfficeItems(id);
+    if(id==='scheduled')loadScheduledTasks();
     suite.querySelectorAll('[data-zs-view]').forEach(function(v){v.dataset.active=String(v.dataset.zsView===id);});
     document.querySelectorAll('[data-zuvyr-section]').forEach(function(el){var active=el.dataset.zuvyrSection===id;el.classList.toggle('active',active);if(active)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});
   }
   function request(path, options){if(typeof window.authFetch==='function')return window.authFetch(path,options);return fetch(path,options);}
+  function scheduledNode(){return suite.querySelector('[data-zs-view="scheduled"]');}
+  function scheduledDate(value){if(!value)return '—';var date=new Date(value);return Number.isFinite(date.getTime())?date.toLocaleString():'—';}
+  async function scheduledRequest(path,options){
+    var response=await request(path,options||{method:'GET',cache:'no-store'}),data={};
+    try{data=await response.json();}catch(_){}
+    if(!response.ok||data.status==='error')throw new Error(data.code||data.message||'scheduled_task_request_failed');
+    return data;
+  }
+  function scheduledStatusClass(value){return ['active','running','succeeded'].indexOf(value)>-1?'ready':(['blocked','failed','cancelled'].indexOf(value)>-1?'danger':'');}
+  function renderScheduledFormState(){
+    var view=scheduledNode(),form=view&&view.querySelector('[data-zs-scheduled-form]');if(!form)return;
+    var recurring=form.scheduleType.value==='recurring',wrap=form.querySelector('[data-zs-scheduled-interval-wrap]');if(wrap)wrap.hidden=!recurring;
+    var timezone=form.timezone;if(timezone&&!timezone.value){try{timezone.value=Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC';}catch(_){timezone.value='UTC';}}
+    var preview=form.querySelector('[data-zs-scheduled-preview]'),raw=form.runAt.value,date=raw?new Date(raw):null;
+    if(preview){preview.textContent=date&&Number.isFinite(date.getTime())?('Next run preview: '+date.toLocaleString()+' · '+(form.timezone.value||'UTC')+(recurring?' · repeats every '+form.intervalMinutes.options[form.intervalMinutes.selectedIndex].text:'')+' · creation charge 0 credits'):'Choose the first run time. No credits are charged at schedule creation.';}
+  }
+  function scheduledActionButtons(item){
+    var state=String(item.state||'draft'),buttons=[];
+    if(state==='draft'||state==='blocked'||(state==='paused'&&item.authorization_revoked_at))buttons.push('<button type="button" class="zs-primary" data-zs-scheduled-action="activate" data-id="'+esc(item.id)+'">Activate</button>');
+    if(['active','ready','running'].indexOf(state)>-1){buttons.push('<button type="button" data-zs-scheduled-action="run-now" data-id="'+esc(item.id)+'">Run now</button>');buttons.push('<button type="button" data-zs-scheduled-action="pause" data-id="'+esc(item.id)+'">Pause</button>');}
+    if(state==='paused'&&!item.authorization_revoked_at)buttons.push('<button type="button" data-zs-scheduled-action="resume" data-id="'+esc(item.id)+'">Resume</button>');
+    if(state!=='cancelled')buttons.push('<button type="button" data-zs-scheduled-action="cancel" data-id="'+esc(item.id)+'">Cancel</button>');
+    buttons.push('<button type="button" class="zs-secondary" data-zs-scheduled-open="'+esc(item.id)+'">History</button>');
+    return buttons.join('');
+  }
+  function renderScheduledTasks(){
+    var view=scheduledNode(),list=view&&view.querySelector('[data-zs-scheduled-list]');if(!list)return;
+    if(scheduledState.loading){list.innerHTML='<div class="zs-muted" role="status">Loading scheduled tasks…</div>';return;}
+    if(scheduledState.error){list.innerHTML='<div class="zs-empty"><div><strong>Scheduled tasks need attention</strong><span>'+esc(scheduledState.error)+'</span><button type="button" data-zs-scheduled-refresh>Retry</button></div></div>';return;}
+    if(!scheduledState.items.length){list.innerHTML='<div class="zs-empty"><div><strong>No scheduled tasks yet</strong><span>Create a draft above. Nothing is charged until a run actually executes.</span></div></div>';return;}
+    list.innerHTML=scheduledState.items.map(function(item){return '<article class="zs-scheduled-item" data-state="'+esc(item.state)+'"><div class="zs-scheduled-item-main"><div><strong>'+esc(item.title||'Scheduled task')+'</strong><div class="zs-chip-row"><span class="zs-chip '+scheduledStatusClass(item.state)+'">'+esc(item.state||'draft')+'</span><span class="zs-chip">'+esc(item.schedule_type||'once')+'</span><span class="zs-chip">cap '+esc(item.max_credits_per_run==null?'—':item.max_credits_per_run)+' credits</span></div><small>Next: '+esc(scheduledDate(item.next_run_at))+' · Zone: '+esc(item.timezone||'UTC')+'</small>'+(item.last_error_code?'<small>Last error: '+esc(item.last_error_code)+'</small>':'')+'</div><div class="zs-actions">'+scheduledActionButtons(item)+'</div></div></article>';}).join('');
+  }
+  function renderScheduledRuns(){
+    var view=scheduledNode(),box=view&&view.querySelector('[data-zs-scheduled-runs]');if(!box)return;
+    if(!scheduledState.selected){box.innerHTML='<div class="zs-empty"><div><strong>No task selected</strong><span>Open a scheduled task to inspect its occurrences.</span></div></div>';return;}
+    if(!scheduledState.runs.length){box.innerHTML='<div class="zs-muted">No occurrences for this task yet.</div>';return;}
+    box.innerHTML=scheduledState.runs.map(function(run){return '<div class="zs-scheduled-run"><div><strong>'+esc(run.state||'unknown')+'</strong><small>'+esc(scheduledDate(run.scheduled_for))+'</small></div><div><span class="zs-chip '+scheduledStatusClass(run.state)+'">'+esc(run.funding_state||'not checked')+'</span>'+(run.error_code?'<small>'+esc(run.error_code)+'</small>':'')+'</div></div>';}).join('');
+  }
+  function renderScheduledNotifications(){
+    var view=scheduledNode(),box=view&&view.querySelector('[data-zs-scheduled-notifications]');if(!box)return;
+    if(!scheduledState.notifications.length){box.innerHTML='<div class="zs-muted">No automation notifications yet.</div>';return;}
+    box.innerHTML=scheduledState.notifications.slice(0,30).map(function(item){return '<button type="button" class="zs-scheduled-notification" data-zs-scheduled-notification="'+esc(item.id)+'" aria-label="'+(item.read_at?'Notification read':'Mark notification as read')+'"><span><strong>'+esc(item.title||'Scheduled task')+'</strong><small>'+esc(item.message||'')+'</small></span><time>'+esc(scheduledDate(item.created_at))+'</time><i aria-hidden="true" data-read="'+(item.read_at?'true':'false')+'"></i></button>';}).join('');
+  }
+  async function loadScheduledTasks(force){
+    if(scheduledState.loading&&!force)return;scheduledState.loading=true;scheduledState.error=null;renderScheduledTasks();
+    try{var results=await Promise.all([scheduledRequest('/api/automations?limit=100'),scheduledRequest('/api/automations/notifications?limit=50')]);scheduledState.items=Array.isArray(results[0].items)?results[0].items:[];scheduledState.notifications=Array.isArray(results[1].items)?results[1].items:[];if(scheduledState.selected&&!scheduledState.items.some(function(x){return x.id===scheduledState.selected;})){scheduledState.selected=null;scheduledState.runs=[];}}
+    catch(error){scheduledState.error=error.message;}
+    finally{scheduledState.loading=false;renderScheduledTasks();renderScheduledRuns();renderScheduledNotifications();renderScheduledFormState();}
+  }
+  async function createScheduledTask(form){
+    var result=scheduledNode().querySelector('[data-zs-scheduled-result]'),button=form.querySelector('[data-zs-scheduled-create]'),date=new Date(form.runAt.value);
+    if(!Number.isFinite(date.getTime())){toast('Choose a valid first run time.');return;}
+    var recurring=form.scheduleType.value==='recurring';button.disabled=true;result.dataset.visible='true';result.innerHTML='<div class="zs-result-title">Creating durable draft…</div><p>No credits are being charged.</p>';
+    try{var data=await scheduledRequest('/api/automations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:form.title.value,goal:form.goal.value,scheduleType:form.scheduleType.value,runAt:date.toISOString(),intervalMinutes:recurring?Number(form.intervalMinutes.value):null,recurrenceSpec:{},timezone:form.timezone.value||'UTC',maxCreditsPerRun:Number(form.maxCreditsPerRun.value),allowTopup:form.allowTopup.checked===true})});result.innerHTML='<div class="zs-result-title">Draft created</div><p>0 credits charged. Review the task below and press Activate when ready.</p>';form.title.value='';form.goal.value='';await loadScheduledTasks(true);}
+    catch(error){result.innerHTML='<div class="zs-result-title">Schedule needs attention</div><p>'+esc(error.message)+'</p>';}
+    finally{button.disabled=false;renderScheduledFormState();}
+  }
+  function randomRequestToken(){return window.crypto&&typeof window.crypto.randomUUID==='function'?window.crypto.randomUUID():'00000000-0000-4000-8000-'+String(Date.now()).padStart(12,'0').slice(-12);}
+  async function controlScheduledTask(button){
+    var action=button.getAttribute('data-zs-scheduled-action'),id=button.getAttribute('data-id');if(!action||!id)return;
+    if(action==='cancel'&&window.confirm&&!window.confirm('Cancel this scheduled task? Its previous run history will be kept.'))return;
+    button.disabled=true;
+    try{var path=action==='run-now'?'run-now':action,options={method:'POST',headers:{'Content-Type':'application/json'},body:'{}'};if(action==='run-now')options.headers['Idempotency-Key']=randomRequestToken();await scheduledRequest('/api/automations/'+encodeURIComponent(id)+'/'+path,options);toast(action==='run-now'?'Run queued with current funding and permission checks.':'Scheduled task '+action+'d.');await loadScheduledTasks(true);if(scheduledState.selected===id)await openScheduledTask(id,true);}
+    catch(error){toast('Scheduled task: '+error.message);}
+    finally{button.disabled=false;}
+  }
+  async function openScheduledTask(id,silent){
+    scheduledState.selected=id;renderScheduledRuns();
+    try{var data=await scheduledRequest('/api/automations/'+encodeURIComponent(id)+'/runs?limit=100');scheduledState.runs=Array.isArray(data.items)?data.items:[];renderScheduledRuns();if(!silent){var box=scheduledNode().querySelector('[data-zs-scheduled-runs]');box&&box.scrollIntoView({block:'nearest'});}}
+    catch(error){scheduledState.runs=[];renderScheduledRuns();toast('Run history: '+error.message);}
+  }
+  async function markScheduledNotification(id){try{await scheduledRequest('/api/automations/notifications/'+encodeURIComponent(id)+'/read',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});var item=scheduledState.notifications.find(function(x){return x.id===id;});if(item)item.read_at=new Date().toISOString();renderScheduledNotifications();}catch(error){toast('Notification: '+error.message);}}
   function checked(form,name){return Array.prototype.slice.call(form.querySelectorAll('input[name="'+name+'"]:checked')).map(function(i){return i.value;});}
   function documentView(){return suite.querySelector('[data-zs-view="documents"]');}
   function documentIds(value){return String(value||'').split(/[\s,]+/).map(function(v){return v.trim();}).filter(Boolean);}
@@ -1765,6 +1859,7 @@
 
   document.addEventListener('submit',function(e){
     var form=e.target;
+    if(form&&form.matches&&form.matches('[data-zs-scheduled-form]')){e.preventDefault();createScheduledTask(form);return;}
     if(form&&form.matches&&form.matches('[data-zs-research-artifact-form]')){e.preventDefault();researchArtifactSubmit(form);return;}
     if(form&&form.matches&&form.matches('[data-zs-document-form]')){e.preventDefault();documentSubmit(form);return;}
     if(form&&form.matches&&form.matches('[data-zs-spreadsheet-form]')){e.preventDefault();spreadsheetSubmit(form);return;}
@@ -1774,6 +1869,10 @@
   });
   document.addEventListener('click',function(e){
     if(!e.target.closest)return;
+    var scheduledAction=e.target.closest('[data-zs-scheduled-action]');if(scheduledAction&&suite.contains(scheduledAction)){controlScheduledTask(scheduledAction);return;}
+    var scheduledOpen=e.target.closest('[data-zs-scheduled-open]');if(scheduledOpen&&suite.contains(scheduledOpen)){openScheduledTask(scheduledOpen.getAttribute('data-zs-scheduled-open'));return;}
+    var scheduledNotification=e.target.closest('[data-zs-scheduled-notification]');if(scheduledNotification&&suite.contains(scheduledNotification)){markScheduledNotification(scheduledNotification.getAttribute('data-zs-scheduled-notification'));return;}
+    if(e.target.closest('[data-zs-scheduled-refresh]')&&suite.contains(e.target)){loadScheduledTasks(true);return;}
     var ipStop=e.target.closest('[data-zs-ip-stop]');if(ipStop&&suite.contains(ipStop)){stopFullControl(ipStop);return;}
     var docDownload=e.target.closest('[data-zs-document-download]');if(docDownload&&suite.contains(docDownload)){downloadDocument(docDownload);return;}
     var officeDownloadButton=e.target.closest('[data-zs-office-download]');if(officeDownloadButton&&suite.contains(officeDownloadButton)){officeDownload(officeDownloadButton);return;}
@@ -1787,7 +1886,8 @@
     if(suite.dataset.open==='true'&&!suite.contains(e.target)&&e.target.closest('[data-tab], [data-open]'))close(true,false);
   },true);
   function refreshVisibleUsage(){if(suite.dataset.open==='true'&&suite.querySelector('[data-zs-view="usage"]').dataset.active==='true'&&!document.hidden)loadUsage();}
-  suite.addEventListener('change',function(e){if(e.target&&e.target.matches('[data-zs-document-template]'))renderDocumentVariableFields();});
+  suite.addEventListener('change',function(e){if(e.target&&e.target.matches('[data-zs-document-template]'))renderDocumentVariableFields();if(e.target&&e.target.matches('[data-zs-scheduled-type], [data-zs-scheduled-run-at], [data-zs-scheduled-timezone], [data-zs-scheduled-form] select[name="intervalMinutes"]'))renderScheduledFormState();});
+  suite.addEventListener('input',function(e){if(e.target&&e.target.matches('[data-zs-scheduled-run-at], [data-zs-scheduled-timezone]'))renderScheduledFormState();});
   window.addEventListener('focus',refreshVisibleUsage);
   document.addEventListener('visibilitychange',function(){if(document.hidden)clearUsage();else refreshVisibleUsage();});
   if(typeof supa!=='undefined'&&supa.auth&&supa.auth.onAuthStateChange)supa.auth.onAuthStateChange(function(event){clearUsage();if(event!=='SIGNED_OUT')setTimeout(refreshVisibleUsage,0);});
