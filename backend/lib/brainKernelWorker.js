@@ -80,24 +80,39 @@ function verifySucceededSnapshot(snapshot, {
   }
 
   const capabilities = snapshot.steps.map(step => step.capability);
-  if (
-    capabilities.length !== 2 ||
-    capabilities[0] !== 'chat.respond' ||
-    capabilities[1] !== 'project.collect' ||
-    snapshot.steps.some(step => step.state !== 'succeeded')
-  ) {
+  const allSucceeded = snapshot.steps.every(step => step.state === 'succeeded');
+  const singleChat =
+    capabilities.length === 1 &&
+    capabilities[0] === 'chat.respond';
+  const legacyChatProject =
+    capabilities.length === 2 &&
+    capabilities[0] === 'chat.respond' &&
+    capabilities[1] === 'project.collect';
+
+  if (!allSucceeded || (!singleChat && !legacyChatProject)) {
     throw workerError('PACK040_TWO_CAPABILITY_RESULT_INVALID', {
-      capabilities
+      capabilities,
+      supportedPlanShapes: [
+        ['chat.respond'],
+        ['chat.respond', 'project.collect']
+      ]
     });
   }
 
-  const project = stepOutput(snapshot.steps[1]);
-  if (
-    project.kind !== 'project_collection' ||
-    !Array.isArray(project.items) ||
-    project.items.length !== 1
-  ) {
-    throw workerError('PACK040_DURABLE_SAVE_INVALID');
+  if (singleChat) {
+    const chat = stepOutput(snapshot.steps[0]);
+    if (chat.kind !== 'chat_response' || typeof chat.text !== 'string') {
+      throw workerError('PACK040_DURABLE_SAVE_INVALID');
+    }
+  } else {
+    const project = stepOutput(snapshot.steps[1]);
+    if (
+      project.kind !== 'project_collection' ||
+      !Array.isArray(project.items) ||
+      project.items.length !== 1
+    ) {
+      throw workerError('PACK040_DURABLE_SAVE_INVALID');
+    }
   }
 
   return Object.freeze({
