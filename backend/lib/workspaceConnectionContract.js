@@ -89,7 +89,7 @@ function normalizePluginDraft(input) {
   if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) fail('invalid_workspace_plugin_manifest');
   const raw = JSON.stringify(manifest);
   if (raw.length > 24000) fail('invalid_workspace_plugin_manifest');
-  if (/(?:javascript:|data:text/html|<script\b|require\s*\(|process\.|child_process|eval\s*\()/i.test(raw)) {
+  if (/(?:javascript:|data:text[/]html|<script\b|require\s*\(|process\.|child_process|eval\s*\()/i.test(raw)) {
     fail('workspace_plugin_executable_manifest_blocked');
   }
 
