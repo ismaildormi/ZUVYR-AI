@@ -1037,3 +1037,18 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - Final 88D evidence: `zuvyr-pack-evidence/pack-088/2026-09-21-88d/receipt.json`.
 - **88E — Production Acceptance + Recovery is now IN_PROGRESS. PACK089 remains blocked until PACK088 reaches full LOCKED_VERIFIED.**
 
+### PACK088 / 88E LOCKED_VERIFIED — 2026-09-21
+
+- **PACK088 — Automations & Durable Workflows: LOCKED_VERIFIED.**
+- 88A / 88B / 88C / 88D / 88E are all canonical `LOCKED_VERIFIED`.
+- 88E one-time production proof: zero charge at schedule creation; one occurrence -> one durable task -> one usage reservation -> persisted terminal result -> one settlement. Canonical usage reserved 3, actual 1, refunded 2.
+- Recovery proof: Brain worker OFF while PACK088 scheduler/execution remained ON, with the schedule run already `running`, durable task `pending`, step attempts 0 and provider cost null. Brain worker ON then completed the same run/task/usage identity exactly once.
+- Recovery identity: run `644f39be-a3ca-4c77-abb2-6d5a8b98d23c`, task `675536a6-d01f-4c36-b851-5ec456063d7d`, usage `106`.
+- Recurring proof: schedule `0fb14e78-5199-4947-92fe-634eda3f4cf7` produced two successful occurrences, then pause set `execution_enabled=false`; future claim after the next-run timestamp returned 0 and run count stayed 2.
+- FIX1 PR #77 closed stranded `subscription_inactive` funding runs; recovery-gate PR #78 merged as `612a86b575f873305d7961a85b7706b44b359b18` and Release Quality run `35641060369` passed.
+- Railway production proof: backend `360f189a-4f69-47fd-9dc3-8d6d4cadc9f6` SUCCESS; Brain-OFF worker `961ddc81-42fb-47aa-9a46-d258ea02f713` SUCCESS; Brain-ON worker `be3676d6-d7e9-49c7-9b2e-427b902b4999` SUCCESS; maintenance `8100e9cd-5798-4d24-91f7-0137c1ce05b8` SUCCESS.
+- 88E introduced no frontend runtime changes; the verified 88D Vercel production Scheduled Tasks artifact remains authoritative.
+- Scoped final cleanliness: 0 active PACK088 runs, 0 enabled PACK088 schedules, 0 PACK088 reserved usage.
+- Final receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88e/receipt.json`.
+- **PACK089 — Skills / Plugins / MCP / Connections is now unblocked.**
+
