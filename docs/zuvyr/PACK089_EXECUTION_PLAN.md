@@ -2,7 +2,7 @@
 
 Date: 2026-09-21
 Canonical predecessor: PACK088 `LOCKED_VERIFIED`
-Implementation status: `IN_PROGRESS` — 89A–89B `LOCKED_VERIFIED`, 89C active
+Implementation status: `IN_PROGRESS` — 89A–89C `LOCKED_VERIFIED`, 89D active
 
 ## 1. Objective
 
@@ -75,7 +75,7 @@ Historical source `plugin_installations` is NOT present in production and must n
 - MCP endpoint SSRF/private-network protections;
 - no paid provider charge unless a canonical cost entry exists.
 
-### 89C — Google Drive OAuth + tools 🟠 `IN_PROGRESS`
+### 89C — Google Drive OAuth + tools ✅ `LOCKED_VERIFIED`
 - OAuth authorization-code + PKCE flow;
 - durable expiring one-time state;
 - token exchange server-side;
@@ -86,7 +86,7 @@ Historical source `plugin_installations` is NOT present in production and must n
 - no browser token exposure;
 - disconnect blocks runtime before remote revoke attempt.
 
-### 89D — Product UI
+### 89D — Product UI 🟠 `IN_PROGRESS`
 - activate Plugins/Connections/Skills surface only after backend gates pass;
 - discover/list, connect/install, permission review, active scopes, revoke/disconnect;
 - loading/empty/error/retry/reopen states;
@@ -160,3 +160,23 @@ Canonical next action: `89C_GOOGLE_DRIVE_OAUTH_TOOLS`.
 - Receipt: `zuvyr-pack-evidence/pack-089/2026-09-21-89b/receipt.json`.
 
 Canonical next action: `89C_GOOGLE_DRIVE_OAUTH_TOOLS`.
+
+
+## 9. 89C canonical receipt — 2026-09-21
+
+- Canonical PR #86 merged as `eb7233ec918dd6b550cc2762300a787054d3e5e7`.
+- Quality run `35657291717`: Backend Quality PASS + Release Quality PASS.
+- Production migration: `20260921212845 pack089_89c_google_drive_oauth`.
+- OAuth uses authorization-code + PKCE, hashed state and Vault-only token/PKCE storage.
+- Drive list/search/read/export/write tools register through the canonical owner-aware `ai.tools` seam.
+- Read execution binds exact connection + provider scope + tool key; write also binds an exact operation fingerprint.
+- Permission denial is checked before Drive network; disconnect blocks locally before best-effort Google revoke.
+- Sensitive 89C RPCs have anon/authenticated EXECUTE = 0 and service_role EXECUTE = true.
+- Production post-apply residue: 0 integration rows, 0 OAuth rows, 0 PACK089 grants/consumptions/audit rows.
+- Exact Railway commit `eb7233ec918dd6b550cc2762300a787054d3e5e7`: backend `20414c63-a0b2-4c49-bf51-6a945df496d3`, worker `6c90ab45-295c-4934-a324-b93ded057307`, maintenance `3cdb6c15-31eb-4972-a144-c0fe23aac8fa` — all SUCCESS.
+- No frontend files changed in 89C.
+- Real Google OAuth remains an 89E external acceptance gate because production has `GOOGLE_API_KEY` but not the OAuth client ID/secret/redirect variables. Missing credentials fail closed before network.
+- A broad rollback-only production lifecycle function was not executed because the connector blocked that call; no bypass was attempted. CI, SQL dry-run, post-apply privilege/RLS/cleanliness and exact runtime deployment are the canonical 89C evidence.
+- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-21-89c/receipt.json`.
+
+Canonical next action: `89D_PRODUCT_UI`.

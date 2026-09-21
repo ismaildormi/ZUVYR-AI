@@ -1,0 +1,127 @@
+{
+  "pack": "089",
+  "phase": "89C_GOOGLE_DRIVE_OAUTH_TOOLS",
+  "title": "Google Drive OAuth + tools",
+  "date": "2026-09-21",
+  "status": "LOCKED_VERIFIED",
+  "finalized_at": "2026-09-21T21:32:06.371Z",
+  "github": {
+    "canonical_pr": 86,
+    "implementation_head": "137b295baa6b3a793974934956b4470442255897",
+    "merge_commit": "eb7233ec918dd6b550cc2762300a787054d3e5e7",
+    "quality_run": 35657291717,
+    "backend_quality": "PASS",
+    "release_quality": "PASS",
+    "superseded_pr": 85,
+    "superseded_pr_closed": true
+  },
+  "implementation": {
+    "oauth_flow": "authorization_code_pkce",
+    "oauth_state_at_rest": "sha256_only",
+    "pkce_verifier_storage": "supabase_vault_only",
+    "integration_token_storage": "supabase_vault_only",
+    "token_refresh": "server_side",
+    "tools": [
+      "list",
+      "search",
+      "read",
+      "export",
+      "write"
+    ],
+    "tool_registry": "canonical ai.tools",
+    "owner_scoped": true,
+    "permission_before_network": true,
+    "read_permission_binding": "connection.read + exact toolKey + provider scope",
+    "write_permission_binding": "connection.write + exact toolKey + operationFingerprint + provider scope",
+    "disconnect_order": "local revoke first, remote Google revoke best-effort second",
+    "billed_credits": 0,
+    "plaintext_token_public_table_storage": false
+  },
+  "database": {
+    "migration": "20260921212845 pack089_89c_google_drive_oauth",
+    "sql_dry_run": "PASS_ROLLBACK",
+    "rpcs": {
+      "consume_workspace_oauth_session_owner_pack089": {
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_role_execute": true
+      },
+      "consume_workspace_connection_permission_pack089": {
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_role_execute": true
+      }
+    },
+    "rls": {
+      "workspace_integration_connections": true,
+      "workspace_oauth_sessions": true
+    },
+    "post_apply_cleanliness": {
+      "integration_rows": 0,
+      "oauth_rows": 0,
+      "pack089_grants": 0,
+      "pack089_consumptions": 0,
+      "pack089_audit_rows": 0
+    }
+  },
+  "tests": {
+    "regression_fixes": [
+      "89A connection.read fixture now binds exact toolKey",
+      "89A connection.write fixture now binds exact toolKey + operationFingerprint",
+      "89A route gate advances Drive connect from disabled to authenticated 89C routes",
+      "89B plugin-only mock explicitly returns no active integrations"
+    ],
+    "google_oauth_unit": "PASS",
+    "missing_credentials_fail_closed_before_network": "PASS",
+    "pkce_hashed_state": "PASS",
+    "token_response_redacted": "PASS",
+    "permission_denial_zero_drive_network_calls": "PASS",
+    "write_fingerprint_binding": "PASS",
+    "disconnect_local_block_before_remote_revoke": "PASS",
+    "full_production_sql_lifecycle_transaction": "NOT_RUN_CONNECTOR_SAFETY_BLOCK",
+    "note": "A broad rollback-only production acceptance function was not executed because the Supabase connector blocked that call; no attempt was made to bypass the connector. CI, migration dry-run, post-apply privileges/RLS/cleanliness and exact runtime deployment are the evidence for 89C."
+  },
+  "railway": {
+    "exact_commit": "eb7233ec918dd6b550cc2762300a787054d3e5e7",
+    "backend": {
+      "deployment": "20414c63-a0b2-4c49-bf51-6a945df496d3",
+      "status": "SUCCESS"
+    },
+    "worker": {
+      "deployment": "6c90ab45-295c-4934-a324-b93ded057307",
+      "status": "SUCCESS"
+    },
+    "maintenance": {
+      "deployment": "3cdb6c15-31eb-4972-a144-c0fe23aac8fa",
+      "status": "SUCCESS"
+    }
+  },
+  "frontend": {
+    "runtime_changed": false,
+    "frontend_files_changed_from_89b": 0,
+    "vercel_build_rate_limit": "NOT_A_89C_RUNTIME_GATE"
+  },
+  "external_gate": {
+    "google_api_key_present": true,
+    "google_oauth_client_id_present": false,
+    "google_oauth_client_secret_present": false,
+    "google_oauth_redirect_uri_present": false,
+    "real_google_oauth_acceptance": "DEFERRED_TO_89E",
+    "engineering_blocked": false,
+    "failure_mode": "workspace_google_oauth_not_configured before network"
+  },
+  "security_advisor": {
+    "rls_enabled_no_policy_info_count": 103,
+    "interpretation": "Includes intentional server-only RLS tables and is not treated as 103 vulnerabilities. PACK089 connection/OAuth tables retain zero client privileges."
+  },
+  "cost": {
+    "provider_calls": 0,
+    "billing_mutations": 0,
+    "observed_pack089_89c_provider_cost": 0
+  },
+  "next": {
+    "phase": "89D_PRODUCT_UI",
+    "allowed": true,
+    "pack090_allowed": false
+  }
+}
