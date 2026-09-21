@@ -2,8 +2,8 @@
 
 Date: 2026-09-21  
 Canonical predecessor: PACK087 `LOCKED_VERIFIED`  
-Planning status: `PLANNING`  
-Implementation status: `NOT_STARTED`
+Planning status: `COMPLETE`  
+Implementation status: `IN_PROGRESS — 88A LOCKED_VERIFIED; 88B–88E NOT_STARTED`
 
 ## 1. Objective
 
@@ -521,3 +521,24 @@ PACK088 is complete only when:
 - receipt/state/matrix/roadmap are reconciled
 
 PACK089 must not start before this gate.
+
+## 13. Phase 88A canonical checkpoint — 2026-09-21
+
+Status: **LOCKED_VERIFIED**
+
+- Implementation PR: `#60`.
+- Implementation merge: `bba73570d735d4801047e90635715eb7d4b3f9cc`.
+- Production schema: additive workflow/schedule revisioning + durable `workspace_schedule_runs` occurrence ledger.
+- Production migration history contains two identical idempotent 88A schema entries:
+  - `20260921051008 pack088_88a_automations_durable_workflows`
+  - `20260921051010 pack088_88a_automations_schema_invariants`
+  - Both have the same SQL SHA256 `654ce05524e1547f9f10b9f385f5e61711abec8a9dc8f2d2ca5cefeb5b8c1813`; no schema divergence exists and history is preserved.
+- Privilege hardening: `20260921051244 pack088_88a_ledger_privilege_hardening`.
+- `workspace_schedule_runs`: RLS ON, zero browser/client grants, service-role privileges limited to SELECT/INSERT/UPDATE.
+- Production acceptance transaction: PASS with ROLLBACK. Verified revision bumps, stale-authorization invalidation, duplicate occurrence rejection, timezone rejection and stale workflow revision rejection. No acceptance rows persisted.
+- Production schedule execution remains disabled: zero `execution_enabled=true` schedules.
+- Railway backend/worker/maintenance on exact implementation merge: SUCCESS.
+- No provider call, billing mutation or scheduled execution occurred in 88A.
+- Receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88a/receipt.json`.
+- **88B — Scheduler + exactly-once dispatch is NOT STARTED and requires explicit user instruction.**
+
