@@ -20,6 +20,10 @@ const repositorySource = fs.readFileSync(
   path.join(__dirname, 'lib', 'automationRepository.js'),
   'utf8'
 );
+const privilegeHardening = fs.readFileSync(
+  path.join(__dirname, '88a_pack088_schedule_run_privilege_hardening.sql'),
+  'utf8'
+);
 
 assert.equal(config.version, 'pack-088.88a.automations.v1');
 assert.equal(config.implementationPhase, '88A_SCHEMA_INVARIANTS');
@@ -67,6 +71,10 @@ for (const marker of [
 ]) {
   assert(migration.includes(marker), `missing PACK088 migration marker: ${marker}`);
 }
+
+assert(privilegeHardening.includes('revoke all on table public.workspace_schedule_runs from service_role'));
+assert(privilegeHardening.includes('grant select, insert, update on table public.workspace_schedule_runs to service_role'));
+assert(!/grant\s+(delete|truncate|references|trigger)/i.test(privilegeHardening));
 
 for (const forbidden of [
   /drop\s+table/i,
