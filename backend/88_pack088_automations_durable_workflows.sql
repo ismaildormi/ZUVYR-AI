@@ -625,7 +625,7 @@ for each row execute function public.pack088_bump_workflow_revision_from_step();
 drop trigger if exists trg_pack088_workflow_schedule_invalidation
   on public.workspace_workflows;
 create trigger trg_pack088_workflow_schedule_invalidation
-after update of revision on public.workspace_workflows
+after update on public.workspace_workflows
 for each row execute function public.pack088_invalidate_schedule_authorization_on_workflow_change();
 
 drop trigger if exists trg_pack088_schedule_definition_guard
