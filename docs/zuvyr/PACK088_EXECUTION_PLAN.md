@@ -521,3 +521,30 @@ PACK088 is complete only when:
 - receipt/state/matrix/roadmap are reconciled
 
 PACK089 must not start before this gate.
+
+## 13. Phase 88A canonical checkpoint — 2026-09-21
+
+Status: **LOCKED_VERIFIED**
+
+- PACK088 overall status: `IN_PROGRESS`.
+- Base implementation PR `#60`, merge `bba73570d735d4801047e90635715eb7d4b3f9cc`.
+- Workflow invalidation FIX2 PR `#63`, merge `f3df3a881a01742b4f927ea9f986bc5d2c23c737`.
+- GitHub quality gates:
+  - run `35563765307`: Backend Quality PASS + Release Quality PASS.
+  - run `35564345862`: Backend Quality PASS + Release Quality PASS.
+- Production schema now includes workflow/schedule revision binding plus durable `workspace_schedule_runs` occurrence identity.
+- Production migration history:
+  - `20260921051008 pack088_88a_automations_durable_workflows`
+  - `20260921051010 pack088_88a_automations_schema_invariants`
+  - `20260921051244 pack088_88a_ledger_privilege_hardening`
+  - `20260921052207 pack088_88a_workflow_invalidation_trigger`
+- The first two 88A migrations contain identical SQL (SHA256 `654ce05524e1547f9f10b9f385f5e61711abec8a9dc8f2d2ca5cefeb5b8c1813`). Migration history is preserved; no schema divergence was found.
+- `workspace_schedule_runs`: RLS ON, zero anon/authenticated grants, service-role privileges limited to SELECT/INSERT/UPDATE.
+- Behavioral production test used transaction-only rows and ROLLBACK. It verifies workflow revision bumps, stale authorization invalidation after workflow change, schedule-definition revision invalidation, duplicate occurrence rejection, owner mismatch rejection and IANA timezone rejection. Zero test rows persisted.
+- Real testing found and closed FIX2: `AFTER UPDATE OF revision` did not fire when a BEFORE trigger derived a revision change. Canonical trigger is now `AFTER UPDATE`, while the function itself guards on `NEW.revision IS DISTINCT FROM OLD.revision`.
+- Railway backend, worker and maintenance are SUCCESS on exact commit `f3df3a881a01742b4f927ea9f986bc5d2c23c737`.
+- No frontend file changed; Vercel deployment was not required for 88A. The known Vercel build-rate-limit status is not an 88A runtime regression.
+- No schedule was activated, no provider call occurred and no billing mutation occurred.
+- Final receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88a/receipt.json`.
+- **88B Scheduler + Exactly-Once Dispatch is NOT_STARTED and requires explicit user instruction.**
+

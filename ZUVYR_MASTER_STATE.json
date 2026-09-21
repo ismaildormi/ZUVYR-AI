@@ -881,9 +881,9 @@
     "final_no_cost_receipt": "zuvyr-pack-evidence/pack-062/2026-09-18-no-cost-final/receipt.json"
   },
   "continuation_reconciliation": {
-    "date": "2026-09-21",
+    "date": "2026-09-21T05:27:13.813063Z",
     "legacy_current_fields_preserved": true,
-    "note": "Fresh truth: Phase 1 / PACK087 remains canonical LOCKED_VERIFIED. PACK088 planning has started from the verified Phase 1 state without repeating PACK087 acceptance. No PACK088 runtime code, migration, provider call or billing mutation has been performed yet. Canonical execution plan is docs/zuvyr/PACK088_EXECUTION_PLAN.md. Implementation begins with 88A only after planning lock."
+    "note": "Fresh truth: PACK087 remains canonical LOCKED_VERIFIED. PACK088 is IN_PROGRESS. Phase 88A Schema + Invariants is LOCKED_VERIFIED after production migrations, least-privilege hardening, FIX2 workflow revision invalidation repair, two successful GitHub quality-gate runs, rollback-only production behavior acceptance, and Railway success on f3df3a881a01742b4f927ea9f986bc5d2c23c737. 88B-88E are NOT_STARTED. Do not start 88B without explicit user instruction."
   },
   "pack063": {
     "status": "LOCKED_ENGINEERING_VERIFIED",
@@ -2517,15 +2517,20 @@
     "phase2_requires_explicit_user_instruction": true
   },
   "phase2_planning_authorized": true,
-  "phase2_implementation_authorized": false,
+  "phase2_implementation_authorized": true,
   "pack088": {
-    "status": "PLANNING",
+    "status": "IN_PROGRESS",
     "title": "Automations & Durable Workflows",
     "plan_path": "docs/zuvyr/PACK088_EXECUTION_PLAN.md",
     "planning_started_at": "2026-09-21",
-    "implementation_started": false,
-    "production_changes_applied": false,
-    "migrations_applied": [],
+    "implementation_started": true,
+    "production_changes_applied": true,
+    "migrations_applied": [
+      "20260921051008 pack088_88a_automations_durable_workflows",
+      "20260921051010 pack088_88a_automations_schema_invariants",
+      "20260921051244 pack088_88a_ledger_privilege_hardening",
+      "20260921052207 pack088_88a_workflow_invalidation_trigger"
+    ],
     "provider_calls_during_planning": 0,
     "payment_mutations_during_planning": 0,
     "dependencies": [
@@ -2563,8 +2568,84 @@
       "88D_UI_NOTIFICATIONS_PAUSE_CANCEL",
       "88E_PRODUCTION_ACCEPTANCE_RECOVERY"
     ],
-    "next_action": "IMPLEMENT_88A_ONLY_AFTER_PLAN_LOCK",
+    "next_action": "AWAIT_USER_TO_START_88B",
     "next_pack": "089",
-    "next_pack_allowed": false
-  }
+    "next_pack_allowed": false,
+    "provider_calls": 0,
+    "payment_mutations": 0,
+    "automatic_schedule_executions": 0,
+    "migration_reconciliation": {
+      "duplicate_versions": [
+        "20260921051008",
+        "20260921051010"
+      ],
+      "identical_sql": true,
+      "sql_sha256": "654ce05524e1547f9f10b9f385f5e61711abec8a9dc8f2d2ca5cefeb5b8c1813",
+      "schema_divergence": false,
+      "history_preserved": true
+    },
+    "current_phase": "88A_COMPLETE_AWAITING_88B_USER_INSTRUCTION",
+    "phases": {
+      "88A_SCHEMA_INVARIANTS": {
+        "status": "LOCKED_VERIFIED",
+        "finalized_at": "2026-09-21T05:27:13.813063Z",
+        "implementation_prs": [
+          60,
+          63
+        ],
+        "implementation_heads": [
+          "52a8aba5189f311bcf25ad699a7d6f99f4d7f486",
+          "14fc60cb7ebbf0dc7e35fea1ca4f7e511f2a44eb"
+        ],
+        "implementation_merge_commits": [
+          "bba73570d735d4801047e90635715eb7d4b3f9cc",
+          "f3df3a881a01742b4f927ea9f986bc5d2c23c737"
+        ],
+        "receipt_path": "zuvyr-pack-evidence/pack-088/2026-09-21-88a/receipt.json",
+        "receipt_git_blob": "dbfc643414cb8decfa0564b91e56ecd518c5c230",
+        "ci_runs": {
+          "implementation": 35563765307,
+          "fix2": 35564345862,
+          "backend_quality": "PASS",
+          "release_quality": "PASS"
+        },
+        "sql_dry_run": "PASS_ROLLBACK",
+        "production_behavior_acceptance": "PASS_ROLLBACK",
+        "workflow_revision_invalidation": "PASS_AFTER_FIX2",
+        "schedule_definition_invalidation": "PASS",
+        "duplicate_occurrence_rejection": "PASS",
+        "owner_mismatch_rejection": "PASS",
+        "timezone_validation": "PASS",
+        "customer_test_rows_persisted": 0,
+        "rls_all_required_tables": true,
+        "schedule_runs_client_grants": 0,
+        "schedule_runs_service_role_grants": [
+          "INSERT",
+          "SELECT",
+          "UPDATE"
+        ],
+        "execution_enabled_schedules": 0,
+        "railway": {
+          "exact_commit": "f3df3a881a01742b4f927ea9f986bc5d2c23c737",
+          "backend": "SUCCESS",
+          "worker": "SUCCESS",
+          "maintenance": "SUCCESS"
+        },
+        "vercel_runtime_change_required": false
+      },
+      "88B_SCHEDULER_EXACTLY_ONCE": {
+        "status": "NOT_STARTED"
+      },
+      "88C_FUNDING_PERMISSION_BRAIN_KERNEL": {
+        "status": "NOT_STARTED"
+      },
+      "88D_UI_NOTIFICATIONS_PAUSE_CANCEL": {
+        "status": "NOT_STARTED"
+      },
+      "88E_PRODUCTION_ACCEPTANCE_RECOVERY": {
+        "status": "NOT_STARTED"
+      }
+    }
+  },
+  "phase2_implementation_authorization_scope": "PACK088_88A_ONLY"
 }
