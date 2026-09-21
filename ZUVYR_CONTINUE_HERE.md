@@ -1742,3 +1742,17 @@ Do **not** reopen PACK084 merely because M18 is deferred. M18 stays a launch/liv
 - **Remaining gate:** Vercel production deployment for the merge commit is blocked by account `build-rate-limit`. Older 88D branch previews are READY, but they do not count as merged production proof.
 - Do not start 88E until the Vercel production UI gate is cleared and the live production Scheduled Tasks surface is verified.
 - Receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88d/receipt.json`.
+
+<!-- PACK088_88D_LOCKED_VERIFIED_20260921 -->
+### PACK088 / 88D LOCKED_VERIFIED — 2026-09-21
+
+- **88D — Pause/Cancel/History/Notifications/Scheduled Tasks UI: LOCKED_VERIFIED.**
+- Implementation PR #72 merged as `cbaff02b1512ff75b550999f7e17c3c0d1b64426`; quality run `35637079084` passed Backend Quality + Release Quality.
+- Supabase migration `20260921181528 pack088_88d_ui_notifications_pause_cancel` is live; control RPCs remain service-role-only.
+- Production transaction acceptance passed create-zero-charge, pause, resume next-run recomputation, run-now idempotency, cancel/history preservation, PACK039 cancellation binding, cancel-after-claim-before-Brain race closure, and exactly-once in-app notifications.
+- Railway backend/worker/maintenance are SUCCESS with scheduler + automation execution enabled.
+- The former Vercel build-rate-limit gate is cleared. Production deployment `dpl_GH3W4VkxLLCgETPU63VDpVPtjvZn` is READY on `main` commit `14a52caacdedf7bfb7cf08482b46a58c054097dd`, target=`production`.
+- Live `zuvyr-suite-v1.js` and `zuvyr-suite-v1.css` exactly match the same Git source; Scheduled Tasks create/pause/resume/cancel/notification-history markers plus RTL/mobile CSS are present.
+- Evidence: `zuvyr-pack-evidence/pack-088/2026-09-21-88d/receipt.json`.
+- **PACK088 remains IN_PROGRESS. 88E — Production Acceptance + Recovery is now the only remaining phase. PACK089 remains blocked until 88E closes PACK088.**
+
