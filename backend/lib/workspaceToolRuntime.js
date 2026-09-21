@@ -26,6 +26,16 @@ function plainObject(value) {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
+function normalizeToolInput(value) {
+  const input = value == null ? {} : value;
+  if (!plainObject(input)) throw toolRuntimeError('workspace_tool_input_invalid');
+  let serialized;
+  try { serialized = JSON.stringify(input); }
+  catch { throw toolRuntimeError('workspace_tool_input_invalid'); }
+  if (serialized.length > 64000) throw toolRuntimeError('workspace_tool_input_too_large');
+  return input;
+}
+
 function normalizeManifestTools(connection) {
   const manifest = connection?.manifest;
   if (!plainObject(manifest) || !Array.isArray(manifest.tools) || manifest.tools.length < 1 || manifest.tools.length > 32) {
@@ -120,6 +130,7 @@ function createWorkspaceToolRuntime({
   }
 
   async function invokeDynamicTool(connectionSnapshot, manifestTool, input, context = {}) {
+    const normalizedInput = normalizeToolInput(input);
     const ownerId = String(context.ownerId || '').toLowerCase();
     const sessionId = String(context.sessionId || '').trim();
     const requestId = String(context.requestId || '').trim();
@@ -146,7 +157,7 @@ function createWorkspaceToolRuntime({
       action,
       connectionId: connection.id,
       toolKey: currentTool.key,
-      input: input == null ? {} : input
+      input: normalizedInput
     });
 
     await permissionStore.consumeWorkspaceTool({
@@ -164,7 +175,7 @@ function createWorkspaceToolRuntime({
       if (!delegate || delegate.ownerId != null || delegate.source !== 'builtin') {
         throw toolRuntimeError('workspace_plugin_delegate_unavailable');
       }
-      const result = await tools.invokeTool(currentTool.delegateToolKey, input, {
+      const result = await tools.invokeTool(currentTool.delegateToolKey, normalizedInput, {
         ...context,
         delegatedFrom: currentTool.key
       });
@@ -184,7 +195,7 @@ function createWorkspaceToolRuntime({
     const result = await mcpAdapter.invoke({
       endpointUrl: connection.endpoint_url,
       remoteToolName: currentTool.remoteToolName,
-      input,
+      input: normalizedInput,
       authorization,
       signal: context.signal || null
     });
@@ -270,6 +281,7 @@ function createWorkspaceToolRuntime({
   }
 
   async function prepareInvocation({ ownerId, toolKey, input, sessionId }) {
+    const normalizedInput = normalizeToolInput(input);
     await hydrateOwnerTools(ownerId);
     const definition = tools.getToolDefinition(toolKey);
     if (!definition || definition.ownerId !== String(ownerId).toLowerCase() || !definition.connectionId) {
@@ -282,7 +294,7 @@ function createWorkspaceToolRuntime({
       action,
       connectionId: connection.id,
       toolKey: normalizedToolKey,
-      input: input == null ? {} : input
+      input: normalizedInput
     });
     return Object.freeze({
       operationFingerprint: fingerprint,
