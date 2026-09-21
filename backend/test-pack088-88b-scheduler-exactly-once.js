@@ -20,6 +20,10 @@ const migration = fs.readFileSync(
   path.join(__dirname, '89_pack088_88b_scheduler_exactly_once.sql'),
   'utf8'
 );
+const baseMigration = fs.readFileSync(
+  path.join(__dirname, '88_pack088_automations_durable_workflows.sql'),
+  'utf8'
+);
 const schedulerSource = fs.readFileSync(
   path.join(__dirname, 'lib', 'automationScheduler.js'),
   'utf8'
@@ -62,6 +66,9 @@ for (const marker of [
 ]) {
   assert(migration.includes(marker), `missing PACK088 88B migration marker: ${marker}`);
 }
+
+assert(baseMigration.includes('constraint workspace_schedule_runs_occurrence_unique'));
+assert(baseMigration.includes('unique(schedule_id, occurrence_key)'));
 
 for (const forbidden of [
   /brainKernelRuntime/i,
