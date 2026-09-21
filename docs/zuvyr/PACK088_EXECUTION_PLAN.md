@@ -452,6 +452,22 @@ Acceptance:
 - workflow revision change invalidates stale authorization
 - Pack087 device-control occurrence mints only a fresh short-lived mission grant
 
+#### 88C FINALIZED — LOCKED_VERIFIED
+
+- Finalized: 2026-09-21T15:46:23.144019Z
+- Primary implementation PR #67 merged as `dcfb1c03ff3db3a274c7af3b319f1380de5caeda`; quality run `35614175709` passed Backend Quality + Release Quality.
+- FIX2 bound Brain plan capabilities to the workflow-approved capability set before reservation and preserved exact quote/cap evidence.
+- FIX3 PR #70 merged as `6c6b6eb18c30a04343a21cbd5d53dea44fcb7613`; quality run `35620353690` passed Backend Quality + Release Quality.
+- Production migration: `20260921144521 pack088_88c_funding_permission_brain`.
+- Live stale/revoked workflow authorization acceptance reached `blocked_permission` before task creation or usage reservation.
+- Live cap=0 acceptance reached `blocked_funding / PACK040_CREDIT_CAP_EXCEEDED` with exact runtime quote evidence (3 estimated credits, cap 0), zero Brain task and zero usage record.
+- Transaction-only PACK087 IP proof minted a fresh mission-bound Full Control grant with 9 scopes, verified mission digest/receipt, then rolled back fully; the real expired session was not misrepresented as live-active.
+- Worker log confirms automation execution runtime is enabled. Railway backend/worker/maintenance are SUCCESS on FIX3 runtime commit.
+- Acceptance fixtures were removed; production is clean: 0 execution-enabled schedules and 0 pending/queued/claimed/running automation runs.
+- No provider call and no payment mutation occurred during live acceptance.
+- Evidence: `zuvyr-pack-evidence/pack-088/2026-09-21-88c/receipt.json`.
+- **88D remains NOT_STARTED and requires explicit user instruction.**
+
 ### Phase 88D — Pause/cancel/history/notifications/UI
 
 Activate product surface.
