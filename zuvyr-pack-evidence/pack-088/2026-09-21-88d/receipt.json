@@ -3,15 +3,15 @@
   "pack": "088",
   "phase": "88D_UI_NOTIFICATIONS_PAUSE_CANCEL",
   "title": "Automations & Durable Workflows — Product Controls, Notifications & Scheduled Tasks UI",
-  "status": "IMPLEMENTATION_VERIFIED_PRODUCTION_UI_GATE",
+  "status": "LOCKED_VERIFIED",
   "canonical_pack_status": "IN_PROGRESS",
   "checkpoint_at": "2026-09-21T18:21:30Z",
   "scope_boundary": {
     "phase_88d_implementation_complete": true,
-    "phase_88d_canonical_locked_verified": false,
+    "phase_88d_canonical_locked_verified": true,
     "phase_88e_started": false,
     "pack089_allowed": false,
-    "remaining_gate": "VERCEL_PRODUCTION_UI_DEPLOYMENT",
+    "remaining_gate": null,
     "provider_execution_used_for_88d_acceptance": false,
     "billing_mutation_used_for_88d_acceptance": false
   },
@@ -118,16 +118,29 @@
     "vercel": {
       "project_id": "prj_P6VddfynJKniiK29clC6Epr9byPk",
       "team_id": "team_3PYlTi0Euf7SDg7T2NRzGx3q",
-      "merge_commit_status": "FAILED_BUILD_RATE_LIMIT",
-      "production_ui_verified": false,
-      "source_build_evidence": {
-        "branch_preview_ui_commit": "24f19817be7746104c6954c9f948e5a52a976a45",
-        "branch_preview_ui_deployment": "dpl_6tXqpoJDi3MXZ2535p2rNfXhhapc",
-        "branch_preview_test_commit": "751a8ec5b711bb6274ba3d970a4d2f448b55b09b",
-        "branch_preview_test_deployment": "dpl_88725HixSbnmjSetn1XmrPXkVJDy",
-        "state": "READY"
+      "production_deployment": "dpl_GH3W4VkxLLCgETPU63VDpVPtjvZn",
+      "production_status": "READY",
+      "target": "production",
+      "production_commit": "14a52caacdedf7bfb7cf08482b46a58c054097dd",
+      "production_alias": "rox-ai-sepia.vercel.app",
+      "production_ui_verified": true,
+      "live_js_blob": "d37b578f4543e7f193fccc194fc10365d3bb6579",
+      "live_css_blob": "d030874f7165b52d14a39dabc701ef58fe64e0b5",
+      "live_js_exact_git_match": true,
+      "live_css_exact_git_match": true,
+      "scheduled_ui_markers": {
+        "create": true,
+        "activate": true,
+        "run_now": true,
+        "pause": true,
+        "resume": true,
+        "cancel": true,
+        "run_history": true,
+        "notification_history": true,
+        "rtl_css": true,
+        "mobile_css": true
       },
-      "interpretation": "Source UI built successfully in preview, but the merged production frontend has not deployed because Vercel rejected the build at the account build-rate limit. This is the only remaining 88D gate."
+      "interpretation": "The merged Scheduled Tasks UI is deployed on Vercel production. Live JS and CSS are exact matches to the GitHub blobs on the production commit, clearing the former build-rate-limit gate."
     }
   },
   "security": {
@@ -137,8 +150,9 @@
     "advisor_note": "Post-migration advisor still reports existing INFO-level RLS-enabled/no-policy findings used by the service-role-only architecture; no 88D-specific privilege expansion was introduced."
   },
   "next": {
-    "action": "RESOLVE_VERCEL_PRODUCTION_UI_GATE_THEN_FINALIZE_88D",
-    "phase_88e": "NOT_STARTED",
+    "action": "START_88E_PRODUCTION_ACCEPTANCE_RECOVERY",
+    "phase_88e": "READY_TO_START",
     "pack089_allowed": false
-  }
+  },
+  "finalized_at": "2026-09-21T18:25:24.197Z"
 }
