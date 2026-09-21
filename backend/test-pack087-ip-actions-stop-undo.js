@@ -169,6 +169,7 @@ class FakeRepository {
 (async () => {
   const sql = fs.readFileSync(path.join(__dirname, '87_pack087_ip_actions_stop_undo.sql'), 'utf8');
   const fullControlSql = fs.readFileSync(path.join(__dirname, '87b_pack087_full_computer_control.sql'), 'utf8');
+  const fullRuntimeSql = fs.readFileSync(path.join(__dirname, '87c_pack087_full_control_device_runtime.sql'), 'utf8');
   const ownerRoutes = fs.readFileSync(path.join(__dirname, 'lib', 'roxIpRoutes.js'), 'utf8');
   const deviceRoutes = fs.readFileSync(path.join(__dirname, 'lib', 'deviceSessionRoutes.js'), 'utf8');
   const pairing = fs.readFileSync(path.join(__dirname, 'lib', 'ipPairingService.js'), 'utf8');
@@ -208,6 +209,18 @@ class FakeRepository {
   ]) assert(fullControlSql.includes(marker), marker);
   assert(!/\b(drop table|truncate|delete from)\b/i.test(fullControlSql));
   assert(!/grant\s+.*\s+to\s+(anon|authenticated)/i.test(fullControlSql));
+
+  for (const marker of [
+    "v_action.permission_grant_id=v_grant.id",
+    "v_action.mission_digest=v_grant.mission_digest",
+    "'pack087_mission_binding_invalid'",
+    "'grantMode',v_grant.grant_mode",
+    "'missionDigest',v_action.mission_digest",
+    "'missionBound',v_full_control",
+    "'fullControl',v_full_control"
+  ]) assert(fullRuntimeSql.includes(marker), marker);
+  assert(!/\b(drop table|truncate|delete from)\b/i.test(fullRuntimeSql));
+  assert(!/grant\s+.*\s+to\s+(anon|authenticated)/i.test(fullRuntimeSql));
 
   for (const marker of [
     "router.get('/devices'",
@@ -417,6 +430,7 @@ class FakeRepository {
   assert.match(stop.signal_id, /^[0-9a-f-]{36}$/);
 
   console.log('PASS: PACK087 Full Computer Control expands one explicit mission-bound grant into all nine device scopes');
+  console.log('PASS: PACK087 claimed Full Control actions are bound to the exact permission grant and mission digest');
   console.log('PASS: PACK087 Full Computer Control is time-bounded to 15 minutes and keeps STOP/revoke independent');
   console.log('PASS: PACK087 device discovery exposes only owner-bound paired-device sessions without secrets');
   console.log('PASS: PACK087 DB authority requires paired session, explicit consent and scoped permission grants');
