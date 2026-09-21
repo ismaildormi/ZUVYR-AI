@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('node:crypto');
 const { config } = require('./ipCapabilityRegistry');
 const { normalizeIpAction, actionDigest } = require('./ipActionPolicy');
 const { normalizePermissionGrant } = require('./ipPermissionContract');
@@ -9,6 +10,18 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 const HEX64 = /^[0-9a-f]{64}$/;
 const BACKUP_REF = /^backup:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_RESULT_BYTES = 16384;
+const FULL_CONTROL_MAX_SECONDS = 900;
+const FULL_CONTROL_SCOPES = Object.freeze([
+  'screen.view',
+  'pointer.control',
+  'keyboard.type',
+  'application.open',
+  'clipboard.read',
+  'clipboard.write',
+  'file.read',
+  'file.write',
+  'shell.execute'
+]);
 const REDACTED_KEY = /(password|secret|token|authorization|cookie|credential|private.?key|api.?key)/i;
 const REDACTED_VALUE = /(?:Bearer\s+[A-Za-z0-9._~+\/-]{12,}|(?:sk|pk|rk)[-_][A-Za-z0-9_-]{16,})/gi;
 
@@ -22,6 +35,29 @@ function uuid(value, code) {
   const text = String(value || '').trim().toLowerCase();
   if (!UUID.test(text)) throw actionServiceError(code);
   return text;
+}
+
+function normalizeMission(value) {
+  const mission = String(value || '').trim();
+  if (!mission || mission.length > 4000) {
+    throw actionServiceError('pack087_mission_invalid');
+  }
+  return mission;
+}
+
+function missionDigest(value) {
+  return crypto.createHash('sha256').update(normalizeMission(value), 'utf8').digest('hex');
+}
+
+function normalizeFullControlExpiry(value, now) {
+  const expiry = Date.parse(String(value || ''));
+  if (!Number.isFinite(expiry) || expiry <= now) {
+    throw actionServiceError('pack087_permission_expiry_invalid');
+  }
+  if (expiry > now + FULL_CONTROL_MAX_SECONDS * 1000) {
+    throw actionServiceError('pack087_permission_expiry_too_long');
+  }
+  return new Date(expiry).toISOString();
 }
 
 function cleanErrorCode(value) {
@@ -83,6 +119,30 @@ function sanitizeResult(value) {
 
 function createIpActionService({ repository, clock = () => new Date() } = {}) {
   if (!repository) throw actionServiceError('pack087_repository_required');
+
+  async function listDevices({ ownerId }) {
+    const owner = uuid(ownerId, 'pack087_owner_id_invalid');
+    return repository.listOwnerDevices({ ownerId: owner });
+  }
+
+  async function grantFullControl({ ownerId, sessionId, mission, expiresAt, explicitConsent }) {
+    if (explicitConsent !== true) {
+      throw actionServiceError('pack087_full_control_consent_required');
+    }
+    const owner = uuid(ownerId, 'pack087_owner_id_invalid');
+    const session = uuid(sessionId, 'pack087_session_id_invalid');
+    const normalizedMission = normalizeMission(mission);
+    const normalizedExpiry = normalizeFullControlExpiry(expiresAt, clock().getTime());
+    await repository.getSessionForOwner({ ownerId: owner, sessionId: session });
+    return repository.grantFullControl({
+      ownerId: owner,
+      sessionId: session,
+      mission: normalizedMission,
+      missionDigest: missionDigest(normalizedMission),
+      expiresAt: normalizedExpiry,
+      scopes: [...FULL_CONTROL_SCOPES]
+    });
+  }
 
   async function grantPermissions({ ownerId, deviceId, sessionId, scopes, expiresAt, explicitConsent }) {
     const owner = uuid(ownerId, 'pack087_owner_id_invalid');
@@ -235,6 +295,8 @@ function createIpActionService({ repository, clock = () => new Date() } = {}) {
   }
 
   return Object.freeze({
+    listDevices,
+    grantFullControl,
     grantPermissions,
     revokePermissions,
     prepareAction,
@@ -252,6 +314,10 @@ function createIpActionService({ repository, clock = () => new Date() } = {}) {
 
 module.exports = {
   MAX_RESULT_BYTES,
+  FULL_CONTROL_MAX_SECONDS,
+  FULL_CONTROL_SCOPES,
+  normalizeMission,
+  missionDigest,
   actionServiceError,
   sanitizeResult,
   createIpActionService

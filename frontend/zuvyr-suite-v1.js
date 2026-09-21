@@ -6,7 +6,7 @@
   var sections = [
     ['dashboard','⌂','Dashboard','ready'],['images','◇','Images','ready'],['video','▷','Video','connect'],
     ['3d','⬡','3D Studio','ready'],['code','</>','Code Studio','ready'],['voice','◉','Voice','connect'],['music','♫','Music','connect'],
-    ['ip','✦','ZUVYR IP','plan'],['research','⌕','Research','ready'],['library','▦','Library','ready'],
+    ['ip','✦','ZUVYR IP','ready'],['research','⌕','Research','ready'],['library','▦','Library','ready'],
     ['projects','▣','Projects','ready'],['documents','▤','Documents','ready'],['spreadsheets','▥','Spreadsheets','ready'],
     ['presentations','▧','Presentations','ready'],['scheduled','◷','Scheduled','blocked'],['plugins','⌘','Plugins','blocked'],
     ['usage','◫','Usage & Billing','ready'],['analytics','⌁','Analytics','validate'],['settings','⚙','Settings','ready']
@@ -19,7 +19,7 @@
     code:['Code Studio','Build multi-file projects and request approved image or video assets when the experience needs them.'],
     voice:['Voice','Prepare transcription, speech and voice conversations with transparent minute usage.'],
     music:['Music & Audio','Create music, effects, cleanup and remix workflows after pricing is verified.'],
-    ip:['ZUVYR IP','Plan work across every ZUVYR capability with exact permissions, audit and STOP controls.'],
+    ip:['ZUVYR IP','Give ZUVYR temporary Full Computer Control for one explicit mission, with live audit, STOP and reversible Undo where supported.'],
     research:['Research','Turn verified cited research into reusable Documents, Spreadsheets or Presentations without a second provider charge.'],
     library:['Library','Find and organize images, documents, media and generated outputs.'],
     projects:['Projects','Keep chats, files, media, code and task context together.'],
@@ -78,11 +78,35 @@
       orchestrator('dashboard')+
       '<div class="zs-card"><h2>5-hour allowance</h2><p>Subscription wallet</p><div class="zs-kpi"><strong>—</strong><span>Connect live usage</span></div><div class="zs-progress"><span style="width:0%"></span></div></div>'+
       '<div class="zs-card half"><h2>Capability network</h2><p>Approved results move between tools through explicit handoffs.</p><div class="zs-orbit"><div><div class="zs-orbit-core">ZUVYR</div><div class="zs-orbit-list"><span class="zs-chip">Research → Code</span><span class="zs-chip">Images → Code</span><span class="zs-chip">Audio → Video</span><span class="zs-chip">Library → Projects</span></div></div></div></div>'+
-      '<div class="zs-card half"><h2>Launch safety</h2><p>These foundations are visible without pretending unavailable providers are live.</p><div class="zs-chip-row"><span class="zs-chip">Unknown price: blocked</span><span class="zs-chip">Extra media: consent</span><span class="zs-chip">Credits: reserve first</span><span class="zs-chip">IP device control: off</span></div></div></div>';
+      '<div class="zs-card half"><h2>Launch safety</h2><p>These foundations are visible without pretending unavailable providers are live.</p><div class="zs-chip-row"><span class="zs-chip">Unknown price: blocked</span><span class="zs-chip">Extra media: consent</span><span class="zs-chip">Credits: reserve first</span><span class="zs-chip">Full Computer Control: mission-bound</span></div></div></div>';
   }
   function ipView() {
-    var scopes=['chat.read','images.propose','video.propose','audio.propose','code.propose','research.propose','library.read','projects.propose','documents.propose','spreadsheets.propose','presentations.propose','scheduled_tasks.propose','plugins.read'];
-    return heading('ip')+'<div class="zs-grid"><div class="zs-card wide"><h2>Permission-scoped tool plan</h2><p>Select exactly what ZUVYR IP may include. Wildcards, shell, filesystem writes and device control are unavailable.</p><form data-zs-ip-form><div class="zs-field"><label for="zs-ip-goal">Goal</label><textarea id="zs-ip-goal" name="goal" placeholder="Plan a multi-step project across ZUVYR"></textarea></div><div class="zs-checks">'+scopes.map(function(s){return '<label class="zs-check"><input type="checkbox" name="scopes" value="'+s+'"> '+s+'</label>';}).join('')+'</div><label class="zs-consent"><input type="checkbox" name="consent"> I approve these exact planning scopes. This does not approve device control, provider calls or spending.</label><div class="zs-actions"><button class="zs-primary" type="submit">Create IP plan</button><span class="zs-hint">Audit + STOP required</span></div></form><div class="zs-result" data-zs-ip-result></div></div><div class="zs-card"><h2>Safety core</h2><div class="zs-chip-row"><span class="zs-chip">Exact scopes</span><span class="zs-chip">Confirmation</span><span class="zs-chip">Live audit</span><span class="zs-chip">STOP</span><span class="zs-chip">Undo plan</span></div><p class="zs-note">Computer control remains disabled until a trusted device agent and rollback evidence exist.</p></div></div>';
+    return heading('ip')+
+      '<div class="zs-grid">'+
+        '<div class="zs-card wide">'+
+          '<h2>Full Computer Control</h2>'+
+          '<p>Describe the result you want. ZUVYR can use the paired computer\'s screen, pointer, keyboard, applications, clipboard, files and approved local commands for this mission only.</p>'+
+          '<form data-zs-ip-full-control-form>'+
+            '<div class="zs-field"><label for="zs-ip-mission">Mission</label><textarea id="zs-ip-mission" name="mission" maxlength="4000" required placeholder="Example: Edit this video in After Effects, export it, upload it to my channel with the title and description I gave you, then schedule it for 20:00."></textarea></div>'+
+            '<div class="zs-field"><label for="zs-ip-device">Computer</label><select id="zs-ip-device" name="sessionId" data-zs-ip-device required><option value="">Loading paired computers…</option></select></div>'+
+            '<div class="zs-actions"><button class="zs-primary" type="submit">Allow Full Computer Control for this task</button><button type="button" data-zs-ip-stop disabled>STOP &amp; End Control</button></div>'+
+            '<p class="zs-note">Pressing Allow is explicit consent for this mission. The grant is temporary, auditable and mission-bound. STOP remains independent. Reversible file writes keep Undo evidence.</p>'+
+          '</form>'+
+          '<div class="zs-result" data-zs-ip-result></div>'+
+        '</div>'+
+        '<div class="zs-card">'+
+          '<h2>What Full Control includes</h2>'+
+          '<div class="zs-chip-row">'+
+            '<span class="zs-chip">Screen</span><span class="zs-chip">Mouse</span><span class="zs-chip">Keyboard</span><span class="zs-chip">Apps</span><span class="zs-chip">Clipboard</span><span class="zs-chip">Files</span><span class="zs-chip">Terminal</span>'+
+          '</div>'+
+          '<p class="zs-note">Internally ZUVYR still records exact scopes, the authorized mission digest, the permission grant and every device action. Full Control does not authorize unrelated work outside the mission.</p>'+
+        '</div>'+
+        '<div class="zs-card">'+
+          '<h2>Control guarantees</h2>'+
+          '<div class="zs-chip-row"><span class="zs-chip">Mission-bound</span><span class="zs-chip">15 min max grant</span><span class="zs-chip">Live audit</span><span class="zs-chip">STOP</span><span class="zs-chip">Undo</span><span class="zs-chip">Secret redaction</span></div>'+
+          '<p class="zs-note">Later Agent Packs add long-running planning, recovery, automations and company workflows on top of this execution foundation.</p>'+
+        '</div>'+
+      '</div>';
   }
   // Usage UI 18: the Usage/Billing surface shares the exact same account source as the sidebar.
   let usageState='idle', usageData=null, usageRequest=0, usageOwner=null;
@@ -1549,6 +1573,7 @@
   }
   function show(id){
     if(id==='usage')loadUsage();else clearUsage();
+    if(id==='ip')loadIpDevices();
     if(id==='documents')loadDocuments();
     if(id==='images'){
       bindImageStudio();
@@ -1638,7 +1663,106 @@
   }
   function renderPlan(el,plan){el.dataset.visible='true';el.innerHTML='<div class="zs-result-title">✦ Safe proposal ready</div><p>No provider call or credit charge was made.</p><div class="zs-step-list">'+plan.steps.map(function(s,i){return '<div class="zs-step"><span class="zs-step-num">'+(i+1)+'</span><div><strong>'+esc(s.title)+'</strong><small>'+esc(s.capability)+' · proposed · execution off</small></div></div>';}).join('')+'</div>';}
   async function planSubmit(form){var result=form.parentNode.querySelector('[data-zs-plan-result]');var body={goal:form.goal.value,requestedOutputs:checked(form,'outputs'),additionalCreationConsent:form.consent.checked};try{var res=await request('/api/unified-product/orchestration/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});var data=await res.json();if(!res.ok)throw new Error(data.code||'plan_failed');renderPlan(result,data.plan);}catch(error){result.dataset.visible='true';result.innerHTML='<div class="zs-result-title">Planning needs attention</div><p>'+esc(error.message==='additional_creation_consent_required'?'Approve selected media creation to include it in the plan.':error.message)+'</p>';}}
-  async function ipSubmit(form){var result=form.parentNode.querySelector('[data-zs-ip-result]');var body={goal:form.goal.value,scopes:checked(form,'scopes'),explicitConsent:form.consent.checked};try{var res=await request('/api/unified-product/ip/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});var data=await res.json();if(!res.ok)throw new Error(data.code||'ip_plan_failed');result.dataset.visible='true';result.innerHTML='<div class="zs-result-title">✦ IP tool plan ready</div><p>'+data.plan.scopes.map(esc).join(' · ')+'</p><div class="zs-chip-row"><span class="zs-chip">Execution off</span><span class="zs-chip">Device control off</span><span class="zs-chip">Audit required</span><span class="zs-chip">STOP available</span></div>';}catch(error){result.dataset.visible='true';result.innerHTML='<div class="zs-result-title">Permission check</div><p>'+esc(error.message)+'</p>';}}
+  var ipDeviceState={devices:[],activeSessionId:null,loading:false};
+
+  function ipViewNode(){return suite.querySelector('[data-zs-view="ip"]');}
+
+  function renderIpDevices(){
+    var view=ipViewNode();if(!view)return;
+    var select=view.querySelector('[data-zs-ip-device]');
+    if(!select)return;
+    var current=select.value;
+    var available=ipDeviceState.devices.filter(function(device){return device&&device.session&&device.session.id;});
+    select.innerHTML=available.length
+      ? available.map(function(device){
+          var seen=device.last_seen_at?new Date(device.last_seen_at).toLocaleString():'not seen yet';
+          return '<option value="'+esc(device.session.id)+'">'+esc(device.display_name||'Paired computer')+' · last seen '+esc(seen)+'</option>';
+        }).join('')
+      : '<option value="">No live paired computer</option>';
+    if(available.some(function(device){return device.session.id===current;}))select.value=current;
+    select.disabled=!available.length;
+  }
+
+  async function loadIpDevices(){
+    if(ipDeviceState.loading)return;
+    ipDeviceState.loading=true;
+    try{
+      var res=await request('/api/roxip/devices',{method:'GET',cache:'no-store'});
+      var data=await res.json();
+      if(!res.ok)throw new Error(data.code||'pack087_device_list_failed');
+      ipDeviceState.devices=Array.isArray(data.devices)?data.devices:[];
+    }catch(_){
+      ipDeviceState.devices=[];
+    }finally{
+      ipDeviceState.loading=false;
+      renderIpDevices();
+    }
+  }
+
+  async function fullControlSubmit(form){
+    var result=form.parentNode.querySelector('[data-zs-ip-result]');
+    var mission=String(form.mission.value||'').trim();
+    var sessionId=String(form.sessionId.value||'').trim();
+    if(!mission||!sessionId){
+      result.dataset.visible='true';
+      result.innerHTML='<div class="zs-result-title">Full Control needs a mission and a live paired computer</div>';
+      return;
+    }
+    var button=form.querySelector('button[type="submit"]');
+    if(button)button.disabled=true;
+    try{
+      var expiresAt=new Date(Date.now()+15*60*1000).toISOString();
+      var res=await request('/api/roxip/permissions/full-control',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({sessionId:sessionId,mission:mission,expiresAt:expiresAt,explicitConsent:true})
+      });
+      var data=await res.json();
+      if(!res.ok)throw new Error(data.code||'pack087_full_control_grant_failed');
+      ipDeviceState.activeSessionId=sessionId;
+      var stop=form.querySelector('[data-zs-ip-stop]');if(stop)stop.disabled=false;
+      result.dataset.visible='true';
+      result.innerHTML='<div class="zs-result-title">✦ Full Computer Control active</div>'+
+        '<p>Mission-bound grant active until '+esc(new Date(data.grant.expires_at||expiresAt).toLocaleString())+'.</p>'+
+        '<div class="zs-chip-row"><span class="zs-chip">9 device scopes</span><span class="zs-chip">Mission '+esc(String(data.grant.mission_digest||'').slice(0,12))+'…</span><span class="zs-chip">STOP ready</span><span class="zs-chip">Audit live</span></div>';
+    }catch(error){
+      result.dataset.visible='true';
+      result.innerHTML='<div class="zs-result-title">Full Control needs attention</div><p>'+esc(error.message)+'</p>';
+    }finally{
+      if(button)button.disabled=false;
+    }
+  }
+
+  async function stopFullControl(button){
+    var view=ipViewNode(),form=button&&button.closest('[data-zs-ip-full-control-form]');
+    var sessionId=ipDeviceState.activeSessionId||(form&&form.sessionId&&form.sessionId.value);
+    if(!sessionId)return;
+    button.disabled=true;
+    var result=view&&view.querySelector('[data-zs-ip-result]');
+    try{
+      try{
+        await request('/api/roxip/stop/request',{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({sessionId:sessionId})
+        });
+      }catch(_){}
+      var res=await request('/api/roxip/permissions/revoke',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({sessionId:sessionId})
+      });
+      var data=await res.json();
+      if(!res.ok)throw new Error(data.code||'pack087_permission_revoke_failed');
+      ipDeviceState.activeSessionId=null;
+      if(result){
+        result.dataset.visible='true';
+        result.innerHTML='<div class="zs-result-title">Control stopped</div><p>The device grant is revoked and pending actions are cancelled.</p>';
+      }
+    }catch(error){
+      button.disabled=false;
+      if(result){result.dataset.visible='true';result.innerHTML='<div class="zs-result-title">STOP needs attention</div><p>'+esc(error.message)+'</p>';}
+    }
+  }
+
   document.addEventListener('submit',function(e){
     var form=e.target;
     if(form&&form.matches&&form.matches('[data-zs-research-artifact-form]')){e.preventDefault();researchArtifactSubmit(form);return;}
@@ -1646,10 +1770,11 @@
     if(form&&form.matches&&form.matches('[data-zs-spreadsheet-form]')){e.preventDefault();spreadsheetSubmit(form);return;}
     if(form&&form.matches&&form.matches('[data-zs-presentation-form]')){e.preventDefault();presentationSubmit(form);return;}
     if(form&&form.matches&&form.matches('[data-zs-plan-form]')){e.preventDefault();planSubmit(form);return;}
-    if(form&&form.matches&&form.matches('[data-zs-ip-form]')){e.preventDefault();ipSubmit(form);return;}
+    if(form&&form.matches&&form.matches('[data-zs-ip-full-control-form]')){e.preventDefault();fullControlSubmit(form);return;}
   });
   document.addEventListener('click',function(e){
     if(!e.target.closest)return;
+    var ipStop=e.target.closest('[data-zs-ip-stop]');if(ipStop&&suite.contains(ipStop)){stopFullControl(ipStop);return;}
     var docDownload=e.target.closest('[data-zs-document-download]');if(docDownload&&suite.contains(docDownload)){downloadDocument(docDownload);return;}
     var officeDownloadButton=e.target.closest('[data-zs-office-download]');if(officeDownloadButton&&suite.contains(officeDownloadButton)){officeDownload(officeDownloadButton);return;}
     var docSave=e.target.closest('[data-zs-document-save-template]');if(docSave&&suite.contains(docSave)){var docForm=docSave.closest('[data-zs-document-form]');if(docForm)saveDocumentTemplate(docForm);return;}

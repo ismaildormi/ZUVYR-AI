@@ -7,6 +7,8 @@ const path = require('node:path');
 const { config } = require('./lib/ipCapabilityRegistry');
 const {
   sanitizeResult,
+  FULL_CONTROL_SCOPES,
+  missionDigest,
   createIpActionService
 } = require('./lib/ipActionService');
 
@@ -36,6 +38,27 @@ class FakeRepository {
     return { ...this.session };
   }
 
+  async listOwnerDevices({ ownerId }) {
+    if (ownerId !== this.session.owner_id) throw err('pack087_owner_id_invalid');
+    return {
+      devices: [{
+        id: this.session.device_id,
+        agent_device_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        display_name: 'Test device',
+        status: 'paired',
+        paired_at: '2026-09-20T21:00:00.000Z',
+        last_seen_at: '2026-09-20T21:39:30.000Z',
+        session: {
+          id: this.session.id,
+          device_id: this.session.device_id,
+          state: this.session.state,
+          execution_enabled: this.session.execution_enabled,
+          token_expires_at: '2026-09-20T21:50:00.000Z'
+        }
+      }]
+    };
+  }
+
   async getActionForOwner({ ownerId, actionId }) {
     const action = this.actions.get(actionId);
     if (!action || action.owner_id !== ownerId) throw err('pack087_action_not_found');
@@ -49,6 +72,22 @@ class FakeRepository {
       success: true,
       grant_id: '44444444-4444-4444-8444-444444444444',
       session_id: input.sessionId,
+      scopes: input.scopes,
+      expires_at: input.expiresAt,
+      execution_enabled: true
+    };
+  }
+
+  async grantFullControl(input) {
+    this.grants.push({ ...input, mode: 'full_control' });
+    this.session.execution_enabled = true;
+    return {
+      success: true,
+      grant_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaab',
+      session_id: input.sessionId,
+      device_id: this.session.device_id,
+      mode: 'full_control',
+      mission_digest: input.missionDigest,
       scopes: input.scopes,
       expires_at: input.expiresAt,
       execution_enabled: true
@@ -129,9 +168,11 @@ class FakeRepository {
 
 (async () => {
   const sql = fs.readFileSync(path.join(__dirname, '87_pack087_ip_actions_stop_undo.sql'), 'utf8');
+  const fullControlSql = fs.readFileSync(path.join(__dirname, '87b_pack087_full_computer_control.sql'), 'utf8');
   const ownerRoutes = fs.readFileSync(path.join(__dirname, 'lib', 'roxIpRoutes.js'), 'utf8');
   const deviceRoutes = fs.readFileSync(path.join(__dirname, 'lib', 'deviceSessionRoutes.js'), 'utf8');
   const pairing = fs.readFileSync(path.join(__dirname, 'lib', 'ipPairingService.js'), 'utf8');
+  const suiteUi = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'zuvyr-suite-v1.js'), 'utf8');
 
   for (const marker of [
     'grant_ip_permissions_pack087',
@@ -154,6 +195,23 @@ class FakeRepository {
   assert(!/grant\s+.*\s+to\s+(anon|authenticated)/i.test(sql));
 
   for (const marker of [
+    'grant_ip_full_control_pack087',
+    "grant_mode='full_control'",
+    "'full_control',v_mission,v_digest",
+    'permission_grant_id',
+    'mission_digest',
+    "interval '15 minutes'",
+    "'full_control_granted'",
+    "v_pre_authorized := coalesce(v_grant_mode='full_control',false)",
+    "'preAuthorizedByFullControl',v_pre_authorized",
+    "'pre_authorized_by_full_control',v_pre_authorized"
+  ]) assert(fullControlSql.includes(marker), marker);
+  assert(!/\b(drop table|truncate|delete from)\b/i.test(fullControlSql));
+  assert(!/grant\s+.*\s+to\s+(anon|authenticated)/i.test(fullControlSql));
+
+  for (const marker of [
+    "router.get('/devices'",
+    "router.post('/permissions/full-control'",
     "router.post('/permissions/grant'",
     "router.post('/permissions/revoke'",
     "router.post('/actions/prepare'",
@@ -171,6 +229,19 @@ class FakeRepository {
     "router.post('/undo/report'"
   ]) assert(deviceRoutes.includes(marker), marker);
 
+  for (const marker of [
+    'Full Computer Control',
+    'Allow Full Computer Control for this task',
+    'STOP &amp; End Control',
+    '/api/roxip/devices',
+    '/api/roxip/permissions/full-control',
+    '/api/roxip/permissions/revoke',
+    'Mission-bound',
+    '9 device scopes'
+  ]) assert(suiteUi.includes(marker), marker);
+  assert(!suiteUi.includes('Wildcards, shell, filesystem writes and device control are unavailable.'));
+  assert(!suiteUi.includes('IP device control: off'));
+
   assert(!pairing.includes('pack086_execution_invariant_failed'));
   assert(pairing.includes('executionEnabled: session.execution_enabled === true'));
 
@@ -180,6 +251,47 @@ class FakeRepository {
     repository: repo,
     clock: () => new Date(now)
   });
+
+  const listed = await service.listDevices({ ownerId: repo.session.owner_id });
+  assert.equal(listed.devices.length, 1);
+  assert.equal(listed.devices[0].session.id, repo.session.id);
+
+  await assert.rejects(
+    () => service.grantFullControl({
+      ownerId: repo.session.owner_id,
+      sessionId: repo.session.id,
+      mission: 'Complete the requested editing task in the authorized apps.',
+      expiresAt: new Date(now.getTime() + 120000).toISOString(),
+      explicitConsent: false
+    }),
+    { code: 'pack087_full_control_consent_required' }
+  );
+
+  const mission = 'Complete the requested editing task in the authorized apps.';
+  const fullGrant = await service.grantFullControl({
+    ownerId: repo.session.owner_id,
+    sessionId: repo.session.id,
+    mission,
+    expiresAt: new Date(now.getTime() + 10 * 60000).toISOString(),
+    explicitConsent: true
+  });
+  assert.equal(fullGrant.mode, 'full_control');
+  assert.equal(fullGrant.execution_enabled, true);
+  assert.deepEqual(fullGrant.scopes, [...FULL_CONTROL_SCOPES]);
+  assert.equal(fullGrant.mission_digest, missionDigest(mission));
+  assert.equal(repo.grants.at(-1).mission, mission);
+  assert.equal(repo.grants.at(-1).missionDigest, missionDigest(mission));
+
+  await assert.rejects(
+    () => service.grantFullControl({
+      ownerId: repo.session.owner_id,
+      sessionId: repo.session.id,
+      mission,
+      expiresAt: new Date(now.getTime() + 16 * 60000).toISOString(),
+      explicitConsent: true
+    }),
+    { code: 'pack087_permission_expiry_too_long' }
+  );
 
   await assert.rejects(
     () => service.grantPermissions({
@@ -202,7 +314,7 @@ class FakeRepository {
     explicitConsent: true
   });
   assert.equal(grant.execution_enabled, true);
-  assert.deepEqual(repo.grants[0].scopes, ['file.write','shell.execute']);
+  assert.deepEqual(repo.grants.at(-1).scopes, ['file.write','shell.execute']);
 
   await assert.rejects(
     () => service.prepareAction({
@@ -304,6 +416,9 @@ class FakeRepository {
   });
   assert.match(stop.signal_id, /^[0-9a-f-]{36}$/);
 
+  console.log('PASS: PACK087 Full Computer Control expands one explicit mission-bound grant into all nine device scopes');
+  console.log('PASS: PACK087 Full Computer Control is time-bounded to 15 minutes and keeps STOP/revoke independent');
+  console.log('PASS: PACK087 device discovery exposes only owner-bound paired-device sessions without secrets');
   console.log('PASS: PACK087 DB authority requires paired session, explicit consent and scoped permission grants');
   console.log('PASS: PACK087 critical actions require exact confirmation phrase and digest');
   console.log('PASS: PACK087 device action routes reuse PACK086 signed-session auth instead of creating a second auth system');
