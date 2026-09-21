@@ -216,6 +216,57 @@ function allowedApplications(env = process.env) {
   return unique(splitList(env.ZUVYR_AGENT_ALLOWED_APPLICATIONS, ','));
 }
 
+function isMissionBoundFullControl(action) {
+  return Boolean(
+    action &&
+    action.fullControl === true &&
+    action.grantMode === 'full_control' &&
+    action.missionBound === true &&
+    /^[0-9a-f]{64}$/i.test(String(action.missionDigest || ''))
+  );
+}
+
+function fullControlRootsForTarget(target) {
+  const resolved = path.resolve(String(target || ''));
+  const root = path.parse(resolved).root;
+  if (!root) throw actionError('pack087_full_control_target_invalid');
+  return [realRoot(root)];
+}
+
+function resolveFullControlExecutable(value) {
+  const target = String(value || '').trim();
+  if (!target || target.length > 1024 || target.includes('\0')) {
+    throw actionError('pack087_shell_executable_invalid');
+  }
+  if (path.isAbsolute(target)) {
+    let stat;
+    try { stat = fs.lstatSync(target); }
+    catch (_) { throw actionError('pack087_shell_executable_not_found'); }
+    if (stat.isSymbolicLink() || !stat.isFile()) {
+      throw actionError('pack087_shell_executable_invalid');
+    }
+    return target;
+  }
+  if (!commandExists(target)) throw actionError('pack087_shell_executable_not_found');
+  return target;
+}
+
+function resolveFullControlApplication(value) {
+  const target = String(value || '').trim();
+  if (!target || target.length > 1024 || target.includes('\0')) {
+    throw actionError('pack087_application_invalid');
+  }
+  if (path.isAbsolute(target)) {
+    let stat;
+    try { stat = fs.lstatSync(target); }
+    catch (_) { throw actionError('pack087_application_not_found'); }
+    if (stat.isSymbolicLink() || !stat.isFile()) {
+      throw actionError('pack087_application_invalid');
+    }
+  }
+  return target;
+}
+
 function assertAllowlisted(value, allowed, code) {
   const target = String(value || '').trim();
   if (!target || !allowed.includes(target)) throw actionError(code);
@@ -492,8 +543,10 @@ async function executeKeyboard(text, tools, options) {
   return { typed: true, chars: text.length };
 }
 
-async function executeApplication(name, env, options) {
-  const app = assertAllowlisted(name, allowedApplications(env), 'pack087_application_not_allowlisted');
+async function executeApplication(name, env, options, { fullControl = false } = {}) {
+  const app = fullControl
+    ? resolveFullControlApplication(name)
+    : assertAllowlisted(name, allowedApplications(env), 'pack087_application_not_allowlisted');
   let result;
   if (process.platform === 'darwin') {
     result = await spawnCaptured('/usr/bin/open', ['-a',app], options);
@@ -508,12 +561,14 @@ async function executeApplication(name, env, options) {
   return { opened: true, application: app };
 }
 
-async function executeCommand(executable, input, env, options) {
-  const command = assertAllowlisted(
-    executable,
-    allowedExecutables(env),
-    'pack087_shell_executable_not_allowlisted'
-  );
+async function executeCommand(executable, input, env, options, { fullControl = false } = {}) {
+  const command = fullControl
+    ? resolveFullControlExecutable(executable)
+    : assertAllowlisted(
+        executable,
+        allowedExecutables(env),
+        'pack087_shell_executable_not_allowlisted'
+      );
   const args = parseArgs(input);
   const result = await spawnCaptured(command, args, options);
   return {
@@ -557,7 +612,10 @@ async function executeAction(action, {
   if (!action || typeof action !== 'object') throw actionError('pack087_action_required');
   if (!stateDir) throw actionError('pack087_state_dir_required');
   ensurePrivateDir(stateDir);
-  const roots = allowedFileRoots(env);
+  const fullControl = isMissionBoundFullControl(action);
+  const roots = fullControl && ['read_file','write_file'].includes(action.type)
+    ? fullControlRootsForTarget(action.target)
+    : allowedFileRoots(env);
   const tools = nativeTools();
   const options = { env, signal, timeoutMs };
   let backup = null;
@@ -576,7 +634,7 @@ async function executeAction(action, {
         raw = await executeKeyboard(String(action.input || ''), tools, options);
         break;
       case 'open_application':
-        raw = await executeApplication(action.target, env, options);
+        raw = await executeApplication(action.target, env, options, { fullControl });
         break;
       case 'read_clipboard':
         raw = await executeClipboardRead(tools, options);
@@ -615,7 +673,7 @@ async function executeAction(action, {
         break;
       }
       case 'run_command':
-        raw = await executeCommand(action.target, action.input, env, options);
+        raw = await executeCommand(action.target, action.input, env, options, { fullControl });
         break;
       default:
         throw actionError('pack087_action_type_unsupported');
@@ -684,6 +742,10 @@ module.exports = {
   allowedFileRoots,
   allowedExecutables,
   allowedApplications,
+  isMissionBoundFullControl,
+  fullControlRootsForTarget,
+  resolveFullControlExecutable,
+  resolveFullControlApplication,
   detectActionCapabilities,
   createFileBackup,
   restoreFileBackup,
