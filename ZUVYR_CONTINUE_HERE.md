@@ -1649,3 +1649,22 @@ Do **not** reopen PACK084 merely because M18 is deferred. M18 stays a launch/liv
 - Receipt: `zuvyr-pack-evidence/pack-086/2026-09-20-engineering-checkpoint/receipt.json` (Git blob `b68d45aba645ad4af96ca132cef2f71e5f64f00d`).
 - Progression: user-approved deferred-real-device continuation.
 - **Active pack is now PACK087 — IP Actions / STOP / Undo.**
+
+### PACK087 ENGINEERING FINALIZED — 2026-09-21
+
+- **PACK087 — IP Actions / STOP / Undo** is `LOCKED_ENGINEERING_VERIFIED`; canonical `LOCKED_VERIFIED` remains **NO** until the real physical-device action/STOP/Undo journey is evidenced.
+- Implementation PR `#51`; candidate head `9ac99785887f037164f62d69454fe9f757c0dab6`; merge commit `f1d764753dc9c8b5d84b5d420cc829fa4914f6df`.
+- GitHub Release Quality Gate run `35553903215` = **Backend Quality PASS + Release Quality PASS**.
+- During release review, a real security defect was found and fixed: sensitive target/input checks no longer concatenate an artificial newline; each surface is slash-normalized and inspected independently, so `.env`/secret paths fail closed.
+- Supabase migration `20260921022221 pack087_ip_actions_stop_undo` applied successfully. 25 expected columns, 12 service-role-only RPCs, 4 constraints and 3 indexes verified; all relevant tables retain RLS; `execution_enabled=true` count remained 0.
+- Exact production evidence on `f1d76475...`:
+  - Vercel `dpl_DiPJXqrWmMKakmRPCCfgAhV7VGeH` = **READY**.
+  - Railway backend `8bfff33b-3cb8-4917-831e-0115d4ac2582` = **SUCCESS**.
+  - Railway worker `aef09aa4-02d0-481f-ba75-bff98d6acc7f` = **SUCCESS**.
+  - Railway maintenance `151c3272-9795-4f39-9a61-078423ca2a44` = **SUCCESS**.
+- Engineering contract verified: signed PACK086 session authority, bounded scopes, confirmation binding, independent STOP, reversible file backup/Undo, secret redaction, sensitive-path blocking, executable allowlist and fail-closed missing capabilities.
+- Real physical-device computer-control calls during this verification: **0**. No live-device success is fabricated.
+- Receipt: `zuvyr-pack-evidence/pack-087/2026-09-21-engineering-checkpoint/receipt.json`.
+- Progression: user-approved deferred-real-device continuation.
+- **Active pack is now PACK088 — Automations & Durable Workflows.**
+
