@@ -384,7 +384,7 @@
           '<form data-zs-scheduled-form class="zs-scheduled-form">'+
             '<div class="zs-document-row"><div class="zs-field"><label>Title</label><input name="title" maxlength="120" required placeholder="Morning research brief"></div><div class="zs-field"><label>Type</label><select name="scheduleType" data-zs-scheduled-type><option value="once">One time</option><option value="recurring">Recurring interval</option></select></div></div>'+
             '<div class="zs-field"><label>Goal</label><textarea name="goal" maxlength="4000" required placeholder="Summarize the approved task and return the result in this workspace."></textarea></div>'+
-            '<div class="zs-document-row"><div class="zs-field"><label>First run</label><input type="datetime-local" name="runAt" required data-zs-scheduled-run-at></div><div class="zs-field"><label>Timezone</label><input name="timezone" maxlength="64" required data-zs-scheduled-timezone placeholder="Africa/Casablanca"></div></div>'+
+            '<div class="zs-document-row"><div class="zs-field"><label>First run</label><input type="datetime-local" name="runAt" required data-zs-scheduled-run-at></div><div class="zs-field"><label>Timezone</label><input name="timezone" maxlength="64" required list="zs-scheduled-timezones" data-zs-scheduled-timezone placeholder="Africa/Casablanca"><datalist id="zs-scheduled-timezones"><option value="Africa/Casablanca"><option value="UTC"><option value="Europe/Paris"><option value="America/New_York"><option value="America/Los_Angeles"><option value="Asia/Dubai"><option value="Asia/Tokyo"></datalist></div></div>'+
             '<div class="zs-document-row"><div class="zs-field" data-zs-scheduled-interval-wrap hidden><label>Repeat every</label><select name="intervalMinutes"><option value="60">1 hour</option><option value="360">6 hours</option><option value="720">12 hours</option><option value="1440">24 hours</option><option value="10080">7 days</option></select></div><div class="zs-field"><label>Maximum credits per run</label><input type="number" name="maxCreditsPerRun" min="0" max="10000000" step="1" value="25" required></div></div>'+
             '<label class="zs-consent"><input type="checkbox" name="allowTopup"> Allow purchased top-up credits if included allowance is unavailable. This still cannot exceed the per-run cap.</label>'+
             '<div class="zs-scheduled-preview" data-zs-scheduled-preview role="status">Choose the first run time. No credits are charged at schedule creation.</div>'+
@@ -1623,8 +1623,8 @@
     var view=scheduledNode(),form=view&&view.querySelector('[data-zs-scheduled-form]');if(!form)return;
     var recurring=form.scheduleType.value==='recurring',wrap=form.querySelector('[data-zs-scheduled-interval-wrap]');if(wrap)wrap.hidden=!recurring;
     var timezone=form.timezone;if(timezone&&!timezone.value){try{timezone.value=Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC';}catch(_){timezone.value='UTC';}}
-    var preview=form.querySelector('[data-zs-scheduled-preview]'),raw=form.runAt.value,date=raw?new Date(raw):null;
-    if(preview){preview.textContent=date&&Number.isFinite(date.getTime())?('Next run preview: '+date.toLocaleString()+' · '+(form.timezone.value||'UTC')+(recurring?' · repeats every '+form.intervalMinutes.options[form.intervalMinutes.selectedIndex].text:'')+' · creation charge 0 credits'):'Choose the first run time. No credits are charged at schedule creation.';}
+    var preview=form.querySelector('[data-zs-scheduled-preview]'),raw=String(form.runAt.value||'');
+    if(preview){preview.textContent=raw?('Next run preview: '+raw.replace('T',' ')+' · '+(form.timezone.value||'UTC')+(recurring?' · repeats every '+form.intervalMinutes.options[form.intervalMinutes.selectedIndex].text:'')+' · creation charge 0 credits'):'Choose the first run time. No credits are charged at schedule creation.';}
   }
   function scheduledActionButtons(item){
     var state=String(item.state||'draft'),buttons=[];
@@ -1660,10 +1660,10 @@
     finally{scheduledState.loading=false;renderScheduledTasks();renderScheduledRuns();renderScheduledNotifications();renderScheduledFormState();}
   }
   async function createScheduledTask(form){
-    var result=scheduledNode().querySelector('[data-zs-scheduled-result]'),button=form.querySelector('[data-zs-scheduled-create]'),date=new Date(form.runAt.value);
-    if(!Number.isFinite(date.getTime())){toast('Choose a valid first run time.');return;}
+    var result=scheduledNode().querySelector('[data-zs-scheduled-result]'),button=form.querySelector('[data-zs-scheduled-create]'),localRunAt=String(form.runAt.value||'').trim();
+    if(!/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}/.test(localRunAt)){toast('Choose a valid first run time.');return;}
     var recurring=form.scheduleType.value==='recurring';button.disabled=true;result.dataset.visible='true';result.innerHTML='<div class="zs-result-title">Creating durable draft…</div><p>No credits are being charged.</p>';
-    try{var data=await scheduledRequest('/api/automations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:form.title.value,goal:form.goal.value,scheduleType:form.scheduleType.value,runAt:date.toISOString(),intervalMinutes:recurring?Number(form.intervalMinutes.value):null,recurrenceSpec:{},timezone:form.timezone.value||'UTC',maxCreditsPerRun:Number(form.maxCreditsPerRun.value),allowTopup:form.allowTopup.checked===true})});result.innerHTML='<div class="zs-result-title">Draft created</div><p>0 credits charged. Review the task below and press Activate when ready.</p>';form.title.value='';form.goal.value='';await loadScheduledTasks(true);}
+    try{var data=await scheduledRequest('/api/automations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:form.title.value,goal:form.goal.value,scheduleType:form.scheduleType.value,runAt:localRunAt,intervalMinutes:recurring?Number(form.intervalMinutes.value):null,recurrenceSpec:{},timezone:form.timezone.value||'UTC',maxCreditsPerRun:Number(form.maxCreditsPerRun.value),allowTopup:form.allowTopup.checked===true})});result.innerHTML='<div class="zs-result-title">Draft created</div><p>0 credits charged. Review the task below and press Activate when ready.</p>';form.title.value='';form.goal.value='';await loadScheduledTasks(true);}
     catch(error){result.innerHTML='<div class="zs-result-title">Schedule needs attention</div><p>'+esc(error.message)+'</p>';}
     finally{button.disabled=false;renderScheduledFormState();}
   }
@@ -1672,7 +1672,7 @@
     var action=button.getAttribute('data-zs-scheduled-action'),id=button.getAttribute('data-id');if(!action||!id)return;
     if(action==='cancel'&&window.confirm&&!window.confirm('Cancel this scheduled task? Its previous run history will be kept.'))return;
     button.disabled=true;
-    try{var path=action==='run-now'?'run-now':action,options={method:'POST',headers:{'Content-Type':'application/json'},body:'{}'};if(action==='run-now')options.headers['Idempotency-Key']=randomRequestToken();await scheduledRequest('/api/automations/'+encodeURIComponent(id)+'/'+path,options);toast(action==='run-now'?'Run queued with current funding and permission checks.':'Scheduled task '+action+'d.');await loadScheduledTasks(true);if(scheduledState.selected===id)await openScheduledTask(id,true);}
+    try{var path=action==='run-now'?'run-now':action,options={method:'POST',headers:{'Content-Type':'application/json'},body:'{}'};if(action==='run-now')options.headers['Idempotency-Key']=randomRequestToken();await scheduledRequest('/api/automations/'+encodeURIComponent(id)+'/'+path,options);toast(action==='run-now'?'Run queued with current funding and permission checks.':'Scheduled task '+({activate:'activated',pause:'paused',resume:'resumed',cancel:'cancelled'}[action]||action)+'.');await loadScheduledTasks(true);if(scheduledState.selected===id)await openScheduledTask(id,true);}
     catch(error){toast('Scheduled task: '+error.message);}
     finally{button.disabled=false;}
   }
