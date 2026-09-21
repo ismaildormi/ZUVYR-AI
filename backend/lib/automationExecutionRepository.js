@@ -47,6 +47,15 @@ function createAutomationExecutionRepository({ client } = {}) {
       return rpcData(result, 'PACK088_EXECUTION_CLAIM_FAILED');
     },
 
+    async checkControl({ runId, claimToken, now = new Date().toISOString() } = {}) {
+      const result = await db.rpc('check_workspace_schedule_run_control_pack088', {
+        p_run_id: uuid(runId, 'PACK088_RUN_ID_INVALID'),
+        p_claim_token: uuid(claimToken, 'PACK088_CLAIM_TOKEN_INVALID'),
+        p_now: now
+      });
+      return rpcData(result, 'PACK088_RUN_CONTROL_CHECK_FAILED');
+    },
+
     async consumePermission({
       runId,
       claimToken,
