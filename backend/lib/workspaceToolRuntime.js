@@ -135,6 +135,13 @@ function createWorkspaceToolRuntime({
     }
 
     const action = connection.plugin_kind === 'mcp' ? 'mcp.invoke' : 'plugin.invoke';
+
+    // Fail closed before consuming an allow-once grant when the MCP runtime
+    // itself is disabled, missing its SDK, or resolves to a blocked network.
+    if (connection.plugin_kind === 'mcp') {
+      await mcpAdapter.preflight({ endpointUrl: connection.endpoint_url });
+    }
+
     const fingerprint = operationFingerprint({
       action,
       connectionId: connection.id,
