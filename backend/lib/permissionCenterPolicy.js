@@ -119,6 +119,51 @@ const ACTIONS = Object.freeze({
     modes: Object.freeze(['allow_once']),
     scopes: Object.freeze(['project_session']),
     namespaces: Object.freeze(['browser_session'])
+  }),
+  'connection.read': Object.freeze({
+    risk: 'medium',
+    consequenceId: 'permission.connection.read.v1',
+    consequence: 'Allow ZUVYR to read data through this owned external connection for the approved scope.',
+    maxGrantSeconds: 86400,
+    modes: Object.freeze(['session', 'scoped']),
+    scopes: Object.freeze(['resource_session', 'resource']),
+    namespaces: Object.freeze(['integration_connection'])
+  }),
+  'connection.write': Object.freeze({
+    risk: 'high',
+    consequenceId: 'permission.connection.write.v1',
+    consequence: 'Allow the approved external write through this owned connection.',
+    maxGrantSeconds: 900,
+    modes: Object.freeze(['allow_once', 'session']),
+    scopes: Object.freeze(['resource_session']),
+    namespaces: Object.freeze(['integration_connection'])
+  }),
+  'plugin.install': Object.freeze({
+    risk: 'high',
+    consequenceId: 'permission.plugin.install.v1',
+    consequence: 'Allow installation of this reviewed declarative plugin or MCP connection.',
+    maxGrantSeconds: 600,
+    modes: Object.freeze(['allow_once']),
+    scopes: Object.freeze(['resource_session']),
+    namespaces: Object.freeze(['plugin_connection'])
+  }),
+  'plugin.invoke': Object.freeze({
+    risk: 'high',
+    consequenceId: 'permission.plugin.invoke.v1',
+    consequence: 'Allow invocation of the approved plugin tool in this connection session.',
+    maxGrantSeconds: 1800,
+    modes: Object.freeze(['allow_once', 'session']),
+    scopes: Object.freeze(['resource_session']),
+    namespaces: Object.freeze(['plugin_connection'])
+  }),
+  'mcp.invoke': Object.freeze({
+    risk: 'high',
+    consequenceId: 'permission.mcp.invoke.v1',
+    consequence: 'Allow invocation of the approved MCP tool in this connection session.',
+    maxGrantSeconds: 1800,
+    modes: Object.freeze(['allow_once', 'session']),
+    scopes: Object.freeze(['resource_session']),
+    namespaces: Object.freeze(['plugin_connection'])
   })
 });
 
@@ -250,6 +295,19 @@ function normalizeConstraints(action, value) {
     });
   }
 
+  if (['connection.write','plugin.install','plugin.invoke','mcp.invoke'].includes(action)) {
+    const operationFingerprint = String(constraints.operationFingerprint || '').trim().toLowerCase();
+    if (!/^[0-9a-f]{64}$/.test(operationFingerprint)) {
+      throw permissionError('permission_operation_fingerprint_required');
+    }
+    if (['plugin.invoke','mcp.invoke'].includes(action)) {
+      const toolKey = text(constraints.toolKey, 'permission_tool_key_required', 200);
+      if (toolKey === '*') throw permissionError('permission_tool_key_required');
+      return Object.freeze({ operationFingerprint, toolKey });
+    }
+    return Object.freeze({ operationFingerprint });
+  }
+
   return Object.freeze({});
 }
 
@@ -269,15 +327,17 @@ function normalizePermissionRequest(value, { ownerId, now = Date.now() } = {}) {
   if (!definition.modes.includes(grantMode)) throw permissionError('permission_mode_action_mismatch');
   if (!definition.scopes.includes(scopeType)) throw permissionError('permission_scope_action_mismatch');
   if (!definition.namespaces.includes(resourceNamespace)) throw permissionError('permission_resource_action_mismatch');
-  if ((grantMode === 'allow_once' || grantMode === 'session') && scopeType !== 'project_session') {
+  const sessionScope = scopeType === 'project_session' || scopeType === 'resource_session';
+  const durableScope = scopeType === 'project' || scopeType === 'resource';
+  if ((grantMode === 'allow_once' || grantMode === 'session') && !sessionScope) {
     throw permissionError('permission_mode_scope_mismatch');
   }
-  if (grantMode === 'scoped' && scopeType !== 'project') {
+  if (grantMode === 'scoped' && !durableScope) {
     throw permissionError('permission_mode_scope_mismatch');
   }
   if (!UUID_RE.test(resourceId)) throw permissionError('invalid_permission_resource_id');
-  if (scopeType === 'project_session' && !sessionId) throw permissionError('permission_session_required');
-  if (scopeType === 'project' && sessionId) throw permissionError('permission_session_not_allowed');
+  if (sessionScope && !sessionId) throw permissionError('permission_session_required');
+  if (durableScope && sessionId) throw permissionError('permission_session_not_allowed');
   if (
     resourceNamespace === 'browser_session' &&
     String(sessionId || '').toLowerCase() !== resourceId.toLowerCase()
