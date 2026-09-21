@@ -1773,3 +1773,16 @@ Do **not** reopen PACK084 merely because M18 is deferred. M18 stays a launch/liv
 
 Start PACK089 with a read-only reconciliation of the existing unified tool registry, Skills/plugin/MCP foundations, OAuth/connection models, Permission Center integration, secret/token storage boundaries and Google Drive connector paths. Reuse the Brain/Kernel, one usage ledger, canonical content IDs and owner/resource scopes; do not create parallel connection or billing systems.
 
+## PACK089 / 89A FINAL — LOCKED_VERIFIED — 2026-09-21
+
+- PACK089 remains `IN_PROGRESS`; 89A is canonical `LOCKED_VERIFIED`.
+- Production now has owner-scoped plugin/integration metadata, OAuth session state, declarative Skills, Vault-only credentials and Permission Center resource grants for connections/plugins/MCP.
+- Migration `20260921192642 pack089_89a_connections_permissions` is applied.
+- Transaction-only production acceptance passed with zero persisted test rows.
+- Runtime merge `cf77c8a20a4a2da279ba6e7be1da1118a8a54dba` is SUCCESS on all Railway services.
+- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-21-89a/receipt.json`.
+
+### ACTIVE NEXT STEP
+
+Continue directly with `89B_UNIFIED_TOOLS_SKILLS_PLUGIN_MCP`: keep `ai.tools` as the single invocation seam, resolve Skills to approved tool keys, add declarative plugin registration and an isolated remote MCP adapter with SSRF/private-network protection, and require a consumed Permission Center grant before every connected-tool invocation. Plugin/MCP code must not execute inside the ZUVYR process.
+
