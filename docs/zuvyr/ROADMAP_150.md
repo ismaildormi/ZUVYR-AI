@@ -1824,7 +1824,7 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 - **External gate:** —
 - **Recorded status:** IN_PROGRESS
 - **Execution plan:** `docs/zuvyr/PACK088_EXECUTION_PLAN.md`
-- **Planning note:** Planning is locked; 88A, 88B and 88C are complete and production-verified. 88D implementation/backend acceptance is verified, with merged production UI deployment still gated by Vercel build-rate-limit.
+- **Planning note:** Planning is locked; 88A, 88B, 88C and 88D are complete and production-verified.
 - **88A status:** LOCKED_VERIFIED — schema/invariants production checkpoint complete after FIX2.
 - **88A evidence:** `zuvyr-pack-evidence/pack-088/2026-09-21-88a/receipt.json`.
 - **88A final runtime commit:** `f3df3a881a01742b4f927ea9f986bc5d2c23c737`.
