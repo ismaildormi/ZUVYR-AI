@@ -88,6 +88,10 @@ const {
   createWorkspaceRouter
 } = require('./lib/workspaceRoutes');
 const {
+  createAutomationRoutes,
+  createAutomationRunRoutes
+} = require('./lib/automationRoutes');
+const {
   createLearningPipelineRouter
 } = require('./lib/learningPipelineRoutes');
 const { requireAdmin } = require('./lib/requireAdmin');
@@ -472,6 +476,18 @@ app.use(
   requireAuth,
   rateLimit('workspace'),
   createWorkspaceRouter()
+);
+app.use(
+  '/api/automations',
+  requireAuth,
+  rateLimit('workspace'),
+  createAutomationRoutes({ client: supabaseAdmin })
+);
+app.use(
+  '/api/automation-runs',
+  requireAuth,
+  rateLimit('workspace'),
+  createAutomationRunRoutes({ client: supabaseAdmin })
 );
 app.use(
   '/api/model-lab',
