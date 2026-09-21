@@ -1824,7 +1824,7 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 - **External gate:** —
 - **Recorded status:** IN_PROGRESS
 - **Execution plan:** `docs/zuvyr/PACK088_EXECUTION_PLAN.md`
-- **Planning note:** Planning is locked; 88A, 88B and 88C are complete and production-verified. 88D implementation/backend acceptance is verified, with merged production UI deployment still gated by Vercel build-rate-limit.
+- **Planning note:** Planning is locked; 88A, 88B, 88C and 88D are LOCKED_VERIFIED. 88E is the active final PACK088 production-acceptance phase.
 - **88A status:** LOCKED_VERIFIED — schema/invariants production checkpoint complete after FIX2.
 - **88A evidence:** `zuvyr-pack-evidence/pack-088/2026-09-21-88a/receipt.json`.
 - **88A final runtime commit:** `f3df3a881a01742b4f927ea9f986bc5d2c23c737`.
@@ -1834,7 +1834,11 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 - **88C status:** LOCKED_VERIFIED — runtime funding, permissions and Brain Kernel binding checkpoint complete after FIX2/FIX3.
 - **88C evidence:** `zuvyr-pack-evidence/pack-088/2026-09-21-88c/receipt.json`.
 - **88C final runtime commit:** `6c6b6eb18c30a04343a21cbd5d53dea44fcb7613`.
-- **88D status:** IMPLEMENTATION_VERIFIED_PRODUCTION_UI_GATE — PR #72 merged; Supabase migration and transaction-only production acceptance passed; Railway exact-commit runtime is SUCCESS; canonical lock waits only for merged Vercel production UI deployment/verification.\n- **88D evidence:** `zuvyr-pack-evidence/pack-088/2026-09-21-88d/receipt.json`.\n- **88D runtime commit:** `cbaff02b1512ff75b550999f7e17c3c0d1b64426`.\n- **Next phase:** 88E Production Acceptance + Recovery = NOT_STARTED and blocked until the 88D Vercel production UI gate clears.
+- **88D status:** LOCKED_VERIFIED — PR #72 implementation, Supabase migration, transaction-only lifecycle acceptance, Railway runtime and merged Vercel production UI are verified.
+- **88D evidence:** `zuvyr-pack-evidence/pack-088/2026-09-21-88d/receipt.json`.
+- **88D runtime commit:** `cbaff02b1512ff75b550999f7e17c3c0d1b64426`; production frontend proof deployment: `dpl_GH3W4VkxLLCgETPU63VDpVPtjvZn` on `14a52caacdedf7bfb7cf08482b46a58c054097dd`.
+- **88E status:** IN_PROGRESS — real production scheduled execution, billing identity, recovery/restart and recurring-pause acceptance.
+- **Next gate:** PACK088 may become LOCKED_VERIFIED only after 88E passes; PACK089 remains blocked.
 
 ## PACK089 — Skills / Plugins / MCP / Connections
 
