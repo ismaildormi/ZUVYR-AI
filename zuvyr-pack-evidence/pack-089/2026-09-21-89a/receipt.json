@@ -1,0 +1,90 @@
+{
+  "pack": "089",
+  "phase": "89A_SCHEMA_VAULT_PERMISSION_CENTER",
+  "title": "Canonical schema + Vault + Permission Center",
+  "status": "LOCKED_VERIFIED",
+  "finalized_at": "2026-09-21T20:15:14.314Z",
+  "github": {
+    "foundation_main_commit": "cf77c8a20a4a2da279ba6e7be1da1118a8a54dba",
+    "hardening_pr": 81,
+    "hardening_head": "0bbbb98f9fe46efa10e1dcc4cebe8ce58cb43cf5",
+    "hardening_merge_commit": "c977e342646b6d3b59d61844ae9ef84486dfa82d",
+    "quality_run": 35649552503,
+    "backend_quality": "PASS",
+    "release_quality": "PASS"
+  },
+  "migrations": [
+    {
+      "version": "20260921192642",
+      "name": "pack089_89a_connections_permissions",
+      "status": "APPLIED"
+    },
+    {
+      "version": "20260921201251",
+      "name": "pack089_89a_oauth_revoke_hardening",
+      "status": "APPLIED"
+    }
+  ],
+  "verification": {
+    "foundation_sql_dry_run": "PASS_ROLLBACK",
+    "hardening_sql_dry_run": "PASS_ROLLBACK",
+    "canonical_tables_reused": true,
+    "legacy_plugin_installations_created": false,
+    "supabase_vault_reused": true,
+    "plaintext_credentials_in_public_rows": false,
+    "oauth_state_hash_only": true,
+    "pkce_verifier_vault_only": true,
+    "revoked_oauth_callback_blocked": true,
+    "revoke_deletes_pending_pkce": true,
+    "revoke_marks_pending_oauth_consumed": true,
+    "recursive_operation_fingerprint": true,
+    "mcp_https_required": true,
+    "mcp_private_host_blocking": true,
+    "permission_center_extended": true,
+    "sensitive_rpc_client_execute_grants": 0,
+    "sensitive_rpc_service_role_execute_count": 8,
+    "required_tables_rls": true,
+    "required_tables_client_grants": 0,
+    "external_plugin_execution_enabled": false,
+    "google_drive_oauth_execution_enabled": false
+  },
+  "production_cleanliness": {
+    "plugin_rows": 0,
+    "integration_rows": 0,
+    "oauth_rows": 0,
+    "skill_rows": 0,
+    "pack089_permission_grants": 0,
+    "pack089_vault_secrets": 0
+  },
+  "railway": {
+    "exact_commit": "c977e342646b6d3b59d61844ae9ef84486dfa82d",
+    "backend": {
+      "deployment": "75c66403-5041-4e83-95e6-7449cf539db8",
+      "status": "SUCCESS"
+    },
+    "worker": {
+      "deployment": "f3ec0c8c-3e83-4d05-b6f0-be97095a77ad",
+      "status": "SUCCESS"
+    },
+    "maintenance": {
+      "deployment": "ae7ae2da-4c66-48d3-8d17-1e09c2119c5e",
+      "status": "SUCCESS"
+    }
+  },
+  "vercel": {
+    "status": "FAILED_BUILD_RATE_LIMIT_NO_FRONTEND_RUNTIME_CHANGE",
+    "frontend_runtime_changed_in_89a": false
+  },
+  "cost": {
+    "provider_calls": 0,
+    "payment_mutations": 0,
+    "external_connection_calls": 0
+  },
+  "external_gate": {
+    "google_oauth_client_credentials_present": false,
+    "google_api_key_present": true,
+    "blocks": "89E_REAL_GOOGLE_OAUTH_ACCEPTANCE",
+    "blocks_engineering": false
+  },
+  "next_phase": "89B_UNIFIED_TOOLS_SKILLS_PLUGIN_MCP"
+}
