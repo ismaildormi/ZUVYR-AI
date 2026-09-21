@@ -21,6 +21,20 @@ const { runActionWithStop } = require('../src/actionWorker');
   assert.equal(config.actionRuntime.transport, 'outbound_https_pull');
   assert.equal(config.execution.rawIpTrust, false);
 
+  const executorSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'actionExecutor.js'), 'utf8');
+  for (const marker of [
+    'ZUVYR_SCREEN_TARGET',
+    'ZUVYR_POINTER_X',
+    'ZUVYR_POINTER_Y',
+    'ZUVYR_POINTER_DOWN',
+    'ZUVYR_POINTER_UP',
+    'ZUVYR_KEYBOARD_TEXT_B64',
+    'ZUVYR_APP_TARGET'
+  ]) assert(executorSource.includes(marker), marker);
+  assert(!executorSource.includes('$i.Save($args[0]'));
+  assert(!executorSource.includes('SendKeys]::SendWait($args[0])'));
+  assert(!executorSource.includes('Start-Process -FilePath $args[0]'));
+
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'zuvyr-pack087-'));
   const dataRoot = path.join(root, 'data');
   const stateDir = path.join(root, 'state');
@@ -219,6 +233,7 @@ const { runActionWithStop } = require('../src/actionWorker');
     console.log('PASS: PACK087 sensitive paths and non-allowlisted shell executables are blocked');
     console.log('PASS: PACK087 command args are passed with shell=false and shell metacharacters stay literal');
     console.log('PASS: PACK087 mission-bound Full Control can use files and executables without manual environment allowlists');
+    console.log('PASS: PACK087 Windows screen, pointer, keyboard and app bridges pass values via isolated environment variables');
     console.log('PASS: PACK087 forged Full Control metadata cannot bypass scoped allowlists and sensitive paths remain blocked');
     console.log('PASS: PACK087 device and backend result paths redact secret-shaped values');
     console.log('PASS: PACK087 independent STOP channel aborts a long-running action and is acknowledged');
