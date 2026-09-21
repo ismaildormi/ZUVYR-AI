@@ -2124,6 +2124,9 @@
 
   document.addEventListener('submit',function(e){
     var form=e.target;
+    if(form&&form.matches&&form.matches('[data-zs-drive-form]')){e.preventDefault();startDriveOAuth(form,null,form.querySelector('[data-zs-drive-connect]'));return;}
+    if(form&&form.matches&&form.matches('[data-zs-plugin-form]')){e.preventDefault();createPluginDraft(form);return;}
+    if(form&&form.matches&&form.matches('[data-zs-skill-form]')){e.preventDefault();createSkill(form);return;}
     if(form&&form.matches&&form.matches('[data-zs-scheduled-form]')){e.preventDefault();createScheduledTask(form);return;}
     if(form&&form.matches&&form.matches('[data-zs-research-artifact-form]')){e.preventDefault();researchArtifactSubmit(form);return;}
     if(form&&form.matches&&form.matches('[data-zs-document-form]')){e.preventDefault();documentSubmit(form);return;}
@@ -2134,6 +2137,15 @@
   });
   document.addEventListener('click',function(e){
     if(!e.target.closest)return;
+    if(e.target.closest('[data-zs-plugin-refresh]')&&suite.contains(e.target)){loadPluginSurface(true);return;}
+    var driveExisting=e.target.closest('[data-zs-drive-existing]');if(driveExisting&&suite.contains(driveExisting)){var driveForm=pluginNode().querySelector('[data-zs-drive-form]');startDriveOAuth(driveForm,driveExisting.getAttribute('data-zs-drive-existing'),driveExisting);return;}
+    var driveDisconnect=e.target.closest('[data-zs-drive-disconnect]');if(driveDisconnect&&suite.contains(driveDisconnect)){revokeIntegrationConnection(driveDisconnect.getAttribute('data-zs-drive-disconnect'),driveDisconnect,true);return;}
+    var integrationRevoke=e.target.closest('[data-zs-integration-revoke]');if(integrationRevoke&&suite.contains(integrationRevoke)){revokeIntegrationConnection(integrationRevoke.getAttribute('data-zs-integration-revoke'),integrationRevoke,false);return;}
+    var pluginInstall=e.target.closest('[data-zs-plugin-install-review]');if(pluginInstall&&suite.contains(pluginInstall)){preparePluginInstall(pluginInstall);return;}
+    var pluginApprove=e.target.closest('[data-zs-plugin-permission-approve]');if(pluginApprove&&suite.contains(pluginApprove)){approvePluginInstall(pluginApprove);return;}
+    if(e.target.closest('[data-zs-plugin-permission-cancel]')&&suite.contains(e.target)){cancelPluginPermission();return;}
+    var pluginRevoke=e.target.closest('[data-zs-plugin-revoke]');if(pluginRevoke&&suite.contains(pluginRevoke)){revokePluginConnection(pluginRevoke.getAttribute('data-zs-plugin-revoke'),pluginRevoke);return;}
+    var skillToggle=e.target.closest('[data-zs-skill-toggle]');if(skillToggle&&suite.contains(skillToggle)){toggleSkill(skillToggle);return;}
     var scheduledAction=e.target.closest('[data-zs-scheduled-action]');if(scheduledAction&&suite.contains(scheduledAction)){controlScheduledTask(scheduledAction);return;}
     var scheduledOpen=e.target.closest('[data-zs-scheduled-open]');if(scheduledOpen&&suite.contains(scheduledOpen)){openScheduledTask(scheduledOpen.getAttribute('data-zs-scheduled-open'));return;}
     var scheduledNotification=e.target.closest('[data-zs-scheduled-notification]');if(scheduledNotification&&suite.contains(scheduledNotification)){markScheduledNotification(scheduledNotification.getAttribute('data-zs-scheduled-notification'));return;}
@@ -2155,8 +2167,9 @@
   suite.addEventListener('input',function(e){if(e.target&&e.target.matches('[data-zs-scheduled-run-at], [data-zs-scheduled-timezone]'))renderScheduledFormState();});
   window.addEventListener('focus',refreshVisibleUsage);
   document.addEventListener('visibilitychange',function(){if(document.hidden)clearUsage();else refreshVisibleUsage();});
-  if(typeof supa!=='undefined'&&supa.auth&&supa.auth.onAuthStateChange)supa.auth.onAuthStateChange(function(event){clearUsage();if(event!=='SIGNED_OUT')setTimeout(refreshVisibleUsage,0);});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&suite.dataset.open==='true'){e.preventDefault();close(true,true);}});
+  if(typeof supa!=='undefined'&&supa.auth&&supa.auth.onAuthStateChange)supa.auth.onAuthStateChange(function(event){clearUsage();if(event!=='SIGNED_OUT'){setTimeout(refreshVisibleUsage,0);if(oauthMarkerGet())setTimeout(handleDriveOAuthReturn,0);}});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&suite.dataset.open==='true'){e.preventDefault();if(pluginState.pendingPermission){cancelPluginPermission();var panel=pluginNode()&&pluginNode().querySelector('[data-zs-plugin-permission]');if(panel)panel.focus({preventScroll:true});return;}close(true,true);}});
+  if(oauthMarkerGet())setTimeout(handleDriveOAuthReturn,250);
 })();
 
 
