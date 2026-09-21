@@ -1788,3 +1788,17 @@ Current canonical phase: `89C_GOOGLE_DRIVE_OAUTH_TOOLS — IN_PROGRESS`.
 
 Implement server-side Google authorization-code + PKCE using the existing 89A OAuth/Vault RPCs, then register owner-scoped Drive tools through the same `ai.tools` seam. Tokens must remain Vault-only. Read/write permission must flow through the existing Permission Center. Missing Google OAuth client credentials are an external acceptance gate, not an engineering stop: routes/runtime must fail closed until legitimate credentials are configured. Do not fabricate credentials and do not start PACK090 before PACK089 closes.
 
+## PACK089 / 89C LOCKED — CONTINUE FROM 89D
+
+- 89A Schema/Vault/Permission Center: `LOCKED_VERIFIED`.
+- 89B Unified Skills/Plugin/MCP runtime: `LOCKED_VERIFIED`.
+- 89C Google Drive OAuth + tools: `LOCKED_VERIFIED`.
+- 89C canonical runtime merge: `eb7233ec918dd6b550cc2762300a787054d3e5e7`; Railway backend/worker/maintenance exact-commit deployments are SUCCESS.
+- Production migration: `20260921212845 pack089_89c_google_drive_oauth`.
+- Missing real Google OAuth client credentials remain an 89E external acceptance gate only; the runtime fails closed before network.
+- **Current phase: 89D Product UI — IN_PROGRESS.**
+
+### NEXT SINGLE EXECUTION STEP
+
+Activate the existing Plugins/Connections/Skills product surface over the authenticated PACK089 routes. Reuse `window.authFetch`, the existing Permission Center and existing workspace APIs. Add real list/connect/install/revoke/skill controls plus loading/empty/error/retry/reopen, keyboard, RTL and mobile behavior. Do not expose OAuth/plugin secrets and do not create a second frontend permission or connection model. PACK090 remains blocked.
+
