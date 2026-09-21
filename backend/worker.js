@@ -95,6 +95,7 @@ const {
 const { assertModel3dLiveAvailable } = require('./lib/model3dPolicy');
 const { connection } = require('./lib/queue');
 const { startBrainKernelWorker } = require('./lib/brainKernelWorker');
+const { startAutomationScheduler } = require('./lib/automationScheduler');
 const { supabaseAdmin } = require('./lib/supabaseAdmin');
 const resolveImageReferences = createImageReferenceResolver({
   db: supabaseAdmin,
@@ -2121,5 +2122,20 @@ brainKernelWorker.on('failed', (job, error) => {
     error && (error.code || error.message)
   );
 });
+
+const automationScheduler = startAutomationScheduler({
+  connection,
+  env: process.env,
+  logger: console
+});
+
+console.log(
+  '[pack088-scheduler] runtime',
+  JSON.stringify({
+    enabled: automationScheduler.enabled,
+    intervalMs: automationScheduler.intervalMs,
+    batchSize: automationScheduler.batchSize
+  })
+);
 
 console.log(`ROX AI worker running (concurrency: image=${CONCURRENCY}, video=${Math.max(1, Math.floor(CONCURRENCY / 2))}, model3d=1, audio=1, attachment=${ATTACHMENT_WORKER_CONCURRENCY})`);

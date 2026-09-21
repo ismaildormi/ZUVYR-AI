@@ -1,21 +1,55 @@
 {
-  "version": "pack-088.88a.automations.v1",
-  "implementationPhase": "88A_SCHEMA_INVARIANTS",
+  "version": "pack-088.88b.automations.v1",
+  "implementationPhase": "88B_SCHEDULER_EXACTLY_ONCE",
   "executionEnabled": false,
-  "schedulerEnabled": false,
+  "schedulerEnabled": true,
   "providerCallsEnabled": false,
   "billingMutationsEnabled": false,
   "sourceOfTruth": "postgres",
   "schedule": {
-    "types": ["once", "recurring"],
-    "states": ["draft", "ready", "active", "running", "paused", "blocked", "completed", "failed", "cancelled"],
-    "misfirePolicies": ["run_once", "skip"],
+    "types": [
+      "once",
+      "recurring"
+    ],
+    "states": [
+      "draft",
+      "ready",
+      "active",
+      "running",
+      "paused",
+      "blocked",
+      "completed",
+      "failed",
+      "cancelled"
+    ],
+    "misfirePolicies": [
+      "run_once",
+      "skip"
+    ],
     "maxCreditsPerRun": 10000000,
     "maxAuthorizationCapabilities": 32
   },
   "run": {
-    "states": ["pending", "claimed", "queued", "running", "succeeded", "failed", "cancelled", "blocked_funding", "blocked_permission", "skipped"],
-    "fundingStates": ["not_checked", "reserved", "settled", "refunded", "blocked", "not_required"],
+    "states": [
+      "pending",
+      "claimed",
+      "queued",
+      "running",
+      "succeeded",
+      "failed",
+      "cancelled",
+      "blocked_funding",
+      "blocked_permission",
+      "skipped"
+    ],
+    "fundingStates": [
+      "not_checked",
+      "reserved",
+      "settled",
+      "refunded",
+      "blocked",
+      "not_required"
+    ],
     "maxAttempts": 100
   },
   "invariants": {
@@ -27,6 +61,25 @@
     "currentTimezoneMustExist": true,
     "scheduleCreationChargesCredits": false,
     "exactlyOnceOccurrenceIdentity": true,
-    "staleAuthorizationAutoInvalidated": true
+    "staleAuthorizationAutoInvalidated": true,
+    "postgresBeforeRedis": true,
+    "stableQueueJobId": true,
+    "pendingOccurrenceRecoverableAfterRedisFailure": true,
+    "schedulerOverlapSuppressedPerProcess": true
+  },
+  "scheduler": {
+    "queueName": "zuvyr-automation-dispatch",
+    "jobName": "scheduled-occurrence",
+    "jobIdPrefix": "pack088-",
+    "runtimeGateEnv": "PACK088_SCHEDULER_ENABLED",
+    "intervalMsDefault": 15000,
+    "intervalMsMin": 1000,
+    "intervalMsMax": 60000,
+    "batchSizeDefault": 25,
+    "batchSizeMax": 100,
+    "queueAttempts": 5,
+    "queueBackoffMs": 2000,
+    "removeOnComplete": 500,
+    "removeOnFail": 1000
   }
 }
