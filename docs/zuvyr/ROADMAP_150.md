@@ -1862,6 +1862,11 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 - **External gate:** M20
 - **Recorded status:** PLANNED
 
+- **89A status:** LOCKED_VERIFIED — canonical schema/Vault/Permission Center production checkpoint complete.
+- **89A evidence:** `zuvyr-pack-evidence/pack-089/2026-09-21-89a/receipt.json`.
+- **89A runtime commit:** `cf77c8a20a4a2da279ba6e7be1da1118a8a54dba`.
+- **89B status:** IN_PROGRESS — unified tools / Skills / declarative Plugin / MCP runtime.
+
 ## PACK090 — Agent Checkpoint I
 
 - **Objective:** Agent Checkpoint I
