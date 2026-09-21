@@ -53,7 +53,6 @@ for (const marker of [
   'create or replace function public.pack088_first_future_occurrence',
   'create or replace function public.claim_due_workspace_schedules_pack088',
   'for update skip locked',
-  'constraint workspace_schedule_runs_occurrence_unique',
   'on conflict(schedule_id,occurrence_key) do nothing',
   'create or replace function public.list_pending_workspace_schedule_runs_pack088',
   'create or replace function public.mark_workspace_schedule_run_queued_pack088',
