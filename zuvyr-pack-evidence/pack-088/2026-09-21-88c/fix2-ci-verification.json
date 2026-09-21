@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "pack": "088",
+  "phase": "88C_FIX2_CI_VERIFICATION",
+  "runtime_commit": "4b6619e1e44444bfc2727171ed2cde17f44bce92",
+  "behavior_change_in_this_verification": false,
+  "source_blobs": {
+    "automation_execution_processor": "bed8d487c8c1dbbbcaa81c42dadaeeacc5273f7a",
+    "brain_kernel_runtime": "87df3b5b50825adebf466a5606c1ac692970c3db",
+    "regression_test": "f536c7596881108fe5631984487b00385351f1a3"
+  },
+  "assertions_already_present": [
+    "Brain plan is derived from authorized workflow capabilities.",
+    "Unauthorized Brain plan capabilities fail closed.",
+    "Plan authorization runs in beforeReservation before usageApi.reserve.",
+    "Cap rejection occurs before reservation.",
+    "Permission failure after reservation refunds before task creation.",
+    "IP-only workflow keeps device authority in fresh PACK087 mission grant."
+  ],
+  "purpose": "Trigger canonical Backend + Release Quality CI on the already-merged 88C FIX2 runtime without changing runtime behavior.",
+  "next_after_ci": [
+    "Verify Railway on exact main commit.",
+    "Run revoked/stale authorization live acceptance.",
+    "Run transaction-only IP mission grant proof.",
+    "Finalize 88C only if both pass."
+  ]
+}
