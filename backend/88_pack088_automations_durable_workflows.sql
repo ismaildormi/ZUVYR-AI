@@ -425,7 +425,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path=public,pg_temp
-as $$
+as $pack088_step$
 declare
   v_old_workflow uuid;
   v_new_workflow uuid;
@@ -477,7 +477,7 @@ begin
   end if;
   return new;
 end
-$;
+$pack088_step$;
 
 create or replace function public.pack088_invalidate_schedule_authorization_on_workflow_change()
 returns trigger
