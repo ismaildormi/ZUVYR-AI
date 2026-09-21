@@ -482,7 +482,7 @@ async function executeClipboardWrite(text, tools, options) {
   let result;
   if (process.platform === 'win32') {
     result = await spawnCaptured(tools.clipboardWrite, [
-      '-NoProfile','-NonInteractive','-Command','[Console]::In.ReadToEnd() | Set-Clipboard'
+      '-NoProfile','-NonInteractive','-Command','$v=[Console]::In.ReadToEnd(); if($v.Length -eq 0){ Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Clipboard]::Clear() } else { Set-Clipboard -Value $v }'
     ], { ...options, input: text });
   } else if (tools.clipboardWrite === 'xclip') {
     result = await spawnCaptured('xclip', ['-selection','clipboard','-i'], { ...options, input: text });
