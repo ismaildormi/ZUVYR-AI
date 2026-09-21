@@ -1,0 +1,173 @@
+{
+  "schema_version": "1.0",
+  "pack": "088",
+  "phase": "88A_SCHEMA_INVARIANTS",
+  "title": "Automations & Durable Workflows — Schema + Invariants",
+  "status": "LOCKED_VERIFIED",
+  "canonical_pack_status": "IN_PROGRESS",
+  "finalized_at": "2026-09-21T05:16:30Z",
+  "scope_boundary": {
+    "phase_88a_only": true,
+    "phase_88b_started": false,
+    "scheduler_enabled": false,
+    "provider_execution_enabled": false,
+    "billing_mutations_enabled": false,
+    "automatic_schedule_execution_enabled": false
+  },
+  "baseline": {
+    "planning_main_commit": "d20e10c665923ccf43b4d19df6a319efd9113e82",
+    "predecessor_pack": "087",
+    "predecessor_status": "LOCKED_VERIFIED"
+  },
+  "implementation": {
+    "pull_request": 60,
+    "candidate_head": "52a8aba5189f311bcf25ad699a7d6f99f4d7f486",
+    "merge_commit": "bba73570d735d4801047e90635715eb7d4b3f9cc",
+    "changed_runtime_paths": [
+      "backend/88_pack088_automations_durable_workflows.sql",
+      "backend/88_pack088_88a_ledger_privilege_hardening.sql",
+      "backend/config/automations.v1.json",
+      "backend/lib/automationRepository.js",
+      "backend/test-pack088-88a-schema-invariants.js",
+      "backend/package.json",
+      "backend/test-model-first-byo-compute-policy.js"
+    ],
+    "source_blobs": {
+      "schema": "7760ab62d005abd0e14f270bce6344b55c480a62",
+      "privilege_hardening": "ca02d3b63868e91360ac8c659502f8d418c32f57",
+      "test": "0d404cf30f81c999c100e378c930727f907ba871",
+      "repository": "87f52e2bae958c01e926f23055f595f70c2945d2"
+    }
+  },
+  "validation": {
+    "sql_production_compatible_dry_run": "PASS_ROLLBACK",
+    "initial_dry_run_issue": {
+      "code": "SQL_DOLLAR_QUOTE_TERMINATOR",
+      "caught_before_production": true,
+      "resolved": true
+    },
+    "implementation_ci": {
+      "run_id": 35563532090,
+      "backend_quality": "PASS",
+      "release_quality": "PASS",
+      "note": "This run validated the implementation before the later ledger-privilege hardening. The finalizer PR is required to rerun the full suite on the final merged runtime before this receipt can reach main."
+    },
+    "production_behavior_transaction": {
+      "status": "PASS_ROLLBACK",
+      "persisted_test_rows": 0,
+      "verified": [
+        "workflow revision begins at 1",
+        "workflow step definition change bumps workflow revision",
+        "valid schedule authorization can enable an active schedule",
+        "duplicate (schedule_id,occurrence_key) is rejected",
+        "workflow revision change blocks schedule and revokes stale authorization",
+        "schedule definition change bumps definition revision and revokes stale authorization",
+        "invalid IANA timezone is rejected",
+        "stale workflow revision is rejected"
+      ]
+    }
+  },
+  "database": {
+    "project": "tqoqsgaymygmqrzddvtu",
+    "migrations": [
+      {
+        "version": "20260921051008",
+        "name": "pack088_88a_automations_durable_workflows"
+      },
+      {
+        "version": "20260921051010",
+        "name": "pack088_88a_automations_schema_invariants"
+      },
+      {
+        "version": "20260921051244",
+        "name": "pack088_88a_ledger_privilege_hardening"
+      }
+    ],
+    "duplicate_apply_reconciliation": {
+      "duplicate_versions": [
+        "20260921051008",
+        "20260921051010"
+      ],
+      "identical_sql": true,
+      "statement_count_each": 1,
+      "sql_length_each": 23411,
+      "sql_sha256": "654ce05524e1547f9f10b9f385f5e61711abec8a9dc8f2d2ca5cefeb5b8c1813",
+      "schema_divergence": false,
+      "action": "PRESERVE_MIGRATION_HISTORY_NO_DELETE"
+    },
+    "new_table": "workspace_schedule_runs",
+    "rls": {
+      "workspace_workflows": true,
+      "workspace_workflow_steps": true,
+      "workspace_schedules": true,
+      "workspace_schedule_runs": true
+    },
+    "workspace_schedule_runs": {
+      "browser_policies": 0,
+      "client_grants": 0,
+      "service_role_grants": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "occurrence_unique": true,
+      "task_run_unique": true
+    },
+    "persisted_rows_after_acceptance": {
+      "workflows": 0,
+      "workflow_steps": 0,
+      "schedules": 0,
+      "schedule_runs": 0
+    },
+    "execution_enabled_schedules": 0
+  },
+  "invariants": {
+    "postgres_is_schedule_occurrence_source_of_truth": true,
+    "workflow_revision_binding": true,
+    "schedule_definition_revision_binding": true,
+    "stale_authorization_auto_invalidated": true,
+    "wildcard_capability_forbidden": true,
+    "iana_timezone_validation": true,
+    "occurrence_identity_unique": true,
+    "runtime_delete_truncate_denied_to_service_role": true,
+    "schedule_creation_credit_reservation": false,
+    "repository_draft_only": true,
+    "ip_capability_allowed_for_future_pack087_integration": true
+  },
+  "production": {
+    "railway": {
+      "exact_commit": "bba73570d735d4801047e90635715eb7d4b3f9cc",
+      "backend": {
+        "deployment": "654a4d67-0cd6-4deb-bee5-9a41c640e07a",
+        "status": "SUCCESS",
+        "startup": "ROX AI backend listening on port 8080"
+      },
+      "worker": {
+        "deployment": "331f031e-6fdb-419b-aec4-2cd6d95ac44a",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deployment": "688963e8-0e86-4f4d-9dd8-354dd1bc8744",
+        "status": "SUCCESS"
+      }
+    },
+    "vercel": {
+      "runtime_change_required": false,
+      "frontend_changed": false,
+      "git_status": "FAILED_BUILD_RATE_LIMIT",
+      "reconciliation": "No frontend file changed in 88A; the known Vercel build-rate-limit is not an 88A runtime regression."
+    }
+  },
+  "cost_and_side_effects": {
+    "provider_calls": 0,
+    "payment_mutations": 0,
+    "scheduled_provider_executions": 0,
+    "customer_rows_modified_by_acceptance": 0
+  },
+  "next": {
+    "phase": "88B_SCHEDULER_EXACTLY_ONCE",
+    "status": "NOT_STARTED",
+    "requires_user_instruction": true,
+    "pack089_allowed": false
+  }
+}
