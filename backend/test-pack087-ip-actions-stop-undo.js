@@ -172,6 +172,7 @@ class FakeRepository {
   const ownerRoutes = fs.readFileSync(path.join(__dirname, 'lib', 'roxIpRoutes.js'), 'utf8');
   const deviceRoutes = fs.readFileSync(path.join(__dirname, 'lib', 'deviceSessionRoutes.js'), 'utf8');
   const pairing = fs.readFileSync(path.join(__dirname, 'lib', 'ipPairingService.js'), 'utf8');
+  const suiteUi = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'zuvyr-suite-v1.js'), 'utf8');
 
   for (const marker of [
     'grant_ip_permissions_pack087',
@@ -200,7 +201,10 @@ class FakeRepository {
     'permission_grant_id',
     'mission_digest',
     "interval '15 minutes'",
-    "'full_control_granted'"
+    "'full_control_granted'",
+    "v_pre_authorized := coalesce(v_grant_mode='full_control',false)",
+    "'preAuthorizedByFullControl',v_pre_authorized",
+    "'pre_authorized_by_full_control',v_pre_authorized"
   ]) assert(fullControlSql.includes(marker), marker);
   assert(!/\b(drop table|truncate|delete from)\b/i.test(fullControlSql));
   assert(!/grant\s+.*\s+to\s+(anon|authenticated)/i.test(fullControlSql));
@@ -224,6 +228,19 @@ class FakeRepository {
     "router.post('/undo/next'",
     "router.post('/undo/report'"
   ]) assert(deviceRoutes.includes(marker), marker);
+
+  for (const marker of [
+    'Full Computer Control',
+    'Allow Full Computer Control for this task',
+    'STOP &amp; End Control',
+    '/api/roxip/devices',
+    '/api/roxip/permissions/full-control',
+    '/api/roxip/permissions/revoke',
+    'Mission-bound',
+    '9 device scopes'
+  ]) assert(suiteUi.includes(marker), marker);
+  assert(!suiteUi.includes('Wildcards, shell, filesystem writes and device control are unavailable.'));
+  assert(!suiteUi.includes('IP device control: off'));
 
   assert(!pairing.includes('pack086_execution_invariant_failed'));
   assert(pairing.includes('executionEnabled: session.execution_enabled === true'));
