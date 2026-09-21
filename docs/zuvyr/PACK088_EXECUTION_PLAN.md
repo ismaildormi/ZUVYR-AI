@@ -2,8 +2,8 @@
 
 Date: 2026-09-21  
 Canonical predecessor: PACK087 `LOCKED_VERIFIED`  
-Planning status: `PLANNING`  
-Implementation status: `NOT_STARTED`
+Planning status: `LOCKED`  
+Implementation status: `IN_PROGRESS` — 88A–88D `LOCKED_VERIFIED`; 88E active
 
 ## 1. Objective
 
@@ -493,9 +493,20 @@ Acceptance:
 - Scheduled Tasks source UI is activated and branch previews built successfully, but the merged Vercel production deployment is currently blocked by the account build-rate-limit.
 - 88D is therefore **not yet canonical LOCKED_VERIFIED**. The only remaining 88D gate is merged production frontend deployment + live Scheduled Tasks UI verification.
 - Evidence: `zuvyr-pack-evidence/pack-088/2026-09-21-88d/receipt.json`.
-- **88E must remain NOT_STARTED until this gate clears.**
+
+#### 88D FINALIZED — LOCKED_VERIFIED
+
+- Former Vercel build-rate-limit gate cleared.
+- Vercel production deployment `dpl_GH3W4VkxLLCgETPU63VDpVPtjvZn` is `READY`, target `production`, on main commit `14a52caacdedf7bfb7cf08482b46a58c054097dd`.
+- Production alias: `rox-ai-sepia.vercel.app`.
+- Live `zuvyr-suite-v1.js` is an exact byte-for-byte match to Git blob `d37b578f4543e7f193fccc194fc10365d3bb6579`; live CSS exactly matches Git blob `d030874f7165b52d14a39dabc701ef58fe64e0b5`.
+- Production artifact contains real Scheduled Tasks create/activate/run-now/pause/resume/cancel/history/notification wiring plus RTL and mobile CSS.
+- 88D is now canonical `LOCKED_VERIFIED`.
+- 88E Production Acceptance + Recovery is now the active PACK088 phase. PACK089 remains blocked until 88E closes PACK088.
 
 ### Phase 88E — Production acceptance + recovery
+
+Current status: **IN_PROGRESS** after 88D production UI finalization.
 
 Real production proof.
 
