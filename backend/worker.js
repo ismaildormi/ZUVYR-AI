@@ -96,6 +96,7 @@ const { assertModel3dLiveAvailable } = require('./lib/model3dPolicy');
 const { connection } = require('./lib/queue');
 const { startBrainKernelWorker } = require('./lib/brainKernelWorker');
 const { startAutomationScheduler } = require('./lib/automationScheduler');
+const { startAutomationExecutionWorker } = require('./lib/automationExecutionWorker');
 const { supabaseAdmin } = require('./lib/supabaseAdmin');
 const resolveImageReferences = createImageReferenceResolver({
   db: supabaseAdmin,
@@ -2128,6 +2129,26 @@ const automationScheduler = startAutomationScheduler({
   env: process.env,
   logger: console
 });
+
+const automationExecutionWorker = startAutomationExecutionWorker({
+  connection,
+  env: process.env
+});
+
+if (automationExecutionWorker.enabled) {
+  automationExecutionWorker.on('failed', (job, error) => {
+    console.error(
+      '[pack088-execution] failed:',
+      job && job.id,
+      error && (error.code || error.message)
+    );
+  });
+}
+
+console.log(
+  '[pack088-execution] runtime',
+  JSON.stringify({ enabled: automationExecutionWorker.enabled })
+);
 
 console.log(
   '[pack088-scheduler] runtime',

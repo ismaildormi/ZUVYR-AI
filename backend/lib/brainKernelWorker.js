@@ -14,6 +14,9 @@ const {
 const {
   createBrainKernelUsage
 } = require('./brainKernelUsage');
+const {
+  createAutomationExecutionRepository
+} = require('./automationExecutionRepository');
 
 function workerError(code, details = {}) {
   const error = new Error(code);
@@ -112,7 +115,8 @@ function createBrainKernelTaskProcessor({
   client = null,
   registry = null,
   persistence = null,
-  usage = null
+  usage = null,
+  automationRepository = null
 } = {}) {
   const databaseClient =
     client ||
@@ -130,6 +134,25 @@ function createBrainKernelTaskProcessor({
   });
   const capabilityRegistry =
     registry || createLiveCapabilityExecutorRegistry();
+  const automation =
+    automationRepository ||
+    (databaseClient
+      ? createAutomationExecutionRepository({ client: databaseClient })
+      : null);
+
+  async function reconcileAutomation(snapshot, settlementReceipt = null) {
+    if (!automation || !snapshot || !snapshot.run) return null;
+    const state = snapshot.run.state;
+    if (!['succeeded','failed','cancelled'].includes(state)) return null;
+    const receipt = settlementReceipt || snapshot.run.checkpoint_d_settlement_receipt || {};
+    const fundingState = receipt.mode === 'settled' ? 'settled' : 'refunded';
+    return automation.finalizeFromTask({
+      taskRunId: snapshot.run.id,
+      taskState: state,
+      fundingState,
+      errorCode: snapshot.run.error_code || null
+    });
+  }
 
   async function finalizeTerminal({
     userId,
@@ -155,6 +178,10 @@ function createBrainKernelTaskProcessor({
       snapshot.run.checkpoint_d_verification_receipt &&
       snapshot.run.checkpoint_d_settlement_receipt
     ) {
+      await reconcileAutomation(
+        snapshot,
+        snapshot.run.checkpoint_d_settlement_receipt
+      );
       return Object.freeze({
         replayed: true,
         snapshot
@@ -219,15 +246,19 @@ function createBrainKernelTaskProcessor({
       settlementReceipt
     });
 
+    const finalSnapshot = await durable.snapshot({
+      userId,
+      taskRunId
+    });
+
+    await reconcileAutomation(finalSnapshot, settlementReceipt);
+
     return Object.freeze({
       replayed: false,
       terminal: true,
       verification,
       settlementReceipt,
-      snapshot: await durable.snapshot({
-        userId,
-        taskRunId
-      })
+      snapshot: finalSnapshot
     });
   }
 
