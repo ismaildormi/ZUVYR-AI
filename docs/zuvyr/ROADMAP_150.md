@@ -1400,7 +1400,7 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 - **Evidence/receipt requirements:** Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.
 - **Final gate:** LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate.
 - **External gate:** —
-- **Recorded status:** PLANNED
+- **Recorded status:** IN_PROGRESS
 
 ## PACK068 — Video Edit / Extend / VFX
 
@@ -1861,6 +1861,17 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 - **Final gate:** LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate.
 - **External gate:** M20
 - **Recorded status:** PLANNED
+
+### PACK089 live progress — 2026-09-21
+
+- **89A:** LOCKED_VERIFIED — canonical connection/Vault/Permission Center foundation.
+- **89B:** LOCKED_VERIFIED — one owner-aware `ai.tools` seam for Skills/plugins/MCP; official `@modelcontextprotocol/client@2.0.0` installed and locked; exact operation fingerprint/tool-key permission binding; SSRF/private-network guards; service-role-only tool RPCs.
+- **89B quality:** PR #83 merged as `92d4e05667c2f095e63b0410d0a81cad62e6d0a7`; quality run `35654292803` PASS.
+- **89B production:** migration `20260921204458 pack089_89b_tool_runtime_permissions`; backend gate-enabled deployment `1d160111-a3c6-4416-992d-2fb246d88e3d` SUCCESS; worker and maintenance exact-commit deployments SUCCESS.
+- **89B acceptance:** install/invoke/replay/fingerprint/revoke lifecycle PASS in production rollback-only acceptance with 0 network/provider/billing mutations and 0 residual rows/grants.
+- **89B receipt:** `zuvyr-pack-evidence/pack-089/2026-09-21-89b/receipt.json`.
+- **89C:** IN_PROGRESS — Google Drive OAuth + Drive tools. Engineering proceeds fail-closed without fabricating missing Google OAuth credentials.
+- PACK090 remains blocked until PACK089 is fully LOCKED_VERIFIED.
 
 ## PACK090 — Agent Checkpoint I
 
