@@ -1052,3 +1052,17 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - Final receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88e/receipt.json`.
 - **PACK089 — Skills / Plugins / MCP / Connections is now unblocked.**
 
+### PACK089 / 89A LOCKED_VERIFIED — 2026-09-21
+
+- PACK089 overall status: `IN_PROGRESS`.
+- **89A — Canonical Schema + Vault + Permission Center: LOCKED_VERIFIED.**
+- Existing production connection tables were extended; legacy `plugin_installations` was not revived.
+- OAuth PKCE and connection/plugin credentials use Supabase Vault; client grants on new tables/RPCs = 0.
+- Permission Center now owns connection/plugin/MCP resource authorization with operation fingerprints and owner checks.
+- Production transaction-only acceptance passed Vault roundtrip, cross-owner denial, grant/revoke/secret deletion and declarative Skill persistence with zero acceptance rows remaining.
+- Migration: `20260921192642 pack089_89a_connections_permissions`.
+- PR #80 merge: `cf77c8a20a4a2da279ba6e7be1da1118a8a54dba`; CI `35644690975` PASS/PASS.
+- Railway backend/worker/maintenance all SUCCESS on the exact runtime commit.
+- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-21-89a/receipt.json`.
+- **89B is active; PACK090 remains blocked.**
+
