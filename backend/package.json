@@ -34,6 +34,7 @@
   "dependencies": {
     "@embedpdf/fonts-arabic": "1.0.0",
     "@fal-ai/client": "^1.10.1",
+    "@modelcontextprotocol/client": "2.0.0",
     "@supabase/supabase-js": "^2.45.4",
     "bidi-shaper": "0.1.2",
     "bullmq": "^5.12.12",
@@ -51,7 +52,6 @@
     "replicate": "^0.34.1",
     "sharp": "0.34.4",
     "stripe": "^16.9.0",
-    "ws": "^8.18.0",
-    "@modelcontextprotocol/client": "2.0.0"
+    "ws": "^8.18.0"
   }
 }
