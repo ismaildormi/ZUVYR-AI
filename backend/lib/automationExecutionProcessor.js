@@ -491,6 +491,21 @@ function createAutomationExecutionProcessor({
         });
       }
 
+      if (claim.status === 'claimed' && typeof executionRepository.checkControl === 'function') {
+        const control = await executionRepository.checkControl({
+          runId,
+          claimToken: claim.claimToken,
+          now: now.toISOString()
+        });
+        if (control && control.open === false) {
+          return Object.freeze({
+            status: 'cancelled',
+            runId,
+            errorCode: 'PACK088_CONTROL_CANCELLED'
+          });
+        }
+      }
+
       const idempotencyKey =
         `${CONFIG.execution.brainIdempotencyPrefix}${runId}`;
 
@@ -579,6 +594,16 @@ function createAutomationExecutionProcessor({
           },
           afterReservation: async ({ quote, liveQuote }) => {
             pricingSnapshot = pricingSnapshotFromQuote({ quote, liveQuote });
+            if (typeof executionRepository.checkControl === 'function') {
+              const control = await executionRepository.checkControl({
+                runId,
+                claimToken: claim.claimToken,
+                now: now.toISOString()
+              });
+              if (control && control.open === false) {
+                throw executionError('PACK088_CONTROL_CANCELLED');
+              }
+            }
             permissionReceipt = await authorizeOccurrence({
               claim,
               request,
@@ -588,6 +613,13 @@ function createAutomationExecutionProcessor({
           }
         });
       } catch (error) {
+        if (String(error && error.code || '') === 'PACK088_CONTROL_CANCELLED') {
+          return Object.freeze({
+            status: 'cancelled',
+            runId,
+            errorCode: error.code
+          });
+        }
         if (isFundingBlock(error)) {
           const snapshot =
             error.code === 'PACK040_CREDIT_CAP_EXCEEDED'
