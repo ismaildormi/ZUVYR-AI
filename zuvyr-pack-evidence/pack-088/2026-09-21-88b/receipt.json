@@ -1,0 +1,171 @@
+{
+  "schema_version": "1.0",
+  "pack": "088",
+  "phase": "88B_SCHEDULER_EXACTLY_ONCE",
+  "title": "Automations & Durable Workflows — Scheduler + Exactly-Once Dispatch",
+  "status": "LOCKED_VERIFIED",
+  "canonical_pack_status": "IN_PROGRESS",
+  "finalized_at": "2026-09-21T13:43:10.952481Z",
+  "scope_boundary": {
+    "phase_88b_only": true,
+    "phase_88c_started": false,
+    "scheduler_runtime_enabled": true,
+    "workflow_execution_enabled": false,
+    "provider_calls_enabled": false,
+    "billing_mutations_enabled": false,
+    "brain_kernel_execution_started": false
+  },
+  "baseline": {
+    "phase_88a_status": "LOCKED_VERIFIED",
+    "phase_88a_finalizer_commit": "00fa2b5dfb4b0c4cb6566b24b9e7828c52d77ca4"
+  },
+  "implementation": {
+    "pull_request": 65,
+    "candidate_head": "414bc0dea30a5cd75e4ad6737e98594c825d30e3",
+    "merge_commit": "172e7d3dc56277461459f279ed8ffe7de5b5e608",
+    "ci_run": 35605334166,
+    "backend_quality": "PASS",
+    "release_quality": "PASS",
+    "vercel": "SUCCESS",
+    "source_blobs": {
+      "scheduler_sql": "d8e07580d70c0814fa971f4ae3ecfeb638526cce",
+      "claim_conflict_hotfix": "f9837c301e7013aae5f994f02fa1953c1d813dfa",
+      "automation_config": "37ec82afd641654990419aac46c5e7dcf7661bc1",
+      "automation_queue": "917416f2abd23a7e93946302f0ac5a72716d32e4",
+      "automation_scheduler": "ccb0239339668179e3953b6dbd673e7ff853996b",
+      "scheduler_repository": "470ac2a25b4c6968c999689df3a471a2a534864a",
+      "regression_test": "f3e4a20dcc3dfd85a7118b6714d46a85f636def9",
+      "worker": "ecb8fbad46acd4f4236f14518964c99916910fce"
+    }
+  },
+  "database": {
+    "project": "tqoqsgaymygmqrzddvtu",
+    "migrations": [
+      {
+        "version": "20260921132002",
+        "name": "pack088_88b_scheduler_exactly_once"
+      },
+      {
+        "version": "20260921133533",
+        "name": "pack088_88b_claim_conflict_hotfix"
+      }
+    ],
+    "sql_dry_run": "PASS_ROLLBACK",
+    "claim_conflict_fix": {
+      "original": "ON CONFLICT(schedule_id,occurrence_key)",
+      "fixed": "ON CONFLICT ON CONSTRAINT workspace_schedule_runs_occurrence_unique",
+      "reason": "Disambiguates PL/pgSQL output variables from occurrence constraint columns.",
+      "production_function_verified": true
+    },
+    "scheduler_rpcs": {
+      "claim_due_workspace_schedules_pack088": "service_role_execute_only",
+      "list_pending_workspace_schedule_runs_pack088": "service_role_execute_only",
+      "mark_workspace_schedule_run_queued_pack088": "service_role_execute_only",
+      "mark_workspace_schedule_run_dispatch_error_pack088": "service_role_execute_only",
+      "anon_authenticated_execute_grants": 0
+    }
+  },
+  "acceptance": {
+    "concurrent_claim": {
+      "status": "PASS",
+      "parallel_calls": 2,
+      "target_schedule": "c3d5cb65-0721-4ed3-8977-f38649f0dee7",
+      "target_occurrence_key": "8133bf96fbd61b2ab8baea5b0e795dd60b5be42dae346d27863a3225020df8ae",
+      "logical_occurrence_count": 1,
+      "second_parallel_claim_rows": 0
+    },
+    "redis_failure_recovery": {
+      "status": "PASS",
+      "simulated_dispatch_error": "pack088_acceptance_simulated_redis_failure",
+      "persisted_recoverable_state": "pending",
+      "recovered_same_run_id": "08420616-46d8-48b1-97e2-76732454b139",
+      "stable_job_id": "pack088-08420616-46d8-48b1-97e2-76732454b139",
+      "final_acceptance_state": "queued",
+      "provider_or_billing_execution": false
+    },
+    "dst": {
+      "status": "PASS",
+      "timezone": "America/New_York",
+      "spring": {
+        "previous_utc": "2026-03-07T14:00:00Z",
+        "next_utc": "2026-03-08T13:00:00Z",
+        "next_local": "2026-03-08T09:00:00"
+      },
+      "fall": {
+        "previous_utc": "2026-10-31T13:00:00Z",
+        "next_utc": "2026-11-01T14:00:00Z",
+        "next_local": "2026-11-01T09:00:00"
+      }
+    },
+    "cleanup": {
+      "historical_acceptance_fixture_detected_and_removed": true,
+      "acceptance_workflows_remaining": 0,
+      "acceptance_schedules_remaining": 0,
+      "execution_enabled_schedules": 0,
+      "pending_runs": 0,
+      "queued_runs": 0
+    }
+  },
+  "runtime": {
+    "railway": {
+      "exact_commit": "172e7d3dc56277461459f279ed8ffe7de5b5e608",
+      "backend": {
+        "deployment": "75a05f5f-4691-46b8-aa58-4bfae53c3fe8",
+        "status": "SUCCESS"
+      },
+      "worker": {
+        "deployment": "0865d7e9-6ad5-4bcb-90d9-bad4cdcde15f",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deployment": "9af2fef6-35af-412b-8be1-f5000396bb0a",
+        "status": "SUCCESS"
+      }
+    },
+    "scheduler": {
+      "enabled": true,
+      "interval_ms": 15000,
+      "batch_size": 25,
+      "startup_log_verified": true,
+      "first_observed_tick": {
+        "recovered": 0,
+        "claimed": 0,
+        "skipped": 0,
+        "candidates": 0,
+        "queued": 0,
+        "failed": 0
+      }
+    },
+    "vercel_status": "SUCCESS"
+  },
+  "invariants": {
+    "postgres_is_occurrence_source_of_truth": true,
+    "schedule_claim_uses_for_update_skip_locked": true,
+    "occurrence_constraint_unique": true,
+    "bullmq_job_id_stable_from_run_id": true,
+    "redis_failure_does_not_lose_occurrence": true,
+    "restart_recovery_reuses_same_run_identity": true,
+    "scheduler_overlap_guard_present": true,
+    "timezone_next_run_is_dst_aware": true,
+    "workflow_execution_deferred_to_88c": true
+  },
+  "cost_and_side_effects": {
+    "provider_calls": 0,
+    "payment_mutations": 0,
+    "brain_kernel_task_starts": 0,
+    "customer_workflows_executed": 0,
+    "acceptance_rows_remaining": 0
+  },
+  "rollback_recovery": {
+    "backup_branch": "backup-pack088-pre-88b-20260921",
+    "scheduler_runtime_gate_env": "PACK088_SCHEDULER_ENABLED",
+    "runtime_disable_path": "Set PACK088_SCHEDULER_ENABLED=false and redeploy worker; Postgres pending occurrences remain durable.",
+    "database_recovery": "Forward migration repair; do not delete migration history."
+  },
+  "next": {
+    "phase": "88C_FUNDING_PERMISSION_BRAIN_KERNEL",
+    "status": "NOT_STARTED",
+    "requires_user_instruction": true,
+    "pack089_allowed": false
+  }
+}
