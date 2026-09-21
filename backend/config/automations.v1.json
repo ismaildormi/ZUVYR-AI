@@ -1,10 +1,10 @@
 {
-  "version": "pack-088.88b.automations.v1",
-  "implementationPhase": "88B_SCHEDULER_EXACTLY_ONCE",
-  "executionEnabled": false,
+  "version": "pack-088.88c.automations.v1",
+  "implementationPhase": "88C_FUNDING_PERMISSION_BRAIN_KERNEL",
+  "executionEnabled": true,
   "schedulerEnabled": true,
-  "providerCallsEnabled": false,
-  "billingMutationsEnabled": false,
+  "providerCallsEnabled": true,
+  "billingMutationsEnabled": true,
   "sourceOfTruth": "postgres",
   "schedule": {
     "types": [
@@ -65,7 +65,15 @@
     "postgresBeforeRedis": true,
     "stableQueueJobId": true,
     "pendingOccurrenceRecoverableAfterRedisFailure": true,
-    "schedulerOverlapSuppressedPerProcess": true
+    "schedulerOverlapSuppressedPerProcess": true,
+    "runtimePricingBeforeExecution": true,
+    "creditCapCheckedAgainstSameReservedQuote": true,
+    "oneBrainReservationPerOccurrence": true,
+    "permissionAfterFundingBeforeTaskCreation": true,
+    "permissionFailureRefundsReservation": true,
+    "brainTaskIdentityStablePerOccurrence": true,
+    "ipGrantFreshPerOccurrence": true,
+    "brainTerminalReconcilesScheduleRun": true
   },
   "scheduler": {
     "queueName": "zuvyr-automation-dispatch",
@@ -81,5 +89,16 @@
     "queueBackoffMs": 2000,
     "removeOnComplete": 500,
     "removeOnFail": 1000
+  },
+  "execution": {
+    "queueName": "zuvyr-automation-dispatch",
+    "jobName": "scheduled-occurrence",
+    "runtimeGateEnv": "PACK088_AUTOMATION_EXECUTION_ENABLED",
+    "concurrencyDefault": 1,
+    "concurrencyMax": 4,
+    "freshIpMissionGrantSeconds": 600,
+    "freshIpMissionGrantMaxSeconds": 900,
+    "brainIdempotencyPrefix": "pack088:",
+    "permissionRequestPrefix": "pack088-permission:"
   }
 }
