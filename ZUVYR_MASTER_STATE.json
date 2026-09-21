@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "source_fix": "005-FIX6",
   "selected_strategy": "railway_internal_route",
-  "previous_pack": "087",
+  "previous_pack": "088",
   "tests": {
     "maintenance": "PASS",
     "runtime_safety": "PASS",
@@ -835,7 +835,7 @@
     "previous_plan_preserved": true,
     "priority_override": "MODEL_FIRST_BYO_COMPUTE_2026_09_19"
   },
-  "active_pack": "088",
+  "active_pack": "089",
   "pack061": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
@@ -2942,5 +2942,47 @@
     },
     "finalized_at": "2026-09-21T19:02:18.675874Z"
   },
-  "phase2_implementation_authorization_scope": "PACK088_COMPLETE_PACK089_READY"
+  "phase2_implementation_authorization_scope": "PACK089_IN_PROGRESS_USER_AUTHORIZED",
+  "pack089": {
+    "status": "IN_PROGRESS",
+    "title": "Skills / Plugins / MCP / Connections",
+    "plan_path": "docs/zuvyr/PACK089_EXECUTION_PLAN.md",
+    "planning_started_at": "2026-09-21",
+    "implementation_started": true,
+    "current_phase": "89A_SCHEMA_VAULT_PERMISSION_CENTER",
+    "phases": {
+      "89A_SCHEMA_VAULT_PERMISSION_CENTER": {
+        "status": "IN_PROGRESS"
+      },
+      "89B_UNIFIED_TOOLS_SKILLS_PLUGIN_MCP": {
+        "status": "NOT_STARTED"
+      },
+      "89C_GOOGLE_DRIVE_OAUTH_TOOLS": {
+        "status": "NOT_STARTED"
+      },
+      "89D_PRODUCT_UI": {
+        "status": "NOT_STARTED"
+      },
+      "89E_PRODUCTION_ACCEPTANCE": {
+        "status": "NOT_STARTED"
+      }
+    },
+    "foundations": {
+      "existing_ai_tools_registry": true,
+      "existing_workspace_plugin_connections": true,
+      "existing_workspace_integration_connections": true,
+      "existing_permission_center": true,
+      "supabase_vault": true,
+      "legacy_plugin_installations_production": false
+    },
+    "external_gate": {
+      "google_oauth_client_credentials_present": false,
+      "google_api_key_present": true,
+      "blocks_phase": "89E_REAL_GOOGLE_OAUTH_ACCEPTANCE",
+      "engineering_blocked": false
+    },
+    "next_action": "EXECUTE_89A_SCHEMA_VAULT_PERMISSION_CENTER",
+    "next_pack": "090",
+    "next_pack_allowed": false
+  }
 }
