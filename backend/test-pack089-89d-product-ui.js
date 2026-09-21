@@ -55,9 +55,13 @@ assert(
 
 assert(drive.includes('function assertOAuthConfigured()'));
 assert(routes.includes('googleDriveRuntime.assertOAuthConfigured();'));
+const driveConnectStart = routes.indexOf("router.post('/drive/connect'");
+const driveCallbackStart = routes.indexOf("router.post('/drive/oauth/callback'", driveConnectStart);
+const driveConnectRoute = routes.slice(driveConnectStart, driveCallbackStart);
+assert(driveConnectStart >= 0 && driveCallbackStart > driveConnectStart);
 assert(
-  routes.indexOf('googleDriveRuntime.assertOAuthConfigured();') <
-  routes.indexOf('connectionStore.createIntegration({'),
+  driveConnectRoute.indexOf('googleDriveRuntime.assertOAuthConfigured();') <
+  driveConnectRoute.indexOf('connectionStore.createIntegration({'),
   'missing OAuth config must fail before draft creation'
 );
 
