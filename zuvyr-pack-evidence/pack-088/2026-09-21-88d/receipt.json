@@ -3,15 +3,14 @@
   "pack": "088",
   "phase": "88D_UI_NOTIFICATIONS_PAUSE_CANCEL",
   "title": "Automations & Durable Workflows — Product Controls, Notifications & Scheduled Tasks UI",
-  "status": "IMPLEMENTATION_VERIFIED_PRODUCTION_UI_GATE",
+  "status": "LOCKED_VERIFIED",
   "canonical_pack_status": "IN_PROGRESS",
-  "checkpoint_at": "2026-09-21T18:21:30Z",
   "scope_boundary": {
     "phase_88d_implementation_complete": true,
-    "phase_88d_canonical_locked_verified": false,
+    "phase_88d_canonical_locked_verified": true,
     "phase_88e_started": false,
     "pack089_allowed": false,
-    "remaining_gate": "VERCEL_PRODUCTION_UI_DEPLOYMENT",
+    "remaining_gate": null,
     "provider_execution_used_for_88d_acceptance": false,
     "billing_mutation_used_for_88d_acceptance": false
   },
@@ -118,16 +117,30 @@
     "vercel": {
       "project_id": "prj_P6VddfynJKniiK29clC6Epr9byPk",
       "team_id": "team_3PYlTi0Euf7SDg7T2NRzGx3q",
-      "merge_commit_status": "FAILED_BUILD_RATE_LIMIT",
-      "production_ui_verified": false,
-      "source_build_evidence": {
-        "branch_preview_ui_commit": "24f19817be7746104c6954c9f948e5a52a976a45",
-        "branch_preview_ui_deployment": "dpl_6tXqpoJDi3MXZ2535p2rNfXhhapc",
-        "branch_preview_test_commit": "751a8ec5b711bb6274ba3d970a4d2f448b55b09b",
-        "branch_preview_test_deployment": "dpl_88725HixSbnmjSetn1XmrPXkVJDy",
-        "state": "READY"
-      },
-      "interpretation": "Source UI built successfully in preview, but the merged production frontend has not deployed because Vercel rejected the build at the account build-rate limit. This is the only remaining 88D gate."
+      "production_deployment": "dpl_GH3W4VkxLLCgETPU63VDpVPtjvZn",
+      "production_commit": "14a52caacdedf7bfb7cf08482b46a58c054097dd",
+      "target": "production",
+      "state": "READY",
+      "aliases": [
+        "rox-ai-sepia.vercel.app",
+        "rox-ai-rox-ai.vercel.app",
+        "rox-ai-git-main-rox-ai.vercel.app"
+      ],
+      "live_asset_http": 200,
+      "live_ui_checks": {
+        "scheduled_ready": true,
+        "durable_banner": true,
+        "timezone_field": true,
+        "local_run_at_preserved": true,
+        "timezone_preserved": true,
+        "create_api": true,
+        "pause": true,
+        "resume": true,
+        "cancel": true,
+        "run_now": true,
+        "notification_history": true,
+        "zero_charge_copy": true
+      }
     }
   },
   "security": {
@@ -137,8 +150,9 @@
     "advisor_note": "Post-migration advisor still reports existing INFO-level RLS-enabled/no-policy findings used by the service-role-only architecture; no 88D-specific privilege expansion was introduced."
   },
   "next": {
-    "action": "RESOLVE_VERCEL_PRODUCTION_UI_GATE_THEN_FINALIZE_88D",
+    "action": "START_88E_PRODUCTION_ACCEPTANCE_RECOVERY",
     "phase_88e": "NOT_STARTED",
     "pack089_allowed": false
-  }
+  },
+  "finalized_at": "2026-09-21T18:26:00Z"
 }
