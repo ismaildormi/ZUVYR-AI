@@ -2110,19 +2110,30 @@ attachmentWorker.on('failed', (job, err) =>
   handleAttachmentFailure(job, err)
 );
 
-const brainKernelWorker =
-  startBrainKernelWorker({
-    connection,
-    concurrency: 1
-  });
+const brainKernelWorkerEnabled =
+  String(process.env.ZUVYR_BRAIN_KERNEL_WORKER_ENABLED || 'true').toLowerCase() !== 'false';
 
-brainKernelWorker.on('failed', (job, error) => {
-  console.error(
-    '[brain-kernel-worker] failed:',
-    job && job.id,
-    error && (error.code || error.message)
-  );
-});
+const brainKernelWorker = brainKernelWorkerEnabled
+  ? startBrainKernelWorker({
+      connection,
+      concurrency: 1
+    })
+  : null;
+
+if (brainKernelWorker) {
+  brainKernelWorker.on('failed', (job, error) => {
+    console.error(
+      '[brain-kernel-worker] failed:',
+      job && job.id,
+      error && (error.code || error.message)
+    );
+  });
+}
+
+console.log(
+  '[brain-kernel-worker] runtime',
+  JSON.stringify({ enabled: brainKernelWorkerEnabled })
+);
 
 const automationScheduler = startAutomationScheduler({
   connection,
