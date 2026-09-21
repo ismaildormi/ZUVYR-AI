@@ -430,14 +430,20 @@ async function executeScreen(stateDir, tools, options) {
     const script = [
       'Add-Type -AssemblyName System.Windows.Forms;',
       'Add-Type -AssemblyName System.Drawing;',
+      '$p=$env:ZUVYR_SCREEN_TARGET;',
+      'if([string]::IsNullOrWhiteSpace($p)){exit 2};',
       '$b=[System.Windows.Forms.Screen]::PrimaryScreen.Bounds;',
       '$i=New-Object System.Drawing.Bitmap($b.Width,$b.Height);',
       '$g=[System.Drawing.Graphics]::FromImage($i);',
       '$g.CopyFromScreen($b.Location,[System.Drawing.Point]::Empty,$b.Size);',
-      '$i.Save($args[0],[System.Drawing.Imaging.ImageFormat]::Png);',
+      '$i.Save($p,[System.Drawing.Imaging.ImageFormat]::Png);',
       '$g.Dispose();$i.Dispose();'
     ].join('');
-    result = await spawnCaptured(tools.screen, ['-NoProfile','-NonInteractive','-Command',script,target], options);
+    result = await spawnCaptured(
+      tools.screen,
+      ['-NoProfile','-NonInteractive','-Command',script],
+      { ...options, env: { ...(options.env || process.env), ZUVYR_SCREEN_TARGET: target } }
+    );
   } else if (tools.screen === 'gnome-screenshot') {
     result = await spawnCaptured(tools.screen, ['-f', target], options);
   } else if (tools.screen === 'scrot') {
@@ -496,8 +502,19 @@ async function executePointer(type, target, tools, options) {
       throw actionError('pack087_pointer_target_invalid');
     }
     if (process.platform === 'win32') {
-      const script = `Add-Type -TypeDefinition 'using System.Runtime.InteropServices; public class C{[DllImport("user32.dll")] public static extern bool SetCursorPos(int X,int Y);}' ;[C]::SetCursorPos([int]$args[0],[int]$args[1]) | Out-Null`;
-      const result = await spawnCaptured(tools.pointer, ['-NoProfile','-NonInteractive','-Command',script,String(x),String(y)], options);
+      const script = `Add-Type -TypeDefinition 'using System.Runtime.InteropServices; public class C{[DllImport("user32.dll")] public static extern bool SetCursorPos(int X,int Y);}' ;[C]::SetCursorPos([int]$env:ZUVYR_POINTER_X,[int]$env:ZUVYR_POINTER_Y) | Out-Null`;
+      const result = await spawnCaptured(
+        tools.pointer,
+        ['-NoProfile','-NonInteractive','-Command',script],
+        {
+          ...options,
+          env: {
+            ...(options.env || process.env),
+            ZUVYR_POINTER_X: String(x),
+            ZUVYR_POINTER_Y: String(y)
+          }
+        }
+      );
       if (result.code !== 0) throw actionError('pack087_pointer_move_failed');
     } else if (process.platform === 'darwin') {
       const result = await spawnCaptured(tools.pointer, ['m:' + x + ',' + y], options);
@@ -513,8 +530,19 @@ async function executePointer(type, target, tools, options) {
   if (![1,2,3].includes(button)) throw actionError('pack087_pointer_button_invalid');
   if (process.platform === 'win32') {
     const flags = button === 1 ? [2,4] : button === 2 ? [32,64] : [8,16];
-    const script = `Add-Type -TypeDefinition 'using System.Runtime.InteropServices; public class C{[DllImport("user32.dll")] public static extern void mouse_event(uint f,uint dx,uint dy,uint d,uint e);}' ;[C]::mouse_event([uint32]$args[0],0,0,0,0);[C]::mouse_event([uint32]$args[1],0,0,0,0)`;
-    const result = await spawnCaptured(tools.pointer, ['-NoProfile','-NonInteractive','-Command',script,String(flags[0]),String(flags[1])], options);
+    const script = `Add-Type -TypeDefinition 'using System.Runtime.InteropServices; public class C{[DllImport("user32.dll")] public static extern void mouse_event(uint f,uint dx,uint dy,uint d,uint e);}' ;[C]::mouse_event([uint32]$env:ZUVYR_POINTER_DOWN,0,0,0,0);[C]::mouse_event([uint32]$env:ZUVYR_POINTER_UP,0,0,0,0)`;
+    const result = await spawnCaptured(
+      tools.pointer,
+      ['-NoProfile','-NonInteractive','-Command',script],
+      {
+        ...options,
+        env: {
+          ...(options.env || process.env),
+          ZUVYR_POINTER_DOWN: String(flags[0]),
+          ZUVYR_POINTER_UP: String(flags[1])
+        }
+      }
+    );
     if (result.code !== 0) throw actionError('pack087_pointer_click_failed');
   } else if (process.platform === 'darwin') {
     const result = await spawnCaptured(tools.pointer, ['c:.'], options);
@@ -531,8 +559,19 @@ async function executeKeyboard(text, tools, options) {
   if (typeof text !== 'string' || text.length > 4000 || text.includes('\0')) throw actionError('pack087_keyboard_input_invalid');
   let result;
   if (process.platform === 'win32') {
-    const script = 'Add-Type -AssemblyName System.Windows.Forms;[System.Windows.Forms.SendKeys]::SendWait($args[0])';
-    result = await spawnCaptured(tools.keyboard, ['-NoProfile','-NonInteractive','-Command',script,text], options);
+    const sendKeysText = text.replace(/[+^%~(){}\[\]]/g, char => '{' + char + '}');
+    const encoded = Buffer.from(sendKeysText, 'utf8').toString('base64');
+    const script = [
+      'Add-Type -AssemblyName System.Windows.Forms;',
+      '$b=[Convert]::FromBase64String($env:ZUVYR_KEYBOARD_TEXT_B64);',
+      '$t=[Text.Encoding]::UTF8.GetString($b);',
+      '[System.Windows.Forms.SendKeys]::SendWait($t);'
+    ].join('');
+    result = await spawnCaptured(
+      tools.keyboard,
+      ['-NoProfile','-NonInteractive','-Command',script],
+      { ...options, env: { ...(options.env || process.env), ZUVYR_KEYBOARD_TEXT_B64: encoded } }
+    );
   } else if (process.platform === 'darwin') {
     const script = 'on run argv\n tell application "System Events" to keystroke (item 1 of argv)\nend run';
     result = await spawnCaptured(tools.keyboard, ['-e',script,text], options);
@@ -553,7 +592,11 @@ async function executeApplication(name, env, options, { fullControl = false } = 
   } else if (process.platform === 'win32') {
     const ps = powershellCommand();
     if (!ps) throw actionError('pack087_application_open_unsupported');
-    result = await spawnCaptured(ps, ['-NoProfile','-NonInteractive','-Command','Start-Process -FilePath $args[0]',app], options);
+    result = await spawnCaptured(
+      ps,
+      ['-NoProfile','-NonInteractive','-Command','Start-Process -FilePath $env:ZUVYR_APP_TARGET'],
+      { ...options, env: { ...(options.env || process.env), ZUVYR_APP_TARGET: app } }
+    );
   } else {
     result = await spawnCaptured(app, [], options);
   }
