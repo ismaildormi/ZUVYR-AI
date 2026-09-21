@@ -98,6 +98,7 @@ rejects(() => normalizeSkill({
   toolKeys: ['*']
 }), 'invalid_workspace_skill_tools');
 
+const readToolKey = `drive:${RESOURCE}:list`;
 const readPermission = normalizePermissionRequest({
   action: 'connection.read',
   grantMode: 'scoped',
@@ -105,10 +106,11 @@ const readPermission = normalizePermissionRequest({
   resourceNamespace: 'integration_connection',
   resourceId: RESOURCE,
   expiresAt: '2026-09-21T20:00:00Z',
-  constraints: {}
+  constraints: { toolKey: readToolKey }
 }, { ownerId: OWNER, now: NOW });
 assert.equal(readPermission.scopeType, 'resource');
 assert.equal(readPermission.sessionId, null);
+assert.equal(readPermission.constraints.toolKey, readToolKey);
 
 const writePermission = normalizePermissionRequest({
   action: 'connection.write',
