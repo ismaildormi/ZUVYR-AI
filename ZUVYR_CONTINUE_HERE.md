@@ -1670,3 +1670,14 @@ Do **not** reopen PACK084 merely because M18 is deferred. M18 stays a launch/liv
 - Final receipt: `zuvyr-pack-evidence/pack-087/2026-09-21-final/receipt.json` (Git blob `1c32be0e0a99b50443b753317b1920e885874a3b`).
 - **PACK088 is next but NOT STARTED. Explicit user instruction is required to begin Phase 2.**
 
+### PACK088 PLANNING STARTED — 2026-09-21
+
+- PACK087 / Phase 1 remains canonical `LOCKED_VERIFIED`; its completed verification is not reopened.
+- **PACK088 — Automations & Durable Workflows** is now `PLANNING`; implementation remains `NOT_STARTED`.
+- Canonical plan: `docs/zuvyr/PACK088_EXECUTION_PLAN.md`.
+- Reuse confirmed: `zuvyr_task_runs`, `zuvyr_task_steps`, BullMQ/Redis durable queue, Brain Kernel run-time quote/consent/usage path, Pack039 cancel/compensation, Pack047 Permission Center, Pack087 Full Computer Control.
+- Existing production foundations confirmed: `workspace_workflows`, `workspace_workflow_steps`, `workspace_schedules`, `zuvyr_notifications`, all with RLS ON and execution still disabled by design.
+- Planned implementation order: 88A schema/invariants -> 88B scheduler/exactly-once -> 88C run-time funding/permissions/Brain Kernel -> 88D UI/notifications/pause/cancel -> 88E production acceptance/recovery.
+- No migration, provider call, payment mutation or runtime deployment was performed during planning.
+- PACK089 remains blocked until PACK088 reaches canonical `LOCKED_VERIFIED`.
+
