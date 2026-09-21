@@ -20,6 +20,10 @@ const migration = fs.readFileSync(
   path.join(__dirname, '89_pack088_88b_scheduler_exactly_once.sql'),
   'utf8'
 );
+const claimConflictHotfix = fs.readFileSync(
+  path.join(__dirname, '90_pack088_88b_claim_conflict_hotfix.sql'),
+  'utf8'
+);
 const baseMigration = fs.readFileSync(
   path.join(__dirname, '88_pack088_automations_durable_workflows.sql'),
   'utf8'
@@ -53,7 +57,7 @@ for (const marker of [
   'create or replace function public.pack088_first_future_occurrence',
   'create or replace function public.claim_due_workspace_schedules_pack088',
   'for update skip locked',
-  'on conflict(schedule_id,occurrence_key) do nothing',
+  'on conflict on constraint workspace_schedule_runs_occurrence_unique do nothing',
   'create or replace function public.list_pending_workspace_schedule_runs_pack088',
   'create or replace function public.mark_workspace_schedule_run_queued_pack088',
   'create or replace function public.mark_workspace_schedule_run_dispatch_error_pack088',
@@ -68,6 +72,8 @@ for (const marker of [
 
 assert(baseMigration.includes('constraint workspace_schedule_runs_occurrence_unique'));
 assert(baseMigration.includes('unique(schedule_id, occurrence_key)'));
+assert(claimConflictHotfix.includes('on conflict on constraint workspace_schedule_runs_occurrence_unique do nothing'));
+assert(!claimConflictHotfix.includes('on conflict(schedule_id,occurrence_key) do nothing'));
 
 for (const forbidden of [
   /brainKernelRuntime/i,
