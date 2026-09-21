@@ -62,6 +62,22 @@ rejects(() => normalizePluginDraft({
   endpointUrl: 'http://127.0.0.1:8000'
 }), 'invalid_workspace_plugin_endpoint');
 rejects(() => normalizePluginDraft({
+  pluginKind: 'mcp',
+  pluginKey: 'mcp.private',
+  scopes: ['workspace.items.read'],
+  explicitConsent: true,
+  manifest: {},
+  endpointUrl: 'https://127.0.0.1/rpc'
+}), 'workspace_mcp_endpoint_blocked');
+rejects(() => normalizePluginDraft({
+  pluginKind: 'mcp',
+  pluginKey: 'mcp.metadata',
+  scopes: ['workspace.items.read'],
+  explicitConsent: true,
+  manifest: {},
+  endpointUrl: 'https://metadata.google.internal/rpc'
+}), 'workspace_mcp_endpoint_blocked');
+rejects(() => normalizePluginDraft({
   pluginKind: 'plugin',
   pluginKey: 'bad-code',
   scopes: ['workspace.items.read'],
@@ -158,7 +174,11 @@ for (const marker of [
   'revoke all on public.workspace_skills from public,anon,authenticated',
   'to service_role',
   "resource_namespace='integration_connection'",
-  "resource_namespace='plugin_connection'"
+  "resource_namespace='plugin_connection'",
+  "and c.status <> 'revoked'",
+  "select s.pkce_verifier_secret_id",
+  "update public.workspace_oauth_sessions",
+  "set consumed_at=coalesce(consumed_at,now())"
 ]) assert(sql.includes(marker), marker);
 
 assert(!/create table if not exists public\.plugin_installations/i.test(sql));
@@ -188,6 +208,9 @@ assert(contract.includes('workspace_credential_material_blocked'));
 const fp1 = operationFingerprint({ tool: 'drive.search', query: 'x' });
 const fp2 = operationFingerprint({ query: 'x', tool: 'drive.search' });
 assert.equal(fp1, fp2);
+const nestedFp1 = operationFingerprint({ tool: 'drive.search', args: { z: 1, a: 2 } });
+const nestedFp2 = operationFingerprint({ args: { a: 2, z: 1 }, tool: 'drive.search' });
+assert.equal(nestedFp1, nestedFp2);
 assert(/^[0-9a-f]{64}$/.test(fp1));
 
 console.log('PASS: Pack089 89A canonical connection tables are extended without reviving legacy plugin_installations');
