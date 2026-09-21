@@ -201,5 +201,19 @@
     "status": "NOT_STARTED",
     "requires_user_instruction": true,
     "pack089_allowed": false
+  },
+  "finalizer": {
+    "pull_request": 64,
+    "branch": "pack088-88a-finalizer-r2-20260921",
+    "runtime_changes": false,
+    "canonical_files": [
+      "ZUVYR_MASTER_STATE.json",
+      "ZUVYR_MASTER_MATRIX.md",
+      "ZUVYR_CONTINUE_HERE.md",
+      "docs/zuvyr/ROADMAP_150.md",
+      "docs/zuvyr/PACK088_EXECUTION_PLAN.md",
+      "zuvyr-pack-evidence/pack-088/2026-09-21-88a/receipt.json"
+    ],
+    "gate": "FULL_BACKEND_AND_RELEASE_QUALITY_BEFORE_MERGE"
   }
 }
