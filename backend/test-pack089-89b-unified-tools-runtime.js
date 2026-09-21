@@ -293,10 +293,10 @@ function baseConnection(overrides = {}) {
   );
   assert.equal(networkCalls, 0);
 
-  const sql = fs.readFileSync('backend/90_pack089_89b_tool_runtime_permissions.sql', 'utf8');
-  const routes = fs.readFileSync('backend/lib/workspaceRoutes.js', 'utf8');
-  const repo = fs.readFileSync('backend/lib/permissionCenterRepository.js', 'utf8');
-  const packageJson = fs.readFileSync('backend/package.json', 'utf8');
+  const sql = fs.readFileSync('90_pack089_89b_tool_runtime_permissions.sql', 'utf8');
+  const routes = fs.readFileSync('lib/workspaceRoutes.js', 'utf8');
+  const repo = fs.readFileSync('lib/permissionCenterRepository.js', 'utf8');
+  const packageJson = fs.readFileSync('package.json', 'utf8');
 
   for (const marker of [
     'consume_workspace_tool_permission_pack089',
