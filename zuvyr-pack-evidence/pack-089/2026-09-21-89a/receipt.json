@@ -1,0 +1,117 @@
+{
+  "pack": "089",
+  "phase": "89A_SCHEMA_VAULT_PERMISSION_CENTER",
+  "date": "2026-09-21",
+  "status": "LOCKED_VERIFIED",
+  "implementation": {
+    "pr": 80,
+    "candidate_head": "6f163cc0c4d431de9c8ae41730495c956319f745",
+    "merge_commit": "cf77c8a20a4a2da279ba6e7be1da1118a8a54dba",
+    "files": [
+      "backend/89_pack089_connections_permissions.sql",
+      "backend/lib/permissionCenterPolicy.js",
+      "backend/lib/workspaceConnectionContract.js",
+      "backend/lib/workspaceConnectionRepository.js",
+      "backend/lib/workspaceRoutes.js",
+      "backend/test-pack089-89a-connections-foundation.js",
+      "backend/package.json",
+      "docs/zuvyr/PACK089_EXECUTION_PLAN.md",
+      "ZUVYR_MASTER_STATE.json"
+    ]
+  },
+  "ci": {
+    "final_run": 35644690975,
+    "backend_quality": "PASS",
+    "release_quality": "PASS",
+    "findings_closed": [
+      "parser-safe manifest guard regex",
+      "stale active-pack regression assertion advanced to PACK089",
+      "refresh_token_present metadata distinguished from raw refresh_token secret"
+    ]
+  },
+  "database": {
+    "migration_version": "20260921192642",
+    "migration_name": "pack089_89a_connections_permissions",
+    "preapply_dry_run": "PASS_ROLLBACK",
+    "postconditions": "PASS",
+    "rls": {
+      "workspace_plugin_connections": true,
+      "workspace_integration_connections": true,
+      "workspace_oauth_sessions": true,
+      "workspace_skills": true
+    },
+    "client_table_grants": {
+      "workspace_oauth_sessions": 0,
+      "workspace_skills": 0
+    },
+    "pack089_rpc_client_execute_grants": 0,
+    "legacy_plugin_installations_exists": false,
+    "persisted_acceptance_rows": {
+      "integrations": 0,
+      "plugins": 0,
+      "oauth_sessions": 0,
+      "skills": 0
+    }
+  },
+  "security": {
+    "canonical_secret_store": "Supabase Vault",
+    "public_plaintext_credentials": false,
+    "oauth_state_persisted_as_sha256_only": true,
+    "pkce_verifier_vault_only": true,
+    "plugin_mcp_credentials_vault_only": true,
+    "resource_owner_checks": true,
+    "revoke_revokes_permission_grants": true,
+    "revoke_deletes_vault_secret": true,
+    "wildcard_scopes_blocked": true,
+    "executable_plugin_manifest_blocked": true,
+    "existing_browser_and_code_permission_hardening_preserved": true
+  },
+  "transaction_acceptance": {
+    "rollback_only": true,
+    "oauth_pkce_vault_roundtrip": "PASS",
+    "oauth_pkce_deleted_after_consume": "PASS",
+    "integration_vault_secret": "PASS",
+    "integration_permission_grant": "PASS",
+    "cross_owner_resource_denied": "PASS",
+    "integration_revoke_connection": "PASS",
+    "integration_revoke_grant": "PASS",
+    "integration_revoke_secret": "PASS",
+    "plugin_vault_secret": "PASS",
+    "mcp_permission_grant": "PASS",
+    "plugin_revoke_connection": "PASS",
+    "plugin_revoke_grant": "PASS",
+    "plugin_revoke_secret": "PASS",
+    "declarative_skill_persistence": "PASS",
+    "persisted_test_rows": 0
+  },
+  "runtime": {
+    "commit": "cf77c8a20a4a2da279ba6e7be1da1118a8a54dba",
+    "railway": {
+      "backend": {
+        "deployment": "a57acbea-99ef-4f28-b09c-cdf2403720e3",
+        "status": "SUCCESS"
+      },
+      "worker": {
+        "deployment": "61faf1b6-9eae-4df5-8b94-f83654a5dcc3",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deployment": "3ea73709-065e-428c-a888-00654b7eb745",
+        "status": "SUCCESS"
+      }
+    },
+    "frontend_runtime_changed": false,
+    "vercel_note": "Known build-rate-limit status; 89A contains no frontend runtime changes."
+  },
+  "deliberate_gates": {
+    "plugin_install_execution": "OFF_UNTIL_89B",
+    "mcp_invoke_execution": "OFF_UNTIL_89B",
+    "google_drive_oauth_execution": "OFF_UNTIL_89C",
+    "real_google_oauth_credentials": "ABSENT_EXTERNAL_GATE_FOR_89E"
+  },
+  "next": {
+    "phase": "89B_UNIFIED_TOOLS_SKILLS_PLUGIN_MCP",
+    "allowed": true,
+    "pack090_allowed": false
+  }
+}
