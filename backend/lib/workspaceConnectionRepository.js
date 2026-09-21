@@ -83,6 +83,53 @@ function createWorkspaceConnectionStore(db) {
     return data;
   }
 
+  async function getPluginConnection({ ownerId, connectionId }) {
+    const { data, error } = await db
+      .from('workspace_plugin_connections')
+      .select('id,plugin_key,plugin_kind,display_name,scopes,explicit_consent,status,installed,runtime_enabled,manifest,endpoint_url,created_at,updated_at,revoked_at,last_error_code')
+      .eq('owner_id', ownerId)
+      .eq('id', connectionId)
+      .single();
+    if (error || !data) throw storeError('workspace_plugin_connection_not_found', error?.message || null);
+    return data;
+  }
+
+  async function listActivePlugins(ownerId, { limit = 100 } = {}) {
+    const { data, error } = await db
+      .from('workspace_plugin_connections')
+      .select('id,plugin_key,plugin_kind,display_name,scopes,status,installed,runtime_enabled,manifest,endpoint_url,created_at,updated_at,revoked_at,last_error_code')
+      .eq('owner_id', ownerId)
+      .eq('status', 'active')
+      .eq('installed', true)
+      .eq('runtime_enabled', true)
+      .is('revoked_at', null)
+      .order('updated_at', { ascending: false })
+      .limit(normalizeLimit(limit, 100, 200));
+    if (error) throw storeError('workspace_plugins_read_failed', error.message);
+    return data || [];
+  }
+
+  async function installPlugin({ ownerId, connectionId, sessionId, requestId, operationFingerprint }) {
+    const { data, error } = await db.rpc('install_workspace_plugin_pack089', {
+      p_owner_id: ownerId,
+      p_connection_id: connectionId,
+      p_session_id: sessionId,
+      p_request_id: requestId,
+      p_operation_fingerprint: operationFingerprint
+    });
+    if (error) throw storeError('workspace_plugin_install_failed', error.message);
+    return data;
+  }
+
+  async function getPluginSecret({ ownerId, connectionId }) {
+    const { data, error } = await db.rpc('get_workspace_plugin_secret_pack089', {
+      p_owner_id: ownerId,
+      p_connection_id: connectionId
+    });
+    if (error) throw storeError('workspace_plugin_secret_read_failed', error.message);
+    return data == null ? null : String(data);
+  }
+
   async function revokeIntegration({ ownerId, connectionId }) {
     const { data, error } = await db.rpc('revoke_workspace_integration_connection_pack089', {
       p_owner_id: ownerId,
@@ -130,6 +177,17 @@ function createWorkspaceConnectionStore(db) {
     return data;
   }
 
+  async function getSkill({ ownerId, skillId }) {
+    const { data, error } = await db
+      .from('workspace_skills')
+      .select('id,name,description,instructions,tool_keys,status,enabled,created_at,updated_at')
+      .eq('owner_id', ownerId)
+      .eq('id', skillId)
+      .single();
+    if (error || !data) throw storeError('workspace_skill_not_found', error?.message || null);
+    return data;
+  }
+
   async function setSkillEnabled({ ownerId, skillId, enabled }) {
     const { data, error } = await db
       .from('workspace_skills')
@@ -150,10 +208,15 @@ function createWorkspaceConnectionStore(db) {
     list,
     createIntegration,
     createPlugin,
+    getPluginConnection,
+    listActivePlugins,
+    installPlugin,
+    getPluginSecret,
     revokeIntegration,
     revokePlugin,
     listSkills,
     createSkill,
+    getSkill,
     setSkillEnabled
   });
 }

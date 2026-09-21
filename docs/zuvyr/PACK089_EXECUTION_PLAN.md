@@ -2,7 +2,7 @@
 
 Date: 2026-09-21
 Canonical predecessor: PACK088 `LOCKED_VERIFIED`
-Implementation status: `IN_PROGRESS` — 89A active
+Implementation status: `IN_PROGRESS` — 89A `LOCKED_VERIFIED`, 89B active
 
 ## 1. Objective
 
@@ -56,7 +56,7 @@ Historical source `plugin_installations` is NOT present in production and must n
 
 ## 4. Phases
 
-### 89A — Canonical schema + Vault + Permission Center
+### 89A — Canonical schema + Vault + Permission Center ✅ `LOCKED_VERIFIED`
 - extend existing plugin/integration connection rows; do not create replacement tables;
 - add durable OAuth sessions with hashed state + PKCE verifier in Vault;
 - add owner-scoped declarative Skills;
@@ -65,7 +65,7 @@ Historical source `plugin_installations` is NOT present in production and must n
 - service-role-only privileges;
 - transaction-only production schema/invariant acceptance.
 
-### 89B — Unified tool / Skills / Plugin / MCP runtime
+### 89B — Unified tool / Skills / Plugin / MCP runtime 🟠 `IN_PROGRESS`
 - keep `ai.tools` as the single invocation seam;
 - persistent declarative Skills resolve to registered tool keys;
 - plugin manifests register namespaced tools only;
@@ -122,3 +122,23 @@ PACK089 becomes `LOCKED_VERIFIED` only when:
 - receipts and canonical project state are reconciled.
 
 PACK090 must not start before this gate.
+
+
+## 7. 89A canonical receipt — 2026-09-21
+
+- Final production commit: `c977e342646b6d3b59d61844ae9ef84486dfa82d`
+- Quality run: `35649552503` — Backend Quality PASS + Release Quality PASS.
+- Production migrations:
+  - `20260921192642 pack089_89a_connections_permissions`
+  - `20260921201251 pack089_89a_oauth_revoke_hardening`
+- Railway exact commit: backend / worker / maintenance all SUCCESS.
+- RLS: PASS on canonical connection/OAuth/Skill tables.
+- Client table grants: 0.
+- Sensitive RPC client EXECUTE grants: 0; service-role sensitive RPCs: 8.
+- Revoked OAuth callbacks fail closed; revoke clears pending PKCE Vault secrets.
+- MCP private/local endpoint validation is blocked before runtime.
+- Acceptance residue: 0 connection rows, 0 OAuth rows, 0 Skills, 0 PACK089 grants, 0 PACK089 Vault secrets.
+- No provider/payment/external-connection calls were made in 89A.
+- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-21-89a/receipt.json`.
+
+Canonical next action: `89B_UNIFIED_TOOLS_SKILLS_PLUGIN_MCP`.

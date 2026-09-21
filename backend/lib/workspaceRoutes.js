@@ -29,6 +29,9 @@ const {
 const {
   getDefaultWorkspaceConnectionStore
 } = require('./workspaceConnectionRepository');
+const {
+  getDefaultWorkspaceToolRuntime
+} = require('./workspaceToolRuntime');
 const { normalizeWorkflow } = require('./workspaceWorkflowContract');
 const { text, uuid, object, fail } = require('./workspaceValidation');
 const {
@@ -185,6 +188,7 @@ function createWorkspaceRouter(options = {}) {
   const researchCheckpoint = options.researchCheckpoint || getDefaultResearchArtifactCheckpointRepository({ documentStudio, officeStudio, libraryStore, projectStore });
   const imageGenerationStore = options.imageGenerationStore || getDefaultImageGenerationRepository();
   const connectionStore = options.connectionStore || getDefaultWorkspaceConnectionStore();
+  const toolRuntime = options.toolRuntime || getDefaultWorkspaceToolRuntime();
   const memoryStore =
     options.memoryStore || getDefaultWorkspaceMemoryStore();
   const contextGraphStore =
@@ -978,6 +982,148 @@ function createWorkspaceRouter(options = {}) {
     }
   });
 
+  function toolRuntimeFailure(res, error) {
+    const code = String(error?.code || error?.message || 'workspace_tool_runtime_failed');
+    if (
+      code.includes('permission_') ||
+      code.includes('owner_mismatch') ||
+      code.includes('fingerprint_mismatch')
+    ) {
+      return res.status(403).json({ status: 'error', code });
+    }
+    if (
+      code.includes('mcp_remote_disabled') ||
+      code.includes('mcp_sdk_') ||
+      code.includes('mcp_fetch_unavailable') ||
+      code.includes('mcp_dns_failed')
+    ) {
+      return res.status(503).json({ status: 'error', code, externalWriteExecuted: false });
+    }
+    if (
+      code.includes('invalid_') ||
+      code.includes('not_found') ||
+      code.includes('inactive') ||
+      code.includes('unavailable') ||
+      code.includes('blocked') ||
+      code.includes('required') ||
+      code.includes('scope_')
+    ) {
+      return res.status(400).json({ status: 'error', code });
+    }
+    console.error('[workspace/tools] operation failed:', code);
+    return res.status(500).json({ status: 'error', code: 'workspace_tool_runtime_failed' });
+  }
+
+  function shortText(value, code, max = 200) {
+    const result = String(value == null ? '' : value).trim();
+    if (!result || result.length > max) {
+      const error = new Error(code);
+      error.code = code;
+      throw error;
+    }
+    return result;
+  }
+
+  router.get('/tools', async (req, res) => {
+    try {
+      const tools = await toolRuntime.hydrateOwnerTools(req.userId);
+      res.set('Cache-Control', 'no-store');
+      return res.json({ status: 'success', tools, billedCredits: 0 });
+    } catch (error) {
+      return toolRuntimeFailure(res, error);
+    }
+  });
+
+  router.get('/skills/:id/resolve', async (req, res) => {
+    try {
+      const skill = await toolRuntime.resolveSkill({
+        ownerId: req.userId,
+        skillId: connectionUuid(req.params.id, 'invalid_workspace_skill_id')
+      });
+      res.set('Cache-Control', 'no-store');
+      return res.json({ status: 'success', skill, billedCredits: 0 });
+    } catch (error) {
+      return toolRuntimeFailure(res, error);
+    }
+  });
+
+  router.post('/plugins/:id/install/challenge', async (req, res) => {
+    try {
+      const sessionId = shortText(req.body?.sessionId, 'permission_session_required');
+      const prepared = await toolRuntime.prepareInstall({
+        ownerId: req.userId,
+        connectionId: connectionUuid(req.params.id),
+        sessionId
+      });
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+      res.set('Cache-Control', 'no-store');
+      return res.json({
+        status: 'success',
+        operationFingerprint: prepared.operationFingerprint,
+        permissionRequest: { ...prepared.permissionRequest, expiresAt }
+      });
+    } catch (error) {
+      return toolRuntimeFailure(res, error);
+    }
+  });
+
+  router.post('/plugins/install', async (req, res) => {
+    try {
+      const result = await toolRuntime.installPlugin({
+        ownerId: req.userId,
+        connectionId: connectionUuid(req.body?.connectionId),
+        sessionId: shortText(req.body?.sessionId, 'permission_session_required'),
+        requestId: shortText(req.body?.requestId, 'invalid_permission_request_id'),
+        operationFingerprint: shortText(
+          req.body?.operationFingerprint,
+          'permission_operation_fingerprint_required',
+          64
+        ).toLowerCase()
+      });
+      res.set('Cache-Control', 'no-store');
+      return res.json({ status: 'success', result, billedCredits: 0 });
+    } catch (error) {
+      return toolRuntimeFailure(res, error);
+    }
+  });
+
+  router.post('/tools/invoke/challenge', async (req, res) => {
+    try {
+      const sessionId = shortText(req.body?.sessionId, 'permission_session_required');
+      const prepared = await toolRuntime.prepareInvocation({
+        ownerId: req.userId,
+        toolKey: shortText(req.body?.toolKey, 'invalid_workspace_tool_key', 240).toLowerCase(),
+        input: req.body?.input == null ? {} : req.body.input,
+        sessionId
+      });
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+      res.set('Cache-Control', 'no-store');
+      return res.json({
+        status: 'success',
+        operationFingerprint: prepared.operationFingerprint,
+        permissionRequest: { ...prepared.permissionRequest, expiresAt }
+      });
+    } catch (error) {
+      return toolRuntimeFailure(res, error);
+    }
+  });
+
+  router.post('/tools/invoke', async (req, res) => {
+    try {
+      const result = await toolRuntime.invoke({
+        ownerId: req.userId,
+        toolKey: shortText(req.body?.toolKey, 'invalid_workspace_tool_key', 240).toLowerCase(),
+        input: req.body?.input == null ? {} : req.body.input,
+        sessionId: shortText(req.body?.sessionId, 'permission_session_required'),
+        requestId: shortText(req.body?.requestId, 'invalid_permission_request_id')
+      });
+      res.set('Cache-Control', 'no-store');
+      return res.json({ status: 'success', result, billedCredits: 0 });
+    } catch (error) {
+      return toolRuntimeFailure(res, error);
+    }
+  });
+
   router.post(
     '/workflows/execute',
     (_req, res) => disabled(res, 'workflow_execute')
@@ -985,10 +1131,6 @@ function createWorkspaceRouter(options = {}) {
   router.post(
     '/schedules/activate',
     (_req, res) => disabled(res, 'schedule_execute')
-  );
-  router.post(
-    '/plugins/install',
-    (_req, res) => disabled(res, 'plugin_install')
   );
   router.post(
     '/drive/connect',

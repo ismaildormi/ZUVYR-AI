@@ -197,8 +197,12 @@ for (const route of [
   "router.post('/skills/:id/enabled'"
 ]) assert(routes.includes(route), route);
 
-assert(routes.includes("'/plugins/install'"));
-assert(routes.includes("disabled(res, 'plugin_install')"));
+// 89A originally kept plugin install fail-closed. 89B is allowed to advance
+// that surface only through the exact permission-gated runtime, while Drive
+// connect remains gated until 89C.
+assert(routes.includes("router.post('/plugins/install'"));
+assert(routes.includes('toolRuntime.installPlugin'));
+assert(!routes.includes("disabled(res, 'plugin_install')"));
 assert(routes.includes("'/drive/connect'"));
 assert(routes.includes("disabled(res, 'drive_connect')"));
 
@@ -218,4 +222,4 @@ assert(/^[0-9a-f]{64}$/.test(fp1));
 console.log('PASS: Pack089 89A canonical connection tables are extended without reviving legacy plugin_installations');
 console.log('PASS: OAuth/plugin secrets stay Vault-only and management responses exclude credential material');
 console.log('PASS: Permission Center supports owner-scoped connection/plugin/MCP grants with operation fingerprints');
-console.log('PASS: Skills are declarative and plugin install / Drive connect execution remains gated');
+console.log('PASS: Skills remain declarative; 89B may advance plugin install only through the guarded runtime while Drive connect remains gated');
