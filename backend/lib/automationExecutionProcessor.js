@@ -2,7 +2,6 @@
 
 const CONFIG = require('../config/automations.v1.json');
 const { ACTIONS } = require('./permissionCenterPolicy');
-const BRAIN_GRAPH = require('../config/capability-graph.v1.json');
 const {
   createAutomationExecutionRepository
 } = require('./automationExecutionRepository');
@@ -47,19 +46,10 @@ function inferSurface(capabilities = [], explicit = null) {
   return 'chat';
 }
 
-const WORKFLOW_TO_BRAIN_OUTPUT = Object.freeze({
-  chat: 'chat',
-  research: 'research',
-  image: 'image',
-  video: 'video',
-  audio: 'audio',
-  code: 'code'
-});
-
-const CODE_PLAN_CAPABILITIES = new Set(
-  Object.keys(BRAIN_GRAPH.capabilities || {})
-    .filter(value => value.startsWith('code.'))
-);
+const PACK040_AUTOMATION_LIVE_CAPABILITIES = new Set([
+  'chat',
+  'ip'
+]);
 
 function workflowCapabilities(claim) {
   const steps = Array.isArray(claim && claim.steps) ? claim.steps : [];
@@ -78,25 +68,21 @@ function workflowCapabilities(claim) {
 
 function workflowBrainOutputs(claim) {
   const capabilities = workflowCapabilities(claim);
-  const unsupported = capabilities.filter(capability =>
-    !Object.hasOwn(WORKFLOW_TO_BRAIN_OUTPUT, capability) &&
-    capability !== 'ip'
+  const unsupported = capabilities.filter(
+    capability => !PACK040_AUTOMATION_LIVE_CAPABILITIES.has(capability)
   );
+
   if (unsupported.length > 0) {
-    throw executionError('PACK088_PERMISSION_BRAIN_CAPABILITY_UNSUPPORTED', {
+    throw executionError('PACK088_PERMISSION_BRAIN_RUNTIME_UNSUPPORTED', {
       capabilities: unsupported
     });
   }
 
-  const outputs = capabilities
-    .map(capability => WORKFLOW_TO_BRAIN_OUTPUT[capability])
-    .filter(Boolean);
-
-  if (outputs.length === 0 && capabilities.includes('ip')) {
-    outputs.push('chat');
-  }
-
-  return Object.freeze([...new Set(outputs)]);
+  // PACK040 production currently proves exactly:
+  // chat.respond -> project.collect.
+  // IP-only automations use chat.respond as the control-plane reasoning step;
+  // device authority itself still comes only from PACK087's fresh mission grant.
+  return Object.freeze(['chat','project']);
 }
 
 function allowedBrainPlanCapabilities(claim) {
@@ -106,24 +92,11 @@ function allowedBrainPlanCapabilities(claim) {
       : []
     ).map(value => String(value || '').trim().toLowerCase())
   );
-  const allowed = new Set();
 
-  if (authorized.has('chat')) allowed.add('chat.respond');
-  if (authorized.has('research')) allowed.add('research.run');
-  if (authorized.has('image')) allowed.add('image.generate');
-  if (authorized.has('video')) allowed.add('video.generate');
-  if (authorized.has('audio')) allowed.add('audio.generate');
-  if (authorized.has('code')) {
-    for (const capability of CODE_PLAN_CAPABILITIES) allowed.add(capability);
+  const allowed = new Set(['project.collect']);
+  if (authorized.has('chat') || authorized.has('ip')) {
+    allowed.add('chat.respond');
   }
-
-  // IP-only workflows use chat.respond as the Brain control-plane step.
-  // Device authority itself still comes only from the fresh PACK087 mission grant.
-  if (authorized.has('ip')) allowed.add('chat.respond');
-
-  // project.collect is an internal read-only aggregation node, not an external action.
-  allowed.add('project.collect');
-
   return allowed;
 }
 
@@ -149,6 +122,39 @@ function assertBrainPlanAuthorized(claim, plan) {
   return true;
 }
 
+async function claimExecutionWithBarrier({
+  repository,
+  runId,
+  queueJobId,
+  now,
+  attempts = 5,
+  delayMs = 150,
+  wait = ms => new Promise(resolve => setTimeout(resolve, ms))
+} = {}) {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await repository.claimExecution({
+        runId,
+        queueJobId,
+        now
+      });
+    } catch (error) {
+      lastError = error;
+      if (
+        String(error && error.code || '') !== 'PACK088_EXECUTION_CLAIM_FAILED' ||
+        attempt >= attempts
+      ) {
+        throw error;
+      }
+      await wait(delayMs);
+    }
+  }
+
+  throw lastError || executionError('PACK088_EXECUTION_CLAIM_FAILED');
+}
+
 function buildAutomationRequest(claim) {
   const template = plainObject(claim.requestTemplate);
   const runInput = plainObject(claim.runInput);
@@ -163,25 +169,31 @@ function buildAutomationRequest(claim) {
 
   if (!goal) throw executionError('PACK088_AUTOMATION_GOAL_REQUIRED');
 
+  const controlledInputs = {
+    ...plainObject(template.inputs),
+    ...plainObject(runInput.inputs),
+    feature: 'chat'
+  };
+  const controlledOutputs = {
+    ...plainObject(template.outputs),
+    ...plainObject(runInput.outputs)
+  };
+  delete controlledOutputs.kind;
+  delete controlledOutputs.kinds;
+  controlledOutputs.requested = workflowBrainOutputs(claim);
+
   return normalizeUniversalRequest({
     ...template,
     ...runInput,
     requestId: `${CONFIG.execution.brainIdempotencyPrefix}${claim.runId}`,
     surface: inferSurface(capabilities, runInput.surface || template.surface),
     goal,
-    inputs: {
-      ...plainObject(template.inputs),
-      ...plainObject(runInput.inputs)
-    },
+    inputs: controlledInputs,
     constraints: {
       ...plainObject(template.constraints),
       ...plainObject(runInput.constraints)
     },
-    outputs: {
-      ...plainObject(template.outputs),
-      ...plainObject(runInput.outputs),
-      requested: workflowBrainOutputs(claim)
-    },
+    outputs: controlledOutputs,
     language: {
       ...plainObject(template.language),
       ...plainObject(runInput.language)
@@ -458,7 +470,8 @@ function createAutomationExecutionProcessor({
   durable = null,
   durableQueue = null,
   enqueue = enqueueDurableTask,
-  nowFactory = () => new Date()
+  nowFactory = () => new Date(),
+  wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 } = {}) {
   const db = client || require('./supabaseAdmin').supabaseAdmin;
   const executionRepository =
@@ -477,10 +490,12 @@ function createAutomationExecutionProcessor({
   return Object.freeze({
     async process({ runId, queueJobId } = {}) {
       const now = nowFactory();
-      const claim = await executionRepository.claimExecution({
+      const claim = await claimExecutionWithBarrier({
+        repository: executionRepository,
         runId,
         queueJobId,
-        now: now.toISOString()
+        now: now.toISOString(),
+        wait
       });
 
       if (!claim || claim.status === 'blocked_permission') {
@@ -556,12 +571,13 @@ function createAutomationExecutionProcessor({
         });
       }
 
-      const request = buildAutomationRequest(claim);
+      let request = null;
       let permissionReceipt = null;
       let pricingSnapshot = null;
 
       let started;
       try {
+        request = buildAutomationRequest(claim);
         started = await brainRuntime.start({
           userId: claim.ownerId,
           request,
@@ -693,6 +709,7 @@ module.exports = {
   inferSurface,
   workflowCapabilities,
   workflowBrainOutputs,
+  claimExecutionWithBarrier,
   allowedBrainPlanCapabilities,
   assertBrainPlanAuthorized,
   buildAutomationRequest,
