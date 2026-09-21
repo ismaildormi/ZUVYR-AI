@@ -1009,10 +1009,10 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 
 
 
-### PACK088 / 88D IMPLEMENTATION_VERIFIED_PRODUCTION_UI_GATE — 2026-09-21
+### PACK088 / 88D LOCKED_VERIFIED — 2026-09-21
 
 - PACK088 overall status remains `IN_PROGRESS`.
-- **88D — Pause/Cancel/History/Notifications/Scheduled Tasks UI:** implementation and backend production acceptance are verified; canonical `LOCKED_VERIFIED` is withheld until the merged Scheduled Tasks UI is deployed and verified on Vercel production.
+- **88D — Pause/Cancel/History/Notifications/Scheduled Tasks UI: LOCKED_VERIFIED.**
 - PR `#72` merged as `cbaff02b1512ff75b550999f7e17c3c0d1b64426`. Quality head `178e8dc75a831bc6cfbeeea62f3b0a3c2bfc6418`; GitHub quality run `35637079084` passed Backend Quality + Release Quality.
 - Supabase production migration: `20260921181528 pack088_88d_ui_notifications_pause_cancel`. A production-schema dry-run with transaction rollback passed before the real migration.
 - Product controls are owner-scoped service routes backed by service-role RPCs: create, activate, pause, resume, cancel, run-now, run history, run detail and in-app notification history/read state.
@@ -1022,6 +1022,6 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - In-app automation notifications are exactly-once by owner/event key. Activated, paused, resumed and cancelled control notifications passed transaction-only production acceptance.
 - The 88D live acceptance changed no usage ledger row, made zero provider calls and zero billing mutations, then rolled back. Cleanup proof: 0 acceptance schedules/workflows/notifications, 0 execution-enabled schedules, 0 active automation runs.
 - Railway backend `bc2d8635-e068-42dd-b3d7-b6cf06135de6`, worker `7a053aca-2251-48bb-9733-b9e3f4a3616a` and maintenance `c16ca61d-6bde-44fc-8161-22d5b7f335ca` are SUCCESS on exact merge commit `cbaff02b1512ff75b550999f7e17c3c0d1b64426`. Worker logs confirm scheduler and automation execution enabled with clean post-deploy ticks.
-- Vercel branch previews for the 88D UI built READY, but the merged production deployment was rejected by the account `build-rate-limit`. This is the only remaining 88D gate; source build success is not being misrepresented as production deployment.
+- Vercel production recovered after the temporary build-rate limit: deployment `dpl_GH3W4VkxLLCgETPU63VDpVPtjvZn` is READY on `main` commit `14a52caacdedf7bfb7cf08482b46a58c054097dd`. Live `zuvyr-suite-v1.js` returned HTTP 200 and verified Scheduled=ready, create/pause/resume/cancel/run-now, notification history, zero-charge creation copy and the timezone-authoritative local-run-time fix.
 - Receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88d/receipt.json`.
-- **88E remains NOT_STARTED and PACK089 remains blocked until the Vercel production UI gate is cleared and 88D reaches canonical LOCKED_VERIFIED.**
+- **88E remains NOT_STARTED and is now the next PACK088 phase. PACK089 remains blocked until 88E completes and PACK088 reaches overall LOCKED_VERIFIED.**
