@@ -181,7 +181,9 @@ function createBrainKernelRuntime({
       confirmCreditReservation,
       allowTopup = false,
       idempotencyKey,
-      enqueueTask = true
+      enqueueTask = true,
+      maxEstimatedCredits = null,
+      afterReservation = null
     } = {}) {
       if (approved !== true || confirmCreditReservation !== true) {
         throw runtimeError('PACK040_EXPLICIT_APPROVAL_REQUIRED');
@@ -204,6 +206,23 @@ function createBrainKernelRuntime({
       }
 
       const bundle = buildBundle(request);
+      if (maxEstimatedCredits != null) {
+        const cap = Number(maxEstimatedCredits);
+        if (!Number.isSafeInteger(cap) || cap < 0) {
+          throw runtimeError('PACK040_CREDIT_CAP_INVALID');
+        }
+        if (Number(bundle.quote.aggregate.estimatedCredits) > cap) {
+          throw runtimeError('PACK040_CREDIT_CAP_EXCEEDED', {
+            estimatedCredits: Number(bundle.quote.aggregate.estimatedCredits),
+            maxEstimatedCredits: cap
+          });
+        }
+      }
+
+      if (afterReservation != null && typeof afterReservation !== 'function') {
+        throw runtimeError('PACK040_AFTER_RESERVATION_HOOK_INVALID');
+      }
+
       const consent = createConsent({
         plan: bundle.plan,
         quote: bundle.quote,
@@ -237,6 +256,16 @@ function createBrainKernelRuntime({
           pricingVersion: bundle.liveQuote.pricingVersion,
           allowTopup: allowTopup === true
         });
+
+        if (afterReservation) {
+          await afterReservation(Object.freeze({
+            request: bundle.request,
+            plan: bundle.plan,
+            quote: bundle.quote,
+            reservation,
+            liveQuote: bundle.liveQuote
+          }));
+        }
 
         task = await durable.createOrGetTask({
           userId,
