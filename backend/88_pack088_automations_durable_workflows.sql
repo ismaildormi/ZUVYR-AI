@@ -442,7 +442,10 @@ begin
   end if;
 
   if not v_changed then
-    return coalesce(new,old);
+    if tg_op='DELETE' then
+      return old;
+    end if;
+    return new;
   end if;
 
   if tg_op in ('UPDATE','DELETE') then
@@ -469,9 +472,12 @@ begin
     where id=v_new_workflow;
   end if;
 
-  return coalesce(new,old);
+  if tg_op='DELETE' then
+    return old;
+  end if;
+  return new;
 end
-$$;
+$;
 
 create or replace function public.pack088_invalidate_schedule_authorization_on_workflow_change()
 returns trigger
