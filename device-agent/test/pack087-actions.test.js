@@ -100,6 +100,54 @@ const { runActionWithStop } = require('../src/actionWorker');
     assert.equal(deniedCommand.errorCode, 'pack087_shell_executable_not_allowlisted');
     assert.equal(deniedCommand.deviceActionExecuted, false);
 
+    const fullControl = Object.freeze({
+      fullControl: true,
+      grantMode: 'full_control',
+      missionBound: true,
+      missionDigest: 'a'.repeat(64)
+    });
+
+    const broadTarget = path.join(root, 'full-control-outside-scoped-root.txt');
+    const broadWrite = await executeAction({
+      ...fullControl,
+      type: 'write_file',
+      target: broadTarget,
+      input: 'full-control\n'
+    }, { stateDir, env: { ...process.env } });
+    assert.equal(broadWrite.success, true);
+    assert.equal(fs.readFileSync(broadTarget, 'utf8'), 'full-control\n');
+
+    const broadCommand = await executeAction({
+      ...fullControl,
+      type: 'run_command',
+      target: process.execPath,
+      input: JSON.stringify(['-e','process.stdout.write("full-control-shell")'])
+    }, { stateDir, env: { ...process.env } });
+    assert.equal(broadCommand.success, true);
+    assert.equal(broadCommand.result.stdout, 'full-control-shell');
+
+    const forgedFullControl = await executeAction({
+      fullControl: true,
+      grantMode: 'full_control',
+      missionBound: false,
+      missionDigest: 'b'.repeat(64),
+      type: 'run_command',
+      target: process.execPath,
+      input: '[]'
+    }, { stateDir, env: { ...process.env, ZUVYR_AGENT_ALLOWED_EXECUTABLES: '' } });
+    assert.equal(forgedFullControl.success, false);
+    assert.equal(forgedFullControl.errorCode, 'pack087_shell_executable_not_allowlisted');
+
+    const fullSensitive = path.join(root, '.env');
+    fs.writeFileSync(fullSensitive, 'SECRET=value\n', 'utf8');
+    const fullBlocked = await executeAction({
+      ...fullControl,
+      type: 'read_file',
+      target: fullSensitive
+    }, { stateDir, env: { ...process.env } });
+    assert.equal(fullBlocked.success, false);
+    assert.equal(fullBlocked.errorCode, 'pack087_sensitive_target_blocked');
+
     const redacted = redactResult({
       password: 'hello',
       nested: { Authorization: 'Bearer ABCDEFGHIJKLMNOPQRST' }
@@ -170,6 +218,8 @@ const { runActionWithStop } = require('../src/actionWorker');
     console.log('PASS: PACK087 file write creates a private backup and undo restores exact previous bytes');
     console.log('PASS: PACK087 sensitive paths and non-allowlisted shell executables are blocked');
     console.log('PASS: PACK087 command args are passed with shell=false and shell metacharacters stay literal');
+    console.log('PASS: PACK087 mission-bound Full Control can use files and executables without manual environment allowlists');
+    console.log('PASS: PACK087 forged Full Control metadata cannot bypass scoped allowlists and sensitive paths remain blocked');
     console.log('PASS: PACK087 device and backend result paths redact secret-shaped values');
     console.log('PASS: PACK087 independent STOP channel aborts a long-running action and is acknowledged');
     console.log('PASS: PACK087 unsupported/config-missing capabilities fail closed instead of pretending success');
