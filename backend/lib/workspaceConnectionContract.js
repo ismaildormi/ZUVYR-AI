@@ -5,6 +5,7 @@ const crypto = require('node:crypto');
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const KEY_RE = /^[a-z0-9][a-z0-9._:-]{0,119}$/;
 const TOOL_KEY_RE = /^[a-z0-9][a-z0-9._:-]{0,199}$/;
+const PRIVATE_IPV4_RE = /^(?:10\\.|127\\.|169\\.254\\.|192\\.168\\.|172\\.(?:1[6-9]|2\\d|3[01])\\.)/;
 const ALLOWED_INTEGRATION_SCOPES = new Set([
   'drive.file.read',
   'drive.file.write',
@@ -55,7 +56,7 @@ function assertNoCredentialMaterial(value) {
   } catch {
     fail('workspace_connection_payload_invalid');
   }
-  if (/(?:access|refresh|oauth|api)[_-]?token|client[_-]?secret|authorization|cookie|password|pkce[_-]?verifier/i.test(serialized)) {
+  if (/(?:access|refresh|oauth|api)[_-]?token|client[_-]?secret|authorization|cookie|password|pkce[_-]?verifier|private[_-]?key|bearer/i.test(serialized)) {
     fail('workspace_credential_material_blocked');
   }
   return true;
@@ -99,6 +100,22 @@ function normalizePluginDraft(input) {
     let parsed;
     try { parsed = new URL(rawUrl); } catch { fail('invalid_workspace_plugin_endpoint'); }
     if (parsed.protocol !== 'https:' || parsed.username || parsed.password) fail('invalid_workspace_plugin_endpoint');
+    const host = String(parsed.hostname || '').toLowerCase().replace(/\.$/, '');
+    if (
+      !host ||
+      host === 'localhost' ||
+      host === '0.0.0.0' ||
+      host === '::1' ||
+      host === '[::1]' ||
+      host === 'metadata.google.internal' ||
+      host.endsWith('.localhost') ||
+      host.endsWith('.local') ||
+      host.endsWith('.internal') ||
+      PRIVATE_IPV4_RE.test(host)
+    ) {
+      fail('workspace_mcp_endpoint_blocked');
+    }
+    parsed.hash = '';
     endpointUrl = parsed.toString();
   }
   if (pluginKind === 'mcp' && !endpointUrl) fail('workspace_mcp_endpoint_required');
@@ -128,8 +145,20 @@ function normalizeSkill(input) {
   return Object.freeze({ name, description, instructions, toolKeys });
 }
 
+function stableCanonical(value) {
+  if (Array.isArray(value)) return value.map(stableCanonical);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map(key => [key, stableCanonical(value[key])])
+    );
+  }
+  return value;
+}
+
 function operationFingerprint(value) {
-  const stable = JSON.stringify(value, Object.keys(value || {}).sort());
+  const stable = JSON.stringify(stableCanonical(value));
   return crypto.createHash('sha256').update(stable).digest('hex');
 }
 
