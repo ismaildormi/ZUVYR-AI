@@ -2519,7 +2519,7 @@
   "phase2_planning_authorized": true,
   "phase2_implementation_authorized": true,
   "pack088": {
-    "status": "IN_PROGRESS",
+    "status": "LOCKED_VERIFIED",
     "title": "Automations & Durable Workflows",
     "plan_path": "docs/zuvyr/PACK088_EXECUTION_PLAN.md",
     "planning_started_at": "2026-09-21",
@@ -2566,7 +2566,10 @@
       "automation_pause_resume_cancel": true,
       "automation_run_now": true,
       "automation_exactly_once_notifications": true,
-      "automation_history_ui_source": true
+      "automation_history_ui_source": true,
+      "brain_worker_recovery_gate": true,
+      "brain_worker_recovery_production_verified": true,
+      "recurring_pause_production_verified": true
     },
     "planning_truth": {
       "postgres_schedule_occurrence_source_of_truth": true,
@@ -2584,9 +2587,9 @@
       "88D_UI_NOTIFICATIONS_PAUSE_CANCEL",
       "88E_PRODUCTION_ACCEPTANCE_RECOVERY"
     ],
-    "next_action": "EXECUTE_88E_LIVE_PRODUCTION_ACCEPTANCE_RECOVERY",
+    "next_action": "START_PACK089_SKILLS_PLUGINS_MCP_CONNECTIONS",
     "next_pack": "089",
-    "next_pack_allowed": false,
+    "next_pack_allowed": true,
     "provider_calls": 0,
     "payment_mutations": 0,
     "automatic_schedule_executions": 0,
@@ -2600,7 +2603,7 @@
       "schema_divergence": false,
       "history_preserved": true
     },
-    "current_phase": "88E_PRODUCTION_ACCEPTANCE_RECOVERY",
+    "current_phase": "COMPLETE",
     "phases": {
       "88A_SCHEMA_INVARIANTS": {
         "status": "LOCKED_VERIFIED",
@@ -2834,11 +2837,110 @@
         }
       },
       "88E_PRODUCTION_ACCEPTANCE_RECOVERY": {
-        "status": "IN_PROGRESS",
-        "started_after": "88D_LOCKED_VERIFIED",
-        "objective": "Dated production proof: scheduled execution, single reservation/settlement, durable restart recovery, recurring next occurrence and pause prevention."
+        "status": "LOCKED_VERIFIED",
+        "finalized_at": "2026-09-21T19:02:18.675874Z",
+        "objective": "Dated production proof: scheduled execution, single reservation/settlement, durable worker-outage recovery, recurring next occurrence and pause prevention.",
+        "receipt_path": "zuvyr-pack-evidence/pack-088/2026-09-21-88e/receipt.json",
+        "receipt_git_blob": "fad39febb4e9a877db0caaf7eeccf59b73c9de70",
+        "fix1": {
+          "pr": 77,
+          "merge_commit": "dac6489661c44cc5ab00f4487b8033eaa08c24dd",
+          "quality_run": 35639253555,
+          "finding": "subscription_inactive terminal funding classification",
+          "result": "PASS"
+        },
+        "recovery_gate": {
+          "pr": 78,
+          "head": "733a727eeee9352af128adfeea0a83efef18f3b0",
+          "merge_commit": "612a86b575f873305d7961a85b7706b44b359b18",
+          "release_quality_run": 35641060369,
+          "result": "PASS"
+        },
+        "one_time_production": {
+          "schedule_id": "18e9522a-63ab-4acd-ba6c-a6df9df575f3",
+          "run_id": "83fccbfe-7158-466a-a7b9-f4d4cc5550eb",
+          "task_run_id": "700f23d3-3f32-4af8-bb90-57acddc441ee",
+          "usage_record_id": 102,
+          "creation_charge": 0,
+          "state": "succeeded",
+          "reserved_credits": 3,
+          "actual_credits": 1,
+          "refunded_credits": 2,
+          "provider": "groq",
+          "model": "openai/gpt-oss-20b",
+          "result": "PASS"
+        },
+        "restart_recovery": {
+          "schedule_id": "69f115ea-3e84-42a3-a608-5e8c03b8cfe1",
+          "run_id": "644f39be-a3ca-4c77-abb2-6d5a8b98d23c",
+          "task_run_id": "675536a6-d01f-4c36-b851-5ec456063d7d",
+          "usage_record_id": 106,
+          "brain_worker_off_deployment": "961ddc81-42fb-47aa-9a46-d258ea02f713",
+          "brain_worker_on_deployment": "be3676d6-d7e9-49c7-9b2e-427b902b4999",
+          "pre_restart_task_state": "pending",
+          "pre_restart_step_attempts": 0,
+          "pre_restart_provider_cost": null,
+          "post_restart_task_state": "succeeded",
+          "occurrence_count": 1,
+          "usage_record_count": 1,
+          "reserved_credits": 3,
+          "actual_credits": 1,
+          "refunded_credits": 2,
+          "same_task_across_restart": true,
+          "duplicate_charge": false,
+          "duplicate_external_side_effect": false,
+          "result": "PASS"
+        },
+        "recurring_pause": {
+          "schedule_id": "0fb14e78-5199-4947-92fe-634eda3f4cf7",
+          "state": "paused",
+          "execution_enabled": false,
+          "run_count": 2,
+          "succeeded_count": 2,
+          "next_run_at": "2026-09-21T20:52:19.989191Z",
+          "future_claim_test_time": "2026-09-21T21:30:00Z",
+          "future_claim_count": 0,
+          "run_count_before": 2,
+          "run_count_after": 2,
+          "rollback_only": true,
+          "result": "PASS"
+        },
+        "notifications_exactly_once": "PASS",
+        "production_cleanliness": {
+          "pack088_active_runs": 0,
+          "pack088_enabled_schedules": 0,
+          "owner_pack088_reserved_usage": 0,
+          "duplicate_fixture_cancelled": true,
+          "duplicate_fixture_run_count": 0
+        },
+        "cost": {
+          "required_acceptance_net_credits": 4,
+          "extra_fast_success_attempt_net_credits": 1,
+          "total_88e_net_credits_observed": 5,
+          "failed_provider_key_attempts_net_credits": 0
+        },
+        "railway": {
+          "runtime_commit": "612a86b575f873305d7961a85b7706b44b359b18",
+          "backend_deployment": "360f189a-4f69-47fd-9dc3-8d6d4cadc9f6",
+          "worker_recovery_off_deployment": "961ddc81-42fb-47aa-9a46-d258ea02f713",
+          "worker_recovery_on_deployment": "be3676d6-d7e9-49c7-9b2e-427b902b4999",
+          "maintenance_deployment": "8100e9cd-5798-4d24-91f7-0137c1ce05b8",
+          "backend": "SUCCESS",
+          "worker": "SUCCESS",
+          "maintenance": "SUCCESS",
+          "brain_worker_restored_enabled": true,
+          "scheduler_enabled": true,
+          "automation_execution_enabled": true
+        },
+        "frontend": {
+          "runtime_change_in_88e": false,
+          "verified_88d_production_deployment": "dpl_GH3W4VkxLLCgETPU63VDpVPtjvZn",
+          "verified_88d_production_commit": "14a52caacdedf7bfb7cf08482b46a58c054097dd",
+          "frontend_files_changed_88d_to_88e": 0
+        }
       }
-    }
+    },
+    "finalized_at": "2026-09-21T19:02:18.675874Z"
   },
-  "phase2_implementation_authorization_scope": "PACK088_88E_IN_PROGRESS_USER_AUTHORIZED"
+  "phase2_implementation_authorization_scope": "PACK088_COMPLETE_PACK089_READY"
 }
