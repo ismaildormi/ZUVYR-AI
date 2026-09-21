@@ -481,9 +481,25 @@ async function executeClipboardWrite(text, tools, options) {
   if (!tools.clipboardWrite) throw actionError('pack087_clipboard_write_unsupported');
   let result;
   if (process.platform === 'win32') {
-    result = await spawnCaptured(tools.clipboardWrite, [
-      '-NoProfile','-NonInteractive','-Command','$v=[Console]::In.ReadToEnd(); if($v.Length -eq 0){ Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Clipboard]::Clear() } else { Set-Clipboard -Value $v }'
-    ], { ...options, input: text });
+    const encoded = Buffer.from(String(text), 'utf8').toString('base64');
+    const script = [
+      'Add-Type -AssemblyName System.Windows.Forms;',
+      '$b=[Convert]::FromBase64String($env:ZUVYR_CLIPBOARD_TEXT_B64);',
+      '$v=[Text.Encoding]::UTF8.GetString($b);',
+      'if($v.Length -eq 0){[System.Windows.Forms.Clipboard]::Clear()}else{[System.Windows.Forms.Clipboard]::SetText($v)}'
+    ].join('');
+    result = await spawnCaptured(
+      tools.clipboardWrite,
+      ['-Sta','-NoProfile','-NonInteractive','-Command',script],
+      {
+        ...options,
+        timeoutMs: Math.min(Number(options?.timeoutMs) || DEFAULT_TIMEOUT_MS, 5000),
+        env: {
+          ...(options?.env || process.env),
+          ZUVYR_CLIPBOARD_TEXT_B64: encoded
+        }
+      }
+    );
   } else if (tools.clipboardWrite === 'xclip') {
     result = await spawnCaptured('xclip', ['-selection','clipboard','-i'], { ...options, input: text });
   } else {
