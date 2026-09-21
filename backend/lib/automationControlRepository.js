@@ -58,7 +58,7 @@ function createAutomationControlRepository({ client } = {}) {
         p_title: String(title || ''),
         p_goal: String(goal || ''),
         p_schedule_type: String(scheduleType || ''),
-        p_run_at: runAt,
+        p_run_at_local: String(runAt || ''),
         p_interval_minutes: intervalMinutes == null ? null : Number(intervalMinutes),
         p_recurrence_spec: recurrenceSpec && typeof recurrenceSpec === 'object' ? recurrenceSpec : {},
         p_timezone: String(timezone || 'UTC'),
