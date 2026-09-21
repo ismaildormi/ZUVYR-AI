@@ -98,6 +98,8 @@ for (const marker of [
 assert(!/grant\s+.*delete.*service_role/i.test(privilegeHardening));
 assert(!/grant\s+.*truncate.*service_role/i.test(privilegeHardening));
 
+assert(migration.includes('after update on public.workspace_workflows'));
+assert(!migration.includes('after update of revision on public.workspace_workflows'));
 assert(workflowInvalidationHotfix.includes('after update on public.workspace_workflows'));
 assert(!workflowInvalidationHotfix.includes('after update of revision on public.workspace_workflows'));
 assert(workflowInvalidationHotfix.includes('pack088_invalidate_schedule_authorization_on_workflow_change'));
