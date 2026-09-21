@@ -1712,5 +1712,20 @@ Do **not** reopen PACK084 merely because M18 is deferred. M18 stays a launch/liv
 - Acceptance fixtures were removed; current production has zero execution-enabled schedules and zero pending/queued automation runs.
 - 88B made zero provider calls, zero Brain Kernel task starts and zero billing mutations. Actual workflow execution remains an 88C responsibility.
 - Receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88b/receipt.json` (Git blob `bb49615fe01df503ad572fe6e18a71916b007c4f`).
-- **88C–88E remain NOT_STARTED. Do not start 88C without explicit user instruction.**
+- At the 88B finalization checkpoint, **88C–88E were NOT_STARTED** and 88C required explicit user instruction.
+
+### PACK088 / 88C LOCKED_VERIFIED — 2026-09-21
+
+- PACK088 overall status remains `IN_PROGRESS`.
+- **88C — Funding + Permission + Brain Kernel: LOCKED_VERIFIED.**
+- Primary PR `#67` merged as `dcfb1c03ff3db3a274c7af3b319f1380de5caeda`; quality run `35614175709` passed Backend Quality + Release Quality.
+- FIX2 hardened Brain plan authorization before reservation and exact quote/cap evidence. FIX3 PR `#70` merged as `6c6b6eb18c30a04343a21cbd5d53dea44fcb7613`; quality run `35620353690` passed Backend Quality + Release Quality.
+- Supabase production migration: `20260921144521 pack088_88c_funding_permission_brain`.
+- Live stale/revoked authorization proof blocked before Brain task/usage creation.
+- Live cap=0 proof blocked on the exact runtime quote with `PACK040_CREDIT_CAP_EXCEEDED`: estimated credits 3, cap 0, zero task, zero usage record, zero provider execution.
+- PACK087 integration proof used a transaction-only fresh mission grant against the real paired device/session contract: 9 Full Control scopes, mission digest and receipt verified; rollback left no grant/workflow and restored the original expired session state.
+- Railway backend, worker and maintenance are SUCCESS on `6c6b6eb18c30a04343a21cbd5d53dea44fcb7613`; worker runtime confirms scheduler and automation execution enabled.
+- Acceptance fixtures were removed. Current production has zero execution-enabled schedules and zero pending/queued/claimed/running automation runs.
+- Receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88c/receipt.json` (Git blob `09cd49b89bdce5aca02d53e0f12852299fefda42`).
+- At this checkpoint **88D–88E remain NOT_STARTED**. PACK089 remains blocked until PACK088 is fully LOCKED_VERIFIED.
 
