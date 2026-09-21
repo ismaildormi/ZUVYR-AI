@@ -275,6 +275,20 @@ function baseConnection(overrides = {}) {
   );
   assert.equal(networkCalls, 0);
 
+  const officialSdk = createMcpRemoteAdapter({
+    enabled: true,
+    lookup: async () => [{ address: '93.184.216.34', family: 4 }],
+    fetchImpl: async () => {
+      networkCalls += 1;
+      throw new Error('network_must_not_run');
+    }
+  });
+  const officialPreflight = await officialSdk.preflight({
+    endpointUrl: 'https://example.com/mcp'
+  });
+  assert.equal(officialPreflight.ready, true);
+  assert.equal(networkCalls, 0);
+
   const privateDns = createMcpRemoteAdapter({
     enabled: true,
     lookup: async () => [{ address: '127.0.0.1', family: 4 }],
@@ -318,7 +332,9 @@ function baseConnection(overrides = {}) {
 
   assert(repo.includes('consumeWorkspaceTool'));
   assert(packageJson.includes('test-pack089-89b-unified-tools-runtime.js'));
+  assert(packageJson.includes('"@modelcontextprotocol/client": "2.0.0"'));
 
+  console.log('PASS: official @modelcontextprotocol/client v2 SDK loads through the production MCP adapter');
   console.log('PASS: Pack089 89B uses one owner-aware ai.tools seam for Skills/plugins/MCP');
   console.log('PASS: exact operation fingerprint + tool key permission binding is wired');
   console.log('PASS: MCP is fail-closed before permission/network when gate or SDK is unavailable');
