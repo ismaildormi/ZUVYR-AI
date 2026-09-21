@@ -1025,3 +1025,15 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - Vercel branch previews for the 88D UI built READY, but the merged production deployment was rejected by the account `build-rate-limit`. This is the only remaining 88D gate; source build success is not being misrepresented as production deployment.
 - Receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88d/receipt.json`.
 - **88E remains NOT_STARTED and PACK089 remains blocked until the Vercel production UI gate is cleared and 88D reaches canonical LOCKED_VERIFIED.**
+
+### PACK088 / 88D LOCKED_VERIFIED — 2026-09-21
+
+- **88D — Pause/Cancel/History/Notifications/Scheduled Tasks UI: LOCKED_VERIFIED.**
+- The former Vercel production UI gate cleared: deployment `dpl_GH3W4VkxLLCgETPU63VDpVPtjvZn` is READY, target production, on main commit `14a52caacdedf7bfb7cf08482b46a58c054097dd`.
+- Production alias `rox-ai-sepia.vercel.app` serves `zuvyr-suite-v1.js` and `zuvyr-suite-v1.css` exactly matching Git blobs `d37b578f4543e7f193fccc194fc10365d3bb6579` and `d030874f7165b52d14a39dabc701ef58fe64e0b5`.
+- Live frontend therefore contains the verified Scheduled Tasks create/activate/run-now/pause/resume/cancel/history/notification surface with responsive/RTL wiring.
+- Supabase migration, service-role-only RPCs, transaction-only lifecycle acceptance, exactly-once notifications and cancellation race hardening remain verified from the 88D checkpoint.
+- Railway backend/worker/maintenance remain SUCCESS on the 88D runtime merge commit `cbaff02b1512ff75b550999f7e17c3c0d1b64426`.
+- Final 88D evidence: `zuvyr-pack-evidence/pack-088/2026-09-21-88d/receipt.json`.
+- **88E — Production Acceptance + Recovery is now IN_PROGRESS. PACK089 remains blocked until PACK088 reaches full LOCKED_VERIFIED.**
+
