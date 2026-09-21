@@ -112,6 +112,7 @@ assert.equal(readPermission.scopeType, 'resource');
 assert.equal(readPermission.sessionId, null);
 assert.equal(readPermission.constraints.toolKey, readToolKey);
 
+const writeToolKey = `drive:${RESOURCE}:write`;
 const writePermission = normalizePermissionRequest({
   action: 'connection.write',
   grantMode: 'allow_once',
@@ -120,9 +121,10 @@ const writePermission = normalizePermissionRequest({
   resourceId: RESOURCE,
   sessionId: 'connection-session-1',
   expiresAt: '2026-09-21T19:10:00Z',
-  constraints: { operationFingerprint: FP }
+  constraints: { operationFingerprint: FP, toolKey: writeToolKey }
 }, { ownerId: OWNER, now: NOW });
 assert.equal(writePermission.constraints.operationFingerprint, FP);
+assert.equal(writePermission.constraints.toolKey, writeToolKey);
 
 const mcpPermission = normalizePermissionRequest({
   action: 'mcp.invoke',
