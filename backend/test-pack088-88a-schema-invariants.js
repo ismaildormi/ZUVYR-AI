@@ -24,10 +24,6 @@ const privilegeHardening = fs.readFileSync(
   path.join(__dirname, '88_pack088_88a_ledger_privilege_hardening.sql'),
   'utf8'
 );
-const privilegeHardening = fs.readFileSync(
-  path.join(__dirname, '88a_pack088_schedule_run_privilege_hardening.sql'),
-  'utf8'
-);
 
 assert.equal(config.version, 'pack-088.88a.automations.v1');
 assert.equal(config.implementationPhase, '88A_SCHEMA_INVARIANTS');
