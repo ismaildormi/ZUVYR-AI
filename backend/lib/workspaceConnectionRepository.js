@@ -236,6 +236,21 @@ function createWorkspaceConnectionStore(db) {
     return data == null ? null : String(data);
   }
 
+  async function recordAudit({ ownerId, eventType, details = {}, externalWriteExecuted = false }) {
+    const { data, error } = await db
+      .from('workspace_audit_events')
+      .insert({
+        owner_id: ownerId,
+        event_type: String(eventType || '').slice(0, 200),
+        details: details && typeof details === 'object' && !Array.isArray(details) ? details : {},
+        external_write_executed: externalWriteExecuted === true
+      })
+      .select('id,event_type,created_at')
+      .single();
+    if (error) throw storeError('workspace_connection_audit_failed', error.message);
+    return data;
+  }
+
   async function revokeIntegration({ ownerId, connectionId }) {
     const { data, error } = await db.rpc('revoke_workspace_integration_connection_pack089', {
       p_owner_id: ownerId,
@@ -320,6 +335,7 @@ function createWorkspaceConnectionStore(db) {
     setIntegrationSecret,
     getIntegrationSecret,
     markIntegrationError,
+    recordAudit,
     createPlugin,
     getPluginConnection,
     listActivePlugins,
