@@ -1,0 +1,32 @@
+{
+  "version": "pack-088.88a.automations.v1",
+  "implementationPhase": "88A_SCHEMA_INVARIANTS",
+  "executionEnabled": false,
+  "schedulerEnabled": false,
+  "providerCallsEnabled": false,
+  "billingMutationsEnabled": false,
+  "sourceOfTruth": "postgres",
+  "schedule": {
+    "types": ["once", "recurring"],
+    "states": ["draft", "ready", "active", "running", "paused", "blocked", "completed", "failed", "cancelled"],
+    "misfirePolicies": ["run_once", "skip"],
+    "maxCreditsPerRun": 10000000,
+    "maxAuthorizationCapabilities": 32
+  },
+  "run": {
+    "states": ["pending", "claimed", "queued", "running", "succeeded", "failed", "cancelled", "blocked_funding", "blocked_permission", "skipped"],
+    "fundingStates": ["not_checked", "reserved", "settled", "refunded", "blocked", "not_required"],
+    "maxAttempts": 100
+  },
+  "invariants": {
+    "rlsRequired": true,
+    "serviceRoleWritesOnly": true,
+    "wildcardCapabilitiesForbidden": true,
+    "workflowRevisionBindingRequiredForExecution": true,
+    "scheduleRevisionBindingRequiredForExecution": true,
+    "currentTimezoneMustExist": true,
+    "scheduleCreationChargesCredits": false,
+    "exactlyOnceOccurrenceIdentity": true,
+    "staleAuthorizationAutoInvalidated": true
+  }
+}
