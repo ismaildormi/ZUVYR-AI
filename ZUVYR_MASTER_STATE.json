@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "source_fix": "005-FIX6",
   "selected_strategy": "railway_internal_route",
-  "previous_pack": "088",
+  "previous_pack": "087",
   "tests": {
     "maintenance": "PASS",
     "runtime_safety": "PASS",
@@ -2983,6 +2983,7 @@
     },
     "next_action": "EXECUTE_89A_SCHEMA_VAULT_PERMISSION_CENTER",
     "next_pack": "090",
-    "next_pack_allowed": false
+    "next_pack_allowed": false,
+    "predecessor": "088"
   }
 }
