@@ -24,6 +24,10 @@ const privilegeHardening = fs.readFileSync(
   path.join(__dirname, '88_pack088_88a_ledger_privilege_hardening.sql'),
   'utf8'
 );
+const workflowInvalidationHotfix = fs.readFileSync(
+  path.join(__dirname, '88b_pack088_workflow_invalidation_trigger.sql'),
+  'utf8'
+);
 
 assert.equal(config.version, 'pack-088.88a.automations.v1');
 assert.equal(config.implementationPhase, '88A_SCHEMA_INVARIANTS');
@@ -93,6 +97,10 @@ for (const marker of [
 }
 assert(!/grant\s+.*delete.*service_role/i.test(privilegeHardening));
 assert(!/grant\s+.*truncate.*service_role/i.test(privilegeHardening));
+
+assert(workflowInvalidationHotfix.includes('after update on public.workspace_workflows'));
+assert(!workflowInvalidationHotfix.includes('after update of revision on public.workspace_workflows'));
+assert(workflowInvalidationHotfix.includes('pack088_invalidate_schedule_authorization_on_workflow_change'));
 
 for (const forbiddenSource of [
   "require('./brainKernelRuntime')",
