@@ -47,4 +47,8 @@ function has(bucketName, key) {
   return bucket(bucketName).has(key);
 }
 
-module.exports = { register, get, list, has };
+function remove(bucketName, key) {
+  return bucket(bucketName).delete(key);
+}
+
+module.exports = { register, get, list, has, remove };
