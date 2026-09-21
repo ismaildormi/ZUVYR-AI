@@ -2,6 +2,7 @@
 
 const CONFIG = require('../config/automations.v1.json');
 const { ACTIONS } = require('./permissionCenterPolicy');
+const BRAIN_GRAPH = require('../config/capability-graph.v1.json');
 const {
   createAutomationExecutionRepository
 } = require('./automationExecutionRepository');
@@ -46,6 +47,108 @@ function inferSurface(capabilities = [], explicit = null) {
   return 'chat';
 }
 
+const WORKFLOW_TO_BRAIN_OUTPUT = Object.freeze({
+  chat: 'chat',
+  research: 'research',
+  image: 'image',
+  video: 'video',
+  audio: 'audio',
+  code: 'code'
+});
+
+const CODE_PLAN_CAPABILITIES = new Set(
+  Object.keys(BRAIN_GRAPH.capabilities || {})
+    .filter(value => value.startsWith('code.'))
+);
+
+function workflowCapabilities(claim) {
+  const steps = Array.isArray(claim && claim.steps) ? claim.steps : [];
+  const values = [
+    ...new Set(
+      steps
+        .map(step => String(step && step.capability || '').trim().toLowerCase())
+        .filter(Boolean)
+    )
+  ];
+  if (values.length === 0) {
+    throw executionError('PACK088_PERMISSION_WORKFLOW_STEPS_REQUIRED');
+  }
+  return values;
+}
+
+function workflowBrainOutputs(claim) {
+  const capabilities = workflowCapabilities(claim);
+  const unsupported = capabilities.filter(capability =>
+    !Object.hasOwn(WORKFLOW_TO_BRAIN_OUTPUT, capability) &&
+    capability !== 'ip'
+  );
+  if (unsupported.length > 0) {
+    throw executionError('PACK088_PERMISSION_BRAIN_CAPABILITY_UNSUPPORTED', {
+      capabilities: unsupported
+    });
+  }
+
+  const outputs = capabilities
+    .map(capability => WORKFLOW_TO_BRAIN_OUTPUT[capability])
+    .filter(Boolean);
+
+  if (outputs.length === 0 && capabilities.includes('ip')) {
+    outputs.push('chat');
+  }
+
+  return Object.freeze([...new Set(outputs)]);
+}
+
+function allowedBrainPlanCapabilities(claim) {
+  const authorized = new Set(
+    (Array.isArray(claim && claim.authorizationCapabilities)
+      ? claim.authorizationCapabilities
+      : []
+    ).map(value => String(value || '').trim().toLowerCase())
+  );
+  const allowed = new Set();
+
+  if (authorized.has('chat')) allowed.add('chat.respond');
+  if (authorized.has('research')) allowed.add('research.run');
+  if (authorized.has('image')) allowed.add('image.generate');
+  if (authorized.has('video')) allowed.add('video.generate');
+  if (authorized.has('audio')) allowed.add('audio.generate');
+  if (authorized.has('code')) {
+    for (const capability of CODE_PLAN_CAPABILITIES) allowed.add(capability);
+  }
+
+  // IP-only workflows use chat.respond as the Brain control-plane step.
+  // Device authority itself still comes only from the fresh PACK087 mission grant.
+  if (authorized.has('ip')) allowed.add('chat.respond');
+
+  // project.collect is an internal read-only aggregation node, not an external action.
+  allowed.add('project.collect');
+
+  return allowed;
+}
+
+function assertBrainPlanAuthorized(claim, plan) {
+  const allowed = allowedBrainPlanCapabilities(claim);
+  const steps = Array.isArray(plan && plan.steps) ? plan.steps : [];
+  const unauthorized = [
+    ...new Set(
+      steps
+        .map(step => String(step && step.capability || '').trim())
+        .filter(Boolean)
+        .filter(capability => !allowed.has(capability))
+    )
+  ];
+
+  if (unauthorized.length > 0) {
+    throw executionError('PACK088_PERMISSION_PLAN_CAPABILITY_UNAUTHORIZED', {
+      unauthorized,
+      authorized: [...allowed].sort()
+    });
+  }
+
+  return true;
+}
+
 function buildAutomationRequest(claim) {
   const template = plainObject(claim.requestTemplate);
   const runInput = plainObject(claim.runInput);
@@ -76,7 +179,8 @@ function buildAutomationRequest(claim) {
     },
     outputs: {
       ...plainObject(template.outputs),
-      ...plainObject(runInput.outputs)
+      ...plainObject(runInput.outputs),
+      requested: workflowBrainOutputs(claim)
     },
     language: {
       ...plainObject(template.language),
@@ -470,6 +574,9 @@ function createAutomationExecutionProcessor({
             claim.maxCreditsPerRun == null
               ? null
               : Number(claim.maxCreditsPerRun),
+          beforeReservation: async ({ plan }) => {
+            assertBrainPlanAuthorized(claim, plan);
+          },
           afterReservation: async ({ quote, liveQuote }) => {
             pricingSnapshot = pricingSnapshotFromQuote({ quote, liveQuote });
             permissionReceipt = await authorizeOccurrence({
@@ -584,6 +691,10 @@ module.exports = {
   FUNDING_BLOCK_CODES,
   executionError,
   inferSurface,
+  workflowCapabilities,
+  workflowBrainOutputs,
+  allowedBrainPlanCapabilities,
+  assertBrainPlanAuthorized,
   buildAutomationRequest,
   permissionDescriptors,
   pricingSnapshotFromQuote,
