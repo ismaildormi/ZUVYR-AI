@@ -169,5 +169,11 @@
     "status": "NOT_STARTED",
     "requires_user_instruction": true,
     "pack089_allowed": false
+  },
+  "finalizer": {
+    "pull_request": 62,
+    "required_gate": "FULL_BACKEND_AND_RELEASE_QUALITY_BEFORE_MERGE",
+    "runtime_base_commit": "bba73570d735d4801047e90635715eb7d4b3f9cc",
+    "phase_88b_started": false
   }
 }
