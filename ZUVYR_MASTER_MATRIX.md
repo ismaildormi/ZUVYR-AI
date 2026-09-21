@@ -1007,3 +1007,16 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - Receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88c/receipt.json` (Git blob `09cd49b89bdce5aca02d53e0f12852299fefda42`).
 - At this checkpoint **88D–88E remain NOT_STARTED**. PACK089 remains blocked until PACK088 is fully LOCKED_VERIFIED.
 
+### PACK088 / 88D IMPLEMENTATION_VERIFIED_PRODUCTION_UI_GATE — 2026-09-21
+
+- PACK088 overall status remains `IN_PROGRESS`.
+- **88D — Pause/Cancel/History/Notifications/Scheduled Tasks UI:** implementation and backend production acceptance are verified; canonical `LOCKED_VERIFIED` is withheld until the merged Scheduled Tasks UI is deployed and verified on Vercel production.
+- PR `#72` merged as `cbaff02b1512ff75b550999f7e17c3c0d1b64426`; GitHub quality runs `35637079084` and `35637348576` passed.
+- Supabase production migration: `20260921181528 pack088_88d_ui_notifications_pause_cancel`; all control/notification RPCs remain service-role-only.
+- Transaction-only production acceptance passed activate, pause, resume, run-now idempotency, cancel/history preservation, claimed-before-Brain cancel race closure, and exactly-once in-app notifications with 0 Brain tasks, 0 usage records, 0 provider execution and 0 charged credits. Cleanup returned 0 acceptance rows and 0 active schedules/runs.
+- PACK039 remains the active-task cancellation path; no parallel cancellation mechanism was introduced.
+- Railway backend/worker/maintenance are SUCCESS on the exact merge commit; worker logs confirm scheduler and automation execution enabled with clean ticks.
+- Vercel 88D branch previews are READY, but merged production deployment is currently blocked by account build-rate-limit. This is the only remaining 88D gate and is not being represented as production success.
+- Evidence: `zuvyr-pack-evidence/pack-088/2026-09-21-88d/receipt.json`.
+- **88E remains NOT_STARTED until the Vercel production UI gate clears. PACK089 remains blocked.**
+

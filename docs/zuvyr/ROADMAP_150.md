@@ -1824,7 +1824,7 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 - **External gate:** —
 - **Recorded status:** IN_PROGRESS
 - **Execution plan:** `docs/zuvyr/PACK088_EXECUTION_PLAN.md`
-- **Planning note:** Planning is locked; 88A, 88B and 88C are complete and production-verified.
+- **Planning note:** Planning is locked; 88A, 88B and 88C are complete and production-verified. 88D implementation/backend acceptance is verified; merged production UI remains gated by Vercel build-rate-limit.
 - **88A status:** LOCKED_VERIFIED — schema/invariants production checkpoint complete after FIX2.
 - **88A evidence:** `zuvyr-pack-evidence/pack-088/2026-09-21-88a/receipt.json`.
 - **88A final runtime commit:** `f3df3a881a01742b4f927ea9f986bc5d2c23c737`.
@@ -1834,7 +1834,10 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 - **88C status:** LOCKED_VERIFIED — runtime funding, permissions and Brain Kernel binding checkpoint complete after FIX2/FIX3.
 - **88C evidence:** `zuvyr-pack-evidence/pack-088/2026-09-21-88c/receipt.json`.
 - **88C final runtime commit:** `6c6b6eb18c30a04343a21cbd5d53dea44fcb7613`.
-- **Next phase:** 88D UI + Notifications + Pause/Cancel = NOT_STARTED; explicit user instruction required.
+- **88D status:** IMPLEMENTATION_VERIFIED_PRODUCTION_UI_GATE — PR #72 merged; Supabase migration and transaction-only production acceptance passed; Railway exact-commit runtime is SUCCESS; canonical lock waits only for merged Vercel production UI deployment/verification.
+- **88D evidence:** `zuvyr-pack-evidence/pack-088/2026-09-21-88d/receipt.json`.
+- **88D runtime commit:** `cbaff02b1512ff75b550999f7e17c3c0d1b64426`.
+- **Next phase:** 88E Production Acceptance + Recovery = NOT_STARTED and blocked until the 88D Vercel production UI gate clears.
 
 ## PACK089 — Skills / Plugins / MCP / Connections
 

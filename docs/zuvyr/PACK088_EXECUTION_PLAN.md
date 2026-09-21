@@ -482,6 +482,18 @@ Acceptance:
 - Scheduled Tasks UI is real, not placeholder
 - loading/empty/error/retry/reopen + keyboard/RTL/mobile pass
 
+#### 88D IMPLEMENTATION CHECKPOINT — PRODUCTION UI GATE
+
+- Implementation PR #72 merged as `cbaff02b1512ff75b550999f7e17c3c0d1b64426`; quality head `178e8dc75a831bc6cfbeeea62f3b0a3c2bfc6418` and GitHub quality runs `35637079084` / `35637348576` passed.
+- Production migration: `20260921181528 pack088_88d_ui_notifications_pause_cancel`.
+- Production-schema transaction-only acceptance passed pause/resume/run-now/cancel/history/exactly-once notifications and the claimed-before-Brain cancellation race. It created 0 Brain tasks, 0 usage records, 0 provider execution and 0 charged credits; cleanup left zero acceptance rows.
+- Active linked task cancellation reuses PACK039. Control is checked after claim and after reservation to prevent cancel races.
+- Railway backend, worker and maintenance are SUCCESS on the exact merge commit; scheduler and automation execution runtimes are enabled.
+- Scheduled Tasks source UI and branch previews are READY, but the merged Vercel production deployment is blocked by the account build-rate-limit.
+- 88D is **not yet canonical LOCKED_VERIFIED**. Remaining gate: merged production frontend deployment + live Scheduled Tasks verification.
+- Evidence: `zuvyr-pack-evidence/pack-088/2026-09-21-88d/receipt.json`.
+- **88E remains NOT_STARTED until this gate clears.**
+
 ### Phase 88E — Production acceptance + recovery
 
 Real production proof.
