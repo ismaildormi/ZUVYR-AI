@@ -1822,9 +1822,9 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 - **Evidence/receipt requirements:** Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.
 - **Final gate:** LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate.
 - **External gate:** —
-- **Recorded status:** IN_PROGRESS
+- **Recorded status:** LOCKED_VERIFIED
 - **Execution plan:** `docs/zuvyr/PACK088_EXECUTION_PLAN.md`
-- **Planning note:** Planning is locked; 88A, 88B, 88C and 88D are LOCKED_VERIFIED. 88E is the active final PACK088 production-acceptance phase.
+- **Planning note:** Planning and implementation are complete; 88A, 88B, 88C, 88D and 88E are LOCKED_VERIFIED.
 - **88A status:** LOCKED_VERIFIED — schema/invariants production checkpoint complete after FIX2.
 - **88A evidence:** `zuvyr-pack-evidence/pack-088/2026-09-21-88a/receipt.json`.
 - **88A final runtime commit:** `f3df3a881a01742b4f927ea9f986bc5d2c23c737`.
@@ -1837,8 +1837,10 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 - **88D status:** LOCKED_VERIFIED — PR #72 implementation, Supabase migration, transaction-only lifecycle acceptance, Railway runtime and merged Vercel production UI are verified.
 - **88D evidence:** `zuvyr-pack-evidence/pack-088/2026-09-21-88d/receipt.json`.
 - **88D runtime commit:** `cbaff02b1512ff75b550999f7e17c3c0d1b64426`; production frontend proof deployment: `dpl_GH3W4VkxLLCgETPU63VDpVPtjvZn` on `14a52caacdedf7bfb7cf08482b46a58c054097dd`.
-- **88E status:** IN_PROGRESS — real production scheduled execution, billing identity, recovery/restart and recurring-pause acceptance.
-- **Next gate:** PACK088 may become LOCKED_VERIFIED only after 88E passes; PACK089 remains blocked.
+- **88E status:** LOCKED_VERIFIED — real production one-time execution, exactly-once billing/result persistence, Brain-worker outage recovery with the same durable task/usage identity, recurring next occurrence and pause prevention all passed.
+- **88E evidence:** `zuvyr-pack-evidence/pack-088/2026-09-21-88e/receipt.json`.
+- **88E runtime commit:** `612a86b575f873305d7961a85b7706b44b359b18` (PR #78 recovery gate); FIX1 merge `dac6489661c44cc5ab00f4487b8033eaa08c24dd`.
+- **Final PACK088 status:** LOCKED_VERIFIED. PACK089 is now allowed to start.
 
 ## PACK089 — Skills / Plugins / MCP / Connections
 

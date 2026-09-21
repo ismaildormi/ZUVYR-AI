@@ -1,0 +1,178 @@
+{
+  "pack": "088",
+  "phase": "88E_PRODUCTION_ACCEPTANCE_RECOVERY",
+  "date": "2026-09-21",
+  "status": "LOCKED_VERIFIED",
+  "canonical_pack_status": "LOCKED_VERIFIED",
+  "source": {
+    "base_runtime_commit": "612a86b575f873305d7961a85b7706b44b359b18",
+    "recovery_gate_pr": 78,
+    "recovery_gate_head": "733a727eeee9352af128adfeea0a83efef18f3b0",
+    "recovery_gate_merge": "612a86b575f873305d7961a85b7706b44b359b18",
+    "recovery_gate_release_quality_run": 35641060369,
+    "fix1_subscription_block_pr": 77,
+    "fix1_merge": "dac6489661c44cc5ab00f4487b8033eaa08c24dd",
+    "fix1_quality_run": 35639253555
+  },
+  "runtime": {
+    "railway_project": "intuitive-cat",
+    "backend_deployment": "360f189a-4f69-47fd-9dc3-8d6d4cadc9f6",
+    "maintenance_deployment": "8100e9cd-5798-4d24-91f7-0137c1ce05b8",
+    "brain_worker_disabled_deployment": "961ddc81-42fb-47aa-9a46-d258ea02f713",
+    "brain_worker_disabled_status": "SUCCESS",
+    "brain_worker_disabled_observed": {
+      "brain_kernel_worker": false,
+      "pack088_scheduler": true,
+      "pack088_execution": true
+    },
+    "brain_worker_reenabled_deployment": "be3676d6-d7e9-49c7-9b2e-427b902b4999",
+    "brain_worker_reenabled_status": "SUCCESS",
+    "recovery_gate_restored": true,
+    "provider_secret_values_exposed": false,
+    "provider_config_repair": "Worker GROQ_API_KEY was bound by Railway service reference to the existing backend GROQ_API_KEY; no secret value was read or persisted."
+  },
+  "frontend": {
+    "pack088_88d_production_deployment": "dpl_GH3W4VkxLLCgETPU63VDpVPtjvZn",
+    "pack088_88d_production_commit": "14a52caacdedf7bfb7cf08482b46a58c054097dd",
+    "files_changed_from_88d_production_to_88e_runtime": 0,
+    "interpretation": "88E changed backend worker/control/test/docs only. The already verified 88D production Scheduled Tasks UI remains the canonical frontend artifact."
+  },
+  "live_acceptance": {
+    "one_time": {
+      "schedule_id": "18e9522a-63ab-4acd-ba6c-a6df9df575f3",
+      "run_id": "83fccbfe-7158-466a-a7b9-f4d4cc5550eb",
+      "task_run_id": "700f23d3-3f32-4af8-bb90-57acddc441ee",
+      "usage_record_id": 102,
+      "result": "PASS",
+      "run_state": "succeeded",
+      "funding_state": "settled",
+      "reserved_credits": 3,
+      "actual_credits": 1,
+      "refunded_credits": 2,
+      "provider": "groq",
+      "model": "openai/gpt-oss-20b",
+      "provider_cost_microusd": 15,
+      "charge_at_schedule_creation": 0
+    },
+    "restart_recovery": {
+      "schedule_id": "69f115ea-3e84-42a3-a608-5e8c03b8cfe1",
+      "run_id": "644f39be-a3ca-4c77-abb2-6d5a8b98d23c",
+      "task_run_id": "675536a6-d01f-4c36-b851-5ec456063d7d",
+      "usage_record_id": 106,
+      "pre_restart": {
+        "schedule_run_state": "running",
+        "task_state": "pending",
+        "step_state": "pending",
+        "step_attempts": 0,
+        "funding_state": "reserved",
+        "reserved_credits": 3,
+        "actual_provider_cost_microusd": null,
+        "settlement_receipt": null
+      },
+      "worker_outage": {
+        "brain_kernel_worker": false,
+        "scheduler": true,
+        "automation_execution": true
+      },
+      "post_restart": {
+        "schedule_run_state": "succeeded",
+        "task_state": "succeeded",
+        "funding_state": "settled",
+        "step_attempts": 1,
+        "reserved_credits": 3,
+        "actual_credits": 1,
+        "refunded_credits": 2,
+        "provider": "groq",
+        "model": "openai/gpt-oss-20b",
+        "provider_cost_microusd": 15,
+        "occurrence_count": 1,
+        "usage_record_count": 1,
+        "notification_count": 2,
+        "same_task_across_restart": true,
+        "settlement_replayed": false
+      },
+      "note": "The processor verification receipt has forcedProcessRestart=false because the recovery was induced operationally by disabling/re-enabling the Brain worker around the persisted task rather than by the Pack040 live-script flag. Database and Railway evidence prove the worker outage/recovery boundary."
+    },
+    "recurring_pause": {
+      "schedule_id": "0fb14e78-5199-4947-92fe-634eda3f4cf7",
+      "state": "paused",
+      "execution_enabled": false,
+      "run_count": 2,
+      "succeeded_count": 2,
+      "runs": [
+        {
+          "run_id": "3178d497-cd96-40b6-b456-932f2a594270",
+          "usage_record_id": 104,
+          "reserved_credits": 3,
+          "actual_credits": 1,
+          "refunded_credits": 2
+        },
+        {
+          "run_id": "83b3c4cb-5e28-45ef-a64a-905d68882af9",
+          "usage_record_id": 105,
+          "reserved_credits": 3,
+          "actual_credits": 1,
+          "refunded_credits": 2
+        }
+      ],
+      "next_run_at": "2026-09-21T20:52:19.989191Z",
+      "future_claim_proof": {
+        "simulated_now": "2026-09-21T21:30:00Z",
+        "claimed_for_paused_schedule": 0,
+        "run_count_before": 2,
+        "run_count_after": 2,
+        "rollback_only": true,
+        "result": "PASS"
+      }
+    }
+  },
+  "issues_found_and_closed": [
+    {
+      "issue": "subscription_inactive was not classified as a terminal funding block, allowing an automation run to remain claimed.",
+      "fix": "PR #77 classified subscription_inactive as blocked_funding and added regression coverage.",
+      "production_result": "PASS after deploy."
+    },
+    {
+      "issue": "Worker GROQ_API_KEY runtime value was unavailable while the backend service held the canonical credential.",
+      "fix": "Bound the worker variable to the existing Railway backend service secret reference without exposing the secret.",
+      "production_result": "Subsequent Groq scheduled tasks succeeded and settled."
+    }
+  ],
+  "cost": {
+    "required_acceptance_net_credits": 4,
+    "extra_fast_success_attempt_net_credits": 1,
+    "total_88e_net_credits_observed": 5,
+    "fully_refunded_failed_provider_key_attempts": 2,
+    "failed_attempt_net_credits": 0,
+    "note": "Each successful acceptance task reserved 3 credits and settled 1 credit, refunding 2. Failed provider-key attempts refunded all reserved credits."
+  },
+  "cleanliness": {
+    "pack088_active_runs": 0,
+    "pack088_enabled_schedules": 0,
+    "owner_pack088_reserved_usage": 0,
+    "duplicate_fixture_schedule": "cancelled",
+    "duplicate_fixture_run_count": 0,
+    "unrelated_old_reserved_usage_records": 4,
+    "unrelated_old_reserved_usage_scope": "attachment-extraction records from 2026-09-01; not modified by PACK088 finalization"
+  },
+  "acceptance": {
+    "no_charge_at_creation": "PASS",
+    "intended_schedule_fire": "PASS",
+    "runtime_quote_funding": "PASS",
+    "exactly_one_task_per_occurrence": "PASS",
+    "exactly_one_usage_reservation": "PASS",
+    "result_persistence": "PASS",
+    "single_terminal_settlement_or_refund": "PASS",
+    "exactly_once_in_app_notifications": "PASS",
+    "worker_outage_recovery_same_task": "PASS",
+    "no_duplicate_charge": "PASS",
+    "no_duplicate_external_side_effect": "PASS",
+    "recurring_next_occurrence": "PASS",
+    "pause_prevents_following_occurrence": "PASS"
+  },
+  "next": {
+    "pack089_allowed": true,
+    "next_pack": "089",
+    "action": "START_PACK089_SKILLS_PLUGINS_MCP_CONNECTIONS"
+  }
+}

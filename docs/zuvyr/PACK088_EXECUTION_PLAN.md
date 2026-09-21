@@ -3,7 +3,7 @@
 Date: 2026-09-21  
 Canonical predecessor: PACK087 `LOCKED_VERIFIED`  
 Planning status: `LOCKED`  
-Implementation status: `IN_PROGRESS` — 88A–88D `LOCKED_VERIFIED`; 88E active
+Implementation status: `LOCKED_VERIFIED` — 88A–88E complete
 
 ## 1. Objective
 
@@ -506,7 +506,7 @@ Acceptance:
 
 ### Phase 88E — Production acceptance + recovery
 
-Current status: **IN_PROGRESS** after 88D production UI finalization.
+Current status: **LOCKED_VERIFIED** — dated production acceptance and recovery complete.
 
 Real production proof.
 
@@ -528,6 +528,24 @@ Minimum live proof:
 14. pause prevents the following occurrence
 
 Only then may PACK088 become `LOCKED_VERIFIED`.
+
+#### 88E FINALIZED — LOCKED_VERIFIED
+
+- One-time production schedule charged **0 credits at creation**, fired through the real scheduler, created one durable task and one usage reservation, persisted the result, and terminally settled exactly once.
+- Canonical one-time proof: schedule `18e9522a-63ab-4acd-ba6c-a6df9df575f3`, run `83fccbfe-7158-466a-a7b9-f4d4cc5550eb`, task `700f23d3-3f32-4af8-bb90-57acddc441ee`, usage `102`; reserved 3 / actual 1 / refunded 2.
+- Real recovery proof used PR #78 / merge `612a86b575f873305d7961a85b7706b44b359b18`: Brain worker was disabled while PACK088 scheduler + execution stayed enabled. The existing occurrence remained `running`, task remained `pending`, step attempts stayed 0 and provider cost remained null.
+- Brain worker was then re-enabled and the **same** occurrence `644f39be-a3ca-4c77-abb2-6d5a8b98d23c`, task `675536a6-d01f-4c36-b851-5ec456063d7d` and usage `106` completed successfully. Occurrence count=1, usage count=1, reserved 3 / actual 1 / refunded 2, no duplicate external effect and no duplicate charge.
+- Recurring production schedule `0fb14e78-5199-4947-92fe-634eda3f4cf7` produced two distinct successful occurrences. It is now paused with `execution_enabled=false`.
+- A rollback-only future claim at `2026-09-21T21:30:00Z` (after the preserved next-run timestamp) returned 0 claims for the paused schedule and did not increase run count (2 -> 2).
+- 88E found and closed FIX1: `subscription_inactive` is now terminalized as `blocked_funding` instead of leaving a claimed run stranded (PR #77, merge `dac6489661c44cc5ab00f4487b8033eaa08c24dd`).
+- Production provider configuration was repaired without exposing secrets by binding the worker's Groq key to the existing Railway backend service secret reference.
+- PR #78 release-quality run `35641060369` passed.
+- Railway production: backend `360f189a-4f69-47fd-9dc3-8d6d4cadc9f6` SUCCESS; recovery-OFF worker `961ddc81-42fb-47aa-9a46-d258ea02f713` SUCCESS; recovery-ON worker `be3676d6-d7e9-49c7-9b2e-427b902b4999` SUCCESS; maintenance `8100e9cd-5798-4d24-91f7-0137c1ce05b8` SUCCESS.
+- 88E changed no frontend files relative to the already verified 88D production UI commit. The 88D Vercel production proof remains authoritative.
+- Final scoped production cleanliness: 0 active PACK088 runs, 0 enabled PACK088 schedules, 0 PACK088 reserved usage. Four older reserved attachment-extraction ledger rows from 2026-09-01 are unrelated and were not modified.
+- Net credits observed across all 88E live attempts: 5. Required final acceptance proofs consumed 4; one earlier fast success that could not prove restart consumed 1; failed provider-key attempts refunded all reservations.
+- Final receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88e/receipt.json`.
+- **PACK088 is now LOCKED_VERIFIED. PACK089 may start.**
 
 ## 10. Required regression coverage
 
