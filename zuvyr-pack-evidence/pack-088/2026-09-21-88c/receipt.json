@@ -1,0 +1,181 @@
+{
+  "schema_version": "1.0",
+  "pack": "088",
+  "phase": "88C_FUNDING_PERMISSION_BRAIN_KERNEL",
+  "title": "Automations & Durable Workflows — Funding + Permission + Brain Kernel",
+  "status": "LOCKED_VERIFIED",
+  "canonical_pack_status": "IN_PROGRESS",
+  "finalized_at": "2026-09-21T15:46:23.144019Z",
+  "scope_boundary": {
+    "phase_88c_only": true,
+    "phase_88d_started": false,
+    "scheduler_runtime_enabled": true,
+    "execution_worker_enabled": true,
+    "provider_execution_path_wired": true,
+    "billing_path_wired": true,
+    "ui_notifications_pause_cancel_deferred_to_88d": true
+  },
+  "baseline": {
+    "phase_88a": "LOCKED_VERIFIED",
+    "phase_88b": "LOCKED_VERIFIED",
+    "phase_88b_finalizer_commit": "1942c2fd72adfb926c726762aecb45ffbbe655b1"
+  },
+  "implementation": {
+    "primary": {
+      "pull_request": 67,
+      "candidate_head": "221dc4e6b603a9527bf921138e10079c5cded770",
+      "merge_commit": "dcfb1c03ff3db3a274c7af3b319f1380de5caeda",
+      "quality_run": 35614175709,
+      "backend_quality": "PASS",
+      "release_quality": "PASS"
+    },
+    "fix2": {
+      "runtime_commit": "4b6619e1e44444bfc2727171ed2cde17f44bce92",
+      "verification_commit": "44860f2912665f5b17166f754fcee9819def8d4f",
+      "evidence_path": "zuvyr-pack-evidence/pack-088/2026-09-21-88c/fix2-ci-verification.json",
+      "purpose": "Bind Brain plan capabilities to approved workflow capabilities before reservation and preserve quote/cap evidence.",
+      "source_blobs": {
+        "automation_execution_processor": "bed8d487c8c1dbbbcaa81c42dadaeeacc5273f7a",
+        "brain_kernel_runtime": "87df3b5b50825adebf466a5606c1ac692970c3db",
+        "regression_test": "f536c7596881108fe5631984487b00385351f1a3"
+      },
+      "workflow_run_directly_attached_to_runtime_commit": false
+    },
+    "fix3": {
+      "pull_request": 70,
+      "candidate_head": "6ea7619766637e7036ca826b178416a354614550",
+      "merge_commit": "6c6b6eb18c30a04343a21cbd5d53dea44fcb7613",
+      "quality_run": 35620353690,
+      "backend_quality": "PASS",
+      "release_quality": "PASS",
+      "purpose": "Allow legitimate single chat.respond Brain plans while preserving the legacy chat.respond -> project.collect proof and fail-closing unsupported shapes."
+    },
+    "source_blobs": {
+      "migration": "5f0a2354fdb4eb3e02d3903df1f50761a3446841",
+      "automation_config": "abe7ea65bccfe3ca041b49a6072b4aeff878d6dd",
+      "execution_repository": "cb553ddd7092b79d0ce4d823a3252ac0312c3cd3",
+      "execution_processor": "bed8d487c8c1dbbbcaa81c42dadaeeacc5273f7a",
+      "execution_worker": "b3286134eaeaa139454921e54df14cf7ed6703f5",
+      "brain_kernel_runtime": "87df3b5b50825adebf466a5606c1ac692970c3db",
+      "brain_kernel_worker": "91b33a3c07bf5214e589d8eb4f3ad7c729e6e456",
+      "live_capability_executors": "8b5126682a955e460c79e534b25b537ebbeec3c0",
+      "regression_test_88c": "f536c7596881108fe5631984487b00385351f1a3",
+      "regression_test_fix3": "5114302c865387b70325fe32e47c89d17a40082e"
+    }
+  },
+  "database": {
+    "project": "tqoqsgaymygmqrzddvtu",
+    "migration": {
+      "version": "20260921144521",
+      "name": "pack088_88c_funding_permission_brain"
+    },
+    "rpc_scope": "service_role_only",
+    "reused_systems": [
+      "reserve_zuvyr_usage / refund_zuvyr_usage / settlement ledger",
+      "Permission Center consume_zuvyr_permission_grant",
+      "PACK087 grant_ip_full_control_pack087",
+      "PACK037/038 durable task kernel",
+      "PACK040 Brain Kernel"
+    ]
+  },
+  "acceptance": {
+    "stale_or_revoked_authorization": {
+      "status": "PASS_LIVE",
+      "observed_run_id": "95aa6d28-e2af-4c38-a40c-b239f8804a80",
+      "observed_state": "blocked_permission",
+      "observed_error": "pack088_execution_workflow_revision_stale",
+      "task_run_id": null,
+      "usage_record_id": null,
+      "provider_or_billing_execution": false,
+      "fixture_name": "PACK088 88C STALE ACCEPTANCE",
+      "cleaned_after_evidence": true
+    },
+    "exact_quote_credit_cap": {
+      "status": "PASS_LIVE_AFTER_FIX3",
+      "run_id": "adce7edd-f0da-4d7b-86e3-3b0d8e6d4afb",
+      "schedule_id": "8d10f97c-dddf-4916-9459-46e8fdb829e0",
+      "workflow_id": "cdee4eec-e5df-4590-a4d4-52d378b5c67d",
+      "state": "blocked_funding",
+      "error_code": "PACK040_CREDIT_CAP_EXCEEDED",
+      "funding_state": "blocked",
+      "cap": 0,
+      "estimated_credits": 3,
+      "estimated_cost_micro_usd": "10292",
+      "plan_version": "13c6ef8817c3c52c9d48ff6e8dab6a74d0ee090b79c3805db7ca8f4eccc7e214",
+      "quote_fingerprint": "e6eeb4d4c2570f4bdbf16a01ffaeaf7840d21a4c08b947dad8507e1c795ade1f",
+      "task_run_id": null,
+      "usage_record_id": null,
+      "brain_tasks_created": 0,
+      "usage_records_created": 0,
+      "provider_execution": false,
+      "fixture_cleaned": true
+    },
+    "ip_fresh_mission_grant": {
+      "status": "PASS_TRANSACTION_ROLLBACK",
+      "real_paired_device_id": "50490dea-d2e9-49ba-b090-dde8dc56a78c",
+      "real_session_id": "364dad7b-ac87-4552-8ac4-8493c872e118",
+      "live_session_token_was_expired": true,
+      "proof_method": "Temporarily extend the session expiry inside one DB transaction only, create a temporary IP schedule occurrence, call grant_workspace_schedule_ip_mission_pack088, verify PACK087 full-control grant, nine scopes, mission digest and persisted receipt, then ROLLBACK.",
+      "full_control_scope_count": 9,
+      "max_grant_minutes": 15,
+      "permanent_workflows_created": 0,
+      "permanent_permission_grants_created": 0,
+      "original_session_expiry_restored": "2026-09-21T05:07:46.738Z"
+    },
+    "unit_and_ci_invariants": [
+      "runtime pricing is computed by Brain Kernel before execution",
+      "cap rejection happens before usage reservation",
+      "one Brain idempotency identity is derived from one occurrence run ID",
+      "permission failure after reservation refunds before task creation",
+      "Permission Center consumption and receipt persistence are crash-atomic",
+      "IP occurrence mints a fresh mission-bound PACK087 grant",
+      "Brain terminal state reconciles schedule run funding state",
+      "single chat.respond Brain plans are supported after FIX3",
+      "legacy chat.respond -> project.collect proof remains supported"
+    ]
+  },
+  "runtime": {
+    "railway": {
+      "exact_commit": "6c6b6eb18c30a04343a21cbd5d53dea44fcb7613",
+      "backend": {
+        "deployment": "4d0ce32e-3e68-454c-bc59-a33abc248c39",
+        "status": "SUCCESS"
+      },
+      "worker": {
+        "deployment": "0b610438-68b2-4fd9-b317-e28468bc7dd1",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deployment": "e0b03e81-44cc-4a30-beea-7841cdd85c2d",
+        "status": "SUCCESS"
+      }
+    },
+    "worker_flags": {
+      "scheduler_enabled": true,
+      "automation_execution_enabled": true
+    },
+    "live_log_proof": {
+      "execution_runtime_enabled": true,
+      "scheduler_runtime_enabled": true
+    },
+    "vercel": {
+      "runtime_frontend_change_required": false,
+      "latest_commit_status": "FAILED_BUILD_RATE_LIMIT",
+      "interpretation": "No frontend runtime file was changed by FIX3; the Vercel build-rate-limit status is external to the 88C backend/worker acceptance."
+    }
+  },
+  "cleanup": {
+    "acceptance_workflows_remaining": 0,
+    "execution_enabled_schedules": 0,
+    "pending_runs": 0,
+    "queued_runs": 0,
+    "claimed_runs": 0,
+    "running_runs": 0
+  },
+  "next": {
+    "phase": "88D_UI_NOTIFICATIONS_PAUSE_CANCEL",
+    "status": "NOT_STARTED",
+    "requires_user_instruction": true,
+    "pack089_allowed": false
+  }
+}

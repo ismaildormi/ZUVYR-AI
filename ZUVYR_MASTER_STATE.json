@@ -2531,7 +2531,8 @@
       "20260921051244 pack088_88a_ledger_privilege_hardening",
       "20260921052207 pack088_88a_workflow_invalidation_trigger",
       "20260921132002 pack088_88b_scheduler_exactly_once",
-      "20260921133533 pack088_88b_claim_conflict_hotfix"
+      "20260921133533 pack088_88b_claim_conflict_hotfix",
+      "20260921144521 pack088_88c_funding_permission_brain"
     ],
     "provider_calls_during_planning": 0,
     "payment_mutations_during_planning": 0,
@@ -2554,7 +2555,10 @@
       "in_app_notifications": true,
       "scheduled_ui_currently_safety_blocked": true,
       "scheduler_runtime": true,
-      "automation_dispatch_queue": true
+      "automation_dispatch_queue": true,
+      "automation_execution_worker": true,
+      "runtime_funding_permission_brain_binding": true,
+      "brain_single_chat_plan_support": true
     },
     "planning_truth": {
       "postgres_schedule_occurrence_source_of_truth": true,
@@ -2572,7 +2576,7 @@
       "88D_UI_NOTIFICATIONS_PAUSE_CANCEL",
       "88E_PRODUCTION_ACCEPTANCE_RECOVERY"
     ],
-    "next_action": "AWAIT_USER_TO_START_88C",
+    "next_action": "AWAIT_USER_TO_START_88D",
     "next_pack": "089",
     "next_pack_allowed": false,
     "provider_calls": 0,
@@ -2588,7 +2592,7 @@
       "schema_divergence": false,
       "history_preserved": true
     },
-    "current_phase": "88B_COMPLETE_AWAITING_88C_USER_INSTRUCTION",
+    "current_phase": "88C_COMPLETE_AWAITING_88D_USER_INSTRUCTION",
     "phases": {
       "88A_SCHEMA_INVARIANTS": {
         "status": "LOCKED_VERIFIED",
@@ -2698,7 +2702,61 @@
         }
       },
       "88C_FUNDING_PERMISSION_BRAIN_KERNEL": {
-        "status": "NOT_STARTED"
+        "status": "LOCKED_VERIFIED",
+        "finalized_at": "2026-09-21T15:46:23.144019Z",
+        "implementation_pr": 67,
+        "implementation_head": "221dc4e6b603a9527bf921138e10079c5cded770",
+        "implementation_merge_commit": "dcfb1c03ff3db3a274c7af3b319f1380de5caeda",
+        "implementation_quality_run": 35614175709,
+        "fix2_runtime_commit": "4b6619e1e44444bfc2727171ed2cde17f44bce92",
+        "fix2_verification_commit": "44860f2912665f5b17166f754fcee9819def8d4f",
+        "fix3_pr": 70,
+        "fix3_head": "6ea7619766637e7036ca826b178416a354614550",
+        "fix3_merge_commit": "6c6b6eb18c30a04343a21cbd5d53dea44fcb7613",
+        "fix3_quality_run": 35620353690,
+        "receipt_path": "zuvyr-pack-evidence/pack-088/2026-09-21-88c/receipt.json",
+        "receipt_git_blob": "09cd49b89bdce5aca02d53e0f12852299fefda42",
+        "migration": "20260921144521 pack088_88c_funding_permission_brain",
+        "backend_quality": "PASS",
+        "release_quality": "PASS",
+        "execution_worker_enabled": true,
+        "scheduler_runtime_enabled": true,
+        "stale_authorization_live_acceptance": "PASS",
+        "exact_quote_cap_live_acceptance": "PASS_AFTER_FIX3",
+        "cap_live_estimated_credits": 3,
+        "cap_live_max_credits": 0,
+        "cap_live_task_run_created": false,
+        "cap_live_usage_record_created": false,
+        "ip_fresh_mission_grant": "PASS_TRANSACTION_ROLLBACK",
+        "ip_scope_count": 9,
+        "permission_failure_refund_unit_ci": "PASS",
+        "one_reservation_per_occurrence_unit_ci": "PASS",
+        "brain_terminal_reconciliation_unit_ci": "PASS",
+        "single_chat_plan_support": "PASS_AFTER_FIX3",
+        "acceptance_rows_remaining": 0,
+        "execution_enabled_schedules": 0,
+        "pending_runs": 0,
+        "queued_runs": 0,
+        "claimed_runs": 0,
+        "running_runs": 0,
+        "provider_calls_during_live_acceptance": 0,
+        "payment_mutations_during_live_acceptance": 0,
+        "railway": {
+          "exact_commit": "6c6b6eb18c30a04343a21cbd5d53dea44fcb7613",
+          "backend": {
+            "deployment": "4d0ce32e-3e68-454c-bc59-a33abc248c39",
+            "status": "SUCCESS"
+          },
+          "worker": {
+            "deployment": "0b610438-68b2-4fd9-b317-e28468bc7dd1",
+            "status": "SUCCESS"
+          },
+          "maintenance": {
+            "deployment": "e0b03e81-44cc-4a30-beea-7841cdd85c2d",
+            "status": "SUCCESS"
+          }
+        },
+        "vercel": "FAILED_BUILD_RATE_LIMIT_NO_FRONTEND_RUNTIME_CHANGE"
       },
       "88D_UI_NOTIFICATIONS_PAUSE_CANCEL": {
         "status": "NOT_STARTED"
