@@ -27,16 +27,28 @@ function buildCheckpointDQuotes(plan, { now = Date.now() } = {}) {
 
   const chatStep = getChatStep(plan);
   const projectStep = getProjectStep(plan);
+  const capabilities = plan.steps.map(step => step.capability);
 
-  if (
-    plan.steps.length !== 2 ||
-    !chatStep ||
-    !projectStep ||
-    projectStep.dependsOn.length !== 1 ||
-    projectStep.dependsOn[0] !== chatStep.id
-  ) {
+  const singleChat =
+    plan.steps.length === 1 &&
+    chatStep &&
+    !projectStep;
+
+  const legacyChatProject =
+    plan.steps.length === 2 &&
+    chatStep &&
+    projectStep &&
+    Array.isArray(projectStep.dependsOn) &&
+    projectStep.dependsOn.length === 1 &&
+    projectStep.dependsOn[0] === chatStep.id;
+
+  if (!singleChat && !legacyChatProject) {
     throw liveError('PACK040_TWO_CAPABILITY_PLAN_REQUIRED', {
-      capabilities: plan.steps.map(step => step.capability)
+      capabilities,
+      supportedPlanShapes: [
+        ['chat.respond'],
+        ['chat.respond', 'project.collect']
+      ]
     });
   }
 
