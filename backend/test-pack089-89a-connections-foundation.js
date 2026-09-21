@@ -201,14 +201,16 @@ for (const route of [
   "router.post('/skills/:id/enabled'"
 ]) assert(routes.includes(route), route);
 
-// 89A originally kept plugin install fail-closed. 89B is allowed to advance
-// that surface only through the exact permission-gated runtime, while Drive
-// connect remains gated until 89C.
+// 89A originally kept plugin install and Drive OAuth fail-closed.
+// 89B activated plugin install behind the exact permission-gated runtime,
+// and 89C is allowed to activate Drive OAuth through authenticated routes.
 assert(routes.includes("router.post('/plugins/install'"));
 assert(routes.includes('toolRuntime.installPlugin'));
 assert(!routes.includes("disabled(res, 'plugin_install')"));
-assert(routes.includes("'/drive/connect'"));
-assert(routes.includes("disabled(res, 'drive_connect')"));
+assert(routes.includes("router.post('/drive/connect'"));
+assert(routes.includes("router.post('/drive/oauth/callback'"));
+assert(routes.includes("router.post('/drive/:id/disconnect'"));
+assert(!routes.includes("disabled(res, 'drive_connect')"));
 
 assert(!repository.includes("select('credential_secret_id"));
 assert(!/\\baccess_token\\b/.test(repository));
