@@ -5,7 +5,7 @@ const crypto = require('node:crypto');
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const KEY_RE = /^[a-z0-9][a-z0-9._:-]{0,119}$/;
 const TOOL_KEY_RE = /^[a-z0-9][a-z0-9._:-]{0,199}$/;
-const PRIVATE_IPV4_RE = /^(?:10\\.|127\\.|169\\.254\\.|192\\.168\\.|172\\.(?:1[6-9]|2\\d|3[01])\\.)/;
+const PRIVATE_IPV4_RE = /^(?:10\.|127\.|169\.254\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)/;
 const ALLOWED_INTEGRATION_SCOPES = new Set([
   'drive.file.read',
   'drive.file.write',
