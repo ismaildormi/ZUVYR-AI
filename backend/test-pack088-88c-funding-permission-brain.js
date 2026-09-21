@@ -327,6 +327,36 @@ assert.throws(
   assert.equal(fundingResult.status,'blocked_funding');
   assert.equal(fundingBlocks[0].state,'blocked_funding');
 
+  const inactiveFundingBlocks=[];
+  const inactiveFundingProcessor=createAutomationExecutionProcessor({
+    client:{},
+    repository:{
+      claimExecution:async()=>baseClaim,
+      findBrainTask:async()=>null,
+      block:async input=>{inactiveFundingBlocks.push(input);return input;}
+    },
+    brain:{
+      start:async()=>{
+        const error=new Error('subscription_inactive');
+        error.code='subscription_inactive';
+        throw error;
+      }
+    },
+    durable:{bindQueueJob:async()=>{}},
+    durableQueue:{},
+    enqueue:async()=>{throw new Error('must not enqueue');},
+    nowFactory:()=>new Date('2026-09-21T14:00:00.000Z')
+  });
+  const inactiveFundingResult=await inactiveFundingProcessor.process({
+    runId:RUN,
+    queueJobId:`pack088-${RUN}`
+  });
+  assert.equal(inactiveFundingResult.status,'blocked_funding');
+  assert.equal(inactiveFundingResult.errorCode,'subscription_inactive');
+  assert.equal(inactiveFundingBlocks.length,1);
+  assert.equal(inactiveFundingBlocks[0].state,'blocked_funding');
+  assert.equal(inactiveFundingBlocks[0].errorCode,'subscription_inactive');
+
   const permissionBlocks=[];
   const deniedClaim={
     ...permissionClaim,
