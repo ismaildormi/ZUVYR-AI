@@ -7,6 +7,8 @@ const path = require('node:path');
 const CONFIG = require('./config/automations.v1.json');
 const {
   inferSurface,
+  workflowBrainOutputs,
+  assertBrainPlanAuthorized,
   buildAutomationRequest,
   permissionDescriptors,
   authorizeOccurrence,
@@ -79,10 +81,12 @@ for (const forbidden of [
 }
 
 const capIndex = brainSource.indexOf("PACK040_CREDIT_CAP_EXCEEDED");
+const beforeHookIndex = brainSource.indexOf("await beforeReservation");
 const reserveIndex = brainSource.indexOf("reservation = await usageApi.reserve");
 const hookIndex = brainSource.indexOf("await afterReservation");
 const taskIndex = brainSource.indexOf("task = await durable.createOrGetTask");
-assert(capIndex >= 0 && capIndex < reserveIndex);
+assert(capIndex >= 0 && capIndex < beforeHookIndex);
+assert(beforeHookIndex >= 0 && beforeHookIndex < reserveIndex);
 assert(reserveIndex >= 0 && reserveIndex < hookIndex);
 assert(hookIndex >= 0 && hookIndex < taskIndex);
 assert(brainSource.includes("if (reservation && !task)"));
@@ -145,6 +149,32 @@ assert.equal(request.requestId, `pack088:${RUN}`);
 assert.equal(request.surface,'work');
 assert.equal(request.goal,'Research the approved topic');
 assert.equal(request.metadata.automationRunId,RUN);
+assert.deepEqual(request.outputs.requested,['research']);
+assert.deepEqual(workflowBrainOutputs(baseClaim),['research']);
+assert.equal(
+  assertBrainPlanAuthorized(baseClaim,{
+    steps:[{capability:'research.run'}]
+  }),
+  true
+);
+assert.throws(
+  () => assertBrainPlanAuthorized(baseClaim,{
+    steps:[{capability:'chat.respond'}]
+  }),
+  error => error.code === 'PACK088_PERMISSION_PLAN_CAPABILITY_UNAUTHORIZED'
+);
+assert.throws(
+  () => buildAutomationRequest({
+    ...baseClaim,
+    authorizationCapabilities:['document'],
+    steps:[{
+      stepKey:'document',
+      capability:'document',
+      inputTemplate:{}
+    }]
+  }),
+  error => error.code === 'PACK088_PERMISSION_BRAIN_CAPABILITY_UNSUPPORTED'
+);
 
 assert.deepEqual(permissionDescriptors(baseClaim),[]);
 
@@ -229,6 +259,13 @@ assert.throws(
   };
   let ipCall=null;
   const ipRequest=buildAutomationRequest({...ipClaim,requestTemplate:{goal:'Open the approved application'}});
+  assert.deepEqual(ipRequest.outputs.requested,['chat']);
+  assert.equal(
+    assertBrainPlanAuthorized(ipClaim,{
+      steps:[{capability:'chat.respond'}]
+    }),
+    true
+  );
   const ipReceipt=await authorizeOccurrence({
     claim:ipClaim,
     request:ipRequest,
@@ -307,6 +344,17 @@ assert.throws(
     repository:deniedRepo,
     brain:{
       start:async options=>{
+        await options.beforeReservation({
+          plan:{
+            steps:[
+              {capability:'code.inspect'},
+              {capability:'code.edit'},
+              {capability:'code.validate'},
+              {capability:'code.runtime.start'},
+              {capability:'code.preview.verify'}
+            ]
+          }
+        });
         await options.afterReservation({
           quote:pricingQuote,
           liveQuote:{pricingVersion:'p1',modelTool:'m1'}
@@ -359,6 +407,9 @@ assert.throws(
       start:async options=>{
         assert.equal(options.maxEstimatedCredits,25);
         assert.equal(options.enqueueTask,false);
+        await options.beforeReservation({
+          plan:{steps:[{capability:'research.run'}]}
+        });
         await options.afterReservation({
           quote:pricingQuote,
           liveQuote:{pricingVersion:'p1',modelTool:'m1'}
@@ -421,6 +472,8 @@ assert.throws(
   assert.equal(replay.replayed,true);
   assert.equal(replayBrainStarts,0);
 
+  console.log('PASS: PACK088 88C workflow capabilities deterministically bind Brain outputs and plan authority before reserve');
+  console.log('PASS: unsupported workflow capabilities fail closed instead of silently changing the requested work');
   console.log('PASS: PACK088 88C cap is enforced before reserve/provider execution');
   console.log('PASS: PACK088 88C permission binding occurs after funding and before task creation');
   console.log('PASS: generic and IP permissions are occurrence-bound and crash-persisted by DB RPCs');
