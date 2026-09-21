@@ -482,7 +482,7 @@ Acceptance:
 - Scheduled Tasks UI is real, not placeholder
 - loading/empty/error/retry/reopen + keyboard/RTL/mobile pass
 
-#### 88D IMPLEMENTATION CHECKPOINT — PRODUCTION UI GATE
+#### 88D FINALIZED — LOCKED_VERIFIED
 
 - Implementation PR #72 merged as `cbaff02b1512ff75b550999f7e17c3c0d1b64426`; quality head `178e8dc75a831bc6cfbeeea62f3b0a3c2bfc6418` and run `35637079084` passed Backend Quality + Release Quality.
 - Production migration: `20260921181528 pack088_88d_ui_notifications_pause_cancel`.
@@ -490,10 +490,10 @@ Acceptance:
 - Transaction-only production acceptance passed pause scheduler blocking, resume next-run recomputation, run-now idempotency, cancel/history preservation, claimed-before-Brain cancellation race closure and exactly-once in-app notifications.
 - Active linked task cancellation uses the existing PACK039 cancellation contract. Control is rechecked after claim and again after reservation; no provider task was live-executed for 88D acceptance.
 - Railway backend, worker and maintenance are SUCCESS on the exact merge commit; scheduler and automation execution runtime flags are live.
-- Scheduled Tasks source UI is activated and branch previews built successfully, but the merged Vercel production deployment is currently blocked by the account build-rate-limit.
-- 88D is therefore **not yet canonical LOCKED_VERIFIED**. The only remaining 88D gate is merged production frontend deployment + live Scheduled Tasks UI verification.
+- Vercel production deployment `dpl_GH3W4VkxLLCgETPU63VDpVPtjvZn` is READY on main commit `14a52caacdedf7bfb7cf08482b46a58c054097dd`. The live suite asset returned HTTP 200 and verified Scheduled=ready, create/pause/resume/cancel/run-now, notification history, zero-credit creation copy, local run-time preservation and IANA timezone submission.
+- 88D is **LOCKED_VERIFIED**.
 - Evidence: `zuvyr-pack-evidence/pack-088/2026-09-21-88d/receipt.json`.
-- **88E must remain NOT_STARTED until this gate clears.**
+- **88E is now the next required phase.**
 
 ### Phase 88E — Production acceptance + recovery
 
