@@ -1800,7 +1800,9 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 - **Evidence/receipt requirements:** Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.
 - **Final gate:** LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate.
 - **External gate:** —
-- **Recorded status:** OPEN
+- **Recorded status:** LOCKED_VERIFIED
+- **Canonical final evidence:** Real Windows-device production acceptance completed 2026-09-21: mission-bound Full Computer Control, screen, pointer, app open, keyboard, clipboard write/clear/read, file write/Undo, independent STOP, secret redaction, signed pairing/session and live heartbeat all PASS. Final receipt: `zuvyr-pack-evidence/pack-087/2026-09-21-final/receipt.json`.
+- **Next-pack rule:** PACK088 remains PLANNED / NOT STARTED until explicit user Phase 2 authorization.
 
 ## PACK088 — Automations & Durable Workflows
 

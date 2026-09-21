@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "source_fix": "005-FIX6",
   "selected_strategy": "railway_internal_route",
-  "previous_pack": "086",
+  "previous_pack": "087",
   "tests": {
     "maintenance": "PASS",
     "runtime_safety": "PASS",
@@ -835,7 +835,7 @@
     "previous_plan_preserved": true,
     "priority_override": "MODEL_FIRST_BYO_COMPUTE_2026_09_19"
   },
-  "active_pack": "087",
+  "active_pack": "088",
   "pack061": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
@@ -881,9 +881,9 @@
     "final_no_cost_receipt": "zuvyr-pack-evidence/pack-062/2026-09-18-no-cost-final/receipt.json"
   },
   "continuation_reconciliation": {
-    "date": "2026-09-19T04:31:00Z",
+    "date": "2026-09-21T04:44:30Z",
     "legacy_current_fields_preserved": true,
-    "note": "Fresh continuation truth: PACK073 source, CI, Supabase and Railway are verified through FIX3. Frontend production remains externally blocked by Vercel rolling deployment-creation quota. PACK073 remains active/not locked; PACK074 must not start until production frontend source and authenticated realtime voice acceptance are truthfully completed."
+    "note": "Fresh truth: PACK087 is canonical LOCKED_VERIFIED after real Windows-device Full Computer Control acceptance including mission-bound grant, screen, pointer, app open, keyboard, clipboard, file write/Undo, independent STOP and secret redaction. PACK086 real pairing/session gate is also satisfied. PACK085 remains engineering-only because real uninstall acceptance was not performed. PACK088 is next but has not started and requires explicit user Phase 2 instruction."
   },
   "pack063": {
     "status": "LOCKED_ENGINEERING_VERIFIED",
@@ -2351,10 +2351,10 @@
     "next_pack": "086"
   },
   "pack086": {
-    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "status": "LOCKED_VERIFIED",
     "title": "Device Pairing & Secure Session",
-    "canonical_locked_verified": false,
-    "canonical_gate_reason": "CI, migration, production deployment and security invariants are verified, but no real physical device was used in this session. No live-device success is fabricated.",
+    "canonical_locked_verified": true,
+    "canonical_gate_reason": "Real physical-device production pairing/session acceptance was completed on 2026-09-21 during PACK087 acceptance using the same Ed25519 device identity; expired-session bypass was not used.",
     "implementation_pr": 48,
     "candidate_head": "3beb7a956ff91d60167af650f88ebb1914b064a0",
     "merge_commit": "8466251829b518eba7f19027f09262ece4ee6d02",
@@ -2413,15 +2413,107 @@
         }
       }
     },
-    "deferred_gates": [
-      "PACK086_REAL_DEVICE_PAIRING_SESSION_ACCEPTANCE"
-    ],
+    "deferred_gates": [],
     "provider_calls_during_verification": 0,
     "payment_calls_during_verification": 0,
     "device_control_calls_during_verification": 0,
     "receipt_path": "zuvyr-pack-evidence/pack-086/2026-09-20-engineering-checkpoint/receipt.json",
     "receipt_git_blob": "b68d45aba645ad4af96ca132cef2f71e5f64f00d",
     "progression": "USER_APPROVED_DEFERRED_REAL_DEVICE_CONTINUATION",
-    "next_pack": "087"
+    "next_pack": "087",
+    "real_device_acceptance": {
+      "status": "PASS",
+      "verified_at": "2026-09-21T04:42:30Z",
+      "agent_device_id": "c044102e-baea-4094-9327-744bc2468074",
+      "backend_device_id": "50490dea-d2e9-49ba-b090-dde8dc56a78c",
+      "fingerprint": "da72e7390476713939000b89d4efb9686264a41cae36ea54000d668b5901a61b",
+      "paired": true,
+      "heartbeat": "PASS",
+      "short_lived_session": "PASS",
+      "expired_token_bypass": "NOT_USED",
+      "cryptographic_repair_session": "PASS",
+      "evidence_receipt": "zuvyr-pack-evidence/pack-087/2026-09-21-final/receipt.json"
+    }
+  },
+  "phase2_authorization_required": true,
+  "phase2_authorized": false,
+  "pack087": {
+    "status": "LOCKED_VERIFIED",
+    "title": "IP Actions / STOP / Undo + Mission-Bound Full Computer Control",
+    "canonical_locked_verified": true,
+    "finalized_at": "2026-09-21T04:44:30Z",
+    "source_commit": "5426f6780049dae53fdbf58942b962372ca62dbb",
+    "implementation_prs": [
+      51,
+      53,
+      54,
+      55,
+      56,
+      57
+    ],
+    "final_candidate_ci": {
+      "pr": 57,
+      "head": "016430f856b3ddb1eed0df4d3a6a4bb8cb9a614a",
+      "workflow_run": 35560451434,
+      "backend_quality": "PASS",
+      "release_quality": "PASS"
+    },
+    "supabase_migrations": [
+      "20260921022221 pack087_ip_actions_stop_undo",
+      "20260921031005 pack087_full_computer_control",
+      "20260921033204 pack087_full_control_device_runtime"
+    ],
+    "full_computer_control": {
+      "mode": "MISSION_BOUND",
+      "one_click_ux": true,
+      "max_grant_minutes": 15,
+      "scope_count": 9,
+      "exact_grant_binding": true,
+      "mission_digest_binding": true,
+      "stop_independent": true,
+      "undo_reversible_file": true,
+      "secret_redaction": true
+    },
+    "real_device_acceptance": {
+      "status": "PASS",
+      "platform": "Windows",
+      "agent_device_id": "c044102e-baea-4094-9327-744bc2468074",
+      "backend_device_id": "50490dea-d2e9-49ba-b090-dde8dc56a78c",
+      "final_session_id": "364dad7b-ac87-4552-8ac4-8493c872e118",
+      "device_agent_commit": "5426f6780049dae53fdbf58942b962372ca62dbb",
+      "file_write": "PASS",
+      "undo": "PASS",
+      "stop_mid_execution": "PASS",
+      "secret_redaction": "PASS",
+      "screen_capture": "PASS",
+      "pointer_move": "PASS",
+      "application_open": "PASS",
+      "keyboard_type": "PASS",
+      "clipboard_write": "PASS",
+      "clipboard_clear": "PASS",
+      "clipboard_read_empty": "PASS",
+      "heartbeat": "PASS"
+    },
+    "production": {
+      "railway": {
+        "backend": "SUCCESS",
+        "worker": "SUCCESS",
+        "maintenance": "SUCCESS"
+      },
+      "vercel": {
+        "deployment": "dpl_GJ6236uvW2Fd2Z6dG68cnGLTStGD",
+        "status": "READY",
+        "promotion_source": "rox-52i0hqiv4-rox-ai.vercel.app",
+        "method": "MANUAL_PROMOTE_NO_REBUILD",
+        "auto_git_status": "FAILED_BUILD_RATE_LIMIT_RECONCILED"
+      },
+      "supabase": "PASS"
+    },
+    "receipt_path": "zuvyr-pack-evidence/pack-087/2026-09-21-final/receipt.json",
+    "receipt_git_blob": "1c32be0e0a99b50443b753317b1920e885874a3b",
+    "remaining_blockers": [],
+    "next_pack": "088",
+    "next_pack_started": false,
+    "phase2_requires_explicit_user_instruction": true
   }
 }
