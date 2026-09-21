@@ -1,7 +1,7 @@
 {
-  "version": "pack-086.device-agent.v1",
+  "version": "pack-087.device-agent.v1",
   "protocolVersion": 1,
-  "status": "pairing_session_engineering_ready",
+  "status": "actions_stop_undo_engineering_ready",
   "bind": {
     "host": "127.0.0.1",
     "port": 47831,
@@ -58,5 +58,18 @@
     "monotonicCounterRequired": true,
     "tokenStoredServerSide": false,
     "rawIpTrust": false
+  },
+  "actionRuntime": {
+    "built": true,
+    "authority": "backend_permission_grant_plus_signed_device_session",
+    "inboundRemotePort": false,
+    "transport": "outbound_https_pull",
+    "fileRootsEnv": "ZUVYR_AGENT_FILE_ROOTS",
+    "allowedExecutablesEnv": "ZUVYR_AGENT_ALLOWED_EXECUTABLES",
+    "allowedApplicationsEnv": "ZUVYR_AGENT_ALLOWED_APPLICATIONS",
+    "capabilityDetection": "runtime",
+    "stopChannel": "independent_signed_poll",
+    "writeFileBackup": "local_private_opaque_ref",
+    "shellMode": "explicit_allowlist_shell_false"
   }
 }

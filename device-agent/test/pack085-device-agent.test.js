@@ -40,7 +40,7 @@ function request({ port, method = 'GET', route, token, origin, host } = {}) {
 }
 
 (async () => {
-  assert.match(config.version, /^pack-08[56]\.device-agent\.v1$/);
+  assert.match(config.version, /^pack-08[567]\.device-agent\.v1$/);
   assert.equal(config.bind.host, '127.0.0.1');
   assert.equal(config.bind.browserOriginsAllowed, false);
   assert.equal(config.install.scope, 'user');

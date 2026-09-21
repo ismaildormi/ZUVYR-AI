@@ -9,6 +9,7 @@ const config = require('../config.v1.json');
 const { defaultStateDir, ensureIdentity, publicIdentity, ensureAuthToken } = require('../src/security');
 const { installUser, uninstallUser, assertLeastPrivilege } = require('../src/lifecycle');
 const { startSecureAgent } = require('../src/server');
+const { runOneCycle, runWorker } = require('../src/actionWorker');
 const {
   signPairingChallenge,
   saveSession,
@@ -48,7 +49,7 @@ async function stopAgent(dir) {
 async function main() {
   const command = process.argv[2] || 'help';
   const dir = stateDir();
-  if (['install','uninstall','start','serve','init','pair-proof','session-import','session-proof','session-clear'].includes(command)) {
+  if (['install','uninstall','start','serve','init','pair-proof','session-import','session-proof','session-clear','cycle','work'].includes(command)) {
     assertLeastPrivilege();
   }
 
@@ -66,9 +67,50 @@ async function main() {
     return;
   }
   if (command === 'serve') {
-    const running = await startSecureAgent({ stateDir: dir, port: Number(option('--port') || config.bind.port) });
-    print({ status: 'ready', ...running.runtime, deviceId: running.identity.deviceId, fingerprint: running.identity.fingerprint });
+    const controller = new AbortController();
+    const running = await startSecureAgent({
+      stateDir: dir,
+      port: Number(option('--port') || config.bind.port),
+      onShutdown: () => controller.abort()
+    });
+    const workerPromise = runWorker(dir, {
+      signal: controller.signal,
+      onCycle: (error, result) => {
+        if (error) {
+          process.stderr.write(JSON.stringify({
+            component: 'pack087-worker',
+            status: 'error',
+            code: error.code || error.message || 'pack087_worker_cycle_failed'
+          }) + '\n');
+        } else if (result && result.kind !== 'idle') {
+          process.stdout.write(JSON.stringify({
+            component: 'pack087-worker',
+            status: 'cycle',
+            kind: result.kind,
+            id: result.id || null
+          }) + '\n');
+        }
+      }
+    }).catch(error => {
+      process.stderr.write(JSON.stringify({
+        component: 'pack087-worker',
+        status: 'fatal',
+        code: error.code || error.message || 'pack087_worker_failed'
+      }) + '\n');
+      controller.abort();
+      try { running.server.close(); } catch (_) {}
+    });
+    void workerPromise;
+    print({
+      status: 'ready',
+      ...running.runtime,
+      deviceId: running.identity.deviceId,
+      fingerprint: running.identity.fingerprint,
+      actionWorker: 'running',
+      executionEngineBuilt: true
+    });
     const cleanup = () => {
+      controller.abort();
       try { fs.rmSync(path.join(dir, 'runtime.json'), { force: true }); } catch (_) {}
     };
     process.once('SIGINT', () => running.server.close(() => { cleanup(); process.exit(0); }));
@@ -140,10 +182,42 @@ async function main() {
     return;
   }
 
+  if (command === 'cycle') {
+    const result = await runOneCycle(dir);
+    print({ status: 'success', cycle: result });
+    return;
+  }
+  if (command === 'work') {
+    const controller = new AbortController();
+    const stop = () => controller.abort();
+    process.once('SIGINT', stop);
+    process.once('SIGTERM', stop);
+    print({ status: 'running', component: 'pack087-worker', stateDir: dir });
+    await runWorker(dir, {
+      signal: controller.signal,
+      onCycle: (error, result) => {
+        if (error) {
+          process.stderr.write(JSON.stringify({
+            status: 'error',
+            code: error.code || error.message || 'pack087_worker_cycle_failed'
+          }) + '\n');
+        } else if (result && result.kind !== 'idle') {
+          process.stdout.write(JSON.stringify({
+            status: 'cycle',
+            kind: result.kind,
+            id: result.id || null
+          }) + '\n');
+        }
+      }
+    });
+    return;
+  }
+
   if (command === 'self-test') {
     const tests = [
       path.resolve(__dirname, '..', 'test', 'pack085-device-agent.test.js'),
-      path.resolve(__dirname, '..', 'test', 'pack086-pairing.test.js')
+      path.resolve(__dirname, '..', 'test', 'pack086-pairing.test.js'),
+      path.resolve(__dirname, '..', 'test', 'pack087-actions.test.js')
     ];
     const runNext = index => {
       if (index >= tests.length) {
@@ -162,9 +236,9 @@ async function main() {
   }
 
   process.stdout.write(
-    'ZUVYR Device Agent — PACK086\\n' +
-    'Commands: init | install | uninstall [--purge-identity] | start | serve | status | stop | pair-proof | session-import | session-proof | session-clear | self-test\\n' +
-    'PACK086 pairing/session proof is enabled; PACK087 computer-control actions remain disabled.\\n'
+    'ZUVYR Device Agent — PACK087\\n' +
+    'Commands: init | install | uninstall [--purge-identity] | start | serve | status | stop | pair-proof | session-import | session-proof | session-clear | cycle | work | self-test\\n' +
+    'PACK087 action execution is permission-gated, signed-session authenticated, runtime-capability detected, STOP-aware and undoable for file writes.\\n'
   );
 }
 main().catch(error => {

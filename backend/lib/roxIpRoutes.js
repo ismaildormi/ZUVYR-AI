@@ -17,6 +17,8 @@ const { inspectIpActionSecurity } = require('./ipSecurityPolicy');
 const { buildStopSignal, normalizeUndoReceipt } = require('./ipRecoveryContract');
 const { createSupabaseIpPairingRepository } = require('./ipPairingRepository');
 const { createIpPairingService } = require('./ipPairingService');
+const { createSupabaseIpActionRepository } = require('./ipActionRepository');
+const { createIpActionService } = require('./ipActionService');
 
 function sendValidationError(res, code, message) {
   return res.status(400).json({
@@ -84,12 +86,18 @@ function sendRoxIpError(res, error) {
 function createRoxIpRouter({
   recordTurn = recordRoxIpDemoTurn,
   db = null,
-  pairingService = null
+  pairingService = null,
+  actionService = null
 } = {}) {
   const router = express.Router();
   const pairing = pairingService || (
     db
       ? createIpPairingService({ repository: createSupabaseIpPairingRepository(db) })
+      : null
+  );
+  const actions = actionService || (
+    db
+      ? createIpActionService({ repository: createSupabaseIpActionRepository(db) })
       : null
   );
 
@@ -119,6 +127,116 @@ function createRoxIpRouter({
   router.post('/permissions/validate', (req, res) => {
     try { return res.json({ status: 'success', grant: normalizePermissionGrant(req.body), executionEnabled: false }); }
     catch (error) { return sendValidationError(res, error.code || 'invalid_ip_permission_grant', 'Invalid ZUVYR IP permission grant.'); }
+  });
+
+  const sendPack087Error = (res, error) => {
+    const code = String(error && (error.code || error.message) || 'pack087_action_error');
+    const forbidden = [
+      'pack087_wrong_device',
+      'pack087_permission_scope_missing',
+      'pack087_confirmation_phrase_invalid'
+    ].includes(code);
+    const conflict =
+      code.includes('not_pending') ||
+      code.includes('expired') ||
+      code.includes('unavailable') ||
+      code.includes('not_undoable');
+    const invalid = code.includes('_invalid') || code.includes('_required');
+    return res.status(forbidden ? 403 : conflict ? 409 : invalid ? 400 : 503).json({
+      status: 'error',
+      code
+    });
+  };
+
+  router.post('/permissions/grant', async (req, res) => {
+    if (!actions) return res.status(503).json({ status: 'error', code: 'pack087_action_runtime_unavailable' });
+    const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    try {
+      const grant = await actions.grantPermissions({
+        ownerId: req.userId,
+        deviceId: body.deviceId,
+        sessionId: body.sessionId,
+        scopes: body.scopes,
+        expiresAt: body.expiresAt,
+        explicitConsent: body.explicitConsent
+      });
+      return res.status(201).json({ status: 'success', grant });
+    } catch (error) {
+      return sendPack087Error(res, error);
+    }
+  });
+
+  router.post('/permissions/revoke', async (req, res) => {
+    if (!actions) return res.status(503).json({ status: 'error', code: 'pack087_action_runtime_unavailable' });
+    const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    try {
+      const result = await actions.revokePermissions({
+        ownerId: req.userId,
+        sessionId: body.sessionId
+      });
+      return res.json({ status: 'success', ...result });
+    } catch (error) {
+      return sendPack087Error(res, error);
+    }
+  });
+
+  router.post('/actions/prepare', async (req, res) => {
+    if (!actions) return res.status(503).json({ status: 'error', code: 'pack087_action_runtime_unavailable' });
+    const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    try {
+      const prepared = await actions.prepareAction({
+        ownerId: req.userId,
+        sessionId: body.sessionId,
+        action: body.action
+      });
+      return res.status(201).json({ status: 'success', ...prepared });
+    } catch (error) {
+      return sendPack087Error(res, error);
+    }
+  });
+
+  router.post('/actions/:actionId/confirm', async (req, res) => {
+    if (!actions) return res.status(503).json({ status: 'error', code: 'pack087_action_runtime_unavailable' });
+    const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    try {
+      const confirmed = await actions.confirmAction({
+        ownerId: req.userId,
+        actionId: req.params.actionId,
+        actionDigest: body.actionDigest,
+        phrase: body.phrase,
+        approved: body.approved
+      });
+      return res.json({ status: 'success', ...confirmed });
+    } catch (error) {
+      return sendPack087Error(res, error);
+    }
+  });
+
+  router.post('/stop/request', async (req, res) => {
+    if (!actions) return res.status(503).json({ status: 'error', code: 'pack087_action_runtime_unavailable' });
+    const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    try {
+      const result = await actions.requestStop({
+        ownerId: req.userId,
+        sessionId: body.sessionId
+      });
+      return res.status(202).json({ status: 'success', ...result });
+    } catch (error) {
+      return sendPack087Error(res, error);
+    }
+  });
+
+  router.post('/actions/:actionId/undo', async (req, res) => {
+    if (!actions) return res.status(503).json({ status: 'error', code: 'pack087_action_runtime_unavailable' });
+    try {
+      const result = await actions.requestUndo({
+        ownerId: req.userId,
+        actionId: req.params.actionId
+      });
+      return res.status(202).json({ status: 'success', ...result });
+    } catch (error) {
+      return sendPack087Error(res, error);
+    }
   });
 
   router.post('/actions/validate', (req, res) => {

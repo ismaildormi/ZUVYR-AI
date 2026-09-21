@@ -3,6 +3,8 @@
 const express = require('express');
 const { createSupabaseIpPairingRepository } = require('./ipPairingRepository');
 const { createIpPairingService } = require('./ipPairingService');
+const { createSupabaseIpActionRepository } = require('./ipActionRepository');
+const { createIpActionService } = require('./ipActionService');
 
 function bearer(req) {
   const header = String(req.headers.authorization || '');
@@ -33,11 +35,21 @@ function sendDeviceError(res, error) {
   });
 }
 
-function createDeviceSessionRouter({ db, service, env = process.env } = {}) {
+function createDeviceSessionRouter({
+  db,
+  service,
+  actionService,
+  env = process.env
+} = {}) {
   const router = express.Router();
   const runtime = service || createIpPairingService({
     repository: createSupabaseIpPairingRepository(db)
   });
+  const actions = actionService || (
+    db
+      ? createIpActionService({ repository: createSupabaseIpActionRepository(db) })
+      : null
+  );
 
   const requestBody = req =>
     req.body && typeof req.body === 'object' && !Array.isArray(req.body)
@@ -82,7 +94,7 @@ function createDeviceSessionRouter({ db, service, env = process.env } = {}) {
     tokenExpiresAt: session.tokenExpiresAt,
     scopes: session.scopes,
     heartbeatAt: session.heartbeatAt,
-    executionEnabled: false
+    executionEnabled: session.executionEnabled === true
   });
 
   router.post('/heartbeat', async (req, res) => {
@@ -124,6 +136,127 @@ function createDeviceSessionRouter({ db, service, env = process.env } = {}) {
       });
     } catch (error) {
       return sendDeviceError(res, error);
+    }
+  });
+
+
+  const requireActions = res => {
+    if (actions) return true;
+    res.status(503).json({
+      status: 'error',
+      code: 'pack087_action_runtime_unavailable',
+      executionEnabled: false
+    });
+    return false;
+  };
+
+  const sendActionError = (res, error) => {
+    const code = String(error && (error.code || error.message) || 'pack087_device_action_error');
+    if (code.startsWith('pack086_')) return sendDeviceError(res, error);
+    const forbidden = [
+      'pack087_execution_not_enabled',
+      'pack087_permission_scope_missing',
+      'pack087_permission_expired'
+    ].includes(code);
+    const conflict =
+      code.includes('attempt_mismatch') ||
+      code.includes('not_ready') ||
+      code.includes('unavailable');
+    const invalid = code.includes('_invalid') || code.includes('_required');
+    return res.status(forbidden ? 403 : conflict ? 409 : invalid ? 400 : 503).json({
+      status: 'error',
+      code,
+      executionEnabled: false
+    });
+  };
+
+  router.post('/actions/next', async (req, res) => {
+    if (httpsRequired(req, res) || !requireActions(res)) return;
+    try {
+      const session = await authenticate(req, '/api/device-agent/actions/next');
+      const result = await actions.claimAction(session);
+      return res.json({
+        status: 'success',
+        ...result,
+        executionEnabled: session.executionEnabled === true
+      });
+    } catch (error) {
+      return sendActionError(res, error);
+    }
+  });
+
+  router.post('/actions/report', async (req, res) => {
+    if (httpsRequired(req, res) || !requireActions(res)) return;
+    try {
+      const session = await authenticate(req, '/api/device-agent/actions/report');
+      const result = await actions.reportAction(session, requestBody(req));
+      return res.json({
+        status: 'success',
+        ...result,
+        executionEnabled: session.executionEnabled === true
+      });
+    } catch (error) {
+      return sendActionError(res, error);
+    }
+  });
+
+  router.post('/stop/next', async (req, res) => {
+    if (httpsRequired(req, res) || !requireActions(res)) return;
+    try {
+      const session = await authenticate(req, '/api/device-agent/stop/next');
+      const result = await actions.claimStop(session);
+      return res.json({
+        status: 'success',
+        ...result,
+        executionEnabled: session.executionEnabled === true
+      });
+    } catch (error) {
+      return sendActionError(res, error);
+    }
+  });
+
+  router.post('/stop/ack', async (req, res) => {
+    if (httpsRequired(req, res) || !requireActions(res)) return;
+    try {
+      const session = await authenticate(req, '/api/device-agent/stop/ack');
+      const result = await actions.ackStop(session, requestBody(req));
+      return res.json({
+        status: 'success',
+        ...result,
+        executionEnabled: session.executionEnabled === true
+      });
+    } catch (error) {
+      return sendActionError(res, error);
+    }
+  });
+
+  router.post('/undo/next', async (req, res) => {
+    if (httpsRequired(req, res) || !requireActions(res)) return;
+    try {
+      const session = await authenticate(req, '/api/device-agent/undo/next');
+      const result = await actions.claimUndo(session);
+      return res.json({
+        status: 'success',
+        ...result,
+        executionEnabled: session.executionEnabled === true
+      });
+    } catch (error) {
+      return sendActionError(res, error);
+    }
+  });
+
+  router.post('/undo/report', async (req, res) => {
+    if (httpsRequired(req, res) || !requireActions(res)) return;
+    try {
+      const session = await authenticate(req, '/api/device-agent/undo/report');
+      const result = await actions.reportUndo(session, requestBody(req));
+      return res.json({
+        status: 'success',
+        ...result,
+        executionEnabled: session.executionEnabled === true
+      });
+    } catch (error) {
+      return sendActionError(res, error);
     }
   });
 

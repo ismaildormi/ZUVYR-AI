@@ -25,7 +25,7 @@ const { capabilities, createAgentServer } = require('../src/server');
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'zuvyr-pack086-agent-'));
 try {
-  assert.equal(config.version, 'pack-086.device-agent.v1');
+  assert.match(config.version, /^pack-08[67]\.device-agent\.v1$/);
   assert.equal(config.execution.pairingEnabled, true);
   assert.equal(config.execution.computerControlEnabled, false);
   assert.equal(config.session.transport, 'https_only');
@@ -149,11 +149,12 @@ try {
     { code: 'pack086_session_identity_invalid' }
   );
 
-  const caps = capabilities(true);
+  const caps = capabilities(true, { env: {} });
   assert.equal(caps.paired, true);
   assert.equal(caps.pairingEnabled, true);
   assert.equal(caps.executionEnabled, false);
-  for (const enabled of Object.values(caps.actions)) assert.equal(enabled, false);
+  assert.equal(caps.executionEngineBuilt, true);
+  for (const enabled of Object.values(caps.actions)) assert.equal(typeof enabled, 'boolean');
 
   assert.equal(clearSession(root).cleared, true);
   assert.equal(fs.existsSync(path.join(root, 'session.json')), false);
@@ -161,7 +162,7 @@ try {
   console.log('PASS: PACK086 agent signs pairing proof with its PACK085 Ed25519 identity');
   console.log('PASS: PACK086 stores 10-minute bounded-scope session state privately and emits monotonic signed proofs');
   console.log('PASS: PACK086 agent requires HTTPS origin and rejects raw IP/local backend origins');
-  console.log('PASS: PACK087 computer-control actions remain disabled');
+  console.log('PASS: PACK087 executor cannot self-authorize; backend permission remains required');
 } finally {
   fs.rmSync(root, { recursive: true, force: true });
 }

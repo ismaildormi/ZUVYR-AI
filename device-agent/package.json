@@ -1,8 +1,8 @@
 {
   "name": "@zuvyr/device-agent",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
-  "description": "ZUVYR PACK086 least-privilege device agent with secure pairing/session proof; computer control remains disabled.",
+  "description": "ZUVYR PACK087 least-privilege device agent with secure pairing, scoped actions, independent STOP and reversible file undo.",
   "type": "commonjs",
   "bin": {
     "zuvyr-device-agent": "./bin/zuvyr-device-agent.js"
@@ -11,8 +11,9 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "node test/pack085-device-agent.test.js && node test/pack086-pairing.test.js",
+    "test": "node test/pack085-device-agent.test.js && node test/pack086-pairing.test.js && node test/pack087-actions.test.js",
     "self-test": "node bin/zuvyr-device-agent.js self-test",
-    "test:pairing": "node test/pack086-pairing.test.js"
+    "test:pairing": "node test/pack086-pairing.test.js",
+    "test:actions": "node test/pack087-actions.test.js"
   }
 }
