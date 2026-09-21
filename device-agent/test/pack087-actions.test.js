@@ -34,7 +34,8 @@ const { runActionWithStop } = require('../src/actionWorker');
   assert(!executorSource.includes('$i.Save($args[0]'));
   assert(!executorSource.includes('SendKeys]::SendWait($args[0])'));
   assert(!executorSource.includes('Start-Process -FilePath $args[0]'));
-  assert(executorSource.includes('$v=[Console]::In.ReadToEnd(); Set-Clipboard -Value $v'));
+  assert(executorSource.includes('[System.Windows.Forms.Clipboard]::Clear()'));
+  assert(executorSource.includes('if($v.Length -eq 0)'));
   assert(!executorSource.includes('[Console]::In.ReadToEnd() | Set-Clipboard'));
 
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'zuvyr-pack087-'));
