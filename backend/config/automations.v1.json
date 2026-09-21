@@ -1,6 +1,6 @@
 {
-  "version": "pack-088.88c.automations.v1",
-  "implementationPhase": "88C_FUNDING_PERMISSION_BRAIN_KERNEL",
+  "version": "pack-088.88d.automations.v1",
+  "implementationPhase": "88D_UI_NOTIFICATIONS_PAUSE_CANCEL",
   "executionEnabled": true,
   "schedulerEnabled": true,
   "providerCallsEnabled": true,
@@ -73,7 +73,15 @@
     "permissionFailureRefundsReservation": true,
     "brainTaskIdentityStablePerOccurrence": true,
     "ipGrantFreshPerOccurrence": true,
-    "brainTerminalReconcilesScheduleRun": true
+    "brainTerminalReconcilesScheduleRun": true,
+    "pauseBlocksFutureRuns": true,
+    "resumeRecomputesNextRun": true,
+    "cancelPreservesRunHistory": true,
+    "activeTaskCancellationUsesPack039": true,
+    "cancellationCheckedAroundReservation": true,
+    "lateTaskBindingCancellationUsesPack039": true,
+    "inAppNotificationEventExactlyOnce": true,
+    "browserSchedulerMutationForbidden": true
   },
   "scheduler": {
     "queueName": "zuvyr-automation-dispatch",
@@ -100,5 +108,7 @@
     "freshIpMissionGrantMaxSeconds": 900,
     "brainIdempotencyPrefix": "pack088:",
     "permissionRequestPrefix": "pack088-permission:"
-  }
+  },
+  "controlApiEnabled": true,
+  "inAppNotificationsEnabled": true
 }
