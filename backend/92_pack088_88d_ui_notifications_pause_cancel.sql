@@ -131,7 +131,7 @@ begin
   from public.workspace_schedules
   where id=new.schedule_id;
 
-  if coalesce((v_policy->>'in_app')::boolean,true) is not true then
+  if lower(coalesce(v_policy->>'in_app','true')) <> 'true' then
     return new;
   end if;
 
@@ -293,7 +293,7 @@ create or replace function public.create_workspace_automation_pack088(
   p_title text,
   p_goal text,
   p_schedule_type text,
-  p_run_at timestamptz,
+  p_run_at_local timestamp without time zone,
   p_interval_minutes integer,
   p_recurrence_spec jsonb,
   p_timezone text,
@@ -311,6 +311,7 @@ declare
   v_goal text := left(trim(coalesce(p_goal,'')),4000);
   v_workflow_id uuid;
   v_schedule_id uuid;
+  v_run_at timestamptz;
 begin
   if not exists(select 1 from public.profiles where id=p_owner_id) then
     raise exception 'pack088_owner_not_found';
@@ -321,12 +322,13 @@ begin
   if p_schedule_type not in ('once','recurring') then
     raise exception 'pack088_schedule_type_invalid';
   end if;
-  if p_run_at is null then
+  if p_run_at_local is null then
     raise exception 'pack088_run_at_required';
   end if;
   if not exists(select 1 from pg_timezone_names where name=p_timezone) then
     raise exception 'pack088_timezone_invalid';
   end if;
+  v_run_at=p_run_at_local at time zone p_timezone;
   if p_max_credits_per_run is null or p_max_credits_per_run<0
      or p_max_credits_per_run>10000000 then
     raise exception 'pack088_credit_cap_invalid';
@@ -365,7 +367,7 @@ begin
     max_credits_per_run,allow_topup,notification_policy
   )
   values(
-    p_owner_id,v_workflow_id,v_title,p_schedule_type,p_run_at,p_interval_minutes,p_timezone,
+    p_owner_id,v_workflow_id,v_title,p_schedule_type,v_run_at,p_interval_minutes,p_timezone,
     'draft',false,coalesce(p_recurrence_spec,'{}'::jsonb),
     jsonb_build_object('goal',v_goal,'surface','chat'),'run_once',
     p_max_credits_per_run,coalesce(p_allow_topup,false),
@@ -694,7 +696,7 @@ revoke all on function public.emit_workspace_automation_notification_pack088(uui
   from public,anon,authenticated;
 revoke all on function public.check_workspace_schedule_run_control_pack088(uuid,uuid,timestamptz)
   from public,anon,authenticated;
-revoke all on function public.create_workspace_automation_pack088(uuid,text,text,text,timestamptz,integer,jsonb,text,integer,boolean,jsonb)
+revoke all on function public.create_workspace_automation_pack088(uuid,text,text,text,timestamp without time zone,integer,jsonb,text,integer,boolean,jsonb)
   from public,anon,authenticated;
 revoke all on function public.control_workspace_schedule_pack088(uuid,uuid,text,uuid,timestamptz)
   from public,anon,authenticated;
