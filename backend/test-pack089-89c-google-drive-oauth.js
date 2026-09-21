@@ -397,9 +397,13 @@ function bytesResponse(buffer, mimeType = 'text/plain', status = 200) {
     "router.post('/drive/:id/disconnect'",
     "googleDriveRuntime.assertOAuthConfigured();"
   ]) assert(routes.includes(marker));
+  const driveConnectStart = routes.indexOf("router.post('/drive/connect'");
+  const driveCallbackStart = routes.indexOf("router.post('/drive/oauth/callback'", driveConnectStart);
+  const driveConnectRoute = routes.slice(driveConnectStart, driveCallbackStart);
+  assert(driveConnectStart >= 0 && driveCallbackStart > driveConnectStart);
   assert(
-    routes.indexOf("googleDriveRuntime.assertOAuthConfigured();") <
-    routes.indexOf("connectionStore.createIntegration({"),
+    driveConnectRoute.indexOf("googleDriveRuntime.assertOAuthConfigured();") <
+    driveConnectRoute.indexOf("connectionStore.createIntegration({"),
     'Drive OAuth config must fail closed before creating a draft connection'
   );
 
