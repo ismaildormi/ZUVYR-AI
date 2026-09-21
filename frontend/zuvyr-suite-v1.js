@@ -8,7 +8,7 @@
     ['3d','⬡','3D Studio','ready'],['code','</>','Code Studio','ready'],['voice','◉','Voice','connect'],['music','♫','Music','connect'],
     ['ip','✦','ZUVYR IP','ready'],['research','⌕','Research','ready'],['library','▦','Library','ready'],
     ['projects','▣','Projects','ready'],['documents','▤','Documents','ready'],['spreadsheets','▥','Spreadsheets','ready'],
-    ['presentations','▧','Presentations','ready'],['scheduled','◷','Scheduled','ready'],['plugins','⌘','Plugins','blocked'],
+    ['presentations','▧','Presentations','ready'],['scheduled','◷','Scheduled','ready'],['plugins','⌘','Plugins','ready'],
     ['usage','◫','Usage & Billing','ready'],['analytics','⌁','Analytics','validate'],['settings','⚙','Settings','ready']
   ];
   var copy = {
@@ -27,7 +27,7 @@
     spreadsheets:['Spreadsheets','Structure data, formulas, analysis and chart-ready results.'],
     presentations:['Presentations','Turn approved outlines, documents and media into coherent slides.'],
     scheduled:['Scheduled Tasks','Create, activate, pause, resume and cancel durable tasks with live run history, funding gates and in-app notifications.'],
-    plugins:['Plugins','Discover integrations and inspect required permissions before installation is enabled.'],
+    plugins:['Plugins & Connections','Connect approved services, install scoped plugins or MCP tools, and build reusable Skills without exposing credentials.'],
     usage:['Usage & Billing','Keep subscription allowance, weekly limits and persistent top-up credits visibly separate.'],
     analytics:['Analytics','Review product usage and financial signals after production data validation.'],
     settings:['Settings','Manage language, appearance, privacy, devices, billing and data controls.']
@@ -373,6 +373,39 @@
     usageOwner = null;
     usageData = null;
     usageState = 'idle';
+  }
+
+  var pluginState={integrations:[],plugins:[],skills:[],tools:[],loading:false,error:null,toolsError:null,pendingPermission:null,oauthMessage:null};
+  function pluginsView(){
+    return heading('plugins')+
+      '<div class="zs-banner zs-plugin-banner"><span>⌘</span><div><b>Skills, Plugins and Connections are live.</b> Credentials stay server-side in Vault. Every connection is owner-scoped, and plugin/MCP installation passes through Permission Center before activation.</div></div>'+
+      '<div class="zs-grid zs-plugin-grid">'+
+        '<div class="zs-card wide"><div class="zs-actions zs-plugin-title-row"><div><h2>Connections</h2><p>Review current scopes, connection state and revocation controls.</p></div><button type="button" class="zs-secondary" data-zs-plugin-refresh>Refresh</button></div><div data-zs-connection-list><div class="zs-muted">Open Plugins &amp; Connections to load your connections.</div></div></div>'+
+        '<div class="zs-card half"><h2>Google Drive</h2><p>Start the server-side OAuth + PKCE flow. ZUVYR never asks you to paste Google access or refresh tokens here.</p><form data-zs-drive-form>'+
+          '<div class="zs-field"><label>Requested access</label><div class="zs-checks"><label class="zs-check"><input type="checkbox" name="driveScopes" value="drive.file.read" checked> Read Drive files</label><label class="zs-check"><input type="checkbox" name="driveScopes" value="drive.export" checked> Export Google files</label><label class="zs-check"><input type="checkbox" name="driveScopes" value="drive.file.write"> Write Drive files</label></div></div>'+
+          '<label class="zs-consent"><input type="checkbox" name="explicitConsent" required> I explicitly approve these Drive scopes. Google credentials stay in Vault and can be disconnected later.</label>'+
+          '<div class="zs-actions"><button type="submit" class="zs-primary" data-zs-drive-connect>Connect Google Drive</button><span class="zs-hint">0 credits · OAuth authorization only</span></div>'+
+        '</form><div class="zs-result" data-zs-drive-result></div></div>'+
+        '<div class="zs-card half"><h2>Add plugin or MCP server</h2><p>Manifests are declarative only. MCP endpoints must be HTTPS and private/local network targets are rejected server-side.</p><form data-zs-plugin-form>'+
+          '<div class="zs-document-row"><div class="zs-field"><label>Kind</label><select name="pluginKind"><option value="mcp">MCP server</option><option value="plugin">Built-in delegate plugin</option></select></div><div class="zs-field"><label>Key</label><input name="pluginKey" maxlength="120" required placeholder="my-tools"></div></div>'+
+          '<div class="zs-field"><label>Display name</label><input name="displayName" maxlength="120" required placeholder="My tools"></div>'+
+          '<div class="zs-field"><label>MCP endpoint <span class="zs-hint">required for MCP</span></label><input type="url" name="endpointUrl" maxlength="2048" placeholder="https://mcp.example.com/mcp" autocomplete="off"></div>'+
+          '<div class="zs-field"><label>Declared scopes</label><div class="zs-checks"><label class="zs-check"><input type="checkbox" name="pluginScopes" value="workspace.items.read" checked> Library read</label><label class="zs-check"><input type="checkbox" name="pluginScopes" value="workspace.items.write"> Library write</label><label class="zs-check"><input type="checkbox" name="pluginScopes" value="projects.read"> Projects read</label><label class="zs-check"><input type="checkbox" name="pluginScopes" value="projects.write"> Projects write</label><label class="zs-check"><input type="checkbox" name="pluginScopes" value="exports.create"> Export create</label></div></div>'+
+          '<div class="zs-field"><label>Declarative manifest JSON</label><textarea name="manifest" maxlength="24000" required spellcheck="false" placeholder="{ &quot;tools&quot;: [{ &quot;name&quot;: &quot;search&quot;, &quot;description&quot;: &quot;Search approved data&quot;, &quot;requiredScopes&quot;: [&quot;workspace.items.read&quot;], &quot;remoteToolName&quot;: &quot;search&quot; }] }"></textarea><span class="zs-hint">No scripts, tokens, passwords or executable code.</span></div>'+
+          '<label class="zs-consent"><input type="checkbox" name="explicitConsent" required> I approve creating this scoped connection. Installation still requires a separate Permission Center confirmation.</label>'+
+          '<div class="zs-actions"><button type="submit" class="zs-primary" data-zs-plugin-create>Create draft</button><span class="zs-hint">Draft only · no remote invocation</span></div>'+
+        '</form><div class="zs-result" data-zs-plugin-create-result></div></div>'+
+        '<div class="zs-card wide zs-plugin-permission" data-zs-plugin-permission tabindex="-1"><h2>Permission review</h2><div data-zs-plugin-permission-body><div class="zs-muted">No plugin installation is waiting for approval.</div></div></div>'+
+        '<div class="zs-card half"><h2>Create Skill</h2><p>Skills are declarative instructions plus references to tools you already own or connected.</p><form data-zs-skill-form>'+
+          '<div class="zs-field"><label>Name</label><input name="name" maxlength="120" required placeholder="Research brief"></div>'+
+          '<div class="zs-field"><label>Description</label><input name="description" maxlength="2000" placeholder="Reusable workflow guidance"></div>'+
+          '<div class="zs-field"><label>Instructions</label><textarea name="instructions" maxlength="12000" required placeholder="Use the approved tools to collect the requested information, then summarize it with sources."></textarea></div>'+
+          '<div class="zs-field"><label>Tools</label><div class="zs-skill-tool-picker" data-zs-skill-tools><div class="zs-muted">Connected tools will appear here.</div></div></div>'+
+          '<div class="zs-actions"><button type="submit" class="zs-primary">Create Skill</button><span class="zs-hint">No executable code is stored.</span></div>'+
+        '</form><div class="zs-result" data-zs-skill-result></div></div>'+
+        '<div class="zs-card half"><h2>Your Skills</h2><div data-zs-skill-list><div class="zs-muted">No Skills loaded yet.</div></div></div>'+
+        '<div class="zs-card wide"><h2>Available tools</h2><p>Discover built-in, Drive, plugin and MCP tools registered through the one owner-aware tool registry.</p><div data-zs-tool-list><div class="zs-muted">Open this surface to discover tools.</div></div></div>'+
+      '</div>';
   }
 
   var scheduledState={items:[],runs:[],notifications:[],selected:null,loading:false,error:null};
@@ -1487,7 +1520,7 @@
     var extra=id==='code'?orchestrator('code'):toolCards(id);
     return heading(id)+'<div class="zs-banner"><span>◎</span><div><b>'+(state==='ready'?'Interface foundation is ready.':'Ready to connect safely.')+'</b> '+(state==='ready'?'Use the existing backend foundation and connect verified data next.':'Provider execution stays off until pricing, limits and settlement pass verification.')+'</div></div>'+extra;
   }
-  function viewHtml(id) { if(id==='dashboard')return dashboard(); if(id==='images')return imageStudioView(); if(id==='3d')return model3dStudioView(); if(id==='ip')return ipView(); if(id==='usage')return usageView(); if(id==='research')return researchView(); if(id==='documents')return documentsView(); if(id==='spreadsheets')return spreadsheetsView(); if(id==='presentations')return presentationsView(); if(id==='scheduled')return scheduledView(); return genericView(id); }
+  function viewHtml(id) { if(id==='dashboard')return dashboard(); if(id==='images')return imageStudioView(); if(id==='3d')return model3dStudioView(); if(id==='ip')return ipView(); if(id==='usage')return usageView(); if(id==='research')return researchView(); if(id==='documents')return documentsView(); if(id==='spreadsheets')return spreadsheetsView(); if(id==='presentations')return presentationsView(); if(id==='scheduled')return scheduledView(); if(id==='plugins')return pluginsView(); return genericView(id); }
 
   // Native navigation integration 01. Existing Chat, Images, Video, Code,
   // IP, Projects, History, Settings and payment handlers retain ownership.
@@ -1552,7 +1585,7 @@
       var title=view.querySelector('h1');if(title)title.textContent=sectionLabel(view.dataset.zsView);
       if(view.dataset.zsView==='3d'){renderModel3dStudioTruth();return;}
       if(view.dataset.zsView==='3d')return;
-      if(['documents','spreadsheets','presentations','scheduled'].indexOf(view.dataset.zsView)>-1){
+      if(['documents','spreadsheets','presentations','scheduled','plugins'].indexOf(view.dataset.zsView)>-1){
         var liveStatus=view.querySelector('.zs-status');if(liveStatus){liveStatus.textContent=language()==='ar'?'مفعّل':language()==='fr'?'Actif':'Live';liveStatus.classList.add('ready');}
         return;
       }
@@ -1606,6 +1639,7 @@
     }
     if(id==='spreadsheets'||id==='presentations')loadOfficeItems(id);
     if(id==='scheduled')loadScheduledTasks();
+    if(id==='plugins')loadPluginSurface();
     suite.querySelectorAll('[data-zs-view]').forEach(function(v){v.dataset.active=String(v.dataset.zsView===id);});
     document.querySelectorAll('[data-zuvyr-section]').forEach(function(el){var active=el.dataset.zuvyrSection===id;el.classList.toggle('active',active);if(active)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});
   }
