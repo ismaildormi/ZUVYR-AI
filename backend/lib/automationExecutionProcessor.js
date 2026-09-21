@@ -304,6 +304,7 @@ function capErrorSnapshot(error) {
 
 const FUNDING_BLOCK_CODES = new Set([
   'PACK040_CREDIT_CAP_EXCEEDED',
+  'subscription_inactive',
   'plan_limits_unconfigured',
   'five_hour_allowance_exhausted',
   'weekly_allowance_exhausted',
