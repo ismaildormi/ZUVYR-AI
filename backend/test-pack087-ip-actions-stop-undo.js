@@ -148,7 +148,7 @@ class FakeRepository {
     'report_ip_undo_pack087',
     'for update skip locked',
     "execution_context_type='device_agent'",
-    'device_action_executed=true'
+    'device_action_executed=coalesce(p_device_action_executed,false)'
   ]) assert(sql.includes(marker), marker);
   assert(!/\b(drop table|truncate|delete from)\b/i.test(sql));
   assert(!/grant\s+.*\s+to\s+(anon|authenticated)/i.test(sql));
