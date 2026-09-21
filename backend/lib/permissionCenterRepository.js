@@ -97,6 +97,33 @@ function createPermissionCenterStore(db) {
     return data;
   }
 
+  async function consumeWorkspaceConnection({
+    ownerId,
+    action,
+    connectionId,
+    sessionId,
+    requestId,
+    toolKey,
+    requiredScope,
+    operationFingerprint = null
+  }) {
+    const { data, error } = await db.rpc('consume_workspace_connection_permission_pack089', {
+      p_owner_id: ownerId,
+      p_action_class: action,
+      p_connection_id: connectionId,
+      p_session_id: sessionId,
+      p_request_id: requestId,
+      p_tool_key: toolKey,
+      p_required_scope: requiredScope,
+      p_operation_fingerprint: operationFingerprint
+    });
+    if (error) throw storeError('workspace_connection_permission_consume_failed', error.message);
+    if (!data || data.success !== true || data.allowed !== true) {
+      throw storeError(data?.error || 'permission_required');
+    }
+    return data;
+  }
+
   async function listGrants(ownerId, { limit = 50, activeOnly = false } = {}) {
     let query = db
       .from('zuvyr_permission_grants')
@@ -129,6 +156,7 @@ function createPermissionCenterStore(db) {
     revokeGrant,
     consume,
     consumeWorkspaceTool,
+    consumeWorkspaceConnection,
     listGrants,
     listAudit
   });

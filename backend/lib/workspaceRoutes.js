@@ -32,6 +32,9 @@ const {
 const {
   getDefaultWorkspaceToolRuntime
 } = require('./workspaceToolRuntime');
+const {
+  getDefaultWorkspaceGoogleDriveRuntime
+} = require('./workspaceGoogleDrive');
 const { normalizeWorkflow } = require('./workspaceWorkflowContract');
 const { text, uuid, object, fail } = require('./workspaceValidation');
 const {
@@ -189,6 +192,7 @@ function createWorkspaceRouter(options = {}) {
   const imageGenerationStore = options.imageGenerationStore || getDefaultImageGenerationRepository();
   const connectionStore = options.connectionStore || getDefaultWorkspaceConnectionStore();
   const toolRuntime = options.toolRuntime || getDefaultWorkspaceToolRuntime();
+  const googleDriveRuntime = options.googleDriveRuntime || getDefaultWorkspaceGoogleDriveRuntime();
   const memoryStore =
     options.memoryStore || getDefaultWorkspaceMemoryStore();
   const contextGraphStore =
@@ -1132,10 +1136,116 @@ function createWorkspaceRouter(options = {}) {
     '/schedules/activate',
     (_req, res) => disabled(res, 'schedule_execute')
   );
-  router.post(
-    '/drive/connect',
-    (_req, res) => disabled(res, 'drive_connect')
-  );
+  function driveFailure(res, error) {
+    const code = String(error?.code || error?.message || 'workspace_google_drive_failed');
+    if (code.includes('not_configured')) {
+      return res.status(503).json({
+        status: 'error',
+        code,
+        externalWriteExecuted: false
+      });
+    }
+    if (
+      code.includes('permission_') ||
+      code.includes('owner_mismatch')
+    ) {
+      return res.status(403).json({ status: 'error', code, externalWriteExecuted: false });
+    }
+    if (
+      code.includes('invalid') ||
+      code.includes('not_found') ||
+      code.includes('inactive') ||
+      code.includes('revoked') ||
+      code.includes('scope_') ||
+      code.includes('required') ||
+      code.includes('blocked')
+    ) {
+      return res.status(400).json({ status: 'error', code, externalWriteExecuted: false });
+    }
+    if (
+      code.includes('token_') ||
+      code.includes('google_request_') ||
+      code.includes('drive_api_')
+    ) {
+      return res.status(502).json({ status: 'error', code, externalWriteExecuted: false });
+    }
+    console.error('[workspace/drive] operation failed:', code);
+    return res.status(500).json({ status: 'error', code: 'workspace_google_drive_failed' });
+  }
+
+  router.post('/drive/connect', async (req, res) => {
+    try {
+      let connectionId;
+      let created = false;
+      if (req.body?.connectionId) {
+        connectionId = connectionUuid(req.body.connectionId);
+      } else {
+        const draft = normalizeIntegrationDraft({
+          ...req.body,
+          integrationKey: 'google_drive'
+        });
+        const connection = await connectionStore.createIntegration({
+          ownerId: req.userId,
+          ...draft
+        });
+        connectionId = connection.id;
+        created = true;
+      }
+
+      const oauth = await googleDriveRuntime.startOAuth({
+        ownerId: req.userId,
+        connectionId
+      });
+      res.set('Cache-Control', 'no-store');
+      return res.status(created ? 201 : 200).json({
+        status: 'success',
+        connectionId,
+        authorizationUrl: oauth.authorizationUrl,
+        expiresAt: oauth.expiresAt,
+        credentialConfigured: false,
+        billedCredits: 0
+      });
+    } catch (error) {
+      return driveFailure(res, error);
+    }
+  });
+
+  router.post('/drive/oauth/callback', async (req, res) => {
+    try {
+      const result = await googleDriveRuntime.completeOAuth({
+        ownerId: req.userId,
+        code: shortText(req.body?.code, 'workspace_google_oauth_code_invalid', 4096),
+        state: shortText(req.body?.state, 'workspace_google_oauth_state_invalid', 512)
+      });
+      res.set('Cache-Control', 'no-store');
+      return res.json({
+        status: 'success',
+        connection: result,
+        billedCredits: 0
+      });
+    } catch (error) {
+      return driveFailure(res, error);
+    }
+  });
+
+  router.post('/drive/:id/disconnect', async (req, res) => {
+    try {
+      const result = await googleDriveRuntime.disconnect({
+        ownerId: req.userId,
+        connectionId: connectionUuid(req.params.id)
+      });
+      toolRuntime.clearOwner(req.userId);
+      res.set('Cache-Control', 'no-store');
+      return res.json({
+        status: 'success',
+        result,
+        billedCredits: 0
+      });
+    } catch (error) {
+      return driveFailure(res, error);
+    }
+  });
+
   router.post(
     '/exports/create',
     (_req, res) => disabled(res, 'external_export')

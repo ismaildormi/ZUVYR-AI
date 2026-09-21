@@ -12,6 +12,7 @@ const {
 } = require('./permissionCenterRepository');
 const aiTools = require('../src/modules/ai/tools');
 const { createMcpRemoteAdapter } = require('./workspaceMcpClient');
+const { createWorkspaceGoogleDriveRuntime } = require('./workspaceGoogleDrive');
 
 const TOOL_NAME_RE = /^[a-z0-9][a-z0-9._-]{0,79}$/;
 const DELEGATE_KEY_RE = /^[a-z0-9][a-z0-9._:-]{0,199}$/;
@@ -105,8 +106,13 @@ function createWorkspaceToolRuntime({
   connectionStore = getDefaultWorkspaceConnectionStore(),
   permissionStore = getDefaultPermissionCenterStore(),
   mcpAdapter = createMcpRemoteAdapter(),
+  driveRuntime = null,
   tools = aiTools
 } = {}) {
+  const googleDrive = driveRuntime || createWorkspaceGoogleDriveRuntime({
+    connectionStore,
+    permissionStore
+  });
   const hydratedByOwner = new Map();
 
   function clearOwner(ownerId) {
@@ -213,7 +219,10 @@ function createWorkspaceToolRuntime({
     if (!owner) throw toolRuntimeError('workspace_tool_owner_required');
     clearOwner(owner);
 
-    const connections = await connectionStore.listActivePlugins(owner, { limit: 200 });
+    const [connections, integrations] = await Promise.all([
+      connectionStore.listActivePlugins(owner, { limit: 200 }),
+      connectionStore.listActiveIntegrations(owner, { limit: 200 })
+    ]);
     const keys = [];
 
     for (const connection of connections) {
@@ -227,6 +236,28 @@ function createWorkspaceToolRuntime({
           handler: (input, context) => invokeDynamicTool(connection, manifestTool, input, context)
         });
         keys.push(manifestTool.key);
+      }
+    }
+
+    for (const connection of integrations) {
+      if (connection.integration_key !== 'google_drive') continue;
+      for (const driveTool of googleDrive.driveToolDefinitions(connection)) {
+        tools.registerTool(driveTool.key, {
+          ownerId: owner,
+          source: 'google_drive',
+          connectionId: connection.id,
+          description: driveTool.description,
+          inputSchema: driveTool.inputSchema,
+          handler: (input, context) => googleDrive.invoke({
+            ownerId: context.ownerId,
+            connectionId: connection.id,
+            toolKey: driveTool.key,
+            input,
+            sessionId: context.sessionId,
+            requestId: context.requestId
+          })
+        });
+        keys.push(driveTool.key);
       }
     }
 
@@ -287,6 +318,21 @@ function createWorkspaceToolRuntime({
     if (!definition || definition.ownerId !== String(ownerId).toLowerCase() || !definition.connectionId) {
       throw toolRuntimeError('workspace_tool_not_found');
     }
+
+    if (definition.source === 'google_drive') {
+      const prepared = await googleDrive.prepareInvocation({
+        ownerId,
+        connectionId: definition.connectionId,
+        toolKey: String(toolKey || '').trim().toLowerCase(),
+        input: normalizedInput,
+        sessionId
+      });
+      return Object.freeze({
+        operationFingerprint: prepared.operationFingerprint,
+        permissionRequest: prepared.permissionRequest
+      });
+    }
+
     const connection = await freshConnection(ownerId, definition.connectionId);
     const action = connection.plugin_kind === 'mcp' ? 'mcp.invoke' : 'plugin.invoke';
     const normalizedToolKey = String(toolKey || '').trim().toLowerCase();
