@@ -321,7 +321,7 @@ begin
       'not_checked',
       case when v_run_state='skipped' then p_now else null end
     )
-    on conflict(schedule_id,occurrence_key) do nothing
+    on conflict on constraint workspace_schedule_runs_occurrence_unique do nothing
     returning id into v_run_id;
 
     if v_run_id is not null then
