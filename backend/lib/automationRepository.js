@@ -60,6 +60,12 @@ function nullableInteger(value, code, { min = 0, max = Number.MAX_SAFE_INTEGER }
   return number;
 }
 
+function requiredInteger(value, code, range = {}) {
+  const number = nullableInteger(value, code, range);
+  if (number == null) throw automationError(code);
+  return number;
+}
+
 function normalizeWorkflowDraft(input = {}) {
   return Object.freeze({
     owner_id: uuid(input.ownerId, 'PACK088_OWNER_ID_INVALID'),
@@ -85,9 +91,14 @@ function normalizeWorkflowStep(input = {}) {
     throw automationError('PACK088_WORKFLOW_DEPENDENCIES_INVALID');
   }
 
+  const stepKey = requiredText(input.stepKey, 'PACK088_WORKFLOW_STEP_KEY_INVALID', 64);
+  if (!/^[A-Za-z][A-Za-z0-9_-]{0,63}$/.test(stepKey)) {
+    throw automationError('PACK088_WORKFLOW_STEP_KEY_INVALID');
+  }
+
   return Object.freeze({
-    step_key: requiredText(input.stepKey, 'PACK088_WORKFLOW_STEP_KEY_INVALID', 64),
-    position: nullableInteger(input.position, 'PACK088_WORKFLOW_POSITION_INVALID', { min: 0, max: 19 }),
+    step_key: stepKey,
+    position: requiredInteger(input.position, 'PACK088_WORKFLOW_POSITION_INVALID', { min: 0, max: 19 }),
     capability,
     depends_on: [...dependsOn],
     input_template: objectValue(input.inputTemplate, 'PACK088_WORKFLOW_INPUT_TEMPLATE_INVALID'),
