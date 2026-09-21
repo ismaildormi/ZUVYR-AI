@@ -133,10 +133,10 @@ for (const action of ['connection.read','connection.write','plugin.install','plu
   assert(policy.actions[action], 'missing policy action ' + action);
 }
 
-const sql = fs.readFileSync('backend/89_pack089_connections_permissions.sql', 'utf8');
-const routes = fs.readFileSync('backend/lib/workspaceRoutes.js', 'utf8');
-const repository = fs.readFileSync('backend/lib/workspaceConnectionRepository.js', 'utf8');
-const contract = fs.readFileSync('backend/lib/workspaceConnectionContract.js', 'utf8');
+const sql = fs.readFileSync('89_pack089_connections_permissions.sql', 'utf8');
+const routes = fs.readFileSync('lib/workspaceRoutes.js', 'utf8');
+const repository = fs.readFileSync('lib/workspaceConnectionRepository.js', 'utf8');
+const contract = fs.readFileSync('lib/workspaceConnectionContract.js', 'utf8');
 
 for (const marker of [
   'alter table public.workspace_plugin_connections',
