@@ -1052,3 +1052,24 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - Final receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88e/receipt.json`.
 - **PACK089 — Skills / Plugins / MCP / Connections is now unblocked.**
 
+### PACK089 / 89A LOCKED_VERIFIED — 2026-09-21
+
+- Canonical connection tables extended instead of creating a second plugin model.
+- Supabase Vault is the credential boundary; public rows retain only secret identifiers/metadata.
+- Permission Center now understands integration/plugin connection resources and scoped actions.
+- OAuth PKCE/state/revoke hardening passed; production tables and sensitive RPCs remain service-role-only.
+- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-21-89a/receipt.json`.
+
+### PACK089 / 89B LOCKED_VERIFIED — 2026-09-21
+
+- Unified Skills/plugins/MCP runtime uses the existing owner-aware `ai.tools` registry; no second tool registry or billing ledger was created.
+- Official stable MCP v2 client package `@modelcontextprotocol/client@2.0.0` is installed and npm-locked.
+- PR #83 merged as `92d4e05667c2f095e63b0410d0a81cad62e6d0a7`; quality run `35654292803` PASS.
+- Production migration `20260921204458 pack089_89b_tool_runtime_permissions` is applied; tool/install RPCs are service-role-only.
+- Exact operation fingerprint + tool key + owner/resource-session permission binding passed.
+- SSRF/private/local targets and redirects fail closed before remote MCP execution.
+- Production rollback-only acceptance proved install/invoke/replay/fingerprint/revoke behavior with 0 provider/network/billing mutations and 0 residual rows/grants.
+- Railway backend deployment `1d160111-a3c6-4416-992d-2fb246d88e3d` SUCCESS with MCP remote gate enabled; worker `e52a3d7e-1b59-4bd2-a4fe-e70e859c6fff` and maintenance `eeffd642-031a-42e3-b7dd-d9507b553c91` SUCCESS.
+- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-21-89b/receipt.json`.
+- **89C Google Drive OAuth + tools is now active.**
+
