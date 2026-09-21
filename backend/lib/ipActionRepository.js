@@ -75,7 +75,7 @@ function createSupabaseIpActionRepository(db) {
 
     async getActionForOwner({ ownerId, actionId }) {
       const result = await db.from('ip_actions')
-        .select('id,owner_id,session_id,action_type,required_scope,risk,status,action_digest,requires_confirmation,device_action_executed,backup_ref')
+        .select('id,owner_id,session_id,action_type,required_scope,risk,status,action_digest,requires_confirmation,device_action_executed,backup_ref,permission_grant_id,mission_digest')
         .eq('id', actionId)
         .eq('owner_id', ownerId)
         .maybeSingle();
