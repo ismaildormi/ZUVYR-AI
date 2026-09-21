@@ -2949,13 +2949,50 @@
     "plan_path": "docs/zuvyr/PACK089_EXECUTION_PLAN.md",
     "planning_started_at": "2026-09-21",
     "implementation_started": true,
-    "current_phase": "89A_SCHEMA_VAULT_PERMISSION_CENTER",
+    "current_phase": "89B_UNIFIED_TOOLS_SKILLS_PLUGIN_MCP",
     "phases": {
       "89A_SCHEMA_VAULT_PERMISSION_CENTER": {
-        "status": "IN_PROGRESS"
+        "status": "LOCKED_VERIFIED",
+        "finalized_at": "2026-09-21T19:30:27.363674Z",
+        "implementation_pr": 80,
+        "implementation_head": "6f163cc0c4d431de9c8ae41730495c956319f745",
+        "implementation_merge_commit": "cf77c8a20a4a2da279ba6e7be1da1118a8a54dba",
+        "ci_run": 35644690975,
+        "backend_quality": "PASS",
+        "release_quality": "PASS",
+        "receipt_path": "zuvyr-pack-evidence/pack-089/2026-09-21-89a/receipt.json",
+        "receipt_git_blob": "18accc4cb56d3328b630494aca56018f9d62f8e1",
+        "migration": "20260921192642 pack089_89a_connections_permissions",
+        "sql_dry_run": "PASS_ROLLBACK",
+        "production_transaction_acceptance": "PASS_ROLLBACK",
+        "acceptance_rows_remaining": 0,
+        "supabase_vault": true,
+        "oauth_pkce_vault_roundtrip": "PASS",
+        "cross_owner_resource_denied": "PASS",
+        "integration_revoke_grant_secret": "PASS",
+        "plugin_revoke_grant_secret": "PASS",
+        "declarative_skill_persistence": "PASS",
+        "pack089_rpc_client_execute_grants": 0,
+        "legacy_plugin_installations_exists": false,
+        "railway": {
+          "exact_commit": "cf77c8a20a4a2da279ba6e7be1da1118a8a54dba",
+          "backend": {
+            "deployment": "a57acbea-99ef-4f28-b09c-cdf2403720e3",
+            "status": "SUCCESS"
+          },
+          "worker": {
+            "deployment": "61faf1b6-9eae-4df5-8b94-f83654a5dcc3",
+            "status": "SUCCESS"
+          },
+          "maintenance": {
+            "deployment": "3ea73709-065e-428c-a888-00654b7eb745",
+            "status": "SUCCESS"
+          }
+        },
+        "frontend_runtime_change_required": false
       },
       "89B_UNIFIED_TOOLS_SKILLS_PLUGIN_MCP": {
-        "status": "NOT_STARTED"
+        "status": "IN_PROGRESS"
       },
       "89C_GOOGLE_DRIVE_OAUTH_TOOLS": {
         "status": "NOT_STARTED"
@@ -2981,7 +3018,7 @@
       "blocks_phase": "89E_REAL_GOOGLE_OAUTH_ACCEPTANCE",
       "engineering_blocked": false
     },
-    "next_action": "EXECUTE_89A_SCHEMA_VAULT_PERMISSION_CENTER",
+    "next_action": "EXECUTE_89B_UNIFIED_TOOLS_SKILLS_PLUGIN_MCP",
     "next_pack": "090",
     "next_pack_allowed": false,
     "predecessor": "088"
