@@ -2823,7 +2823,15 @@
           "live_css_exact_git_match": true,
           "remaining_gate": null
         },
-        "finalized_at": "2026-09-21T18:25:24.197Z"
+        "finalized_at": "2026-09-21T18:25:24.197Z",
+        "receipt_git_blob": "de178827b54130df7042aa532245a6488ed47f64",
+        "production_ui_proof": {
+          "deployment": "dpl_GH3W4VkxLLCgETPU63VDpVPtjvZn",
+          "commit": "14a52caacdedf7bfb7cf08482b46a58c054097dd",
+          "js_blob": "d37b578f4543e7f193fccc194fc10365d3bb6579",
+          "css_blob": "d030874f7165b52d14a39dabc701ef58fe64e0b5",
+          "exact_match": true
+        }
       },
       "88E_PRODUCTION_ACCEPTANCE_RECOVERY": {
         "status": "IN_PROGRESS",
