@@ -34,6 +34,8 @@ const { runActionWithStop } = require('../src/actionWorker');
   assert(!executorSource.includes('$i.Save($args[0]'));
   assert(!executorSource.includes('SendKeys]::SendWait($args[0])'));
   assert(!executorSource.includes('Start-Process -FilePath $args[0]'));
+  assert(executorSource.includes('$v=[Console]::In.ReadToEnd(); Set-Clipboard -Value $v'));
+  assert(!executorSource.includes('[Console]::In.ReadToEnd() | Set-Clipboard'));
 
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'zuvyr-pack087-'));
   const dataRoot = path.join(root, 'data');
@@ -234,6 +236,7 @@ const { runActionWithStop } = require('../src/actionWorker');
     console.log('PASS: PACK087 command args are passed with shell=false and shell metacharacters stay literal');
     console.log('PASS: PACK087 mission-bound Full Control can use files and executables without manual environment allowlists');
     console.log('PASS: PACK087 Windows screen, pointer, keyboard and app bridges pass values via isolated environment variables');
+    console.log('PASS: PACK087 Windows clipboard write supports empty-string cleanup');
     console.log('PASS: PACK087 forged Full Control metadata cannot bypass scoped allowlists and sensitive paths remain blocked');
     console.log('PASS: PACK087 device and backend result paths redact secret-shaped values');
     console.log('PASS: PACK087 independent STOP channel aborts a long-running action and is acknowledged');
