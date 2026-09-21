@@ -705,7 +705,7 @@ grant execute on function public.emit_workspace_automation_notification_pack088(
   to service_role;
 grant execute on function public.check_workspace_schedule_run_control_pack088(uuid,uuid,timestamptz)
   to service_role;
-grant execute on function public.create_workspace_automation_pack088(uuid,text,text,text,timestamptz,integer,jsonb,text,integer,boolean,jsonb)
+grant execute on function public.create_workspace_automation_pack088(uuid,text,text,text,timestamp without time zone,integer,jsonb,text,integer,boolean,jsonb)
   to service_role;
 grant execute on function public.control_workspace_schedule_pack088(uuid,uuid,text,uuid,timestamptz)
   to service_role;
