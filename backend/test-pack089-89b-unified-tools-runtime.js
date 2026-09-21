@@ -60,6 +60,10 @@ function baseConnection(overrides = {}) {
   const permissions = [];
   let connection = baseConnection();
   const connectionStore = {
+    async listActiveIntegrations(ownerId) {
+      assert.equal(ownerId, OWNER);
+      return [];
+    },
     async listActivePlugins(ownerId) {
       assert.equal(ownerId, OWNER);
       return [connection];
