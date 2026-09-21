@@ -2554,14 +2554,14 @@
       "workspace_workflow_steps": true,
       "workspace_schedules": true,
       "in_app_notifications": true,
-      "scheduled_ui_currently_safety_blocked": true,
+      "scheduled_ui_currently_safety_blocked": false,
       "scheduler_runtime": true,
       "automation_dispatch_queue": true,
       "automation_execution_worker": true,
       "runtime_funding_permission_brain_binding": true,
       "brain_single_chat_plan_support": true,
       "scheduled_ui_source_activated": true,
-      "scheduled_ui_production_verified": false,
+      "scheduled_ui_production_verified": true,
       "automation_control_api": true,
       "automation_pause_resume_cancel": true,
       "automation_run_now": true,
@@ -2584,7 +2584,7 @@
       "88D_UI_NOTIFICATIONS_PAUSE_CANCEL",
       "88E_PRODUCTION_ACCEPTANCE_RECOVERY"
     ],
-    "next_action": "RESOLVE_VERCEL_PRODUCTION_UI_GATE_THEN_FINALIZE_88D",
+    "next_action": "EXECUTE_88E_LIVE_PRODUCTION_ACCEPTANCE_RECOVERY",
     "next_pack": "089",
     "next_pack_allowed": false,
     "provider_calls": 0,
@@ -2600,7 +2600,7 @@
       "schema_divergence": false,
       "history_preserved": true
     },
-    "current_phase": "88D_IMPLEMENTATION_VERIFIED_PRODUCTION_UI_GATE",
+    "current_phase": "88E_PRODUCTION_ACCEPTANCE_RECOVERY",
     "phases": {
       "88A_SCHEMA_INVARIANTS": {
         "status": "LOCKED_VERIFIED",
@@ -2767,8 +2767,7 @@
         "vercel": "FAILED_BUILD_RATE_LIMIT_NO_FRONTEND_RUNTIME_CHANGE"
       },
       "88D_UI_NOTIFICATIONS_PAUSE_CANCEL": {
-        "status": "IMPLEMENTATION_VERIFIED_PRODUCTION_UI_GATE",
-        "checkpoint_at": "2026-09-21T18:21:30Z",
+        "status": "LOCKED_VERIFIED",
         "implementation_pr": 72,
         "implementation_head": "178e8dc75a831bc6cfbeeea62f3b0a3c2bfc6418",
         "implementation_merge_commit": "cbaff02b1512ff75b550999f7e17c3c0d1b64426",
@@ -2812,15 +2811,24 @@
           "automation_execution_enabled": true
         },
         "vercel": {
-          "production_status": "FAILED_BUILD_RATE_LIMIT",
-          "production_ui_verified": false,
-          "branch_preview_builds": "READY",
-          "remaining_gate": "VERCEL_PRODUCTION_UI_DEPLOYMENT"
-        }
+          "production_status": "READY",
+          "production_ui_verified": true,
+          "production_deployment": "dpl_GH3W4VkxLLCgETPU63VDpVPtjvZn",
+          "target": "production",
+          "production_commit": "14a52caacdedf7bfb7cf08482b46a58c054097dd",
+          "production_alias": "rox-ai-sepia.vercel.app",
+          "live_js_blob": "d37b578f4543e7f193fccc194fc10365d3bb6579",
+          "live_css_blob": "d030874f7165b52d14a39dabc701ef58fe64e0b5",
+          "live_js_exact_git_match": true,
+          "live_css_exact_git_match": true,
+          "remaining_gate": null
+        },
+        "finalized_at": "2026-09-21T18:25:24.197Z"
       },
       "88E_PRODUCTION_ACCEPTANCE_RECOVERY": {
-        "status": "NOT_STARTED",
-        "blocked_by": "88D_VERCEL_PRODUCTION_UI_GATE"
+        "status": "IN_PROGRESS",
+        "started_after": "88D_LOCKED_VERIFIED",
+        "objective": "Dated production proof: scheduled execution, single reservation/settlement, durable restart recovery, recurring next occurrence and pause prevention."
       }
     }
   },
