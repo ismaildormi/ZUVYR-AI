@@ -2,7 +2,7 @@
 
 Date: 2026-09-21
 Canonical predecessor: PACK088 `LOCKED_VERIFIED`
-Implementation status: `IN_PROGRESS` — 89A `LOCKED_VERIFIED`, 89B active
+Implementation status: `IN_PROGRESS` — 89A–89B `LOCKED_VERIFIED`, 89C active
 
 ## 1. Objective
 
@@ -65,7 +65,7 @@ Historical source `plugin_installations` is NOT present in production and must n
 - service-role-only privileges;
 - transaction-only production schema/invariant acceptance.
 
-### 89B — Unified tool / Skills / Plugin / MCP runtime 🟠 `IN_PROGRESS`
+### 89B — Unified tool / Skills / Plugin / MCP runtime ✅ `LOCKED_VERIFIED`
 - keep `ai.tools` as the single invocation seam;
 - persistent declarative Skills resolve to registered tool keys;
 - plugin manifests register namespaced tools only;
@@ -75,7 +75,7 @@ Historical source `plugin_installations` is NOT present in production and must n
 - MCP endpoint SSRF/private-network protections;
 - no paid provider charge unless a canonical cost entry exists.
 
-### 89C — Google Drive OAuth + tools
+### 89C — Google Drive OAuth + tools 🟠 `IN_PROGRESS`
 - OAuth authorization-code + PKCE flow;
 - durable expiring one-time state;
 - token exchange server-side;
@@ -141,4 +141,22 @@ PACK090 must not start before this gate.
 - No provider/payment/external-connection calls were made in 89A.
 - Receipt: `zuvyr-pack-evidence/pack-089/2026-09-21-89a/receipt.json`.
 
-Canonical next action: `89B_UNIFIED_TOOLS_SKILLS_PLUGIN_MCP`.
+Canonical next action: `89C_GOOGLE_DRIVE_OAUTH_TOOLS`.
+
+## 8. 89B canonical receipt — 2026-09-21
+
+- Unified `ai.tools` runtime, declarative Skills, guarded plugin delegates and MCP remote tools are live on main.
+- 89B runtime implementation commit: `62b82697aa3be0eaa38ebf7f6dc2931d2289395f`.
+- Official MCP client SDK: `@modelcontextprotocol/client@2.0.0`.
+- SDK PR #83 merged as `92d4e05667c2f095e63b0410d0a81cad62e6d0a7`.
+- Quality run `35654292803`: Backend Quality PASS + Release Quality PASS; `npm ci` and real SDK preflight import PASS.
+- Production migration: `20260921204458 pack089_89b_tool_runtime_permissions`.
+- 89B RPCs are service-role-only; anon/authenticated EXECUTE grants are 0.
+- Transaction-only production acceptance: plugin install PASS, invoke PASS, replay blocked, fingerprint mismatch blocked, revoke blocks next invocation; 0 network/provider/billing calls; full rollback.
+- Production cleanup: 0 active plugin rows and 0 PACK089 plugin grants.
+- Railway exact commit `92d4e05667c2f095e63b0410d0a81cad62e6d0a7`: backend gate-enabled deployment `1d160111-a3c6-4416-992d-2fb246d88e3d` SUCCESS; worker `e52a3d7e-1b59-4bd2-a4fe-e70e859c6fff` SUCCESS; maintenance `eeffd642-031a-42e3-b7dd-d9507b553c91` SUCCESS.
+- `PACK089_MCP_REMOTE_ENABLED=true` is enabled only on backend production; no live MCP connection exists, so no unsolicited third-party network call occurred.
+- Real remote MCP invocation remains part of 89E final production acceptance.
+- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-21-89b/receipt.json`.
+
+Canonical next action: `89C_GOOGLE_DRIVE_OAUTH_TOOLS`.

@@ -1773,3 +1773,18 @@ Do **not** reopen PACK084 merely because M18 is deferred. M18 stays a launch/liv
 
 Start PACK089 with a read-only reconciliation of the existing unified tool registry, Skills/plugin/MCP foundations, OAuth/connection models, Permission Center integration, secret/token storage boundaries and Google Drive connector paths. Reuse the Brain/Kernel, one usage ledger, canonical content IDs and owner/resource scopes; do not create parallel connection or billing systems.
 
+## PACK089 / 89A + 89B CHECKPOINT — 2026-09-21
+
+- PACK089 remains `IN_PROGRESS`.
+- 89A Schema/Vault/Permission Center: `LOCKED_VERIFIED`.
+- 89B Unified Skills/Plugin/MCP runtime: `LOCKED_VERIFIED`.
+- Official MCP client `@modelcontextprotocol/client@2.0.0` is installed, locked and verified through `npm ci` and the production adapter preflight path.
+- MCP remote runtime gate is enabled on backend production; no live MCP connection exists, so no unsolicited remote call occurred.
+- Production acceptance residue for 89B: 0 plugin rows / 0 PACK089 plugin grants.
+
+## PACK089 / 89B FINAL — CONTINUE FROM 89C
+
+Current canonical phase: `89C_GOOGLE_DRIVE_OAUTH_TOOLS — IN_PROGRESS`.
+
+Implement server-side Google authorization-code + PKCE using the existing 89A OAuth/Vault RPCs, then register owner-scoped Drive tools through the same `ai.tools` seam. Tokens must remain Vault-only. Read/write permission must flow through the existing Permission Center. Missing Google OAuth client credentials are an external acceptance gate, not an engineering stop: routes/runtime must fail closed until legitimate credentials are configured. Do not fabricate credentials and do not start PACK090 before PACK089 closes.
+

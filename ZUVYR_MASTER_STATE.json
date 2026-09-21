@@ -2949,7 +2949,7 @@
     "plan_path": "docs/zuvyr/PACK089_EXECUTION_PLAN.md",
     "planning_started_at": "2026-09-21",
     "implementation_started": true,
-    "current_phase": "89B_UNIFIED_TOOLS_SKILLS_PLUGIN_MCP",
+    "current_phase": "89C_GOOGLE_DRIVE_OAUTH_TOOLS",
     "phases": {
       "89A_SCHEMA_VAULT_PERMISSION_CENTER": {
         "status": "LOCKED_VERIFIED",
@@ -2991,11 +2991,43 @@
         "receipt_path": "zuvyr-pack-evidence/pack-089/2026-09-21-89a/receipt.json"
       },
       "89B_UNIFIED_TOOLS_SKILLS_PLUGIN_MCP": {
-        "status": "IN_PROGRESS",
-        "started_at": "2026-09-21"
+        "status": "LOCKED_VERIFIED",
+        "started_at": "2026-09-21",
+        "finalized_at": "2026-09-21T21:03:42.131Z",
+        "implementation_main_commit": "62b82697aa3be0eaa38ebf7f6dc2931d2289395f",
+        "official_mcp_sdk": {
+          "package": "@modelcontextprotocol/client",
+          "version": "2.0.0",
+          "pr": 83,
+          "merge_commit": "92d4e05667c2f095e63b0410d0a81cad62e6d0a7",
+          "quality_run": 35654292803,
+          "npm_ci": "PASS",
+          "sdk_load_test": "PASS"
+        },
+        "migration": "20260921204458 pack089_89b_tool_runtime_permissions",
+        "permission_acceptance": "PASS_ROLLBACK",
+        "production_mcp_remote_gate_enabled": true,
+        "railway": {
+          "backend": {
+            "deployment": "1d160111-a3c6-4416-992d-2fb246d88e3d",
+            "status": "SUCCESS"
+          },
+          "worker": {
+            "deployment": "e52a3d7e-1b59-4bd2-a4fe-e70e859c6fff",
+            "status": "SUCCESS"
+          },
+          "maintenance": {
+            "deployment": "eeffd642-031a-42e3-b7dd-d9507b553c91",
+            "status": "SUCCESS"
+          }
+        },
+        "receipt_path": "zuvyr-pack-evidence/pack-089/2026-09-21-89b/receipt.json"
       },
       "89C_GOOGLE_DRIVE_OAUTH_TOOLS": {
-        "status": "NOT_STARTED"
+        "status": "IN_PROGRESS",
+        "started_at": "2026-09-21",
+        "objective": "Server-side Google OAuth authorization-code + PKCE, Vault token lifecycle, and owner-scoped Drive tools through ai.tools with Permission Center scope checks.",
+        "real_oauth_acceptance_gate": "GOOGLE_OAUTH_CLIENT_CREDENTIALS_MISSING"
       },
       "89D_PRODUCT_UI": {
         "status": "NOT_STARTED"
@@ -3018,7 +3050,7 @@
       "blocks_phase": "89E_REAL_GOOGLE_OAUTH_ACCEPTANCE",
       "engineering_blocked": false
     },
-    "next_action": "EXECUTE_89B_UNIFIED_TOOLS_SKILLS_PLUGIN_MCP",
+    "next_action": "EXECUTE_89C_GOOGLE_DRIVE_OAUTH_TOOLS",
     "next_pack": "090",
     "next_pack_allowed": false,
     "predecessor": "088"
