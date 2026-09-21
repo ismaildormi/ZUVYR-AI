@@ -1073,3 +1073,15 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - Receipt: `zuvyr-pack-evidence/pack-089/2026-09-21-89b/receipt.json`.
 - **89C Google Drive OAuth + tools is now active.**
 
+### PACK089 / 89C LOCKED_VERIFIED — 2026-09-21
+
+- Google Drive OAuth + tools is `LOCKED_VERIFIED` at the engineering/production-runtime boundary.
+- Canonical PR #86 merged as `eb7233ec918dd6b550cc2762300a787054d3e5e7`; quality run `35657291717` PASS.
+- Migration `20260921212845 pack089_89c_google_drive_oauth` is applied.
+- PKCE verifier and OAuth tokens are Vault-only; public tables keep metadata/secret references only.
+- Drive list/search/read/export/write use the unified `ai.tools` runtime and exact Permission Center bindings before network.
+- Railway backend `20414c63-a0b2-4c49-bf51-6a945df496d3`, worker `6c90ab45-295c-4934-a324-b93ded057307`, maintenance `3cdb6c15-31eb-4972-a144-c0fe23aac8fa` are SUCCESS on the exact merge commit.
+- Production has no Google OAuth client ID/secret/redirect configuration; real provider authorization remains explicitly deferred to 89E and fails closed.
+- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-21-89c/receipt.json`.
+- **89D Product UI is now active.**
+
