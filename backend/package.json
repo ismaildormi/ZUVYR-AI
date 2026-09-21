@@ -51,6 +51,7 @@
     "replicate": "^0.34.1",
     "sharp": "0.34.4",
     "stripe": "^16.9.0",
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "@modelcontextprotocol/client": "2.0.0"
   }
 }
