@@ -974,5 +974,21 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - Railway backend/worker/maintenance on `f3df3a881a01742b4f927ea9f986bc5d2c23c737` are SUCCESS.
 - No schedule was activated, no provider call occurred and no billing mutation occurred.
 - Receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88a/receipt.json`.
-- **88B–88E are NOT_STARTED. Do not start 88B without explicit user instruction.**
+- At the 88A finalization checkpoint, **88B–88E were NOT_STARTED** and 88B required explicit user instruction.
+
+### PACK088 / 88B LOCKED_VERIFIED — 2026-09-21
+
+- PACK088 overall status remains `IN_PROGRESS`.
+- **88B — Scheduler + Exactly-Once Dispatch: LOCKED_VERIFIED.**
+- PR `#65` merged as `172e7d3dc56277461459f279ed8ffe7de5b5e608`; GitHub quality run `35605334166` passed Backend Quality + Release Quality.
+- Supabase production migrations: `20260921132002 pack088_88b_scheduler_exactly_once` and `20260921133533 pack088_88b_claim_conflict_hotfix`.
+- Postgres is authoritative for due schedule claiming and occurrence identity. Claiming uses `FOR UPDATE SKIP LOCKED` plus the named unique occurrence constraint.
+- Production concurrent acceptance created one logical occurrence for the target due schedule; the second parallel claim produced no duplicate.
+- Dispatch failure recovery kept the occurrence durable as `pending`; recovery reused the same run ID and deterministic `pack088-<runId>` queue job ID.
+- DST fixtures passed through 2026 America/New_York spring-forward and fall-back while preserving the intended local clock time.
+- Railway backend, worker and maintenance are SUCCESS on the exact runtime commit. Worker log confirms scheduler `enabled=true`, 15000 ms interval, batch 25, and a clean live tick with zero claimed/queued/failed jobs after fixture cleanup.
+- Acceptance fixtures were removed; current production has zero execution-enabled schedules and zero pending/queued automation runs.
+- 88B made zero provider calls, zero Brain Kernel task starts and zero billing mutations. Actual workflow execution remains an 88C responsibility.
+- Receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88b/receipt.json` (Git blob `bb49615fe01df503ad572fe6e18a71916b007c4f`).
+- **88C–88E remain NOT_STARTED. Do not start 88C without explicit user instruction.**
 

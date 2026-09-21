@@ -2529,7 +2529,9 @@
       "20260921051008 pack088_88a_automations_durable_workflows",
       "20260921051010 pack088_88a_automations_schema_invariants",
       "20260921051244 pack088_88a_ledger_privilege_hardening",
-      "20260921052207 pack088_88a_workflow_invalidation_trigger"
+      "20260921052207 pack088_88a_workflow_invalidation_trigger",
+      "20260921132002 pack088_88b_scheduler_exactly_once",
+      "20260921133533 pack088_88b_claim_conflict_hotfix"
     ],
     "provider_calls_during_planning": 0,
     "payment_mutations_during_planning": 0,
@@ -2550,7 +2552,9 @@
       "workspace_workflow_steps": true,
       "workspace_schedules": true,
       "in_app_notifications": true,
-      "scheduled_ui_currently_safety_blocked": true
+      "scheduled_ui_currently_safety_blocked": true,
+      "scheduler_runtime": true,
+      "automation_dispatch_queue": true
     },
     "planning_truth": {
       "postgres_schedule_occurrence_source_of_truth": true,
@@ -2568,7 +2572,7 @@
       "88D_UI_NOTIFICATIONS_PAUSE_CANCEL",
       "88E_PRODUCTION_ACCEPTANCE_RECOVERY"
     ],
-    "next_action": "AWAIT_USER_TO_START_88B",
+    "next_action": "AWAIT_USER_TO_START_88C",
     "next_pack": "089",
     "next_pack_allowed": false,
     "provider_calls": 0,
@@ -2584,7 +2588,7 @@
       "schema_divergence": false,
       "history_preserved": true
     },
-    "current_phase": "88A_COMPLETE_AWAITING_88B_USER_INSTRUCTION",
+    "current_phase": "88B_COMPLETE_AWAITING_88C_USER_INSTRUCTION",
     "phases": {
       "88A_SCHEMA_INVARIANTS": {
         "status": "LOCKED_VERIFIED",
@@ -2634,7 +2638,64 @@
         "vercel_runtime_change_required": false
       },
       "88B_SCHEDULER_EXACTLY_ONCE": {
-        "status": "NOT_STARTED"
+        "status": "LOCKED_VERIFIED",
+        "finalized_at": "2026-09-21T13:43:10.952481Z",
+        "implementation_pr": 65,
+        "implementation_head": "414bc0dea30a5cd75e4ad6737e98594c825d30e3",
+        "implementation_merge_commit": "172e7d3dc56277461459f279ed8ffe7de5b5e608",
+        "receipt_path": "zuvyr-pack-evidence/pack-088/2026-09-21-88b/receipt.json",
+        "receipt_git_blob": "bb49615fe01df503ad572fe6e18a71916b007c4f",
+        "ci_run": 35605334166,
+        "backend_quality": "PASS",
+        "release_quality": "PASS",
+        "vercel": "SUCCESS",
+        "migrations": [
+          "20260921132002 pack088_88b_scheduler_exactly_once",
+          "20260921133533 pack088_88b_claim_conflict_hotfix"
+        ],
+        "sql_dry_run": "PASS_ROLLBACK",
+        "concurrent_due_claim": "PASS",
+        "logical_occurrence_count": 1,
+        "duplicate_enqueue_identity": "PASS",
+        "redis_failure_recovery": "PASS",
+        "stable_queue_job_id": "PASS",
+        "dst_spring": "PASS",
+        "dst_fall": "PASS",
+        "scheduler_runtime_enabled": true,
+        "scheduler_interval_ms": 15000,
+        "scheduler_batch_size": 25,
+        "first_live_tick": {
+          "recovered": 0,
+          "claimed": 0,
+          "skipped": 0,
+          "candidates": 0,
+          "queued": 0,
+          "failed": 0
+        },
+        "client_rpc_execute_grants": 0,
+        "service_role_rpc_execute_only": true,
+        "acceptance_rows_remaining": 0,
+        "execution_enabled_schedules": 0,
+        "pending_runs": 0,
+        "queued_runs": 0,
+        "provider_calls": 0,
+        "payment_mutations": 0,
+        "brain_kernel_task_starts": 0,
+        "railway": {
+          "exact_commit": "172e7d3dc56277461459f279ed8ffe7de5b5e608",
+          "backend": {
+            "deployment": "75a05f5f-4691-46b8-aa58-4bfae53c3fe8",
+            "status": "SUCCESS"
+          },
+          "worker": {
+            "deployment": "0865d7e9-6ad5-4bcb-90d9-bad4cdcde15f",
+            "status": "SUCCESS"
+          },
+          "maintenance": {
+            "deployment": "9af2fef6-35af-412b-8be1-f5000396bb0a",
+            "status": "SUCCESS"
+          }
+        }
       },
       "88C_FUNDING_PERMISSION_BRAIN_KERNEL": {
         "status": "NOT_STARTED"

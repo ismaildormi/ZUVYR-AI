@@ -423,6 +423,21 @@ Acceptance:
 - restart re-enqueues the same occurrence identity
 - timezone next-run calculation passes DST fixtures
 
+#### 88B FINALIZED — LOCKED_VERIFIED
+
+- Finalized: 2026-09-21T13:43:10.952481Z
+- PR #65 merged as `172e7d3dc56277461459f279ed8ffe7de5b5e608`.
+- GitHub run `35605334166`: Backend Quality PASS + Release Quality PASS.
+- Production migrations: `20260921132002 pack088_88b_scheduler_exactly_once` and `20260921133533 pack088_88b_claim_conflict_hotfix`.
+- Concurrent due-schedule claims produced one logical occurrence for the acceptance schedule; the parallel replay returned no duplicate occurrence.
+- Redis-dispatch failure recovery preserved the occurrence as `pending`, then requeued the same run identity with stable BullMQ job ID `pack088-<runId>`.
+- DST fixtures passed across 2026 America/New_York spring-forward and fall-back transitions while preserving 09:00 local time.
+- Railway worker runs the scheduler with `enabled=true`, interval 15000 ms and batch 25. First observed production tick had 0 claimed / 0 queued / 0 failed.
+- Acceptance fixtures were removed. Production now has 0 execution-enabled schedules and 0 pending/queued automation runs.
+- No provider call, Brain Kernel task start, or billing mutation occurred in 88B.
+- Evidence: `zuvyr-pack-evidence/pack-088/2026-09-21-88b/receipt.json`.
+- **88C remains NOT_STARTED and requires explicit user instruction.**
+
 ### Phase 88C — Brain Kernel + funding + permission binding
 
 Connect each occurrence to the existing Brain Kernel.
