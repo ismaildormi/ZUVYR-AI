@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "source_fix": "005-FIX6",
   "selected_strategy": "railway_internal_route",
-  "previous_pack": "086",
+  "previous_pack": "087",
   "tests": {
     "maintenance": "PASS",
     "runtime_safety": "PASS",
@@ -835,7 +835,7 @@
     "previous_plan_preserved": true,
     "priority_override": "MODEL_FIRST_BYO_COMPUTE_2026_09_19"
   },
-  "active_pack": "087",
+  "active_pack": "088",
   "pack061": {
     "status": "LOCKED_VERIFIED",
     "source_commit": "f2ca024dc63c5dd5bfc45046d498d5c6c96daa4c",
@@ -2423,5 +2423,51 @@
     "receipt_git_blob": "b68d45aba645ad4af96ca132cef2f71e5f64f00d",
     "progression": "USER_APPROVED_DEFERRED_REAL_DEVICE_CONTINUATION",
     "next_pack": "087"
+  },
+  "pack087": {
+    "status": "LOCKED_ENGINEERING_VERIFIED",
+    "title": "IP Actions / STOP / Undo",
+    "canonical_locked_verified": false,
+    "canonical_gate_reason": "GitHub CI, Supabase production migration, Vercel production and all three Railway services are verified on the exact merge commit. Real physical-device action + STOP + reversible file Undo acceptance was not exercised in this session, so canonical LOCKED_VERIFIED is not claimed.",
+    "implementation_pr": 51,
+    "candidate_head": "9ac99785887f037164f62d69454fe9f757c0dab6",
+    "merge_commit": "f1d764753dc9c8b5d84b5d420cc829fa4914f6df",
+    "github_ci_run": 35553903215,
+    "github_ci": "SUCCESS",
+    "supabase_migration": "pack087_ip_actions_stop_undo",
+    "supabase_migration_version": "20260921022221",
+    "production": {
+      "vercel": {
+        "deployment": "dpl_DiPJXqrWmMKakmRPCCfgAhV7VGeH",
+        "status": "READY",
+        "exact_commit": "f1d764753dc9c8b5d84b5d420cc829fa4914f6df"
+      },
+      "railway": {
+        "exact_commit": "f1d764753dc9c8b5d84b5d420cc829fa4914f6df",
+        "backend": {
+          "deployment": "8bfff33b-3cb8-4917-831e-0115d4ac2582",
+          "status": "SUCCESS"
+        },
+        "worker": {
+          "deployment": "aef09aa4-02d0-481f-ba75-bff98d6acc7f",
+          "status": "SUCCESS"
+        },
+        "maintenance": {
+          "deployment": "151c3272-9795-4f39-9a61-078423ca2a44",
+          "status": "SUCCESS"
+        }
+      }
+    },
+    "security_fix": "Sensitive target/input surfaces are inspected independently after slash normalization; .env/.ssh/.aws and secret-shaped targets fail closed.",
+    "deferred_gates": [
+      "PACK087_REAL_PHYSICAL_DEVICE_ACTION_STOP_UNDO_ACCEPTANCE",
+      "M19_REAL_DEVICE_ACCEPTANCE"
+    ],
+    "provider_calls_during_verification": 0,
+    "payment_calls_during_verification": 0,
+    "device_control_calls_during_verification": 0,
+    "receipt_path": "zuvyr-pack-evidence/pack-087/2026-09-21-engineering-checkpoint/receipt.json",
+    "progression": "USER_APPROVED_DEFERRED_REAL_DEVICE_CONTINUATION",
+    "next_pack": "088"
   }
 }
