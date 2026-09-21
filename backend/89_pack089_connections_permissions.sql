@@ -610,17 +610,12 @@ declare
   v_session public.workspace_oauth_sessions%rowtype;
   v_verifier text;
 begin
-  select s.* into v_session
-  from public.workspace_oauth_sessions s
-  join public.workspace_integration_connections c
-    on c.id=s.connection_id
-   and c.owner_id=s.owner_id
-  where s.state_hash=lower(trim(coalesce(p_state_hash,'')))
-    and s.consumed_at is null
-    and s.expires_at > now()
-    and c.status <> 'revoked'
-    and c.revoked_at is null
-  for update of s;
+  select * into v_session
+  from public.workspace_oauth_sessions
+  where state_hash=lower(trim(coalesce(p_state_hash,'')))
+    and consumed_at is null
+    and expires_at > now()
+  for update;
 
   if not found then
     raise exception 'pack089_oauth_session_invalid';
@@ -896,21 +891,6 @@ begin
     and resource_id=p_connection_id::text
     and revoked_at is null;
   get diagnostics v_grants = row_count;
-
-  delete from vault.secrets
-  where id in (
-    select s.pkce_verifier_secret_id
-    from public.workspace_oauth_sessions s
-    where s.connection_id=p_connection_id
-      and s.owner_id=p_owner_id
-      and s.consumed_at is null
-  );
-
-  update public.workspace_oauth_sessions
-  set consumed_at=coalesce(consumed_at,now())
-  where connection_id=p_connection_id
-    and owner_id=p_owner_id
-    and consumed_at is null;
 
   if v_connection.credential_secret_id is not null then
     delete from vault.secrets where id=v_connection.credential_secret_id;
