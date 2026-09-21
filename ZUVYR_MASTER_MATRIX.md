@@ -959,3 +959,20 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - No migration, provider call, payment mutation or runtime deployment was performed during planning.
 - PACK089 remains blocked until PACK088 reaches canonical `LOCKED_VERIFIED`.
 
+### PACK088 / 88A LOCKED_VERIFIED — 2026-09-21
+
+- PACK088 overall status: `IN_PROGRESS`.
+- **88A — Schema + Invariants: LOCKED_VERIFIED.**
+- Base implementation PR `#60` merged as `bba73570d735d4801047e90635715eb7d4b3f9cc`.
+- Workflow invalidation FIX2 PR `#63` merged as `f3df3a881a01742b4f927ea9f986bc5d2c23c737`.
+- GitHub quality runs `35563765307` and `35564345862`: Backend Quality PASS + Release Quality PASS.
+- Production now has workflow/schedule revision binding, stale authorization invalidation and durable `workspace_schedule_runs` occurrence identity.
+- RLS is ON across workflows, steps, schedules and schedule runs. The occurrence ledger has zero client grants; service-role access is limited to SELECT/INSERT/UPDATE.
+- Production acceptance used rollback-only test rows and verified workflow revision invalidation, schedule definition invalidation, duplicate occurrence rejection, owner boundary and timezone validation. Zero acceptance rows persisted.
+- Migration history includes four 88A entries; the first two are identical idempotent SQL with SHA256 `654ce05524e1547f9f10b9f385f5e61711abec8a9dc8f2d2ca5cefeb5b8c1813`. History is preserved.
+- FIX2 changed the invalidation trigger to `AFTER UPDATE`; function-level revision comparison prevents unnecessary invalidation.
+- Railway backend/worker/maintenance on `f3df3a881a01742b4f927ea9f986bc5d2c23c737` are SUCCESS.
+- No schedule was activated, no provider call occurred and no billing mutation occurred.
+- Receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88a/receipt.json`.
+- **88B–88E are NOT_STARTED. Do not start 88B without explicit user instruction.**
+
