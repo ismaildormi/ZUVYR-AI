@@ -1754,3 +1754,22 @@ Do **not** reopen PACK084 merely because M18 is deferred. M18 stays a launch/liv
 - Preserve one logical occurrence/task/billing identity across retries/restarts; do not manufacture success if provider, funding, deployment or recovery evidence fails.
 - PACK089 remains blocked until PACK088 is canonically LOCKED_VERIFIED and receipt/state/matrix/roadmap are reconciled.
 
+## PACK088 FINAL — LOCKED_VERIFIED — 2026-09-21
+
+- PACK088 / Automations & Durable Workflows is now `LOCKED_VERIFIED`.
+- All phases are closed: 88A Schema/Invariants, 88B Scheduler/Exactly-Once, 88C Funding/Permissions/Brain, 88D UI/Notifications/Pause/Cancel, 88E Production Acceptance/Recovery.
+- Runtime recovery-gate merge: `612a86b575f873305d7961a85b7706b44b359b18` (PR #78); Release Quality run `35641060369` PASS.
+- FIX1 for inactive-subscription terminal reconciliation: merge `dac6489661c44cc5ab00f4487b8033eaa08c24dd` (PR #77).
+- Real one-time production execution passed with zero schedule-creation charge and exactly one task/usage/terminal settlement.
+- Real worker-outage recovery passed using the same persisted run/task/usage identity across Brain worker OFF -> ON; no duplicate charge and no duplicate provider side effect.
+- Real recurring schedule produced two distinct successful occurrences; pause disabled execution and a future transaction-only scheduler claim returned 0.
+- Final production state for PACK088: 0 active runs, 0 enabled PACK088 schedules, 0 PACK088 reserved usage.
+- 88E changed no frontend files, so the 88D Vercel production Scheduled Tasks proof remains authoritative.
+- Final receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88e/receipt.json`.
+
+### NEXT CANONICAL STEP
+
+`PACK089 — Skills / Plugins / MCP / Connections` is now allowed to start.
+
+Start PACK089 with a read-only reconciliation of the existing unified tool registry, Skills/plugin/MCP foundations, OAuth/connection models, Permission Center integration, secret/token storage boundaries and Google Drive connector paths. Reuse the Brain/Kernel, one usage ledger, canonical content IDs and owner/resource scopes; do not create parallel connection or billing systems.
+
