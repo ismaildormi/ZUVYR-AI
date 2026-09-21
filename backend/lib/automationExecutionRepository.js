@@ -134,7 +134,7 @@ function createAutomationExecutionRepository({ client } = {}) {
     async findBrainTask({ ownerId, idempotencyKey } = {}) {
       const result = await db
         .from('zuvyr_task_runs')
-        .select('id,user_id,idempotency_key,plan_version,queue_job_id,usage_record_id,state,error_code')
+        .select('id,user_id,idempotency_key,plan_version,queue_job_id,usage_record_id,state,error_code,checkpoint_d_quote')
         .eq('user_id', uuid(ownerId, 'PACK088_OWNER_ID_INVALID'))
         .eq('idempotency_key', brainIdempotencyKey(idempotencyKey))
         .maybeSingle();
