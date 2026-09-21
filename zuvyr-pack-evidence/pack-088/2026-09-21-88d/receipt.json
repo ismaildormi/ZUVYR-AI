@@ -1,0 +1,144 @@
+{
+  "schema_version": "1.0",
+  "pack": "088",
+  "phase": "88D_UI_NOTIFICATIONS_PAUSE_CANCEL",
+  "title": "Automations & Durable Workflows — Product Controls, Notifications & Scheduled Tasks UI",
+  "status": "IMPLEMENTATION_VERIFIED_PRODUCTION_UI_GATE",
+  "canonical_pack_status": "IN_PROGRESS",
+  "checkpoint_at": "2026-09-21T18:21:30Z",
+  "scope_boundary": {
+    "phase_88d_implementation_complete": true,
+    "phase_88d_canonical_locked_verified": false,
+    "phase_88e_started": false,
+    "pack089_allowed": false,
+    "remaining_gate": "VERCEL_PRODUCTION_UI_DEPLOYMENT",
+    "provider_execution_used_for_88d_acceptance": false,
+    "billing_mutation_used_for_88d_acceptance": false
+  },
+  "baseline": {
+    "source_main": "4c509e8cf960a0ca100fab78e4b0147b5dd26c27",
+    "phase_88c": "LOCKED_VERIFIED"
+  },
+  "implementation": {
+    "pull_request": 72,
+    "quality_head": "178e8dc75a831bc6cfbeeea62f3b0a3c2bfc6418",
+    "merge_commit": "cbaff02b1512ff75b550999f7e17c3c0d1b64426",
+    "quality_run": 35637079084,
+    "backend_quality": "PASS",
+    "release_quality": "PASS",
+    "migration_path": "backend/92_pack088_88d_ui_notifications_pause_cancel.sql",
+    "migration_dry_run": "PASS_TRANSACTION_ROLLBACK",
+    "migration_signature_fix": "PASS",
+    "changed_capabilities": [
+      "owner-scoped automation API",
+      "create/activate/pause/resume/cancel/run-now",
+      "PACK039 active-task cancellation binding",
+      "cancel-after-claim-before-Brain race closure",
+      "exactly-once in-app automation notifications",
+      "run history and notification history",
+      "live Scheduled Tasks source UI",
+      "timezone-authoritative local schedule creation",
+      "responsive/RTL/keyboard-oriented UI states"
+    ]
+  },
+  "database": {
+    "project": "tqoqsgaymygmqrzddvtu",
+    "migration": {
+      "version": "20260921181528",
+      "name": "pack088_88d_ui_notifications_pause_cancel"
+    },
+    "added_contracts": [
+      "workspace_schedules.control_revision",
+      "workspace_schedule_runs.cancel_requested_at",
+      "zuvyr_notifications.event_key",
+      "zuvyr_notifications.metadata"
+    ],
+    "rpcs": [
+      "create_workspace_automation_pack088",
+      "control_workspace_schedule_pack088",
+      "check_workspace_schedule_run_control_pack088",
+      "emit_workspace_automation_notification_pack088"
+    ],
+    "rpc_execute_scope": "service_role_only",
+    "authenticated_direct_control_execute": false
+  },
+  "acceptance": {
+    "mode": "PRODUCTION_SCHEMA_TRANSACTION_ROLLBACK",
+    "create_zero_charge": "PASS",
+    "activate": "PASS",
+    "pause_blocks_scheduler_claim": "PASS",
+    "resume_recomputes_next_run": "PASS",
+    "run_now_idempotency": "PASS",
+    "claimed_before_brain_cancel_race": "PASS",
+    "cancel_disables_future_runs": "PASS",
+    "history_preserved": "PASS",
+    "notification_exactly_once": "PASS",
+    "control_notifications": {
+      "activated": "PASS",
+      "paused": "PASS",
+      "resumed": "PASS",
+      "cancelled": "PASS"
+    },
+    "usage_ledger_unchanged": "PASS",
+    "active_task_cancellation_uses_pack039": "PASS_SOURCE_AND_CI",
+    "active_provider_task_live_cancel_not_executed_in_88d": true,
+    "provider_calls": 0,
+    "billing_mutations": 0,
+    "cleanup": {
+      "acceptance_schedules": 0,
+      "acceptance_workflows": 0,
+      "acceptance_notifications": 0,
+      "execution_enabled_schedules": 0,
+      "active_runs": 0
+    }
+  },
+  "runtime": {
+    "railway": {
+      "exact_commit": "cbaff02b1512ff75b550999f7e17c3c0d1b64426",
+      "backend": {
+        "deployment": "bc2d8635-e068-42dd-b3d7-b6cf06135de6",
+        "status": "SUCCESS"
+      },
+      "worker": {
+        "deployment": "7a053aca-2251-48bb-9733-b9e3f4a3616a",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deployment": "c16ca61d-6bde-44fc-8161-22d5b7f335ca",
+        "status": "SUCCESS"
+      },
+      "worker_log": {
+        "scheduler_enabled": true,
+        "automation_execution_enabled": true,
+        "interval_ms": 15000,
+        "batch_size": 25,
+        "post_deploy_ticks_clean": true
+      }
+    },
+    "vercel": {
+      "project_id": "prj_P6VddfynJKniiK29clC6Epr9byPk",
+      "team_id": "team_3PYlTi0Euf7SDg7T2NRzGx3q",
+      "merge_commit_status": "FAILED_BUILD_RATE_LIMIT",
+      "production_ui_verified": false,
+      "source_build_evidence": {
+        "branch_preview_ui_commit": "24f19817be7746104c6954c9f948e5a52a976a45",
+        "branch_preview_ui_deployment": "dpl_6tXqpoJDi3MXZ2535p2rNfXhhapc",
+        "branch_preview_test_commit": "751a8ec5b711bb6274ba3d970a4d2f448b55b09b",
+        "branch_preview_test_deployment": "dpl_88725HixSbnmjSetn1XmrPXkVJDy",
+        "state": "READY"
+      },
+      "interpretation": "Source UI built successfully in preview, but the merged production frontend has not deployed because Vercel rejected the build at the account build-rate limit. This is the only remaining 88D gate."
+    }
+  },
+  "security": {
+    "migration_added_client_table_grants": false,
+    "direct_authenticated_rpc_execution": false,
+    "owner_scope_enforced_server_side": true,
+    "advisor_note": "Post-migration advisor still reports existing INFO-level RLS-enabled/no-policy findings used by the service-role-only architecture; no 88D-specific privilege expansion was introduced."
+  },
+  "next": {
+    "action": "RESOLVE_VERCEL_PRODUCTION_UI_GATE_THEN_FINALIZE_88D",
+    "phase_88e": "NOT_STARTED",
+    "pack089_allowed": false
+  }
+}
