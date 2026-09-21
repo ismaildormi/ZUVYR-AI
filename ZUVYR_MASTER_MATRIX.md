@@ -1007,3 +1007,21 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - Receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88c/receipt.json` (Git blob `09cd49b89bdce5aca02d53e0f12852299fefda42`).
 - At this checkpoint **88D–88E remain NOT_STARTED**. PACK089 remains blocked until PACK088 is fully LOCKED_VERIFIED.
 
+
+
+### PACK088 / 88D IMPLEMENTATION_VERIFIED_PRODUCTION_UI_GATE — 2026-09-21
+
+- PACK088 overall status remains `IN_PROGRESS`.
+- **88D — Pause/Cancel/History/Notifications/Scheduled Tasks UI:** implementation and backend production acceptance are verified; canonical `LOCKED_VERIFIED` is withheld until the merged Scheduled Tasks UI is deployed and verified on Vercel production.
+- PR `#72` merged as `cbaff02b1512ff75b550999f7e17c3c0d1b64426`. Quality head `178e8dc75a831bc6cfbeeea62f3b0a3c2bfc6418`; GitHub quality run `35637079084` passed Backend Quality + Release Quality.
+- Supabase production migration: `20260921181528 pack088_88d_ui_notifications_pause_cancel`. A production-schema dry-run with transaction rollback passed before the real migration.
+- Product controls are owner-scoped service routes backed by service-role RPCs: create, activate, pause, resume, cancel, run-now, run history, run detail and in-app notification history/read state.
+- Pause live proof prevented a future scheduler claim. Resume live proof recomputed `next_run_at` using the canonical scheduler occurrence function.
+- Run-now replay with the same request token produced one logical occurrence. Cancel preserved the run row, disabled future schedule execution and closed the claimed-before-Brain-task race.
+- Active linked-task cancellation is bound to PACK039; execution control is rechecked both after claim and after usage reservation so cancellation before task creation refunds the reservation instead of starting a provider task.
+- In-app automation notifications are exactly-once by owner/event key. Activated, paused, resumed and cancelled control notifications passed transaction-only production acceptance.
+- The 88D live acceptance changed no usage ledger row, made zero provider calls and zero billing mutations, then rolled back. Cleanup proof: 0 acceptance schedules/workflows/notifications, 0 execution-enabled schedules, 0 active automation runs.
+- Railway backend `bc2d8635-e068-42dd-b3d7-b6cf06135de6`, worker `7a053aca-2251-48bb-9733-b9e3f4a3616a` and maintenance `c16ca61d-6bde-44fc-8161-22d5b7f335ca` are SUCCESS on exact merge commit `cbaff02b1512ff75b550999f7e17c3c0d1b64426`. Worker logs confirm scheduler and automation execution enabled with clean post-deploy ticks.
+- Vercel branch previews for the 88D UI built READY, but the merged production deployment was rejected by the account `build-rate-limit`. This is the only remaining 88D gate; source build success is not being misrepresented as production deployment.
+- Receipt: `zuvyr-pack-evidence/pack-088/2026-09-21-88d/receipt.json`.
+- **88E remains NOT_STARTED and PACK089 remains blocked until the Vercel production UI gate is cleared and 88D reaches canonical LOCKED_VERIFIED.**
