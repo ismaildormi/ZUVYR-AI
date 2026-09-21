@@ -91,7 +91,11 @@ assert(pack('096').scope.includes('BYOC'));
 assert(pack('096').scope.includes('usage fee $0'));
 assert(pack('096').acceptance.includes('user/org-funded BYOC'));
 
-assert.equal(state.active_pack, '087');
+assert.equal(state.previous_pack, '087');
+assert.equal(state.active_pack, '088');
+assert.equal(state.pack087.status, 'LOCKED_VERIFIED');
+assert.equal(state.pack087.canonical_locked_verified, true);
+assert(state.pack088 && ['PLANNING','IN_PROGRESS','LOCKED_VERIFIED'].includes(state.pack088.status));
 assert.equal(state.model_first_priority_override.status, 'CANONICAL');
 assert.equal(state.model_first_priority_override.current_inflight_pack, null);
 assert.equal(state.model_first_priority_override.current_inflight_may_finish, false);
