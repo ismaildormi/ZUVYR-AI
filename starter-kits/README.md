@@ -50,4 +50,4 @@ See each kit's README for its specific example.
 
 ## License
 
-Everything inside `starter-kits/` is licensed under Apache License 2.0. ZUVYR branding and trademarks are not licensed. See the repository root `LICENSE` and `docs/PUBLIC_USE_POLICY.md`.
+Everything inside `starter-kits/` is licensed under Apache License 2.0. ZUVYR branding and trademarks are not licensed. See [this directory's LICENSE](LICENSE), the [repository licensing notice](../LICENSE), and the [Public Use Policy](../docs/PUBLIC_USE_POLICY.md).
