@@ -126,7 +126,7 @@
     ]
   },
   "no_loss_rule": "If continuity files disagree, a snapshot drifts without reconciliation, CI/validator fails, or the active Pack/receipt cannot be reconstructed with evidence, stop feature work and repair continuity first. Never guess an active Pack, silently drop roadmap additions, remove canonical V1 work to obtain READY, or depend on private chat memory as the only source.",
-  "last_reconciled_git_head_before_manifest_update": "73218ae759da366142fea37630223b6f48b31baf",
+  "last_reconciled_git_head_before_manifest_update": "975fa39d4aec8f0dca87155bdef5f1bb3bcaca71",
   "integrity_guard_files": {
     "tools/validate-zuvyr-continuity.cjs": "ef6a2535c920aafcff2fa0aa51987ce4569cced2",
     ".github/workflows/zuvyr-continuity.yml": "ba526ae36bf46c46786f9aa426adcada1e335ffc",
@@ -136,8 +136,9 @@
   "validation": {
     "validator": "tools/validate-zuvyr-continuity.cjs",
     "release_wrapper": "tools/verify-zuvyr-continuity.js",
-    "dedicated_workflow": ".github/workflows/zuvyr-continuity.yml",
-    "release_quality_hook": "package.json#scripts.validate:release",
-    "rule": "Any canonical snapshot drift, missing EA ID, route gap, roadmap/matrix blob mismatch, active Pack/receipt mismatch, stale current-state conflict, or guard-file drift fails continuity validation and must be reconciled before feature work or Pack lock."
+    "workflow": ".github/workflows/zuvyr-continuity.yml",
+    "release_command": "npm run validate:release",
+    "continuity_command": "npm run validate:continuity",
+    "rule": "Any canonical snapshot drift, missing EA ID, route gap, active Pack/receipt mismatch, stale current-state conflict, or validator failure is a continuity defect. Reconcile it before feature work or Pack lock."
   }
 }
