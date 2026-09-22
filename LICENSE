@@ -8,7 +8,7 @@ The contents of the following directories are licensed under the Apache License,
 - starter-kits/
 
 2. Core ZUVYR source and other repository content
-Unless a file or directory contains a separate license notice, all other ZUVYR-authored source code, production configuration, product assets, documentation, internal schemas, workflows, deployment material, pack evidence, and other repository content are not licensed for copying, redistribution, commercial reuse, or creation of derivative works.
+Unless a file or directory contains a separate license notice, no additional license is granted by this repository notice for copying, redistribution, commercial reuse, or creation of derivative works from other ZUVYR-authored source code, production configuration, product assets, documentation, internal schemas, workflows, deployment material, pack evidence, or repository content. This does not limit rights that may independently arise under applicable law or the hosting platform's terms.
 
 Viewing source in this repository does not by itself grant reuse rights.
 
