@@ -2,7 +2,7 @@
   "name": "rox-ai",
   "version": "0.64.0",
   "private": true,
-  "description": "ROX AI — Safe Bridge release with isolated profiles, read-only live verification, smoke tests, and guarded staging/production deployment.",
+  "description": "ZUVYR — unified AI platform; legacy package/CLI identifiers are retained temporarily for compatibility.",
   "bin": {
     "rox": "./cli/rox.js"
   },
