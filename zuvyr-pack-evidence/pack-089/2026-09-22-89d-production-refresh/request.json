@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "pack": "089",
+  "phase": "89D_PRODUCT_UI",
+  "status": "PRODUCTION_REFRESH_REQUESTED",
+  "requested_at": "2026-09-22",
+  "reason": "Prior 89D head production build was blocked by Vercel build-rate-limit; runtime code is already merged in main and backend/worker/maintenance are live.",
+  "source_main": "93c293c215eb67f864397880c1f40b05ed07052c",
+  "runtime_files_unchanged": true,
+  "frontend_blobs": {
+    "js": "156c116bf3302c13963e2f0618593bdd029a7f68",
+    "css": "cc031ef7c6e6a921e3249ee1270469cfe1ecc113"
+  },
+  "regression_test_blob": "46582d123cb129d5fba5694d793181b0eb380ec8",
+  "acceptance_gate": "Vercel production deployment must become READY and published frontend assets must match these Git blobs before 89D is finalized."
+}
