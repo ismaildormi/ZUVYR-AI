@@ -34,12 +34,13 @@ These are smaller than the starter kits and focus on one reusable idea at a time
 Example:
 
 ```bash
-git clone https://github.com/ismaildormi/rox-ai.git
-cd rox-ai/starter-kits/durable-ai-job
+# Copy the current HTTPS clone URL from GitHub's “Code” button.
+git clone <repository-https-url>
+cd <repository-directory>/starter-kits/durable-ai-job
 npm start
 ```
 
-When the repository is renamed to `zuvyr`, GitHub's repository redirect should preserve old links, but new documentation should use the new repository name from that point forward.
+Using the repository URL shown by GitHub keeps this guide valid if the repository name changes.
 
 ## What you can safely reuse
 
