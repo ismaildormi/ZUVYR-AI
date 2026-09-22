@@ -1,6 +1,6 @@
 ZUVYR REPOSITORY LICENSING NOTICE
 
-Copyright (c) 2026 ZUVYR. All rights reserved except where this notice explicitly grants a license.
+Unless a file or directory says otherwise, rights in repository content remain with the applicable copyright holder(s).
 
 1. Public reusable resources
 The contents of the following directories are licensed under the Apache License, Version 2.0, as provided by the LICENSE file inside each directory:
@@ -8,20 +8,23 @@ The contents of the following directories are licensed under the Apache License,
 - starter-kits/
 
 2. Core ZUVYR source and other repository content
-Unless a file or directory contains a separate license notice, all other source code, production configuration, product assets, documentation, internal schemas, workflows, deployment material, pack evidence, and other repository content remain proprietary and are not licensed for copying, redistribution, commercial reuse, or creation of derivative works.
+Unless a file or directory contains a separate license notice, all other ZUVYR-authored source code, production configuration, product assets, documentation, internal schemas, workflows, deployment material, pack evidence, and other repository content are not licensed for copying, redistribution, commercial reuse, or creation of derivative works.
 
 Viewing source in this repository does not by itself grant reuse rights.
 
-3. Trademarks and branding
-The names ZUVYR and related logos, product marks, and brand assets are not licensed under the Apache License. No permission is granted to use them in a way that suggests endorsement, affiliation, sponsorship, or that a third-party product is an official ZUVYR product.
+3. Third-party material
+This notice does not relicense third-party code, dependencies, media, fonts, trademarks, datasets, model assets, or other third-party material. Any such material remains subject to its own applicable terms and rights.
 
-4. Secrets, data, and service access
+4. Trademarks and branding
+The ZUVYR name, logos, product marks, and brand assets are not licensed under the Apache License. No permission is granted to use them in a way that suggests endorsement, affiliation, sponsorship, or that a third-party product is an official ZUVYR product.
+
+5. Secrets, data, and service access
 No license or permission is granted to use production credentials, tokens, customer data, private infrastructure, provider accounts, internal service access, or restricted operational information.
 
-5. No public API commitment
+6. No public API commitment
 Source visibility does not make ZUVYR internal endpoints, schemas, or operational interfaces a supported public API. Only interfaces explicitly documented as public developer contracts should be relied upon by third parties.
 
-6. Warranty
-Public reusable resources are provided under the warranty and liability terms of the Apache License, Version 2.0. Other repository content is provided for viewing/reference only to the extent permitted by applicable law and without any additional warranty from ZUVYR.
+7. Warranty
+Public reusable resources are provided under the warranty and liability terms of the Apache License, Version 2.0. Other repository content is provided for viewing/reference only to the extent permitted by applicable law and without any additional warranty.
 
 See docs/PUBLIC_USE_POLICY.md for the repository's public-use policy.
