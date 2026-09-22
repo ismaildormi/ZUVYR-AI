@@ -1,4 +1,6 @@
-# ROX AI — CLI Reference
+# ZUVYR — CLI Reference
+
+> The executable name `rox` remains a legacy compatibility identifier. The product identity is **ZUVYR**. Do not rename the command blindly while scripts/automation still depend on it.
 
 The whole platform — API server, background worker, database schema,
 backups — is managed through one entrypoint: `cli/rox.js`. This is
