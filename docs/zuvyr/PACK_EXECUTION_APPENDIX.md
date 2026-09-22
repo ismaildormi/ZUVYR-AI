@@ -2,6 +2,26 @@
 
 This appendix is part of every PACK001–PACK150 execution prompt and every future ZUVYR pack. It is not optional guidance. It is a completion requirement.
 
+## Mandatory external architecture audit overlay
+
+The canonical `docs/zuvyr/ROADMAP_150.md` contains the **EXTERNAL TECHNICAL ARCHITECTURE AUDIT OVERLAY — 2026-09-22** with requirements `EA-001` through `EA-090`. That overlay is part of the Pack contract.
+
+- Do not renumber Packs or reopen historical Packs merely to satisfy it.
+- When an EA item maps to the current or a future Pack, that Pack owns reconciliation of the mapped requirement in addition to its original scope.
+- A mapped P0/P1 requirement may be marked not implemented only when the corresponding capability is explicitly `NOT_ADVERTISED` / `NOT_IN_V1`, is not misleadingly reachable, and the limitation is recorded.
+- `PACK148` must run the horizontal-plane acceptance rehearsal; `PACK149` must reconcile external/legal/business/claim gates; `PACK150` must reconcile every `EA-001…EA-090` item in the final release manifest.
+- Plan-level absence is not proof that runtime code is absent. Inspect the current implementation first and preserve verified behavior.
+
+Every modified Pack receipt must additionally record, where applicable:
+
+```text
+EXTERNAL_AUDIT_ITEMS_TOUCHED:
+EA_RECONCILIATION_STATUS:
+UNRESOLVED_P0_P1:
+NOT_ADVERTISED_DECISIONS:
+HORIZONTAL_PLANE_TESTS:
+```
+
 ## Mandatory instruction to the executing engineer/agent
 
 Before you modify anything, preserve the existing verified implementation and exact pack identity. Do not renumber historical packs, do not reopen completed packs merely to attach this overlay, and do not delete prior requirements. Apply this contract additively wherever the current pack touches product behavior, UI, orchestration, tools, models, routing, memory/context, economics, learning, or evaluation.
