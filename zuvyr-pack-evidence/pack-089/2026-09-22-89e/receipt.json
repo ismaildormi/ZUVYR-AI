@@ -3,9 +3,9 @@
   "pack": "089",
   "phase": "89E_PRODUCTION_ACCEPTANCE",
   "title": "Skills / Plugins / MCP / Connections — Production Acceptance",
-  "status": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_CREDENTIALS",
+  "status": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_CLIENT_CREDENTIALS",
   "canonical_pack_status": "IN_PROGRESS",
-  "checkpoint_at": "2026-09-22T05:40:11.348816Z",
+  "checkpoint_at": "2026-09-22T06:12:00Z",
   "production": {
     "github_main": "c8157e82b23d842d55ac5b57c4696275268a2104",
     "vercel": {
@@ -36,11 +36,12 @@
     "google_api_key_present": true,
     "google_oauth_client_id_present": false,
     "google_oauth_client_secret_present": false,
-    "google_oauth_redirect_uri_present": false,
-    "real_google_oauth_acceptance": "BLOCKED_EXTERNAL",
-    "failure_mode": "workspace_google_oauth_not_configured before connection draft/network",
+    "google_oauth_redirect_uri_present": true,
+    "real_google_oauth_acceptance": "BLOCKED_EXTERNAL_MISSING_CLIENT_ID_SECRET",
+    "failure_mode": "workspace_google_oauth_not_configured until legitimate client ID and client secret exist",
     "engineering_blocked": false,
-    "pack090_allowed": false
+    "pack090_allowed": false,
+    "google_oauth_redirect_uri": "https://rox-ai-sepia.vercel.app/"
   },
   "non_external_acceptance": {
     "plugin_permission_lifecycle": {
@@ -110,12 +111,30 @@
     "migration_history_preserved": true
   },
   "remaining_required_gate": {
-    "action": "Configure legitimate Google OAuth client ID, client secret and redirect URI in production, then execute one real owner-scoped Google Drive OAuth connect + granted-scope tool call + denied-scope check + disconnect/revoke + audit/secret-cleanliness verification.",
-    "may_fabricate_credentials": false
+    "action": "Provide or create a legitimate Google OAuth Web client ID and client secret in the user's Google Cloud project. The redirect URI is already configured as https://rox-ai-sepia.vercel.app/. Then resume real owner-scoped Google Drive OAuth connect + granted-scope tool call + denied-scope proof + disconnect/revoke + audit/Vault cleanliness verification.",
+    "may_fabricate_credentials": false,
+    "remaining_values": [
+      "GOOGLE_OAUTH_CLIENT_ID",
+      "GOOGLE_OAUTH_CLIENT_SECRET"
+    ]
   },
   "next": {
     "pack089": "IN_PROGRESS",
-    "phase89e": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_CREDENTIALS",
+    "phase89e": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_CLIENT_CREDENTIALS",
     "pack090_allowed": false
+  },
+  "connected_source_reconciliation": {
+    "checked_at": "2026-09-22T06:12:00Z",
+    "railway_current_project": "NO_CLIENT_ID_OR_SECRET",
+    "railway_legacy_project": "NO_CLIENT_ID_OR_SECRET",
+    "supabase_vault": "NO_GOOGLE_OR_OAUTH_SECRET",
+    "google_drive_keyword_search": "NO_CREDENTIAL_FILE",
+    "google_drive_metadata_search": "NO_CLIENT_SECRET_CREDENTIAL_OR_OAUTH_FILENAME",
+    "gmail_search": "NO_CLIENT_SECRET_OR_CREDENTIAL_ATTACHMENT",
+    "github_secret_api": "UNAVAILABLE_BY_CONNECTOR_POLICY",
+    "vercel_env_secret_api": "UNAVAILABLE_BY_CURRENT_CONNECTOR",
+    "google_cloud_secret_manager_connector": "NOT_AVAILABLE",
+    "chatgpt_google_connector_credentials_reusable_for_zuvyr": false,
+    "redirect_uri_configured_in_railway": true
   }
 }
