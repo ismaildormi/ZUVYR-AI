@@ -90,10 +90,10 @@ These are reference anchors, not claims of certification or legal compliance.
 ### A. Identity, account and organization trust plane
 
 - **EA-001 — P0 — Strong session/device security.** Explicit secure-cookie/token lifecycle, rotation, logout-all, device/session inventory, revocation propagation, fixation/replay defenses, suspicious-session handling. **Route:** PACK123, PACK139, PACK144, PACK148.
-- **EA-002 — P0 — MFA/passkeys and account recovery.** Define MFA/passkey support or an explicit V1 non-advertised decision; recovery codes/reset flows must not bypass security controls. **Route:** PACK139, PACK144, PACK149.
+- **EA-002 — P0 — MFA/passkeys and account recovery.** Implement strong MFA with phishing-resistant passkey support where the selected auth/platform stack permits it, plus hardened enrollment, recovery, recovery-code/reset and recent-authentication flows; recovery must not bypass MFA/session controls. **Route:** PACK139, PACK144, PACK149.
 - **EA-003 — P0 — Organization/team/RBAC closure.** Owner/admin/member/service identities, invitations, removal, ownership transfer, least privilege and cross-tenant denial must be explicit rather than inferred from owner scoping. **Route:** PACK139, PACK148.
 - **EA-004 — P1 — API keys/service accounts.** If automation/API access is exposed, use scoped, revocable, expiring credentials with last-used visibility, hash-at-rest semantics and no browser disclosure. Otherwise keep the surface absent. **Route:** PACK125, PACK126, PACK145, PACK149.
-- **EA-005 — P2 — Enterprise federation decision.** SSO/OIDC/SAML and SCIM are either implemented and tested or explicitly outside V1 and not advertised. **Route:** PACK145, PACK149.
+- **EA-005 — P2 — Enterprise federation boundary.** If organization/enterprise federation is part of V1, SSO/OIDC/SAML and SCIM are implemented and tested with tenant/role lifecycle controls. If no federation surface exists anywhere in canonical V1, the row may be `N/A_WITH_EVIDENCE`; merely hiding unfinished federation is not sufficient. **Route:** PACK145, PACK149.
 - **EA-006 — P0 — OAuth BCP closure.** Exact redirect matching, PKCE/state/nonce where applicable, refresh-token rotation/reuse detection, no open redirectors, minimum scopes and reconnect/revoke tests. **Route:** PACK125, PACK139, PACK148.
 
 ### B. AI/agent adversarial security plane
@@ -190,7 +190,7 @@ These are reference anchors, not claims of certification or legal compliance.
 
 - **EA-073 — P1 — Public API contract decision.** If ZUVYR exposes external APIs, publish versioned OpenAPI/JSON-schema contracts, authentication, scopes, pagination, idempotency and rate-limit semantics. Otherwise do not imply public API availability. **Route:** PACK126, PACK145, PACK149.
 - **EA-074 — P1 — Webhook delivery contract.** Signed events, event IDs, retry/backoff, ordering limits, replay protection, endpoint disablement and test delivery. **Route:** PACK125, PACK145.
-- **EA-075 — P2 — SDK/developer docs decision.** Supported client SDKs/examples, changelog and deprecation windows are either shipped or explicitly outside V1. **Route:** PACK145, PACK149.
+- **EA-075 — P2 — SDK/developer docs boundary.** If public developer APIs/SDKs are exposed in V1, ship supported examples/docs, changelog and deprecation windows. If no public SDK/API product surface exists, use `N/A_WITH_EVIDENCE`; do not imply developer-platform support without it. **Route:** PACK145, PACK149.
 - **EA-076 — P0 — Connector/plugin marketplace trust.** Publisher identity, manifest/schema validation, requested scopes, permission diffs, version pinning, disable/revoke, security review and malicious-package response. **Route:** PACK126, PACK139, PACK149.
 - **EA-077 — P0 — Connector data-boundary tests.** Read-only scopes cannot mutate; tenant/user credentials cannot cross; revoked/expired tokens stop queued actions; reconnect cannot resurrect widened scopes. **Route:** PACK125, PACK127, PACK139.
 
@@ -235,7 +235,7 @@ The following Pack ranges now own these horizontal control planes in addition to
 
 ### Final acceptance rule introduced by this audit
 
-PACK150 cannot declare V1 ready solely because all feature Packs exist. It must prove that the vertical AI stack and the horizontal control planes work together under normal, denial, failure, restart, revocation, rollback and recovery conditions. Any `EA-*` requirement not implemented must be explicitly non-advertised, non-reachable where necessary, and recorded as a known V1 limitation rather than silently omitted.
+PACK150 cannot declare V1 ready solely because all feature Packs exist. It must prove that the vertical AI stack and the horizontal control planes work together under normal, denial, failure, restart, revocation, rollback and recovery conditions. Any applicable `EA-*` requirement must be implemented and verified. `N/A_WITH_EVIDENCE` is allowed only for a genuinely non-applicable surface absent from canonical V1; unfinished V1 work cannot be hidden as a limitation or non-advertised feature.
 <!-- ZUVYR_FULL_V1_READINESS_SECOND_PASS_2026-09-22_BEGIN -->
 ## FULL V1 READINESS COMPLETENESS — SECOND EXTERNAL-EYE PASS — 2026-09-22
 
@@ -888,7 +888,7 @@ Uploads and generated/exported media define whether EXIF/GPS/device/author metad
 **Route:** PACK061, PACK065, PACK113, PACK140.
 
 ### EA-205 — V1_REQUIRED_IF_SURFACE_EXISTS — Content Credentials / C2PA decision
-For generated/edited media where provenance is material, define whether C2PA/Content Credentials are emitted, preserved, verified or explicitly unsupported. Do not claim authenticity merely from a visible watermark.  
+For generated/edited media where provenance is material, implement preservation/verification of available C2PA/Content Credentials and emit provenance credentials where ZUVYR controls a compatible export path. Per-asset/provider absence must be represented truthfully; do not claim authenticity merely from a visible watermark.  
 **Route:** PACK065, PACK070, PACK115, PACK149.
 
 ### EA-206 — V1_REQUIRED — Synthetic-media labeling policy
