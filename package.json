@@ -23,6 +23,7 @@
     "cron": "node ./cli/rox.js cron",
     "test:cli": "node cli/tests/test-group-dispatch.js && node cli/tests/test-ai-backend.js && node cli/tests/test-ops-commands.js && node cli/tests/test-cross-platform.js && node cli/tests/test-setup-redis-check.js",
     "test:deploy": "node cli/tests/test-production-deploy-config.js",
+    "test:public-resources": "node --check examples/patterns/idempotent-task.js && node --check examples/patterns/permission-bound-action.js && node --check examples/patterns/reserve-settle-refund.js && node starter-kits/durable-ai-job/src/index.js && node starter-kits/permissioned-tool/src/index.js && node starter-kits/provider-router/src/index.js",
     "validate:release": "node tools/verify-zuvyr-continuity.js && node tools/validate-release.js",
     "manager": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./ROX-MANAGER.ps1",
     "setup:windows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./ROX-SETUP.ps1",
