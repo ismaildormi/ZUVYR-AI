@@ -12,6 +12,8 @@ Before starting or resuming any Pack in a new ChatGPT/Work/Codex session:
 - Treat disagreement between MASTER_STATE, MASTER_MATRIX, LIVE_PROJECT_STATE, receipts or production evidence as a **continuity defect**. Repair/reconcile it before changing product code.
 - Do not use chat memory as the sole source for active Pack, roadmap additions, blockers, deployment identity or next step.
 - After every material Pack/FIX/deployment/E2E/rollback/blocker/roadmap change, update the continuity sources in the same work session or record a continuity-update blocker.
+- Run `node tools/validate-zuvyr-continuity.cjs` after continuity-affecting changes and before a Pack is locked. The `ZUVYR Continuity Integrity` GitHub workflow must pass for changes that touch canonical planning/state/evidence files.
+- A continuity validation failure is a release/continuation blocker, not a warning to ignore.
 
 A Pack cannot be truthfully `LOCKED_VERIFIED` if its execution left the canonical continuation state ambiguous for the next session.
 
@@ -33,6 +35,9 @@ EA_RECONCILIATION_STATUS:
 UNRESOLVED_P0_P1:
 NOT_ADVERTISED_DECISIONS:
 HORIZONTAL_PLANE_TESTS:
+CONTINUITY_VALIDATOR_RESULT:
+CONTINUITY_MANIFEST_UPDATED:
+CONTINUITY_CONFLICTS_RESOLVED:
 ```
 
 ## V1_READY STRICTNESS
