@@ -19,17 +19,25 @@ Do NOT ask the user to explain the project again.
 Before doing work, read in this order:
 
 1. ZUVYR_CONTINUE_HERE.md
-2. ZUVYR_MASTER_STATE.json
-3. ZUVYR_MASTER_MATRIX.md
-4. docs/zuvyr/ROADMAP_150.md
-5. docs/zuvyr/V1_READINESS_COMPLETENESS_AUDIT_2026-09-22.md
-6. docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json
-7. docs/zuvyr/USER_OUTCOME_ENGINE.md
-8. docs/zuvyr/PACK_EXECUTION_APPENDIX.md
-9. newest receipt/evidence for the active Pack
-10. actual Git / production state only where necessary
+2. docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json
+3. ZUVYR_MASTER_STATE.json
+4. ZUVYR_MASTER_MATRIX.md
+5. docs/zuvyr/ROADMAP_150.md
+6. docs/zuvyr/V1_READINESS_COMPLETENESS_AUDIT_2026-09-22.md
+7. docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json
+8. docs/zuvyr/USER_OUTCOME_ENGINE.md
+9. docs/zuvyr/PACK_EXECUTION_APPENDIX.md
+10. newest receipt/evidence for the active Pack
+11. actual Git / production state only where necessary
 
 Fresh evidence overrides older text.
+
+### CONTINUITY INTEGRITY GATE — NON-NEGOTIABLE
+
+Before feature work in a new chat/session, verify that `docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json` is readable, that its active Pack/latest receipt can be reconciled with fresh Git/production evidence, and that the canonical readiness matrix has the full expected EA range with no missing/duplicate IDs. If any of these disagree, **repair continuity first**; do not guess an active Pack and do not continue implementation from stale text.
+
+Historical status sections may remain for evidence, but a newer dated override/receipt wins. Chat memory is never the only source of truth.
+
 
 ### PACK150 readiness invariant
 
