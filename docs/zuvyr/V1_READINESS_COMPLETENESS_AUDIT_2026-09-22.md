@@ -569,7 +569,7 @@ Uploads and generated/exported media define whether EXIF/GPS/device/author metad
 **Route:** PACK061, PACK065, PACK113, PACK140.
 
 ### EA-205 — V1_REQUIRED_IF_SURFACE_EXISTS — Content Credentials / C2PA decision
-For generated/edited media where provenance is material, define whether C2PA/Content Credentials are emitted, preserved, verified or explicitly unsupported. Do not claim authenticity merely from a visible watermark.  
+For generated/edited media where provenance is material, implement preservation/verification of available C2PA/Content Credentials and emit provenance credentials where ZUVYR controls a compatible export path. Per-asset/provider absence must be represented truthfully; do not claim authenticity merely from a visible watermark.  
 **Route:** PACK065, PACK070, PACK115, PACK149.
 
 ### EA-206 — V1_REQUIRED — Synthetic-media labeling policy
