@@ -3107,9 +3107,9 @@
         "receipt_git_blob": "a883de252f3f29b8a43fb353def4ac15a0e3a486"
       },
       "89E_PRODUCTION_ACCEPTANCE": {
-        "status": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_CREDENTIALS",
+        "status": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_CLIENT_CREDENTIALS",
         "started_at": "2026-09-22",
-        "checkpoint_at": "2026-09-22T05:40:11.348816Z",
+        "checkpoint_at": "2026-09-22T06:12:00Z",
         "receipt_path": "zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json",
         "receipt_git_blob": "233eb000110dc3dd2a3dc45e710f2a8ed0d0b5e7",
         "non_external_acceptance": {
@@ -3149,8 +3149,10 @@
           "google_api_key_present": true,
           "google_oauth_client_id_present": false,
           "google_oauth_client_secret_present": false,
-          "google_oauth_redirect_uri_present": false,
-          "real_google_oauth_acceptance": "NOT_RUN_MISSING_CREDENTIALS"
+          "google_oauth_redirect_uri_present": true,
+          "real_google_oauth_acceptance": "NOT_RUN_MISSING_CLIENT_ID_SECRET",
+          "google_oauth_redirect_uri": "https://rox-ai-sepia.vercel.app/",
+          "connected_source_reconciliation": "PASS_NO_CREDENTIALS_FOUND"
         }
       }
     },
@@ -3165,12 +3167,13 @@
     "external_gate": {
       "google_oauth_client_credentials_present": false,
       "google_api_key_present": true,
-      "google_oauth_redirect_uri_present": false,
+      "google_oauth_redirect_uri_present": true,
       "blocks_phase": "89E_REAL_GOOGLE_OAUTH_ACCEPTANCE",
       "engineering_blocked": false,
-      "current_status": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_CREDENTIALS"
+      "current_status": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_CLIENT_CREDENTIALS",
+      "google_oauth_redirect_uri": "https://rox-ai-sepia.vercel.app/"
     },
-    "next_action": "CONFIGURE_GOOGLE_OAUTH_CREDENTIALS_THEN_RESUME_89E_REAL_ACCEPTANCE",
+    "next_action": "CONFIGURE_GOOGLE_OAUTH_CLIENT_ID_AND_SECRET_THEN_RESUME_89E_REAL_ACCEPTANCE",
     "next_pack": "090",
     "next_pack_allowed": false,
     "predecessor": "088"
