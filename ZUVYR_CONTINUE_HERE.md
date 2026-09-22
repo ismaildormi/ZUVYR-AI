@@ -23,10 +23,11 @@ Before doing work, read in this order:
 3. ZUVYR_MASTER_MATRIX.md
 4. docs/zuvyr/ROADMAP_150.md
 5. docs/zuvyr/V1_READINESS_COMPLETENESS_AUDIT_2026-09-22.md
-6. docs/zuvyr/USER_OUTCOME_ENGINE.md
-7. docs/zuvyr/PACK_EXECUTION_APPENDIX.md
-8. newest receipt/evidence for the active Pack
-9. actual Git / production state only where necessary
+6. docs/zuvyr/V1_READINESS_REQUIREMENTS_001_240.json
+7. docs/zuvyr/USER_OUTCOME_ENGINE.md
+8. docs/zuvyr/PACK_EXECUTION_APPENDIX.md
+9. newest receipt/evidence for the active Pack
+10. actual Git / production state only where necessary
 
 Fresh evidence overrides older text.
 
