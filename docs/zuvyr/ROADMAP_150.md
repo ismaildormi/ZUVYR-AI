@@ -52,6 +52,193 @@ V1 must prepare ZUVYR as a continuously improving system rather than a static ch
 - primary evaluation combines task success/quality with total cost per successful task rather than raw benchmark score alone.
 
 
+<!-- ZUVYR_EXTERNAL_AUDIT_2026-09-22_BEGIN -->
+## EXTERNAL TECHNICAL ARCHITECTURE AUDIT OVERLAY — 2026-09-22
+
+**Authority:** This section is part of the canonical 001–150 roadmap. It is an acceptance overlay, not a new Pack series and not a renumbering. It does not reopen already locked Packs. Any gap below that belongs to work already completed is routed forward into the listed future Pack(s). A mapped Pack may not be declared `LOCKED_VERIFIED` until its mapped audit requirements are either (a) verified with evidence, or (b) explicitly marked NOT_ADVERTISED / NOT_IN_V1 with a reason and a non-misleading product surface. PACK148–150 must reconcile every `EA-*` item.
+
+### External-eye architecture conclusion
+
+The visible ZUVYR plan already covers the six vertical layers commonly shown in modern AI-stack diagrams:
+
+1. Compute / GPU / runtime
+2. Data + tools
+3. RAG / vector / context
+4. Foundation models + router
+5. Agents / orchestration / automation
+6. User applications / studios
+
+The main plan-level weakness was not another vertical AI layer. It was that several **horizontal control planes** were implicit, scattered, or absent: identity/session trust, AI-specific adversarial security, retrieval/memory quality, release/supply-chain trust, observability/tracing, reliability/data lifecycle, commercial operations, product telemetry/support, developer-platform contracts, privacy/governance, and owned-model MLOps hardening.
+
+This audit treats an item as a **plan-level gap** when the requirement is not explicit enough in `ROADMAP_150.md`; this does not by itself prove the runtime code lacks it.
+
+### External standards used as architecture anchors
+
+- OWASP GenAI / LLM Top 10 2026: https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/
+- NIST AI RMF + Generative AI Profile: https://www.nist.gov/itl/ai-risk-management-framework
+- OAuth 2.0 Security Best Current Practice, RFC 9700: https://www.rfc-editor.org/rfc/rfc9700.html
+- OpenTelemetry semantic conventions: https://opentelemetry.io/docs/specs/semconv/
+
+These are reference anchors, not claims of certification or legal compliance.
+
+### Severity contract
+
+- **P0:** launch-blocking when applicable to an advertised or reachable capability.
+- **P1:** required for production-grade V1 quality; may be explicitly hidden/not-advertised only when the capability is outside V1.
+- **P2:** ecosystem/enterprise maturity requirement; final launch must state whether implemented or intentionally not advertised.
+
+### A. Identity, account and organization trust plane
+
+- **EA-001 — P0 — Strong session/device security.** Explicit secure-cookie/token lifecycle, rotation, logout-all, device/session inventory, revocation propagation, fixation/replay defenses, suspicious-session handling. **Route:** PACK123, PACK139, PACK144, PACK148.
+- **EA-002 — P0 — MFA/passkeys and account recovery.** Define MFA/passkey support or an explicit V1 non-advertised decision; recovery codes/reset flows must not bypass security controls. **Route:** PACK139, PACK144, PACK149.
+- **EA-003 — P0 — Organization/team/RBAC closure.** Owner/admin/member/service identities, invitations, removal, ownership transfer, least privilege and cross-tenant denial must be explicit rather than inferred from owner scoping. **Route:** PACK139, PACK148.
+- **EA-004 — P1 — API keys/service accounts.** If automation/API access is exposed, use scoped, revocable, expiring credentials with last-used visibility, hash-at-rest semantics and no browser disclosure. Otherwise keep the surface absent. **Route:** PACK125, PACK126, PACK145, PACK149.
+- **EA-005 — P2 — Enterprise federation decision.** SSO/OIDC/SAML and SCIM are either implemented and tested or explicitly outside V1 and not advertised. **Route:** PACK145, PACK149.
+- **EA-006 — P0 — OAuth BCP closure.** Exact redirect matching, PKCE/state/nonce where applicable, refresh-token rotation/reuse detection, no open redirectors, minimum scopes and reconnect/revoke tests. **Route:** PACK125, PACK139, PACK148.
+
+### B. AI/agent adversarial security plane
+
+- **EA-007 — P0 — Direct and indirect prompt-injection defense.** Treat web pages, emails, files, RAG chunks, plugin output and model output as untrusted data; they may not silently create authority or widen permissions. **Route:** PACK122, PACK127, PACK139, PACK148.
+- **EA-008 — P0 — Excessive-agency prevention.** Capability minimization, least-privilege scopes, consequence classes, approval boundaries, STOP/revoke propagation and bounded autonomy for browser/device/connector/Manager actions. **Route:** PACK122, PACK126, PACK127, PACK139.
+- **EA-009 — P0 — Improper model/tool output handling.** Validate/sanitize outputs before SQL, shell, HTML/DOM, URL navigation, file paths, code execution, connector actions or downstream tool calls. **Route:** PACK118, PACK122, PACK139.
+- **EA-010 — P0 — Sensitive-information/system-prompt leakage tests.** Secrets, hidden prompts, connector tokens, other tenants' content and operator data must not become model-visible unless specifically required and authorized. **Route:** PACK139, PACK147, PACK148.
+- **EA-011 — P0 — Unbounded-consumption controls.** Bound model/tool loops, recursion, token growth, browser steps, code repair loops, media retries and parallel fan-out; enforce per-task and per-user budgets before cost is incurred. **Route:** PACK119, PACK128, PACK139, PACK142.
+- **EA-012 — P0 — Multi-agent delegation contract.** Child/sub-agents may inherit only the minimum subset of parent authority; delegated scope, depth, budget and consequence receipts are explicit. **Route:** PACK122, PACK127, PACK139.
+- **EA-013 — P0 — Tool/skill provenance and integrity.** Pin tool identity/version/schema/permissions; changed tools cannot inherit old approval. Signed/verified package or manifest provenance is required for trusted skills/plugins. **Route:** PACK126, PACK139.
+- **EA-014 — P0 — Agent egress controls.** SSRF, DNS rebinding, metadata/internal-network access, arbitrary redirects and data exfiltration paths are tested across browser, Code, plugins and device actions, not only Preview. **Route:** PACK118, PACK121, PACK127, PACK139.
+- **EA-015 — P1 — High-risk Manager change control.** Break-glass actions, destructive/admin mutations and security/billing changes require stronger approval policy, explicit audit identity and rollback; support two-person approval where consequence warrants it. **Route:** PACK092, PACK143.
+
+### C. RAG, memory, search and truth-quality plane
+
+- **EA-016 — P0 — Retrieval-quality evaluation.** Versioned eval sets for recall/precision/relevance, reranking, missing-evidence behavior and permission-preserving retrieval. **Route:** PACK102, PACK105, PACK134, PACK137.
+- **EA-017 — P0 — Citation/source fidelity.** Citation must point to the exact supporting source/version; stale, conflicting, inaccessible or weakly supporting sources are surfaced rather than presented as proof. **Route:** PACK102, PACK134, PACK148.
+- **EA-018 — P1 — Freshness/temporal grounding.** Time-sensitive research records retrieval time, source version/freshness and distinguishes historical from current evidence. **Route:** PACK102, PACK105, PACK148.
+- **EA-019 — P0 — RAG/vector poisoning defense.** Embedding/vector records retain owner/source/provenance/trust state; malicious or newly unauthorized chunks cannot silently contaminate another task/tenant. **Route:** PACK105, PACK132, PACK139.
+- **EA-020 — P1 — Embedding/index lifecycle.** Model/version changes require versioned reindex, compatibility policy, rollback and no mixed-index ambiguity. **Route:** PACK105, PACK132, PACK145.
+- **EA-021 — P0 — Memory poisoning/conflict hygiene.** New memories are attributable, reviewable and revocable; contradictory/stale/low-confidence memory cannot silently override explicit current user instructions. **Route:** PACK105, PACK131, PACK139, PACK148.
+- **EA-022 — P1 — Memory lifecycle.** Expiry/decay/archive rules, project/account boundary changes, deleted-source behavior and hard-forget propagation are tested at scale. **Route:** PACK105, PACK140.
+- **EA-023 — P0 — Hallucination/uncertainty behavior.** High-consequence factual flows define abstention/verification rules, confidence is not fabricated, and unsupported claims do not become durable memory/training truth. **Route:** PACK134, PACK147, PACK148.
+- **EA-024 — P1 — Search-index quality and repair.** Index lag, reindex, corrupt/missing records, deep-link stability and permission changes are observable and repairable. **Route:** PACK105, PACK142.
+
+### D. Observability, telemetry and operator plane
+
+- **EA-025 — P0 — End-to-end distributed tracing.** Correlate user request → Brain/task → Router/model → tool/connector → queue/worker → DB/storage → settlement with privacy-safe IDs and sampling. Prefer OpenTelemetry-compatible semantics. **Route:** PACK091, PACK143.
+- **EA-026 — P0 — Telemetry privacy contract.** No prompt/file/secret/customer-content capture by default; field allowlists, redaction, retention and access controls apply to logs/traces/crash reports. **Route:** PACK091, PACK139, PACK140.
+- **EA-027 — P1 — Client crash/performance telemetry.** Web/Windows/Android/iOS startup crashes, fatal JS/native errors, ANR/hangs and release-version correlation are measurable without collecting unnecessary content. **Route:** PACK091, PACK144.
+- **EA-028 — P0 — Tamper-evident audit trail.** Security, permission, billing, connector, Manager, model-promotion and destructive actions have actor/resource/time/outcome receipts with integrity protection and retention policy. **Route:** PACK091, PACK139, PACK143.
+- **EA-029 — P1 — Feature/config/kill-switch governance.** Every risky capability has owner, default state, rollout stage, emergency disable path, audit event and stale-flag cleanup policy. **Route:** PACK091, PACK143, PACK148.
+- **EA-030 — P1 — Telemetry schema governance.** Version event schemas; define required dimensions/denominators, late events, duplicate suppression and data-quality alarms before analytics drive decisions. **Route:** PACK091, PACK134.
+- **EA-031 — P1 — Public status and incident communication path.** Service status, user-impact summary, incident updates and post-incident record are defined for launch. **Route:** PACK143, PACK149.
+
+### E. Reliability, data integrity and disaster-recovery plane
+
+- **EA-032 — P0 — Zero-downtime schema evolution.** Expand/backfill/contract discipline, idempotent backfills, compatibility windows, rollback/forward-fix plan and large-table lock-risk checks. **Route:** PACK141, PACK145, PACK148.
+- **EA-033 — P0 — Queue poison/DLQ/backpressure.** Poison jobs, retries, dead-letter handling, replay authorization, queue saturation and duplicate delivery are explicit across media/agent/code workloads. **Route:** PACK115, PACK127, PACK142.
+- **EA-034 — P0 — Transactional event/outbox integrity.** Where DB state and external async work must agree, prevent committed-without-event / event-without-commit gaps and make retries idempotent. **Route:** PACK122, PACK142.
+- **EA-035 — P1 — DB operational health.** Pool saturation, long queries, lock/deadlock, index drift, vacuum/storage growth and connection exhaustion have observable limits and recovery. **Route:** PACK142, PACK143.
+- **EA-036 — P0 — Backup immutability/PITR.** Define immutable/offline-or-separated backup protection where available, point-in-time recovery expectations and restore integrity checks. **Route:** PACK141.
+- **EA-037 — P0 — Explicit RTO/RPO.** Recovery-time and recovery-point objectives are stated per critical store/service and actually measured by the restore drill. **Route:** PACK141, PACK143.
+- **EA-038 — P1 — Region/provider outage posture.** Either prove failover/recovery for critical dependencies or explicitly document accepted single-region/provider risk and degraded mode. **Route:** PACK141, PACK142, PACK143.
+- **EA-039 — P1 — Object-storage durability lifecycle.** Versioning/replication where appropriate, orphan detection, corruption/hash checks, signed-link renewal and restore behavior. **Route:** PACK113, PACK141.
+- **EA-040 — P1 — Controlled chaos/fault injection.** Validate DB/Redis/provider/storage/network/worker restart failures under nonbillable or approved bounded conditions. **Route:** PACK142, PACK143.
+- **EA-041 — P1 — Cache/CDN correctness.** Cache keys must include authorization-sensitive dimensions; private responses are never shared; invalidation and stale-while-revalidate behavior are tested. **Route:** PACK139, PACK142, PACK144.
+- **EA-042 — P1 — Clock/lease correctness.** Clock skew, expired leases, scheduler locks and reconnect races do not duplicate automation or settlement. **Route:** PACK124, PACK142.
+
+### F. Secure software supply chain and release plane
+
+- **EA-043 — P0 — SBOM/dependency/license inventory.** Release artifacts enumerate direct/transitive dependencies and relevant licenses; unsupported or critically vulnerable dependencies block release or have an explicit exception. **Route:** PACK117, PACK144, PACK149.
+- **EA-044 — P0 — Dependency/container vulnerability gates.** Automated package/container scanning, patch policy and vulnerability ownership are part of release qualification. **Route:** PACK117, PACK139, PACK144.
+- **EA-045 — P0 — Artifact provenance/signing.** Web build manifest, server/container image, Windows/Android/iOS artifacts, plugins and owned-model artifacts are tied to exact source and checksum/signature. **Route:** PACK126, PACK144, PACK147, PACK150.
+- **EA-046 — P0 — Browser security baseline.** CSP, CSRF strategy, CORS allowlists, secure cookie attributes, clickjacking protection, MIME/sniffing policy and trusted-origin review. **Route:** PACK118, PACK139, PACK144.
+- **EA-047 — P1 — Secret scanning and rotation.** CI/repository/build artifacts are scanned for secrets; production credentials have ownership, rotation/revocation and compromise procedure. **Route:** PACK139, PACK143, PACK149.
+- **EA-048 — P1 — KMS/envelope-encryption decision.** Sensitive connector/BYOC secrets use an explicit server-side encryption/key-versioning design; document platform-managed versus application-managed key boundaries. **Route:** PACK125, PACK139, PACK149.
+- **EA-049 — P0 — Code Studio security scanning.** Generated/imported code is checked for secrets, dangerous package/install behavior and license/provenance risks before export/deploy; sandbox egress/resource limits remain authoritative. **Route:** PACK117, PACK120, PACK139.
+
+### G. Owned-model, dataset and MLOps hardening plane
+
+- **EA-050 — P0 — Dataset/checkpoint cryptographic identity.** Exact hashes, tokenizer/prompt-template/config versions and immutable lineage for every promoted model artifact. **Route:** PACK132, PACK147.
+- **EA-051 — P0 — Reproducible training environment.** Code commit, base model, dataset snapshot, environment/container, hyperparameters, random seeds where meaningful and compute target are retained for candidate reproduction. **Route:** PACK132, PACK147.
+- **EA-052 — P0 — Model safety/red-team regression.** Prompt injection, sensitive leakage, harmful tool use, jailbreak robustness, tool-call correctness and authorization behavior are tested before promotion. **Route:** PACK136, PACK147, PACK148.
+- **EA-053 — P1 — Drift monitoring.** Detect production task-quality, latency, failure mix, language/domain and routing drift; promotion decisions do not rely only on static benchmarks. **Route:** PACK134, PACK137, PACK147.
+- **EA-054 — P1 — Model/system cards.** Each production owned model has scope, intended uses, limitations, eval set/version, safety findings, known failures, serving requirements and rollback target. **Route:** PACK147, PACK149.
+- **EA-055 — P0 — BYOC endpoint trust.** Endpoint ownership, TLS/auth, capability attestation, tenant isolation, credential lifecycle, health proof and compromised-endpoint revocation are explicit. **Route:** PACK135, PACK139, PACK147.
+- **EA-056 — P1 — GPU resource admission.** VRAM/CPU/RAM/disk/concurrency/batching/warmup/scale-to-idle limits prevent one model/session from destabilizing the host; measured cost and latency stay attributable. **Route:** PACK135, PACK142.
+- **EA-057 — P0 — Model theft/exfiltration controls.** Checkpoint download/export, registry access, BYOC secrets and teacher/dataset assets are least-privilege and audited. **Route:** PACK139, PACK147.
+- **EA-058 — P0 — Training-rights versioning.** Rights/consent/license policy version used by each dataset build is immutable and queryable; unknown rights fail closed. **Route:** PACK131, PACK132, PACK133, PACK147.
+
+### H. Commercial, billing and fraud plane
+
+- **EA-059 — P0 — Chargeback/dispute/refund lifecycle.** Payment disputes, refunds after consumption, negative-balance prevention, entitlement rollback and immutable accounting reconciliation are tested. **Route:** PACK146, PACK149.
+- **EA-060 — P0 — Fraud/abuse controls.** Signup/payment abuse, stolen credentials, promo/top-up abuse, bot bursts and suspicious high-cost consumption have rate/risk controls without corrupting legitimate balances. **Route:** PACK139, PACK146.
+- **EA-061 — P1 — Currency/rounding/tax/invoice closure.** Integer-money invariants extend to display currency, FX assumptions, taxes/VAT where applicable, invoices/receipts and app-store/platform commissions if used. **Route:** PACK128, PACK130, PACK146, PACK149.
+- **EA-062 — P1 — User spend controls.** User/org budget ceilings, alerts, per-capability spend visibility and safe behavior at exhaustion are explicit, especially for third-party fallback and BYOC metering. **Route:** PACK128, PACK130, PACK146.
+- **EA-063 — P1 — Revenue/cost event reconciliation.** Provider corrections, late usage, refunds, support credits, taxes, app-store fees and storage/egress corrections remain attributable to a logical task without double settlement. **Route:** PACK128, PACK130, PACK146.
+
+### I. Product quality, growth, accessibility and support plane
+
+- **EA-064 — P1 — First-run onboarding/activation.** New user reaches a successful first task with truthful permission/cost explanations, sample/empty states and no hidden paid action. **Route:** PACK110, PACK148.
+- **EA-065 — P1 — Product analytics.** Privacy-safe activation, task-success, retention, funnel, feature adoption and failure analytics use versioned event definitions; content is not collected merely for analytics. **Route:** PACK110, PACK128, PACK134.
+- **EA-066 — P2 — Experiment framework.** A/B or staged product experiments require hypothesis, population, guardrails, stop criteria and no silent billing/permission changes. **Route:** PACK129, PACK148.
+- **EA-067 — P1 — Notification center/preferences.** In-app/push/email classes, dedupe, retries, quiet preferences, revoked-token cleanup and deep links are defined; security notices cannot be silently suppressed. **Route:** PACK109, PACK143, PACK144.
+- **EA-068 — P0 — Accessibility target.** Move from generic accessibility to a declared WCAG-level target for supported surfaces; keyboard, screen reader, contrast, zoom, reduced motion, captions/transcripts and error semantics are tested. **Route:** PACK107, PACK144, PACK148.
+- **EA-069 — P1 — Browser/device compatibility matrix.** Supported browser/OS/device versions, graceful unsupported behavior and performance limits are declared and tested. **Route:** PACK144, PACK145.
+- **EA-070 — P1 — Performance budgets.** Web startup/Core Web Vital-like metrics, API p95/p99, mobile startup/memory/battery/network, queue age and media/code cold-start targets are explicit. **Route:** PACK142, PACK144, PACK148.
+- **EA-071 — P1 — Support and controlled operator access.** Support case IDs, user-provided diagnostics, least-privilege admin tools, break-glass audit and no default access to customer content. **Route:** PACK143, PACK149.
+- **EA-072 — P1 — User-facing report/feedback flow.** Users can report bad output, abuse, connector failures or billing issues and receive a traceable case/reference without exposing secrets. **Route:** PACK143, PACK149.
+
+### J. Developer platform, connectors and ecosystem plane
+
+- **EA-073 — P1 — Public API contract decision.** If ZUVYR exposes external APIs, publish versioned OpenAPI/JSON-schema contracts, authentication, scopes, pagination, idempotency and rate-limit semantics. Otherwise do not imply public API availability. **Route:** PACK126, PACK145, PACK149.
+- **EA-074 — P1 — Webhook delivery contract.** Signed events, event IDs, retry/backoff, ordering limits, replay protection, endpoint disablement and test delivery. **Route:** PACK125, PACK145.
+- **EA-075 — P2 — SDK/developer docs decision.** Supported client SDKs/examples, changelog and deprecation windows are either shipped or explicitly outside V1. **Route:** PACK145, PACK149.
+- **EA-076 — P0 — Connector/plugin marketplace trust.** Publisher identity, manifest/schema validation, requested scopes, permission diffs, version pinning, disable/revoke, security review and malicious-package response. **Route:** PACK126, PACK139, PACK149.
+- **EA-077 — P0 — Connector data-boundary tests.** Read-only scopes cannot mutate; tenant/user credentials cannot cross; revoked/expired tokens stop queued actions; reconnect cannot resurrect widened scopes. **Route:** PACK125, PACK127, PACK139.
+
+### K. Privacy, governance, legal-operational and content provenance plane
+
+- **EA-078 — P0 — Data inventory/classification.** Identify stores/classes for profile, conversation, files, embeddings, telemetry, billing, connector data, datasets/checkpoints and support records with owner/retention/access rules. **Route:** PACK140, PACK149.
+- **EA-079 — P1 — Data residency/subprocessor register.** Regions and third-party processors/providers are documented; unsupported residency promises are not made. **Route:** PACK140, PACK149.
+- **EA-080 — P0 — Consent/policy versioning.** Record the exact privacy/training/terms consent version and timestamp needed for each governed use; policy changes do not retroactively create rights. **Route:** PACK131, PACK140, PACK149.
+- **EA-081 — P0 — Complete export/delete workflow.** Account export/delete covers projects, assets, memories, connectors, telemetry where applicable, support references and future dataset exclusion while truthfully recording checkpoint limitations. **Route:** PACK140, PACK149.
+- **EA-082 — P1 — Content moderation/reporting decision.** Define reachable prohibited-abuse categories, reporting/appeal/operator handling and provider-policy mismatch behavior for chat/media/agents; do not rely only on upstream provider rejection. **Route:** PACK139, PACK149.
+- **EA-083 — P1 — IP/copyright/media provenance.** Preserve source/operation/model metadata, strip sensitive EXIF where appropriate, track user-supplied asset rights declarations where needed and support takedown/report handling. **Route:** PACK113, PACK140, PACK149.
+- **EA-084 — P1 — Age/child-safety product boundary.** State intended age boundary and ensure onboarding, terms, data collection and high-risk agent features do not imply unsupported minor use. **Route:** PACK149.
+- **EA-085 — P0 — File/media ingestion hardening.** MIME/content sniffing, decompression/archive bombs, malformed PDF/media, macro/active-content treatment, image bombs and antivirus/malware strategy where relevant. **Route:** PACK113, PACK139, PACK148.
+
+### L. Final release governance plane
+
+- **EA-086 — P0 — Risk register and exception ownership.** Every unresolved P0/P1 has owner, reason, exposure, mitigation, expiry/review date and product-surface consequence; “unknown” is not silently treated as pass. **Route:** PACK143, PACK148, PACK149.
+- **EA-087 — P0 — Release manifest completeness.** PACK150 release manifest includes exact source commits, DB migrations, config/feature flags, provider/model versions, client artifacts, SBOM/provenance, owned-model hashes, rollback targets and known limitations. **Route:** PACK150.
+- **EA-088 — P0 — Production test-data isolation.** Real production acceptance uses isolated tagged test identities/resources with deterministic cleanup; tests never broaden privileges or leave billable/user-visible residue. **Route:** PACK148, PACK150.
+- **EA-089 — P0 — Claim/advertising truth audit.** Every public claim about models, privacy, free usage, BYOC, supported platforms, speed, security, automation or capabilities has dated evidence; absent evidence means the claim is removed/qualified. **Route:** PACK149, PACK150.
+- **EA-090 — P0 — Final horizontal-plane checkpoint.** PACK148 must demonstrate at least one representative journey that crosses identity/session → context/RAG → model/router → tools/agent → async worker/storage → billing → observability/audit → recovery, with denial/failure/rollback variants. **Route:** PACK148, PACK150.
+
+### Mandatory reconciliation matrix
+
+The following Pack ranges now own these horizontal control planes in addition to their existing scope:
+
+| Pack(s) | Added audit ownership |
+|---|---|
+| 090–093 | Action-system checkpoint, Manager observability, safe admin/change control, business/telemetry visibility |
+| 101–110 | Context/RAG quality, memory/search lifecycle, product onboarding/analytics, accessibility, interruption/notification behavior |
+| 111–115 | Media ingestion safety, storage integrity, queue/DLQ/backpressure and provenance |
+| 116–120 | Code supply chain, sandbox/output/egress security, secret/license scans, repair-cost boundaries |
+| 121–127 | Prompt-injection-resistant agent recovery, delegated authority, OAuth/connector lifecycle, signed/pinned plugins, webhooks |
+| 128–130 | Full cost attribution, spend controls, taxes/fees/FX assumptions, experiment governance |
+| 131–138 | Rights/versioning, contamination, reproducibility, drift, BYOC/GPU controls, model artifact identity |
+| 139–140 | Integrated AI/application security, identity/session hardening, privacy inventory/export/delete, moderation/provenance |
+| 141–143 | Zero-downtime data evolution, backup/PITR/RTO/RPO, fault injection, tracing, incidents/status/support |
+| 144–147 | Client crash/performance/release trust, API compatibility, billing disputes/fraud, owned-model safety/release evidence |
+| 148 | Full horizontal-plane acceptance rehearsal and production test isolation |
+| 149 | External/legal/business/store/developer/claim truth reconciliation |
+| 150 | Exact final manifest + SBOM/provenance + all EA-001…EA-090 reconciliation |
+
+### Final acceptance rule introduced by this audit
+
+PACK150 cannot declare V1 ready solely because all feature Packs exist. It must prove that the vertical AI stack and the horizontal control planes work together under normal, denial, failure, restart, revocation, rollback and recovery conditions. Any `EA-*` requirement not implemented must be explicitly non-advertised, non-reachable where necessary, and recorded as a known V1 limitation rather than silently omitted.
+<!-- ZUVYR_EXTERNAL_AUDIT_2026-09-22_END -->
+
+
 ## PACK001 — Freeze Production Truth
 
 - **Objective:** Freeze Production Truth
