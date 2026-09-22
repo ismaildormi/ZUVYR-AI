@@ -36,7 +36,13 @@ jobs:
         run: npm ci
 
       - name: Verify public builder resources
-        run: npm run test:public-resources
+        run: |
+          node --check examples/patterns/idempotent-task.js
+          node --check examples/patterns/permission-bound-action.js
+          node --check examples/patterns/reserve-settle-refund.js
+          node starter-kits/durable-ai-job/src/index.js
+          node starter-kits/permissioned-tool/src/index.js
+          node starter-kits/provider-router/src/index.js
 
       - name: Verify validator scope
         run: node tools/test-release-validator-scope.js
