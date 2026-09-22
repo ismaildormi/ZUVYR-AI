@@ -1,4 +1,6 @@
-# ROX AI — Architecture
+# ZUVYR — Legacy Architecture Snapshot
+
+> **Status:** historical architecture document retained for implementation context. It predates the current PACK001–PACK150 architecture and must not override fresher canonical state. For the public current overview see [docs/ARCHITECTURE_OVERVIEW.md](docs/ARCHITECTURE_OVERVIEW.md); for execution truth see [docs/zuvyr/ROADMAP_150.md](docs/zuvyr/ROADMAP_150.md).
 
 This document is the map: what exists, how it's organized, and — for every
 feature on the roadmap that isn't built yet — exactly where it plugs in
