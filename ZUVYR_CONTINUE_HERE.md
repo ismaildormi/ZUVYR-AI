@@ -1820,3 +1820,21 @@ Activate the existing Plugins/Connections/Skills product surface over the authen
 ### NEXT CANONICAL STEP
 
 Continue PACK089 / 89E production acceptance. Complete all non-external production proofs now: owner-scoped connection lifecycle, granted-scope execution path, deny-before-network, immediate local revoke, audit persistence, secret redaction, retry/reopen stability and exact deployment identity. Do not fabricate Google OAuth credentials. If legitimate Google OAuth client credentials are still absent after all other gates pass, record 89E as externally blocked rather than declaring PACK089 complete.
+
+### PACK089 / 89E NON-EXTERNAL ACCEPTANCE COMPLETE — EXTERNAL GATE OPEN — 2026-09-22
+
+- PACK089 remains `IN_PROGRESS`; PACK090 remains blocked.
+- 89A / 89B / 89C / 89D are `LOCKED_VERIFIED`.
+- 89E non-external production acceptance passed in rollback-only production transactions.
+- Plugin path proved owner scoping, Vault-only secret reference, deny-before-grant, install, exact tool/fingerprint permission, replay denial, wrong-owner denial, immediate revoke, post-revoke denial and audit emission.
+- Google Drive connection permission path proved exact read scope allow, export/write out-of-scope denial, wrong-owner denial, grant revocation and post-revoke denial, without network calls.
+- Production cleanliness after acceptance: 0 plugin/integration/OAuth/Skill rows, 0 PACK089 grants, 0 consumptions and 0 acceptance audit residue.
+- Vercel production `dpl_4cQzVSs8ZYdasm8NUuZWU5Vk7USD` is READY on main `c8157e82b23d842d55ac5b57c4696275268a2104`.
+- Railway runtime remains SUCCESS on PACK089 89D runtime commit `93c293c215eb67f864397880c1f40b05ed07052c`.
+- Production variables confirm `GOOGLE_API_KEY` exists but no Google OAuth client ID, client secret or redirect URI is configured.
+- **Remaining hard gate:** configure legitimate Google OAuth credentials, then run one real owner-scoped Google Drive OAuth connect -> granted-scope tool call -> denied-scope proof -> disconnect/revoke -> audit + secret-cleanliness verification.
+- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json`.
+
+### NEXT CANONICAL STEP
+
+Do not start PACK090. Configure legitimate Google OAuth client ID, client secret and redirect URI in production. Then resume only the remaining 89E real-provider acceptance: connect Google Drive through OAuth, execute one granted-scope Drive tool, prove an ungranted scope fails before network, disconnect/revoke, confirm future calls are blocked, confirm audit persisted and no plaintext token leaked. Only after that may PACK089 become LOCKED_VERIFIED.
