@@ -1,3 +1,8 @@
+ZUVYR LEGACY ARCHIVE NOTICE
+This file documents the historical v0.64 Safe Bridge workflow. It is retained only for archive/compatibility context and is NOT the current ZUVYR V1 start guide.
+Current public start guide: docs/QUICKSTART.md
+Current V1 roadmap: docs/zuvyr/ROADMAP_150.md
+
 ROX AI v0.64 SAFE BRIDGE
 
 DO NOT replace the live project manually.
