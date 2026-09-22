@@ -2,6 +2,19 @@
 
 This appendix is part of every PACK001–PACK150 execution prompt and every future ZUVYR pack. It is not optional guidance. It is a completion requirement.
 
+## Mandatory continuity reconstruction gate
+
+Before starting or resuming any Pack in a new ChatGPT/Work/Codex session:
+
+- Read `docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json` and the boot order in `ZUVYR_CONTINUE_HERE.md`.
+- Reconcile the manifest's active Pack/latest receipt against fresh Git/production evidence.
+- Verify the canonical readiness file `docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json` is readable and complete for the expected range.
+- Treat disagreement between MASTER_STATE, MASTER_MATRIX, LIVE_PROJECT_STATE, receipts or production evidence as a **continuity defect**. Repair/reconcile it before changing product code.
+- Do not use chat memory as the sole source for active Pack, roadmap additions, blockers, deployment identity or next step.
+- After every material Pack/FIX/deployment/E2E/rollback/blocker/roadmap change, update the continuity sources in the same work session or record a continuity-update blocker.
+
+A Pack cannot be truthfully `LOCKED_VERIFIED` if its execution left the canonical continuation state ambiguous for the next session.
+
 ## Mandatory external architecture audit overlay
 
 The canonical `docs/zuvyr/ROADMAP_150.md` contains the **EXTERNAL TECHNICAL ARCHITECTURE AUDIT OVERLAY — 2026-09-22** with requirements `EA-001` through `EA-292`. The machine-readable ownership matrix is `docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json`. Both are part of the Pack contract.
