@@ -8,7 +8,12 @@ ZUVYR brings multimodal chat, research, image and video creation, voice, Code St
 
 ## Explore ZUVYR
 
-[Product](docs/PRODUCT.md) · [Build with ZUVYR](docs/BUILD_WITH_ZUVYR.md) · [Architecture](docs/ARCHITECTURE_OVERVIEW.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [V1 Roadmap](docs/zuvyr/ROADMAP_150.md)
+[Product](docs/PRODUCT.md) · [Build with ZUVYR](docs/BUILD_WITH_ZUVYR.md) · [Starter Kits](starter-kits/README.md) · [Architecture](docs/ARCHITECTURE_OVERVIEW.md) · [Security](SECURITY.md) · [Public Use](docs/PUBLIC_USE_POLICY.md) · [Contributing](CONTRIBUTING.md) · [V1 Roadmap](docs/zuvyr/ROADMAP_150.md)
+
+
+## Build with ZUVYR
+
+Builders can reuse the sanitized resources in `examples/` and `starter-kits/` under **Apache License 2.0**. They are intentionally independent of ZUVYR production credentials and private infrastructure. The rest of the repository remains proprietary unless a file says otherwise. See [LICENSE](LICENSE) and [Public Use Policy](docs/PUBLIC_USE_POLICY.md).
 
 ---
 
