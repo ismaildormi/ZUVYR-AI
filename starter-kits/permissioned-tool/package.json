@@ -1,0 +1,9 @@
+{
+  "name": "zuvyr-starter-permissioned-tool",
+  "version": "1.0.0",
+  "private": false,
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": { "node": ">=22" },
+  "scripts": { "start": "node src/index.js" }
+}
