@@ -735,7 +735,7 @@ EA_UNRESOLVED:
 
 # 7. PACK148 / PACK149 / PACK150 strengthened acceptance
 
-## PACK148
+### Strengthened acceptance — PACK148
 Must run the complete integrated rehearsal, including:
 - authenticated user + session/device;
 - object/property/function authorization;
@@ -753,7 +753,7 @@ Must run the complete integrated rehearsal, including:
 - client/mobile where applicable;
 - exact cleanup/no test residue.
 
-## PACK149
+### Strengthened acceptance — PACK149
 Must reconcile:
 - providers and external accounts;
 - app/store/signing/domain/certificates;
@@ -765,7 +765,7 @@ Must reconcile:
 - independent security findings;
 - all external blockers.
 
-## PACK150
+### Strengthened acceptance — PACK150
 May emit `V1_READY=true` only if:
 - PACK001–PACK150 acceptance = PASS;
 - EA-001–EA-240 applicable = PASS;
