@@ -31,7 +31,7 @@ const masterMatrix = read(masterMatrixPath);
 const appendix = read(appendixPath);
 
 if (manifest.v1_contract?.readiness_range !== 'EA-001..EA-292') fail('manifest readiness range is not EA-001..EA-292');
-if (!/^PACK\\d{3}$/.test(manifest.active_work?.pack || '')) fail('manifest active Pack is missing or malformed');
+if (!/^PACK\d{3}$/.test(manifest.active_work?.pack || '')) fail('manifest active Pack is missing or malformed');
 if (!manifest.active_work?.phase) fail('manifest active phase is missing');
 if (!manifest.active_work?.latest_receipt) fail('manifest latest receipt is missing');
 if (!fs.existsSync(path.join(root, manifest.active_work.latest_receipt))) fail('manifest latest receipt does not exist: ' + manifest.active_work.latest_receipt);
