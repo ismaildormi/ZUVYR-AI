@@ -96,9 +96,9 @@ Never copy credentials, environment values, production IDs or privileged operati
 
 ## Historical and legacy material
 
-The repository still contains historical ROX-named files, backups and compatibility identifiers.
+The repository still contains some pre-ZUVYR historical filenames, backups and compatibility identifiers.
 
-They are **not the current brand** and should not be treated as recommended starting points for new integrations. They remain only where safe migration or historical evidence still matters.
+They are **not the current product identity** and should not be treated as recommended starting points for new integrations. They remain only where safe migration, compatibility or historical evidence still matters.
 
 Current product identity: **ZUVYR**.
 
