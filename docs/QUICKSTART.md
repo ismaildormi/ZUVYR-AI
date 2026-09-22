@@ -34,9 +34,9 @@ These are smaller than the starter kits and focus on one reusable idea at a time
 Example:
 
 ```bash
-# Copy the current HTTPS clone URL from GitHub's “Code” button.
-git clone <repository-https-url>
-cd <repository-directory>/starter-kits/durable-ai-job
+# Copy the current HTTPS clone URL from GitHub's “Code” button and substitute it below.
+git clone REPOSITORY_HTTPS_URL
+cd REPOSITORY_DIRECTORY/starter-kits/durable-ai-job
 npm start
 ```
 
