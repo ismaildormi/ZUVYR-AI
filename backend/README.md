@@ -1,4 +1,6 @@
-# ROX AI — Backend (Gatekeeper + Fallback Router + Queue + Stripe + Supabase)
+# ZUVYR — Backend Legacy Setup Snapshot
+
+> **Status:** historical backend setup guide retained for context. It does not enumerate the current production schema, migrations, providers or PACK-era runtime. Use current source, numbered migrations, canonical state and pack receipts for implementation truth.
 
 Ce dossier contient le squelette technique du système "الحارس" (Gatekeeper),
 renforcé par 3 ajouts : bascule automatique entre modèles (fallback),
