@@ -1,4 +1,18 @@
-# ZUVYR V1 — Canonical Product Target
+# ZUVYR
+
+**One AI platform for thinking, creating, building and acting.**
+
+ZUVYR brings multimodal chat, research, image and video creation, voice, Code Studio, computer control, agents and automations into one connected workspace.
+
+> **Status:** ZUVYR V1 is in active development. The repository follows evidence-based PACK001→PACK150 production acceptance; individual capabilities may still be gated until their production acceptance is complete.
+
+## Explore ZUVYR
+
+[Product](docs/PRODUCT.md) · [Architecture](docs/ARCHITECTURE_OVERVIEW.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [V1 Roadmap](docs/zuvyr/ROADMAP_150.md)
+
+---
+
+## ZUVYR V1 — Canonical Product Target
 
 > This README defines the **target required for ZUVYR V1**. It replaces the historical ROX AI / Safe Bridge README as the repository landing page.
 >
