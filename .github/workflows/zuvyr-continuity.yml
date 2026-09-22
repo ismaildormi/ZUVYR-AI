@@ -1,0 +1,50 @@
+name: ZUVYR Continuity Integrity
+
+on:
+  pull_request:
+    paths:
+      - "ZUVYR_CONTINUE_HERE.md"
+      - "ZUVYR_MASTER_STATE.json"
+      - "ZUVYR_MASTER_MATRIX.md"
+      - "docs/zuvyr/**"
+      - "zuvyr-pack-evidence/**"
+      - "tools/validate-zuvyr-continuity.cjs"
+      - ".github/workflows/zuvyr-continuity.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "ZUVYR_CONTINUE_HERE.md"
+      - "ZUVYR_MASTER_STATE.json"
+      - "ZUVYR_MASTER_MATRIX.md"
+      - "docs/zuvyr/**"
+      - "zuvyr-pack-evidence/**"
+      - "tools/validate-zuvyr-continuity.cjs"
+      - ".github/workflows/zuvyr-continuity.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zuvyr-continuity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  continuity-integrity:
+    name: Continuity Integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate canonical ZUVYR continuity
+        run: node tools/validate-zuvyr-continuity.cjs
