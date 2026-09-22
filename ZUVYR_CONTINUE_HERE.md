@@ -1,6 +1,6 @@
 # ZUVYR — CONTINUE HERE
 
-Updated: 2026-09-17 16:40:17 +01:00
+Updated: 2026-09-22 — external architecture audit integrated
 
 ## PURPOSE
 
@@ -28,6 +28,16 @@ Before doing work, read in this order:
 8. actual Git / production state only where necessary
 
 Fresh evidence overrides older text.
+
+## EXTERNAL TECHNICAL ARCHITECTURE AUDIT OVERLAY — 2026-09-22
+
+The canonical `docs/zuvyr/ROADMAP_150.md` now includes the mandatory external-eye architecture audit `EA-001…EA-090`.
+
+- This overlay adds horizontal production requirements without renumbering PACK001–PACK150 and without reopening historical Packs merely for documentation.
+- Each mapped future Pack must reconcile its EA items before truthful LOCK.
+- PACK148–PACK150 must reconcile all EA items, including explicit NOT_ADVERTISED / NOT_IN_V1 decisions where applicable.
+- The overlay does **not** decide the current active Pack by itself. Fresh Git/production/evidence state still overrides stale active-pack text in this bootstrap file.
+
 
 ---
 
