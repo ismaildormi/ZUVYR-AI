@@ -1,6 +1,6 @@
 # ZUVYR — CONTINUE HERE
 
-Updated: 2026-09-22 — external architecture audit integrated
+Updated: 2026-09-22 — EA-001…EA-180 full V1 readiness integrated
 
 ## PURPOSE
 
@@ -22,16 +22,22 @@ Before doing work, read in this order:
 2. ZUVYR_MASTER_STATE.json
 3. ZUVYR_MASTER_MATRIX.md
 4. docs/zuvyr/ROADMAP_150.md
-5. docs/zuvyr/USER_OUTCOME_ENGINE.md
-6. docs/zuvyr/PACK_EXECUTION_APPENDIX.md
-7. newest receipt/evidence for the active Pack
-8. actual Git / production state only where necessary
+5. docs/zuvyr/V1_READINESS_COMPLETENESS_AUDIT_2026-09-22.md
+6. docs/zuvyr/USER_OUTCOME_ENGINE.md
+7. docs/zuvyr/PACK_EXECUTION_APPENDIX.md
+8. newest receipt/evidence for the active Pack
+9. actual Git / production state only where necessary
 
 Fresh evidence overrides older text.
 
+### PACK150 readiness invariant
+
+Finishing the numbered Packs is not enough by itself. `V1_READY=true` is allowed only after PACK150 reconciles PACK001–PACK150 plus all applicable `EA-001…EA-180` requirements. Final applicable EA states are only `PASS` or `N/A_WITH_EVIDENCE`; any known/partial/deferred/untested applicable gap blocks V1 readiness. This includes non-critical production-quality gaps, not only P0/P1 items.
+
+
 ## EXTERNAL TECHNICAL ARCHITECTURE AUDIT OVERLAY — 2026-09-22
 
-The canonical `docs/zuvyr/ROADMAP_150.md` now includes the mandatory external-eye architecture audit `EA-001…EA-090`.
+The canonical `docs/zuvyr/ROADMAP_150.md` now includes the mandatory external-eye architecture audit `EA-001…EA-180`.
 
 - This overlay adds horizontal production requirements without renumbering PACK001–PACK150 and without reopening historical Packs merely for documentation.
 - Each mapped future Pack must reconcile its EA items before truthful LOCK.
