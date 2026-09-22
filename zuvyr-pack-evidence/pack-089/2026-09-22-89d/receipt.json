@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.0",
+  "pack": "089",
+  "phase": "89D_PRODUCT_UI",
+  "title": "Skills / Plugins / MCP / Connections — Product UI",
+  "status": "LOCKED_VERIFIED",
+  "canonical_pack_status": "IN_PROGRESS",
+  "finalized_at": "2026-09-22T05:31:38.809052Z",
+  "implementation": {
+    "pr": 88,
+    "head": "602e2c4fbfb8e2e258c20970dbc3e2824ee0e657",
+    "merge_commit": "93c293c215eb67f864397880c1f40b05ed07052c",
+    "quality_run": 35659006162,
+    "backend_quality": "PASS",
+    "release_quality": "PASS"
+  },
+  "production_refresh": {
+    "pr": 89,
+    "request_commit": "e5be352029a6c692956302259c84712960e7c1b0",
+    "merge_commit": "0311678c2bf4727f1f658ba667fb3ba0cf2be9ff",
+    "quality_run": 35690749203,
+    "backend_quality": "PASS",
+    "release_quality": "PASS",
+    "runtime_files_changed_between_implementation_and_refresh": false,
+    "diff_only": [
+      "zuvyr-pack-evidence/pack-089/2026-09-22-89d-production-refresh/request.json"
+    ]
+  },
+  "frontend": {
+    "js_blob": "156c116bf3302c13963e2f0618593bdd029a7f68",
+    "css_blob": "cc031ef7c6e6a921e3249ee1270469cfe1ecc113",
+    "regression_test_blob": "46582d123cb129d5fba5694d793181b0eb380ec8",
+    "verified_capabilities": [
+      "Skills / Plugins / Connections discovery/list surfaces",
+      "Google Drive connect flow with fail-closed OAuth preflight",
+      "plugin install with Permission Center review/challenge/grant",
+      "active scopes and revoke/disconnect controls",
+      "loading / empty / error / retry / reopen states",
+      "keyboard Escape handling",
+      "RTL support",
+      "responsive/mobile support",
+      "no OAuth tokens, client secrets or passwords rendered after submission"
+    ],
+    "live_http_asset_fetch": {
+      "status": "UNAVAILABLE_CONNECTOR",
+      "interpretation": "No claim of direct HTTP byte-for-byte asset fetch. Production source identity is proven by READY Git deployment on the exact docs-only refresh commit whose runtime files are unchanged from the verified 89D implementation commit."
+    }
+  },
+  "vercel": {
+    "project_id": "prj_P6VddfynJKniiK29clC6Epr9byPk",
+    "team_id": "team_3PYlTi0Euf7SDg7T2NRzGx3q",
+    "deployment": "dpl_5gLNzyGXieFe2TxLF18ABnkW4vQq",
+    "status": "READY",
+    "target": "production",
+    "source": "git",
+    "production_commit": "0311678c2bf4727f1f658ba667fb3ba0cf2be9ff",
+    "aliases": [
+      "rox-ai-sepia.vercel.app",
+      "rox-ai-rox-ai.vercel.app",
+      "rox-ai-git-main-rox-ai.vercel.app"
+    ],
+    "alias_error": null
+  },
+  "railway": {
+    "runtime_commit": "93c293c215eb67f864397880c1f40b05ed07052c",
+    "backend": {
+      "deployment": "bcdc4d43-ba3b-4b21-a268-60fb012a73c9",
+      "status": "SUCCESS"
+    },
+    "worker": {
+      "deployment": "d512dd05-4e22-4683-bf0b-d772dde4aa21",
+      "status": "SUCCESS"
+    },
+    "maintenance": {
+      "deployment": "008747dd-40cb-4dea-ab55-bbdb1fea78ff",
+      "status": "SUCCESS"
+    },
+    "docs_only_refresh_deployments_skipped": true
+  },
+  "security": {
+    "secrets_rendered_in_ui": false,
+    "oauth_preflight_fail_closed": true,
+    "permission_center_reused": true,
+    "second_frontend_permission_model_created": false
+  },
+  "cost_and_side_effects": {
+    "provider_calls": 0,
+    "payment_mutations": 0,
+    "new_migrations": 0
+  },
+  "rollback": {
+    "backup_branch": "backup-pack089-pre-89d-finalizer-20260922",
+    "previous_production_deployment": "dpl_9Zmyao5ctsh6dUxveQrgQt9p3qmB",
+    "recovery": "Use prior READY Vercel production deployment or revert only 89D frontend/backend UI wiring; preserve PACK089 data and migration history."
+  },
+  "next": {
+    "phase": "89E_PRODUCTION_ACCEPTANCE",
+    "status": "READY_TO_START",
+    "external_gate": "GOOGLE_OAUTH_CLIENT_CREDENTIALS_MISSING",
+    "pack090_allowed": false
+  }
+}

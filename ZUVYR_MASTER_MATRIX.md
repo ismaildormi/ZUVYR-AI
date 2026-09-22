@@ -1085,3 +1085,18 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - Receipt: `zuvyr-pack-evidence/pack-089/2026-09-21-89c/receipt.json`.
 - **89D Product UI is now active.**
 
+### PACK089 / 89D LOCKED_VERIFIED — 2026-09-22
+
+- 89D Product UI is `LOCKED_VERIFIED`.
+- PR #88 merged as `93c293c215eb67f864397880c1f40b05ed07052c`; quality run `35659006162` passed Backend Quality + Release Quality.
+- Production refresh PR #89 merged as `0311678c2bf4727f1f658ba667fb3ba0cf2be9ff`; quality run `35690749203` passed.
+- Vercel deployment `dpl_5gLNzyGXieFe2TxLF18ABnkW4vQq` is READY, target production, source Git, alias `rox-ai-sepia.vercel.app`.
+- The refresh commit changed only the production-refresh evidence file; 89D frontend/runtime bytes are unchanged from the verified implementation commit.
+- 89D frontend Git blobs: JS `156c116bf3302c13963e2f0618593bdd029a7f68`, CSS `cc031ef7c6e6a921e3249ee1270469cfe1ecc113`.
+- UI regression coverage proves Connections / Plugins / Skills controls, Google OAuth fail-closed preflight, Permission Center review, revoke/disconnect, no credential fields, loading/error/retry/reopen, keyboard Escape, RTL and mobile behavior.
+- Railway backend `bcdc4d43-ba3b-4b21-a268-60fb012a73c9`, worker `d512dd05-4e22-4683-bf0b-d772dde4aa21`, maintenance `008747dd-40cb-4dea-ab55-bbdb1fea78ff` are SUCCESS on runtime commit `93c293c215eb67f864397880c1f40b05ed07052c`.
+- Direct static-asset HTTP byte fetch was unavailable through the Vercel connector; production identity is therefore evidenced by exact READY Git deployment plus unchanged runtime diff, not by an unsupported HTTP byte-match claim.
+- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-22-89d/receipt.json`.
+- **Current phase: 89E Production Acceptance — IN_PROGRESS.**
+- Real Google OAuth acceptance is still externally gated by missing Google OAuth client credentials. PACK090 remains blocked.
+

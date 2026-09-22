@@ -2949,7 +2949,7 @@
     "plan_path": "docs/zuvyr/PACK089_EXECUTION_PLAN.md",
     "planning_started_at": "2026-09-21",
     "implementation_started": true,
-    "current_phase": "89D_PRODUCT_UI",
+    "current_phase": "89E_PRODUCTION_ACCEPTANCE",
     "phases": {
       "89A_SCHEMA_VAULT_PERMISSION_CENTER": {
         "status": "LOCKED_VERIFIED",
@@ -3060,12 +3060,57 @@
         "receipt_git_blob": "4fb1a95a4274fe2c178e4852d947c780574ad4fc"
       },
       "89D_PRODUCT_UI": {
-        "status": "IN_PROGRESS",
+        "status": "LOCKED_VERIFIED",
         "started_at": "2026-09-21",
-        "objective": "Activate Skills / Plugins / Connections UI over the existing authenticated PACK089 backend with permission review, scopes, revoke/disconnect, robust states, keyboard, RTL and mobile behavior."
+        "finalized_at": "2026-09-22T05:31:38.809052Z",
+        "implementation_pr": 88,
+        "implementation_head": "602e2c4fbfb8e2e258c20970dbc3e2824ee0e657",
+        "implementation_merge_commit": "93c293c215eb67f864397880c1f40b05ed07052c",
+        "quality_run": 35659006162,
+        "backend_quality": "PASS",
+        "release_quality": "PASS",
+        "production_refresh_pr": 89,
+        "production_refresh_merge_commit": "0311678c2bf4727f1f658ba667fb3ba0cf2be9ff",
+        "production_refresh_quality_run": 35690749203,
+        "frontend_js_blob": "156c116bf3302c13963e2f0618593bdd029a7f68",
+        "frontend_css_blob": "cc031ef7c6e6a921e3249ee1270469cfe1ecc113",
+        "product_ui_test_blob": "46582d123cb129d5fba5694d793181b0eb380ec8",
+        "vercel": {
+          "deployment": "dpl_5gLNzyGXieFe2TxLF18ABnkW4vQq",
+          "status": "READY",
+          "target": "production",
+          "source": "git",
+          "production_commit": "0311678c2bf4727f1f658ba667fb3ba0cf2be9ff",
+          "production_alias": "rox-ai-sepia.vercel.app",
+          "runtime_files_changed_after_89d_merge": false,
+          "http_asset_fetch": "UNAVAILABLE_CONNECTOR"
+        },
+        "railway": {
+          "runtime_commit": "93c293c215eb67f864397880c1f40b05ed07052c",
+          "backend": {
+            "deployment": "bcdc4d43-ba3b-4b21-a268-60fb012a73c9",
+            "status": "SUCCESS"
+          },
+          "worker": {
+            "deployment": "d512dd05-4e22-4683-bf0b-d772dde4aa21",
+            "status": "SUCCESS"
+          },
+          "maintenance": {
+            "deployment": "008747dd-40cb-4dea-ab55-bbdb1fea78ff",
+            "status": "SUCCESS"
+          }
+        },
+        "secrets_rendered_in_ui": false,
+        "oauth_preflight_fail_closed": true,
+        "permission_center_reused": true,
+        "receipt_path": "zuvyr-pack-evidence/pack-089/2026-09-22-89d/receipt.json",
+        "receipt_git_blob": "a883de252f3f29b8a43fb353def4ac15a0e3a486"
       },
       "89E_PRODUCTION_ACCEPTANCE": {
-        "status": "NOT_STARTED"
+        "status": "IN_PROGRESS",
+        "started_at": "2026-09-22",
+        "objective": "Production acceptance for owner-scoped connection lifecycle, exact scope enforcement, deny-before-network, immediate revoke blocking, secret redaction, audit persistence, retry/reopen stability and exact deployment identity.",
+        "external_gate": "GOOGLE_OAUTH_CLIENT_CREDENTIALS_MISSING"
       }
     },
     "foundations": {
@@ -3082,7 +3127,7 @@
       "blocks_phase": "89E_REAL_GOOGLE_OAUTH_ACCEPTANCE",
       "engineering_blocked": false
     },
-    "next_action": "EXECUTE_89D_PRODUCT_UI",
+    "next_action": "EXECUTE_89E_NON_EXTERNAL_ACCEPTANCE_THEN_GOOGLE_OAUTH_GATE",
     "next_pack": "090",
     "next_pack_allowed": false,
     "predecessor": "088"

@@ -86,14 +86,28 @@ Historical source `plugin_installations` is NOT present in production and must n
 - no browser token exposure;
 - disconnect blocks runtime before remote revoke attempt.
 
-### 89D — Product UI 🟠 `IN_PROGRESS`
+### 89D — Product UI ✅ `LOCKED_VERIFIED`
 - activate Plugins/Connections/Skills surface only after backend gates pass;
 - discover/list, connect/install, permission review, active scopes, revoke/disconnect;
 - loading/empty/error/retry/reopen states;
 - responsive/mobile, keyboard and RTL acceptance;
 - no credential fields rendered after submission.
 
-### 89E — Production acceptance
+#### 89D FINALIZED — LOCKED_VERIFIED
+
+- PR #88 merged as `93c293c215eb67f864397880c1f40b05ed07052c`; Release Quality run `35659006162` passed Backend + Release Quality.
+- Product UI covers Skills / Plugins / Connections, Google Drive connect preflight, permission review, active scopes, revoke/disconnect, loading/error/retry/reopen, keyboard Escape, RTL and responsive/mobile states.
+- UI regression contract confirms no OAuth tokens, client secrets or passwords are rendered after submission.
+- Vercel production refresh PR #89 merged as `0311678c2bf4727f1f658ba667fb3ba0cf2be9ff`; quality run `35690749203` passed.
+- Vercel deployment `dpl_5gLNzyGXieFe2TxLF18ABnkW4vQq` is READY, target production, source Git, alias `rox-ai-sepia.vercel.app`.
+- The refresh commit differs from the 89D runtime merge by one evidence file only; frontend/runtime bytes are unchanged.
+- Frontend Git blobs: JS `156c116bf3302c13963e2f0618593bdd029a7f68`, CSS `cc031ef7c6e6a921e3249ee1270469cfe1ecc113`.
+- Direct HTTP byte fetch of static assets was unavailable through the connector; no unsupported byte-for-byte HTTP claim is made.
+- Railway backend/worker/maintenance remain SUCCESS on runtime commit `93c293c215eb67f864397880c1f40b05ed07052c`.
+- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-22-89d/receipt.json`.
+
+### 89E — Production acceptance 🟠 `IN_PROGRESS`
+- 89E external gate: Google OAuth client credentials are still missing in production; non-external acceptance continues, but real Google OAuth cannot be claimed until legitimate credentials are configured.
 - real owner-scoped connection journey;
 - connected tool executes only granted scope;
 - denied scope fails before external call;
