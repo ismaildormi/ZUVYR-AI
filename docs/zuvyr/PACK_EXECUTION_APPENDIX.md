@@ -4,7 +4,7 @@ This appendix is part of every PACK001–PACK150 execution prompt and every futu
 
 ## Mandatory external architecture audit overlay
 
-The canonical `docs/zuvyr/ROADMAP_150.md` contains the **EXTERNAL TECHNICAL ARCHITECTURE AUDIT OVERLAY — 2026-09-22** with requirements `EA-001` through `EA-240`. That overlay is part of the Pack contract.
+The canonical `docs/zuvyr/ROADMAP_150.md` contains the **EXTERNAL TECHNICAL ARCHITECTURE AUDIT OVERLAY — 2026-09-22** with requirements `EA-001` through `EA-240`. The machine-readable ownership matrix is `docs/zuvyr/V1_READINESS_REQUIREMENTS_001_240.json`. Both are part of the Pack contract.
 
 - Do not renumber Packs or reopen historical Packs merely to satisfy it.
 - When an EA item maps to the current or a future Pack, that Pack owns reconciliation of the mapped requirement in addition to its original scope.
