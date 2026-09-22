@@ -8,7 +8,7 @@ The canonical `docs/zuvyr/ROADMAP_150.md` contains the **EXTERNAL TECHNICAL ARCH
 
 - Do not renumber Packs or reopen historical Packs merely to satisfy it.
 - When an EA item maps to the current or a future Pack, that Pack owns reconciliation of the mapped requirement in addition to its original scope.
-- A mapped P0/P1 requirement may be marked not implemented only when the corresponding capability is explicitly `NOT_ADVERTISED` / `NOT_IN_V1`, is not misleadingly reachable, and the limitation is recorded.
+- A mapped applicable requirement may not be waived merely by hiding or relabeling an unfinished V1 capability. `N/A_WITH_EVIDENCE` is allowed only when the underlying surface genuinely does not exist anywhere in canonical V1 and is not implied by another V1 capability.
 - `PACK148` must run the horizontal-plane acceptance rehearsal; `PACK149` must reconcile external/legal/business/claim gates; `PACK150` must reconcile every `EA-001…EA-180` item in the final release manifest.
 - Plan-level absence is not proof that runtime code is absent. Inspect the current implementation first and preserve verified behavior.
 
