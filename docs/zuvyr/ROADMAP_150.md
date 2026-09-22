@@ -1860,7 +1860,7 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 - **Evidence/receipt requirements:** Dated receipt with base/source commits, changed paths, backup hashes, test commands/results, deployment IDs, observed live cases and omissions, cost, migration identity, rollback proof and receipt hash. Historical claims retain their original evidence status.
 - **Final gate:** LOCKED_VERIFIED only after scoped tests, security/financial regressions where relevant, intended commit/push, exact deployment identity or documented unchanged-runtime identity, dated real production user-flow evidence, rollback/recovery proof, receipt hash and canonical state reconciliation. No next pack before this gate.
 - **External gate:** M20
-- **Recorded status:** IN_PROGRESS
+- **Recorded status:** IN_PROGRESS — 89E blocked only by real Google OAuth credentials
 
 ### PACK089 live progress — 2026-09-21
 
@@ -1872,7 +1872,7 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 - **89B receipt:** `zuvyr-pack-evidence/pack-089/2026-09-21-89b/receipt.json`.
 - **89C:** LOCKED_VERIFIED — Google Drive OAuth + Drive tools are live on exact Railway commit `eb7233ec918dd6b550cc2762300a787054d3e5e7`; migration `20260921212845 pack089_89c_google_drive_oauth` applied; real Google OAuth remains an 89E credential gate and fails closed.
 - **89D:** LOCKED_VERIFIED — Skills / Plugins / Connections product UI is deployed to Vercel production from exact Git source and passed product/security regressions.
-- **89E:** IN_PROGRESS — execute production acceptance; real Google OAuth remains gated by missing legitimate client credentials.
+- **89E:** BLOCKED_EXTERNAL_GOOGLE_OAUTH_CREDENTIALS — all non-external production acceptance passed; real Google OAuth connect/tool/disconnect remains the only open gate.
 - PACK090 remains blocked until PACK089 is fully LOCKED_VERIFIED.
 
 ## PACK090 — Agent Checkpoint I
