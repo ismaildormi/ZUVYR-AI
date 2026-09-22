@@ -86,15 +86,17 @@
     "cold_start_reconstruction_test_required": true
   },
   "canonical_files_snapshot": {
-    "ZUVYR_CONTINUE_HERE.md": "df8ec8325bce8e0e67fc6528c4010d69787169ac",
-    "ZUVYR_MASTER_STATE.json": "95569a28d0fc26e32b696ac7ddf140f4db4c73da",
-    "ZUVYR_MASTER_MATRIX.md": "7d476e3353c48309bd59735254705e51833177e9",
+    "ZUVYR_CONTINUE_HERE.md": "8fa49fbff7498ecc0325898bfa923735c255ca4c",
+    "ZUVYR_MASTER_STATE.json": "9168a79c3b8de1db05f058d3e964bb0dc90144d5",
+    "ZUVYR_MASTER_MATRIX.md": "1c53ef0e1f29d88b60cd893259db952bd06d53e7",
     "docs/zuvyr/ROADMAP_150.md": "df5d1bcabe94f3f2c9beb4c3603bae94dd91e7d9",
     "docs/zuvyr/V1_READINESS_COMPLETENESS_AUDIT_2026-09-22.md": "12e2275dcc7e4bd7cf3f78b168ee84f872f4fae0",
     "docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json": "dde1d33d3d101afb399ca5fb363af37de0baed06",
     "docs/zuvyr/USER_OUTCOME_ENGINE.md": "600c485be8e8bf5d7ab40c060ffd3d2750a028a6",
-    "docs/zuvyr/PACK_EXECUTION_APPENDIX.md": "e3e30e4b794ac26f19c2c5bcfc0491280d8e6f40",
-    "zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json": "11eaa0657768804ccc85c75839336e69ad770598"
+    "docs/zuvyr/PACK_EXECUTION_APPENDIX.md": "435b8b9d52490705d91a93b97d4d1146704d3ef4",
+    "zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json": "11eaa0657768804ccc85c75839336e69ad770598",
+    "tools/verify-zuvyr-continuity.js": "67dfbaf1a36ea4a1696dff6f221a6eb6d6309d4d",
+    "package.json": "05babfed9ef591413d4a72c57d7540f6f0933a5f"
   },
   "snapshot_policy": "Blob SHAs are a known-good snapshot, not a freeze. If a canonical file has a newer SHA on main, inspect the newer change and reconcile it; do not roll it back merely because it differs from this snapshot.",
   "integrity_expectations": {
@@ -103,7 +105,8 @@
     "readiness_duplicate_ids": 0,
     "every_readiness_requirement_has_pack_route": true,
     "preserve_historical_receipts": true,
-    "secrets_must_never_be_stored_in_manifest": true
+    "secrets_must_never_be_stored_in_manifest": true,
+    "ci_gate": "npm run validate:release runs tools/verify-zuvyr-continuity.js before release validation"
   },
   "new_chat_command_semantics": {
     "examples": [
@@ -120,5 +123,6 @@
       "After any material checkpoint, update continuity sources before leaving the work session."
     ]
   },
-  "no_loss_rule": "If continuity files disagree, or the active Pack/receipt cannot be reconstructed with evidence, stop feature work and repair continuity first. Never guess an active Pack, silently drop roadmap additions, or depend on private chat memory as the only source."
+  "no_loss_rule": "If continuity files disagree, or the active Pack/receipt cannot be reconstructed with evidence, stop feature work and repair continuity first. Never guess an active Pack, silently drop roadmap additions, or depend on private chat memory as the only source.",
+  "last_reconciled_git_head_before_manifest_update": "cd0ccdf3af8d674d3fb7a433ca9210b2625852d9"
 }
