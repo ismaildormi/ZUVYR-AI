@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.3",
+  "schema_version": "1.4",
   "updated_at": "2026-09-22",
   "purpose": "Single anti-loss reconstruction capsule for any new ChatGPT/Work/Codex session. It does not replace fresh production evidence; it tells the session exactly what to load and how to resolve conflicts.",
   "repository": "ismaildormi/rox-ai",
@@ -126,7 +126,7 @@
     ]
   },
   "no_loss_rule": "If continuity files disagree, a snapshot drifts without reconciliation, CI/validator fails, or the active Pack/receipt cannot be reconstructed with evidence, stop feature work and repair continuity first. Never guess an active Pack, silently drop roadmap additions, remove canonical V1 work to obtain READY, or depend on private chat memory as the only source.",
-  "last_reconciled_git_head_before_manifest_update": "975fa39d4aec8f0dca87155bdef5f1bb3bcaca71",
+  "last_reconciled_git_head_before_manifest_update": "64bf4a9745781480754d6bf19a363f5fc90613d2",
   "integrity_guard_files": {
     "tools/validate-zuvyr-continuity.cjs": "ef6a2535c920aafcff2fa0aa51987ce4569cced2",
     ".github/workflows/zuvyr-continuity.yml": "ba526ae36bf46c46786f9aa426adcada1e335ffc",
@@ -140,5 +140,30 @@
     "release_command": "npm run validate:release",
     "continuity_command": "npm run validate:continuity",
     "rule": "Any canonical snapshot drift, missing EA ID, route gap, active Pack/receipt mismatch, stale current-state conflict, or validator failure is a continuity defect. Reconcile it before feature work or Pack lock."
+  },
+  "latest_continuity_verification": {
+    "checked_at": "2026-09-22",
+    "release_quality_run_id": 35778808559,
+    "release_quality_conclusion": "SUCCESS",
+    "continuity_integrity_last_success_run_id": 35778619058,
+    "canonical_pack_heading_count": 150,
+    "canonical_pack_heading_unique_count": 150,
+    "readiness_requirement_count": 292,
+    "readiness_missing_ids": 0,
+    "readiness_duplicate_ids": 0,
+    "readiness_unrouted_ids": 0,
+    "roadmap_matrix_blob_match": true,
+    "snapshot_mismatches": 0,
+    "integrity_guard_mismatches": 0,
+    "railway_google_oauth_credentials": {
+      "backend_service": "rox-ai",
+      "backend_has_google_oauth_client_id": false,
+      "backend_has_google_oauth_client_secret": false,
+      "worker_service": "loving-harmony",
+      "worker_has_google_oauth_client_id": false,
+      "worker_has_google_oauth_client_secret": false,
+      "values_redacted": true,
+      "conclusion": "External Google OAuth Web client credentials are still genuinely absent; do not fabricate them."
+    }
   }
 }
