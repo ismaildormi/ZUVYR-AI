@@ -4087,7 +4087,7 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 ## PACK139 — Security abuse and tenant isolation
 
 - **Objective:** Security abuse and tenant isolation
-- **Scope:** Adversarial authorization, upload, prompt-injection and rate-limit regression across the integrated platform. ADD full OWASP API Top 10 closure: canonical endpoint inventory; object-level (BOLA), object-property/mass-assignment (BOPLA), function-level authorization, sensitive business-flow abuse controls, resource-consumption limits, system-wide SSRF, secure configuration, old/debug API retirement and unsafe third-party API consumption. ADD ASVS-aligned injection/XSS/CSRF/transport/crypto/config/error handling checks, tenant-context propagation and identity/session abuse. PACK139 owns **every requirement mapped to PACK139 in `docs/zuvyr/V1_READINESS_REQUIREMENTS_001_240.json`**, including later third-pass EA items; a stale numeric range must never truncate its scope.
+- **Scope:** Adversarial authorization, upload, prompt-injection and rate-limit regression across the integrated platform. ADD full OWASP API Top 10 closure: canonical endpoint inventory; object-level (BOLA), object-property/mass-assignment (BOPLA), function-level authorization, sensitive business-flow abuse controls, resource-consumption limits, system-wide SSRF, secure configuration, old/debug API retirement and unsafe third-party API consumption. ADD ASVS-aligned injection/XSS/CSRF/transport/crypto/config/error handling checks, tenant-context propagation and identity/session abuse. PACK139 owns **every requirement mapped to PACK139 in `docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json`**, including later third-pass EA items; a stale numeric range must never truncate its scope.
 - **Dependencies:** 110, 115, 120, 127, 137
 - **Files/systems affected:** All trust boundaries
 - **Architecture decisions:** Reuse canonical Brain/Kernel, registry/router, content IDs, permissions and one usage ledger. Extend the existing implementation; do not build a duplicate subsystem.
@@ -4307,7 +4307,7 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 ## PACK150 — V1 final release and recovery gate
 
 - **Objective:** V1 final release and recovery gate
-- **Scope:** Seal exact release manifest for all 150 packs and rerun affected launch journeys after final changes. Produce/update the canonical machine-readable PACK001–PACK150 + EA-001…EA-292 completeness matrix using `docs/zuvyr/V1_READINESS_REQUIREMENTS_001_240.json`, with exact source/migration/config/flag/provider/model/client/SBOM/provenance identities, known-limitations list, production rollback target and recovery proof. PACK150 is the only gate allowed to emit V1_READY=true.
+- **Scope:** Seal exact release manifest for all 150 packs and rerun affected launch journeys after final changes. Produce/update the canonical machine-readable PACK001–PACK150 + EA-001…EA-292 completeness matrix using `docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json`, with exact source/migration/config/flag/provider/model/client/SBOM/provenance identities, known-limitations list, production rollback target and recovery proof. PACK150 is the only gate allowed to emit V1_READY=true.
 - **Dependencies:** 149
 - **Files/systems affected:** Full platform and canonical state
 - **Architecture decisions:** Reuse canonical Brain/Kernel, registry/router, content IDs, permissions and one usage ledger. Extend the existing implementation; do not build a duplicate subsystem.
