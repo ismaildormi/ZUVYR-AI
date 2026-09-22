@@ -1,3 +1,28 @@
+# ZUVYR MASTER MATRIX — LATEST CANONICAL CONTINUITY OVERRIDE — 2026-09-22
+
+This dated override is the **current-state entry point**. Older Pack headers/status blocks below are preserved as historical evidence and must not be interpreted as current merely because they appear earlier in the file.
+
+| Field | Current canonical value |
+|---|---|
+| Continuity manifest | `docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json` |
+| Readiness matrix | `docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json` |
+| V1 readiness range | `EA-001…EA-292` |
+| Active main Pack | `PACK089 — Skills / Plugins / MCP / Connections` |
+| Active phase | `89E_PRODUCTION_ACCEPTANCE` |
+| Current status | `BLOCKED_EXTERNAL_GOOGLE_OAUTH_CLIENT_CREDENTIALS` |
+| 89A / 89B / 89C / 89D | `LOCKED_VERIFIED` |
+| 89E non-external acceptance | `PASS` |
+| Latest receipt | `zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json` |
+| PACK090 allowed | **NO** |
+| Remaining external values | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` |
+| Final release gate | `PACK150` only; `V1_READY=true` requires all applicable `EA-001…EA-292` PASS |
+
+**Next legal step:** configure legitimate Google OAuth Web client ID + client secret in production, then complete the real owner-scoped Google Drive OAuth acceptance: connect → granted-scope tool call → denied-scope proof → disconnect/revoke → post-revoke denial → audit persistence → secret/Vault cleanliness. Do **not** start PACK090 first.
+
+**Conflict rule:** fresh production/source/receipt evidence beats this override; this override beats older historical matrix sections. If a new session sees disagreement between continuity sources, it must repair/reconcile continuity before feature work rather than guessing.
+
+---
+
 # ZUVYR MASTER MATRIX - PACK 005 / FIX7
 
 Generated: 2026-09-12T00:04:43.9660425+01:00
