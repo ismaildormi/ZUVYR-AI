@@ -1,0 +1,121 @@
+{
+  "schema_version": "1.0",
+  "pack": "089",
+  "phase": "89E_PRODUCTION_ACCEPTANCE",
+  "title": "Skills / Plugins / MCP / Connections — Production Acceptance",
+  "status": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_CREDENTIALS",
+  "canonical_pack_status": "IN_PROGRESS",
+  "checkpoint_at": "2026-09-22T05:40:11.348816Z",
+  "production": {
+    "github_main": "c8157e82b23d842d55ac5b57c4696275268a2104",
+    "vercel": {
+      "deployment": "dpl_4cQzVSs8ZYdasm8NUuZWU5Vk7USD",
+      "state": "READY",
+      "target": "production",
+      "source": "git",
+      "commit": "c8157e82b23d842d55ac5b57c4696275268a2104",
+      "url": "rox-py6icbk4q-rox-ai.vercel.app"
+    },
+    "railway_runtime_commit": "93c293c215eb67f864397880c1f40b05ed07052c",
+    "railway": {
+      "backend": {
+        "deployment": "bcdc4d43-ba3b-4b21-a268-60fb012a73c9",
+        "status": "SUCCESS"
+      },
+      "worker": {
+        "deployment": "d512dd05-4e22-4683-bf0b-d772dde4aa21",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deployment": "008747dd-40cb-4dea-ab55-bbdb1fea78ff",
+        "status": "SUCCESS"
+      }
+    }
+  },
+  "external_gate": {
+    "google_api_key_present": true,
+    "google_oauth_client_id_present": false,
+    "google_oauth_client_secret_present": false,
+    "google_oauth_redirect_uri_present": false,
+    "real_google_oauth_acceptance": "BLOCKED_EXTERNAL",
+    "failure_mode": "workspace_google_oauth_not_configured before connection draft/network",
+    "engineering_blocked": false,
+    "pack090_allowed": false
+  },
+  "non_external_acceptance": {
+    "plugin_permission_lifecycle": {
+      "mode": "PRODUCTION_TRANSACTION_ROLLBACK",
+      "owner_scope": "PASS",
+      "vault_only_plugin_secret_reference": "PASS",
+      "plaintext_secret_in_public_row": "PASS_NONE_FOUND",
+      "deny_without_grant": "PASS",
+      "install_with_allow_once_grant": "PASS",
+      "exact_tool_and_fingerprint_invoke": "PASS",
+      "wrong_tool_denied": "PASS",
+      "replay_denied": "PASS",
+      "wrong_owner_denied": "PASS",
+      "revoke_disables_runtime": "PASS",
+      "revoke_deletes_vault_secret": "PASS",
+      "post_revoke_invoke_denied": "PASS",
+      "permission_audit": "PASS",
+      "workspace_install_revoke_audit": "PASS",
+      "network_calls": 0,
+      "provider_calls": 0,
+      "billing_mutations": 0
+    },
+    "google_drive_scope_layer": {
+      "mode": "PRODUCTION_TRANSACTION_ROLLBACK_NO_NETWORK",
+      "owner_scope": "PASS",
+      "exact_drive_file_read_scope": "PASS",
+      "drive_export_outside_scope_denied": "PASS",
+      "drive_write_outside_scope_denied": "PASS",
+      "wrong_owner_denied": "PASS",
+      "permission_allow_audit": "PASS",
+      "revoke_disables_connection": "PASS",
+      "revoke_revokes_grants": "PASS",
+      "post_revoke_read_denied": "PASS",
+      "revoke_audit": "PASS",
+      "network_calls": 0,
+      "provider_calls": 0,
+      "billing_mutations": 0
+    },
+    "source_and_ci_guarantees": {
+      "missing_oauth_credentials_fail_closed_before_draft_and_network": "PASS",
+      "permission_before_google_network": "PASS",
+      "write_operation_fingerprint_binding": "PASS",
+      "local_revoke_before_remote_revoke": "PASS",
+      "oauth_tokens_redacted_from_browser_response": "PASS",
+      "product_ui_retry_reopen_keyboard_rtl_mobile": "PASS"
+    }
+  },
+  "cleanliness": {
+    "plugin_rows": 0,
+    "integration_rows": 0,
+    "oauth_rows": 0,
+    "skill_rows": 0,
+    "pack089_grants": 0,
+    "pack089_consumptions": 0,
+    "pack089_audit_rows": 0
+  },
+  "cost": {
+    "provider_calls_during_89e_non_external_acceptance": 0,
+    "billing_mutations": 0,
+    "external_network_calls": 0,
+    "observed_incremental_credits": 0
+  },
+  "rollback": {
+    "backup_branch": "backup-pack089-pre-89e-external-gate-20260922",
+    "acceptance_transactions": "ROLLBACK",
+    "production_rows_preserved": true,
+    "migration_history_preserved": true
+  },
+  "remaining_required_gate": {
+    "action": "Configure legitimate Google OAuth client ID, client secret and redirect URI in production, then execute one real owner-scoped Google Drive OAuth connect + granted-scope tool call + denied-scope check + disconnect/revoke + audit/secret-cleanliness verification.",
+    "may_fabricate_credentials": false
+  },
+  "next": {
+    "pack089": "IN_PROGRESS",
+    "phase89e": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_CREDENTIALS",
+    "pack090_allowed": false
+  }
+}
