@@ -1,6 +1,6 @@
 {
   "continuity_capsule": {
-    "schema_version": "1.0",
+    "schema_version": "1.1",
     "updated_at": "2026-09-22",
     "status": "CANONICAL_CONTINUITY_OVERRIDE",
     "manifest": "docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json",
@@ -13,7 +13,10 @@
     "pack090_allowed": false,
     "next_legal_step": "Configure legitimate GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET, then complete real Google Drive OAuth owner-scoped acceptance. Do not start PACK090 first.",
     "conflict_rule": "If any older field in this long historical state file conflicts with this capsule or fresher production/receipt evidence, do not use the older field as current state. Reconcile using the canonical source-of-truth order.",
-    "continuity_failure_policy": "If the active Pack/receipt/readiness range cannot be reconstructed, repair continuity before feature work; never guess from chat memory."
+    "continuity_failure_policy": "If the active Pack/receipt/readiness range cannot be reconstructed, or the continuity validator fails, repair continuity before feature work; never guess from chat memory.",
+    "validator": "tools/validate-zuvyr-continuity.cjs",
+    "continuity_ci": ".github/workflows/zuvyr-continuity.yml",
+    "continuity_ci_required": true
   },
   "schema_version": "1.0",
   "source_fix": "005-FIX6",
