@@ -8,7 +8,7 @@ ZUVYR brings multimodal chat, research, image and video creation, voice, Code St
 
 ## Explore ZUVYR
 
-[Product](docs/PRODUCT.md) · [Architecture](docs/ARCHITECTURE_OVERVIEW.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [V1 Roadmap](docs/zuvyr/ROADMAP_150.md)
+[Product](docs/PRODUCT.md) · [Build with ZUVYR](docs/BUILD_WITH_ZUVYR.md) · [Architecture](docs/ARCHITECTURE_OVERVIEW.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [V1 Roadmap](docs/zuvyr/ROADMAP_150.md)
 
 ---
 
