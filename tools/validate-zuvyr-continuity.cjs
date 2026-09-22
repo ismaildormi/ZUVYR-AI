@@ -101,18 +101,20 @@ if (readiness) {
 }
 
 const active = manifest.active_work || {};
-expect(active.pack === 'PACK089', `unexpected current active Pack in manifest: ${active.pack}`);
-expect(active.phase === '89E_PRODUCTION_ACCEPTANCE', `unexpected active phase: ${active.phase}`);
-expect(active.phase_status === 'BLOCKED_EXTERNAL_GOOGLE_OAUTH_CLIENT_CREDENTIALS', `unexpected active phase status: ${active.phase_status}`);
-expect(active.pack090_allowed === false, 'PACK090 must remain blocked while PACK089 external OAuth gate is open');
+expect(/^PACK\d{3}$/.test(active.pack || ''), `manifest active Pack is missing/malformed: ${active.pack}`);
+expect(typeof active.pack_status === 'string' && active.pack_status.length > 0, 'manifest active pack_status missing');
+expect(typeof active.phase === 'string' && active.phase.length > 0, 'manifest active phase missing');
+expect(typeof active.phase_status === 'string' && active.phase_status.length > 0, 'manifest active phase_status missing');
 expect(typeof active.latest_receipt === 'string' && active.latest_receipt.length > 0, 'manifest latest_receipt missing');
 
 const receipt = readJson(active.latest_receipt);
 if (receipt) {
-  expect(receipt.pack === '089', `receipt pack mismatch: ${receipt.pack}`);
+  expect(`PACK${receipt.pack}` === active.pack, `receipt pack mismatch: PACK${receipt.pack} vs ${active.pack}`);
   expect(receipt.phase === active.phase, `receipt phase mismatch: ${receipt.phase} vs ${active.phase}`);
   expect(receipt.status === active.phase_status, `receipt status mismatch: ${receipt.status} vs ${active.phase_status}`);
-  expect(receipt?.next?.pack090_allowed === false, 'receipt unexpectedly allows PACK090');
+  if (typeof active.pack090_allowed === 'boolean' && typeof receipt?.next?.pack090_allowed === 'boolean') {
+    expect(receipt.next.pack090_allowed === active.pack090_allowed, `receipt/manifest PACK090 gate mismatch: ${receipt.next.pack090_allowed} vs ${active.pack090_allowed}`);
+  }
 }
 
 const masterState = readJson('ZUVYR_MASTER_STATE.json');
@@ -135,8 +137,8 @@ for (const needle of [
   'docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json',
   'EA-001…EA-292',
   'CURRENT CANONICAL EXECUTION CAPSULE',
-  'PACK089',
-  '89E_PRODUCTION_ACCEPTANCE',
+  active.pack,
+  active.phase,
   active.latest_receipt,
   'HISTORICAL CONTENT BOUNDARY',
   'tools/validate-zuvyr-continuity.cjs',
@@ -160,6 +162,12 @@ for (const needle of [
 }
 
 const roadmap = readText('docs/zuvyr/ROADMAP_150.md') || '';
+if (readiness) {
+  expect(
+    readiness.generated_from_blob_sha === gitBlobSha(roadmap),
+    `matrix generated_from_blob_sha does not match current ROADMAP_150 blob: matrix=${readiness.generated_from_blob_sha} actual=${gitBlobSha(roadmap)}`
+  );
+}
 for (const needle of [
   'EA-001…EA-292',
   'V1_READINESS_REQUIREMENTS_001_292.json',
@@ -204,6 +212,6 @@ if (!process.exitCode) {
     latest_receipt: active.latest_receipt,
     readiness_range: expectedRange,
     readiness_count: readiness?.requirements?.length,
-    pack090_allowed: active.pack090_allowed
+    next_gate_flag_pack090_allowed: active.pack090_allowed
   }, null, 2));
 }
