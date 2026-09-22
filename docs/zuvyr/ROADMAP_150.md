@@ -1871,7 +1871,8 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 - **89B acceptance:** install/invoke/replay/fingerprint/revoke lifecycle PASS in production rollback-only acceptance with 0 network/provider/billing mutations and 0 residual rows/grants.
 - **89B receipt:** `zuvyr-pack-evidence/pack-089/2026-09-21-89b/receipt.json`.
 - **89C:** LOCKED_VERIFIED — Google Drive OAuth + Drive tools are live on exact Railway commit `eb7233ec918dd6b550cc2762300a787054d3e5e7`; migration `20260921212845 pack089_89c_google_drive_oauth` applied; real Google OAuth remains an 89E credential gate and fails closed.
-- **89D:** IN_PROGRESS — activate Skills / Plugins / Connections product UI over the existing authenticated PACK089 backend.
+- **89D:** LOCKED_VERIFIED — Skills / Plugins / Connections product UI is deployed to Vercel production from exact Git source and passed product/security regressions.
+- **89E:** IN_PROGRESS — execute production acceptance; real Google OAuth remains gated by missing legitimate client credentials.
 - PACK090 remains blocked until PACK089 is fully LOCKED_VERIFIED.
 
 ## PACK090 — Agent Checkpoint I
