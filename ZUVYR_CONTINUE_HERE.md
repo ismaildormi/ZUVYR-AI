@@ -39,6 +39,25 @@ Before feature work in a new chat/session, verify that `docs/zuvyr/ZUVYR_CONTINU
 Historical status sections may remain for evidence, but a newer dated override/receipt wins. Chat memory is never the only source of truth.
 
 
+## CURRENT CANONICAL EXECUTION CAPSULE — 2026-09-22
+
+This small section is intentionally duplicated from the machine-readable continuity manifest so a human or a fresh chat can identify the legal continuation point before reading historical material.
+
+- **Active Pack:** `PACK089 — Skills / Plugins / MCP / Connections`
+- **Pack status:** `IN_PROGRESS`
+- **Active phase:** `89E_PRODUCTION_ACCEPTANCE`
+- **Phase status:** `BLOCKED_EXTERNAL_GOOGLE_OAUTH_CLIENT_CREDENTIALS`
+- **89A / 89B / 89C / 89D:** `LOCKED_VERIFIED`
+- **89E non-external acceptance:** `PASS`
+- **Latest receipt:** `zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json`
+- **PACK090 allowed:** `NO`
+- **Next legal step:** configure legitimate `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET`, then complete the real owner-scoped Google Drive OAuth acceptance: connect → granted-scope tool call → denied-scope proof → disconnect/revoke → post-revoke denial → audit persistence → Vault/plaintext-secret cleanliness.
+- **Do not fabricate credentials and do not start PACK090 before PACK089 becomes LOCKED_VERIFIED.**
+- **Continuity validator:** `tools/validate-zuvyr-continuity.cjs`
+- **Continuity CI:** `.github/workflows/zuvyr-continuity.yml`
+
+
+
 ### PACK150 readiness invariant
 
 Finishing the numbered Packs is not enough by itself. `V1_READY=true` is allowed only after PACK150 reconciles PACK001–PACK150 plus all applicable `EA-001…EA-292` requirements. Final applicable EA states are only `PASS` or `N/A_WITH_EVIDENCE`; any known/partial/deferred/untested applicable gap blocks V1 readiness. This includes non-critical production-quality gaps, not only P0/P1 items.
@@ -56,7 +75,15 @@ The canonical `docs/zuvyr/ROADMAP_150.md` now includes the mandatory external-ey
 
 ---
 
-## LATEST CANONICAL OVERRIDE — MODEL-FIRST + BYO COMPUTE — 2026-09-19
+## HISTORICAL CONTENT BOUNDARY
+
+Everything below this boundary is preserved for design history, evidence, earlier Pack checkpoints, or superseded sequencing. **Do not infer the current active Pack from any later heading that says CURRENT/LATEST/ACTIVE/NEXT.** Current execution identity comes from the continuity manifest + current execution capsule + newest receipt + fresh production/source evidence.
+
+The owned-model/BYOC design decisions below may remain canonical unless separately superseded, but their old active-Pack sequencing statements are historical.
+
+---
+
+## HISTORICAL OVERRIDE — MODEL-FIRST + BYO COMPUTE — 2026-09-19
 
 This section overrides older active-pack / next-pack text later in this file.
 
