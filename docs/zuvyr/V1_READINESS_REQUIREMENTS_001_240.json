@@ -1,6 +1,7 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "generated_from": "docs/zuvyr/ROADMAP_150.md",
+  "generated_from_blob_sha": "c828010cf7e880d903f0ff5290d1c82f0ee2be01",
   "generated_at": "2026-09-22",
   "canonical_range": "EA-001..EA-240",
   "final_v1_rule": {
@@ -20,7 +21,7 @@
       "ENGINEERING_ONLY",
       "BLOCKED_BUT_ADVERTISED"
     ],
-    "na_rule": "Allowed only when the underlying surface genuinely does not exist anywhere in canonical V1 and is not implied by another V1 capability.",
+    "na_rule": "Allowed only when the underlying surface genuinely does not exist anywhere in canonical V1 and is not implied by another V1 capability; unfinished V1 work cannot be hidden as N/A.",
     "no_known_applicable_gap": true
   },
   "requirements": [
@@ -40,7 +41,7 @@
       "id": "EA-002",
       "requirement_class": "P0",
       "title": "MFA/passkeys and account recovery",
-      "requirement": "Define MFA/passkey support or an explicit V1 non-advertised decision; recovery codes/reset flows must not bypass security controls.",
+      "requirement": "Implement strong MFA with phishing-resistant passkey support where the selected auth/platform stack permits it, plus hardened enrollment, recovery, recovery-code/reset and recent-authentication flows; recovery must not bypass MFA/session controls.",
       "routes": [
         "PACK139",
         "PACK144",
@@ -72,8 +73,8 @@
     {
       "id": "EA-005",
       "requirement_class": "P2",
-      "title": "Enterprise federation decision",
-      "requirement": "SSO/OIDC/SAML and SCIM are either implemented and tested or explicitly outside V1 and not advertised.",
+      "title": "Enterprise federation boundary",
+      "requirement": "If organization/enterprise federation is part of V1, SSO/OIDC/SAML and SCIM are implemented and tested with tenant/role lifecycle controls. If no federation surface exists anywhere in canonical V1, the row may be `N/A_WITH_EVIDENCE`; merely hiding unfinished federation is not sufficient.",
       "routes": [
         "PACK145",
         "PACK149"
@@ -821,8 +822,8 @@
     {
       "id": "EA-075",
       "requirement_class": "P2",
-      "title": "SDK/developer docs decision",
-      "requirement": "Supported client SDKs/examples, changelog and deprecation windows are either shipped or explicitly outside V1.",
+      "title": "SDK/developer docs boundary",
+      "requirement": "If public developer APIs/SDKs are exposed in V1, ship supported examples/docs, changelog and deprecation windows. If no public SDK/API product surface exists, use `N/A_WITH_EVIDENCE`; do not imply developer-platform support without it.",
       "routes": [
         "PACK145",
         "PACK149"
@@ -2264,7 +2265,7 @@
       "id": "EA-205",
       "requirement_class": "V1_REQUIRED_IF_SURFACE_EXISTS",
       "title": "Content Credentials / C2PA decision",
-      "requirement": "For generated/edited media where provenance is material, define whether C2PA/Content Credentials are emitted, preserved, verified or explicitly unsupported. Do not claim authenticity merely from a visible watermark.",
+      "requirement": "For generated/edited media where provenance is material, implement preservation/verification of available C2PA/Content Credentials and emit provenance credentials where ZUVYR controls a compatible export path. Per-asset/provider absence must be represented truthfully; do not claim authenticity merely from a visible watermark.",
       "routes": [
         "PACK065",
         "PACK070",
