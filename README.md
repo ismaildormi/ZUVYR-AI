@@ -8,7 +8,7 @@ ZUVYR brings multimodal chat, research, image and video creation, voice, Code St
 
 ## Explore ZUVYR
 
-[Quickstart](docs/QUICKSTART.md) · [Repository Map](docs/REPOSITORY_MAP.md) · [Product](docs/PRODUCT.md) · [Build with ZUVYR](docs/BUILD_WITH_ZUVYR.md) · [Starter Kits](starter-kits/README.md) · [Architecture](docs/ARCHITECTURE_OVERVIEW.md) · [Security](SECURITY.md) · [Public Use](docs/PUBLIC_USE_POLICY.md) · [Contributing](CONTRIBUTING.md) · [V1 Roadmap](docs/zuvyr/ROADMAP_150.md)
+[Quickstart](docs/QUICKSTART.md) · [Repository Map](docs/REPOSITORY_MAP.md) · [Product](docs/PRODUCT.md) · [Build with ZUVYR](docs/BUILD_WITH_ZUVYR.md) · [Starter Kits](starter-kits/README.md) · [Architecture](docs/ARCHITECTURE_OVERVIEW.md) · [Security](SECURITY.md) · [Public Use](docs/PUBLIC_USE_POLICY.md) · [Contributing](CONTRIBUTING.md) · [V1 Roadmap](docs/zuvyr/ROADMAP_150.md) · [V1 Readiness Audit](docs/zuvyr/V1_READINESS_COMPLETENESS_AUDIT_2026-09-22.md)
 
 
 ## Build with ZUVYR
@@ -19,7 +19,7 @@ Builders can reuse the sanitized resources in `examples/` and `starter-kits/` un
 
 ## ZUVYR V1 — Canonical Product Target
 
-> This README defines the **target required for ZUVYR V1**. It replaces the historical ROX AI / Safe Bridge README as the repository landing page.
+> This README defines the **target required for ZUVYR V1** and is the repository landing page.
 >
 > Detailed execution truth remains in the canonical project-state documents, receipts, migrations, tests and live production evidence. **A feature is not complete merely because code exists.**
 
@@ -28,7 +28,7 @@ Builders can reuse the sanitized resources in `examples/` and `starter-kits/` un
 ZUVYR V1 is complete only when **PACK150** is reached and the complete V1 acceptance surface is genuinely verified.
 
 - PACK001–PACK150 are the execution envelope for V1.
-- The canonical V1 audit contains **EA-001 → EA-240** acceptance items.
+- The canonical V1 audit contains **EA-001 → EA-292** acceptance items.
 - Every applicable acceptance item must finish as **PASS** or **N/A_WITH_EVIDENCE**.
 - `UNKNOWN`, `PARTIAL`, `DEFERRED`, `NOT_TESTED`, `MOCK_ONLY`, code-only, local-only, deploy-only or undocumented assumptions **do not qualify as V1_READY**.
 - Critical **and non-critical** V1 gaps discovered during implementation must be incorporated into the remaining packs instead of being silently deferred.
@@ -160,4 +160,4 @@ Historical ZIP plans, old completion percentages and old README instructions are
 
 The project is being completed sequentially through PACK150. Do not skip unresolved dependencies, manufacture credentials/evidence, or mark a gate complete from mocks. When an external dependency is genuinely unavailable, record the exact blocker and leave production safe.
 
-**PACK150 is the final V1 gate:** ZUVYR may be declared `V1_READY` only after the entire canonical V1 surface—including all applicable EA-001→EA-240 items and all gaps discovered before final acceptance—is PASS or N/A_WITH_EVIDENCE.
+**PACK150 is the final V1 gate:** ZUVYR may be declared `V1_READY` only after the entire canonical V1 surface—including all applicable EA-001→EA-292 items and all gaps discovered before final acceptance—is PASS or N/A_WITH_EVIDENCE.
