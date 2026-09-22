@@ -147,8 +147,8 @@ The current internal HTTP map lives in `docs/API.md`, but it is not automaticall
 
 ## 10. Reuse and licensing
 
-This repository currently does **not** include an explicit open-source license. That means readers should treat the code as reference/source-visible material unless and until the repository owner publishes a license granting reuse rights.
+The intentionally reusable public resources in `examples/` and `starter-kits/` are licensed under **Apache License 2.0**. The rest of the repository remains proprietary unless a separate file or directory license explicitly says otherwise.
 
-The architecture explanations and generic patterns here are intended to teach. Before copying repository code into another project, verify the applicable license and permissions.
+Apache-2.0 does not grant rights to ZUVYR trademarks or branding. Before reusing anything outside those public-resource directories, verify the applicable rights and third-party terms.
 
-See `docs/SAFE_REUSE.md`.
+See `LICENSE`, `docs/PUBLIC_USE_POLICY.md` and `docs/SAFE_REUSE.md`.
