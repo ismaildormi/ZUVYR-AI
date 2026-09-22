@@ -1100,3 +1100,17 @@ Remaining: Implement priced provider-specific reference/variation executor and i
 - **Current phase: 89E Production Acceptance — IN_PROGRESS.**
 - Real Google OAuth acceptance is still externally gated by missing Google OAuth client credentials. PACK090 remains blocked.
 
+### PACK089 / 89E NON-EXTERNAL ACCEPTANCE COMPLETE — EXTERNAL GATE OPEN — 2026-09-22
+
+- PACK089 remains `IN_PROGRESS`; PACK090 remains blocked.
+- 89A / 89B / 89C / 89D are `LOCKED_VERIFIED`.
+- 89E non-external production acceptance passed in rollback-only production transactions.
+- Plugin path proved owner scoping, Vault-only secret reference, deny-before-grant, install, exact tool/fingerprint permission, replay denial, wrong-owner denial, immediate revoke, post-revoke denial and audit emission.
+- Google Drive connection permission path proved exact read scope allow, export/write out-of-scope denial, wrong-owner denial, grant revocation and post-revoke denial, without network calls.
+- Production cleanliness after acceptance: 0 plugin/integration/OAuth/Skill rows, 0 PACK089 grants, 0 consumptions and 0 acceptance audit residue.
+- Vercel production `dpl_4cQzVSs8ZYdasm8NUuZWU5Vk7USD` is READY on main `c8157e82b23d842d55ac5b57c4696275268a2104`.
+- Railway runtime remains SUCCESS on PACK089 89D runtime commit `93c293c215eb67f864397880c1f40b05ed07052c`.
+- Production variables confirm `GOOGLE_API_KEY` exists but no Google OAuth client ID, client secret or redirect URI is configured.
+- **Remaining hard gate:** configure legitimate Google OAuth credentials, then run one real owner-scoped Google Drive OAuth connect -> granted-scope tool call -> denied-scope proof -> disconnect/revoke -> audit + secret-cleanliness verification.
+- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json`.
+

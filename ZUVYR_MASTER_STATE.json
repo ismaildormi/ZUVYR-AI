@@ -2949,7 +2949,7 @@
     "plan_path": "docs/zuvyr/PACK089_EXECUTION_PLAN.md",
     "planning_started_at": "2026-09-21",
     "implementation_started": true,
-    "current_phase": "89E_PRODUCTION_ACCEPTANCE",
+    "current_phase": "89E_PRODUCTION_ACCEPTANCE_BLOCKED_EXTERNAL",
     "phases": {
       "89A_SCHEMA_VAULT_PERMISSION_CENTER": {
         "status": "LOCKED_VERIFIED",
@@ -3107,10 +3107,51 @@
         "receipt_git_blob": "a883de252f3f29b8a43fb353def4ac15a0e3a486"
       },
       "89E_PRODUCTION_ACCEPTANCE": {
-        "status": "IN_PROGRESS",
+        "status": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_CREDENTIALS",
         "started_at": "2026-09-22",
-        "objective": "Production acceptance for owner-scoped connection lifecycle, exact scope enforcement, deny-before-network, immediate revoke blocking, secret redaction, audit persistence, retry/reopen stability and exact deployment identity.",
-        "external_gate": "GOOGLE_OAUTH_CLIENT_CREDENTIALS_MISSING"
+        "checkpoint_at": "2026-09-22T05:40:11.348816Z",
+        "receipt_path": "zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json",
+        "receipt_git_blob": "233eb000110dc3dd2a3dc45e710f2a8ed0d0b5e7",
+        "non_external_acceptance": {
+          "plugin_permission_lifecycle": "PASS_ROLLBACK",
+          "plugin_vault_boundary": "PASS_ROLLBACK",
+          "exact_plugin_tool_fingerprint": "PASS_ROLLBACK",
+          "plugin_replay_block": "PASS_ROLLBACK",
+          "plugin_revoke_block": "PASS_ROLLBACK",
+          "plugin_audit": "PASS_ROLLBACK",
+          "integration_read_scope": "PASS_ROLLBACK",
+          "integration_export_scope_denied": "PASS_ROLLBACK",
+          "integration_write_scope_denied": "PASS_ROLLBACK",
+          "integration_wrong_owner_denied": "PASS_ROLLBACK",
+          "integration_revoke_block": "PASS_ROLLBACK",
+          "integration_audit": "PASS_ROLLBACK",
+          "missing_oauth_credentials_fail_closed_before_network": "PASS_SOURCE_AND_CI",
+          "secret_redaction": "PASS",
+          "retry_reopen_ui": "PASS"
+        },
+        "production_identity": {
+          "github_main": "c8157e82b23d842d55ac5b57c4696275268a2104",
+          "vercel_deployment": "dpl_4cQzVSs8ZYdasm8NUuZWU5Vk7USD",
+          "vercel_status": "READY",
+          "vercel_target": "production",
+          "railway_runtime_commit": "93c293c215eb67f864397880c1f40b05ed07052c"
+        },
+        "cleanliness": {
+          "plugin_rows": 0,
+          "integration_rows": 0,
+          "oauth_rows": 0,
+          "skill_rows": 0,
+          "grants": 0,
+          "consumptions": 0,
+          "audit_rows": 0
+        },
+        "external_gate": {
+          "google_api_key_present": true,
+          "google_oauth_client_id_present": false,
+          "google_oauth_client_secret_present": false,
+          "google_oauth_redirect_uri_present": false,
+          "real_google_oauth_acceptance": "NOT_RUN_MISSING_CREDENTIALS"
+        }
       }
     },
     "foundations": {
@@ -3124,10 +3165,12 @@
     "external_gate": {
       "google_oauth_client_credentials_present": false,
       "google_api_key_present": true,
+      "google_oauth_redirect_uri_present": false,
       "blocks_phase": "89E_REAL_GOOGLE_OAUTH_ACCEPTANCE",
-      "engineering_blocked": false
+      "engineering_blocked": false,
+      "current_status": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_CREDENTIALS"
     },
-    "next_action": "EXECUTE_89E_NON_EXTERNAL_ACCEPTANCE_THEN_GOOGLE_OAUTH_GATE",
+    "next_action": "CONFIGURE_GOOGLE_OAUTH_CREDENTIALS_THEN_RESUME_89E_REAL_ACCEPTANCE",
     "next_pack": "090",
     "next_pack_allowed": false,
     "predecessor": "088"
