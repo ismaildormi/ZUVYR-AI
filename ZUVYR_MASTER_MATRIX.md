@@ -5,6 +5,8 @@ This dated override is the **current-state entry point**. Older Pack headers/sta
 | Field | Current canonical value |
 |---|---|
 | Continuity manifest | `docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json` |
+| Continuity validator | `tools/validate-zuvyr-continuity.cjs` |
+| Continuity CI | `.github/workflows/zuvyr-continuity.yml` |
 | Readiness matrix | `docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json` |
 | V1 readiness range | `EA-001…EA-292` |
 | Active main Pack | `PACK089 — Skills / Plugins / MCP / Connections` |
@@ -19,7 +21,7 @@ This dated override is the **current-state entry point**. Older Pack headers/sta
 
 **Next legal step:** configure legitimate Google OAuth Web client ID + client secret in production, then complete the real owner-scoped Google Drive OAuth acceptance: connect → granted-scope tool call → denied-scope proof → disconnect/revoke → post-revoke denial → audit persistence → secret/Vault cleanliness. Do **not** start PACK090 first.
 
-**Conflict rule:** fresh production/source/receipt evidence beats this override; this override beats older historical matrix sections. If a new session sees disagreement between continuity sources, it must repair/reconcile continuity before feature work rather than guessing.
+**Conflict rule:** fresh production/source/receipt evidence beats this override; this override beats older historical matrix sections. If a new session sees disagreement between continuity sources, or the continuity validator/CI fails, it must repair/reconcile continuity before feature work rather than guessing.
 
 ---
 
