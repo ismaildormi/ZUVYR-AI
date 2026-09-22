@@ -1,202 +1,144 @@
+# ZUVYR V1 — Canonical Product Target
 
-## v0.64 Safe Bridge workflow
+> This README defines the **target required for ZUVYR V1**. It replaces the historical ROX AI / Safe Bridge README as the repository landing page.
+>
+> Detailed execution truth remains in the canonical project-state documents, receipts, migrations, tests and live production evidence. **A feature is not complete merely because code exists.**
 
-Do not copy this ZIP manually over production. Extract it separately and run `ROX-BRIDGE.cmd`. The bridge preserves the existing Git/hosting links and secrets, activates Local, validates the import, and never pushes or deploys automatically. See `docs/SAFE_BRIDGE.md`.
+## V1 completion contract
 
-# ROX AI — مشروع موحد
+ZUVYR V1 is complete only when **PACK150** is reached and the complete V1 acceptance surface is genuinely verified.
 
-هاد المجلد فيه النسخة الوحيدة الصحيحة، مجمعة من الملفات المتفرقة اللي كانت
-عندك من جلسات مختلفة. `rox-ai-backend-v4_pro_max_.zip` و `metricsServer.js`
-(المنفذ 9100) تحيدو عمدا — كانوا نسخ قديمة/موازية كتضارب مع v6.
+- PACK001–PACK150 are the execution envelope for V1.
+- The canonical V1 audit contains **EA-001 → EA-240** acceptance items.
+- Every applicable acceptance item must finish as **PASS** or **N/A_WITH_EVIDENCE**.
+- `UNKNOWN`, `PARTIAL`, `DEFERRED`, `NOT_TESTED`, `MOCK_ONLY`, code-only, local-only, deploy-only or undocumented assumptions **do not qualify as V1_READY**.
+- Critical **and non-critical** V1 gaps discovered during implementation must be incorporated into the remaining packs instead of being silently deferred.
+- Every pack must be re-studied for architecture, UX, security, privacy, reliability, performance, accessibility, cost, integrations and production safety.
+- Preserve previous verified work. Fresh production evidence overrides stale handoffs or historical percentages.
+- No pack is complete before its acceptance evidence and receipt support `LOCKED_VERIFIED`.
 
-## البنية
+## What ZUVYR V1 must be
 
-```
-backend/     — v6 (النسخة الكاملة الوحيدة: hardening + credits + metrics)
-              server.js فيه CORS مفتوح غير على /metrics (باقي الـ API
-              محمي بـ ALLOWED_ORIGINS كيفما كان)
-frontend/    — index.html (رابط واحد كايختار تلقائياً بين واجهة الهاتف
-              وواجهة الحاسوب، فيه Supabase Auth وواجهة الترجمة الكاملة)
-tools/       — rox-ai-telemetry.html (dashboard كيقرا /metrics مباشرة،
-              بأسماء الحقول الصحيحة ديال v6)
-```
+ZUVYR V1 is one integrated AI platform rather than disconnected demos. Chat, Research, Images, Video, Code Studio, Voice/Audio, Computer Control/IP, agents, workspace/library, integrations and account/billing systems must share identity, permissions, usage accounting, context, artifacts and safety boundaries.
 
-## العمارة (Architecture)
+### Intelligence and orchestration
 
-`ARCHITECTURE.md` (فالجذر) فيه الخريطة الكاملة: البنية المعيارية
-(`backend/src/core`, `backend/src/modules`, `backend/src/api/v1`), نظام
-الـ feature flags (`backend/config/feature-flags.json`), وين غيدخل كل
-فيتشر مستقبلي (Teams, Plugins, Agents, Webhooks, إلخ) بلا ما نعاودو
-نكتبو الكود الحالي. الأرقام اللي كانت مكتوبة مباشرة فـ `server.js`
-(تكلفة الكريديت، الحدود) دابا فـ `backend/config/plans.json` و
-`backend/config/models.json`.
+V1 requires a production-grade model/provider registry, capability-aware routing, fallback and health handling, task planning/orchestration, cost-aware execution, retries and idempotency, reservations/settlement/refunds, observability, and explicit failure states. Provider/model abstractions must allow models to be replaced without rewriting product surfaces.
 
-## قبل ما تخدم
+The V1 foundation must also prepare ZUVYR's owned-model path: governed Teacher Gateway, training-rights matrix, Learning Pipeline/Failure Bank, dataset/license/checkpoint lineage, task-success and total-cost-per-success evaluation, and owned-model serving with shadow/canary/rollback. Runtime knowledge access and training rights must remain explicitly separated.
 
-1. `cd backend && npm install` (يخدم دابا — `package.json` مزيد فالمشروع)
-2. Supabase → SQL Editor: خدم `01_schema.sql` حتى `16_settle_credit_charge.sql`
-   **بالترتيب الرقمي** (`10_profile_column_lockdown.sql` كيسد ثغرة كانت
-   كاينة فـ RLS، و`12_extension_schema.sql` جديد — كيزيد أعمدة/جداول
-   فاضيين مقفولين بـ RLS لتحضير المشروع للميزات الجاية، و
-   `13_advisor_optimizer_schema.sql` كيزيد الجداول ديال AI Business
-   Advisor/Auto Optimizer + عمود `profiles.is_admin` — خاصهم يتخدمو حتى
-   هوما، ماشي اختياري، ما كيبدلو أي حاجة كاينة).
-3. عمر `.env` (نسخ من `.env.example`) — خاصك على الأقل:
-   `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `REDIS_URL`
-4. **الوحيد اللي بقا معلق:** راجع `CONFIG` داخل نسختي الهاتف والحاسوب فـ `frontend/index.html`:
-   - `SUPABASE_URL`
-   - `SUPABASE_ANON_KEY`
-   (من نفس مشروع Supabase اللي فـ `.env` ديال backend)
-5. `npm install && ./cli/rox.js setup` (فالجذر ديال المشروع، ماشي فـ `backend/`)
-   — كيدير `npm install`، كيتأكد Redis خدام (ويبداه بـ Docker إلا كانت
-   local وماشي خدامة)، كيطبق `.sql` files إلا عندك `SUPABASE_DB_URL`
-   فـ `.env`، وكيسجل pm2 باش يبداو الخدمات معاه فأي reboot.
-   من بعد: `./cli/rox.js start` — كيبدا السيرفر والـ worker بجوج، ماخصكش
-   تبدا كل واحد فـ terminal بوحدو. الكوماندات الكاملين (start/stop/
-   update/backup/restore/health) فـ `docs/CLI.md`.
-6. افتح `frontend/index.html` (فضل تخدمو بـ local server ماشي
-   `file://` باش الـ Supabase Auth يخدم مزيان)، وزيد العنوان اللي كتفتح
-   منو فـ `ALLOWED_ORIGINS` فـ `.env`
-7. افتح `tools/rox-ai-telemetry.html` وضغط Fetch باش تشوف `/metrics`
-   (إلا عمرتي `METRICS_TOKEN` فـ `.env`، خاصك تدخلو فالـ tool هو الآخر).
-   للـ health check السريع (بلا ما تفتح tool): `./cli/rox.js health`.
-8. **AI Business Advisor / Auto Optimizer** (جديد): بدّل `is_admin` لـ
-   `true` فـ صف `profiles` ديالك فـ Supabase (ماكاينش UI لهادشي بعد —
-   يدوي عمدا، ماشي كل يوزر قادر يولي admin من واجهة). زيد `CRON_SECRET`
-   فـ `.env` وعمر scheduler (cron خارجي، أو Railway/GitHub Actions cron)
-   يضرب `POST /internal/advisor/run-daily` بـ header
-   `x-cron-secret: <CRON_SECRET>` مرة فالنهار. افتح
-   `tools/rox-ai-admin-dashboard.html` (خاصك تدخل فيه توكن Supabase
-   ديال حساب admin) باش تشوف التقرير اليومي، الـ health scores،
-   التوصيات، والـ optimizer.
+### Chat and multimodal
 
-## Docker (طريقة تانية، اختيارية — ماكاتبدلش ./cli/rox.js)
+Production chat must support persistent conversations/history, attachments and files, images, extraction/OCR where applicable, memory/context, sources, web/search and deep-research workflows, tool calls, artifact handling, retries/cancel states, usage visibility and robust multimodal rendering. Conversation operations such as pin/rename/archive/delete must preserve owner isolation and consistency.
 
-الطريقة ديال فوق (`./cli/rox.js setup/start`, pm2) هي الأساسية ومازال
-كتخدم بحالها بلا حتى تبديل. Docker هنا طريقة تانية مستقلة، خاصك بيها إلا
-بغيتي local dev بلا ما تبدا Redis يدوي، أو deployment بلا pm2:
+### Research, web and shopping agents
 
-1. `cp backend/.env.example backend/.env` — عمر بالقيم الحقيقية (نفس
-   الملف اللي كيتقرا فـ CLI path).
-2. `docker compose up --build` (من جذر المشروع) — كيبدا 3 حاجات:
-   `redis` (7-alpine, محلي), `backend` (`backend/Dockerfile`, `node
-   server.js`, بورت 3001), و`worker` (`backend/Dockerfile.worker`, `node
-   worker.js`, ماعندوش بورت).
-3. `docker compose logs -f backend` / `worker` — باش تشوف الـ logs
-   (`docker logs` هو المعادل ديال pm2's out/err files هنا).
-4. `docker compose down` (وقف + مسح الـ containers)، أو `docker compose
-   down -v` باش تمسح معاها الـ Redis volume.
+V1 must support multi-source research, evidence/provenance, citations, source quality handling, long-running task state, cancellation/recovery and useful result synthesis. Shopping/recommendation workflows must be capability-aware and integrate with the same task, permission and accounting foundation.
 
-Supabase/Stripe/Anthropic/OpenRouter/Replicate بقاو خدمات خارجية فـ
-الحالتين بجوج (CLI ولا Docker) — الفرق الوحيد هو Redis (كيخدم local
-داخل compose) وشكل الـ process supervision (pm2 مقابل `restart:
-unless-stopped` ديال Docker). تفاصيل أكثر فـ `ARCHITECTURE.md` §13.
+### Images
 
-**ماشي مبني بعد**: automated backup ديال deployment المبني بـ Docker
-(`rox backup`/`restore` مازالهم كيفترضو الطريقة ديال pm2/bare-metal —
-شوف `ARCHITECTURE.md` §12). CI و CD (build + push تلقائي) دابا
-موجودين — شوف تحت. Staging deployment و Production deployment دابا هوما
-الآخرين موجودين (شوف تحت).
+V1 image workflows include generation, reference-image use, editing, variations, background removal, upscale, inpainting/targeted edits, expansion, history/library integration, download/export, retry/cancel and correct credit settlement/refund behavior. Generated media and prompts must render correctly across chat and dedicated image surfaces.
 
-## CI (build + test تلقائي على كل push/PR)
+### Video
 
-`.github/workflows/ci.yml` — كيخدم وحدو على GitHub Actions، ماكاين
-حتى إعداد يدوي. أربع خطوات، خاصهم يعديو بلا مشاكل قبل ما يتدمج أي PR
-فـ `main`:
+V1 video workflows include text-to-video, image-to-video, job lifecycle/progress, preview, edit/extend, subtitles, dubbing, enhancement, export/download, cancellation, lineage/history and failure/refund reconciliation. Long-running generation must be durable and idempotent.
 
-1. **lint** — syntax check ديال كل ملفات `.js` (`node --check`)، صحة
-   الـ JSON ديال `package.json`، وصحة `docker-compose.yml`.
-2. **test-cli** — `npm run test:cli` (5 ملفات، 38 test).
-3. **test-backend** — `npm run test:unit` فـ `backend/` (mocked
-   Supabase، ماخصوش database حقيقية).
-4. **docker-build** — كيبني الجوج images (`backend/Dockerfile`,
-   `Dockerfile.worker`) باش يتأكد أنهم قابلين للبناء — بلا push لحتى
-   registry (هادشي ديال CD).
+### Code Studio
 
-تفاصيل أكثر فـ `ARCHITECTURE.md` §13a.
+Code Studio must provide projects/files, editor, terminal/sandbox, build/test, preview, artifact/ZIP handling and AI-assisted coding workflows. It must interoperate with other ZUVYR capabilities—for example requesting or consuming generated images/video—without bypassing permission, usage or security controls.
 
-## CD (build + push تلقائي ديال الـ images)
+### Voice and audio
 
-`.github/workflows/cd.yml` — كيخدم بعد ما CI ينجح فـ `main` (ولا على
-tag `v*.*.*`، ولا يدوي بـ `workflow_dispatch`). كيبني ويدير push ديال
-`backend` و`worker` images لـ **GHCR** (`ghcr.io`) — بلا حتى secret
-زايد، كيستعمل `GITHUB_TOKEN` اللي كاين ديجا. **ماكايديرش deploy** —
-غير build + push ديال الـ image، حيت مازال ماشي مقرر Railway ولا
-Render ولا platform آخر (شوف `ARCHITECTURE.md` §13b).
+V1 includes speech-to-text, text-to-speech and the planned audio workflows, plus production realtime voice with explicit session state, microphone/STOP controls, interruption/barge-in, transcript turns, retention rules, usage accounting and safe provider/cost gates.
 
-تفاصيل أكثر فـ `ARCHITECTURE.md` §13b.
+### ZUVYR IP / computer control
 
-## Staging Deployment (deploy تلقائي بعد CD)
+Computer-control/IP must be permission-bound, auditable and revocable. Missions/tasks must use explicit grants, scoped capabilities, owner isolation, safe execution boundaries, cancellation and terminal-state reconciliation. Computer control must be able to reach the appropriate ZUVYR capabilities without becoming an authorization bypass.
 
-`.github/workflows/deploy-staging.yml` — كيخدم من بعد ما CD (فوق) ينجح
-فـ push للـ `main`، ولا يدوي بـ `workflow_dispatch`. كياخد الـ images
-اللي CD دابا زاد فـ GHCR وكيدير عليهم deploy فـ SSH لأي server عندك
-فيه Docker — provider-agnostic بحال CD، حيت مازال ماشي مقرر Railway
-ولا Render (نفس السبب).
+### Agents, automations and Brain Kernel
 
-- محتاج GitHub Environment سميتو `staging` فيه 5 secrets (SSH host/user/
-  key/port/deploy-dir) — التفاصيل الكاملة فـ `docs/DEPLOYMENT.md`.
-- الـ secrets ديال التطبيق (Supabase، Stripe...) ماكايعديوش من GitHub
-  Actions — كايبقاو فـ ملف `.env` مباشرة فـ server، بحال `backend/.env`
-  بالضبط.
-- بعد كل deploy، كايدير health check على `/healthz` (نفسها اللي
-  `rox health` كيستعمل). إلا فشلت، كايدير rollback أوتوماتيكي للـ tag
-  اللي كان خدام قبل، بلا ما يبقى staging وقف.
-- Rollback يدوي ممكن من `workflow_dispatch` بـ `rollback: true`.
+V1 must support durable tasks, workflows, scheduling/automation, permission-bound execution and the Brain Kernel execution path. Funding/caps, grants, retries, reservations, terminal success/failure/refund states and idempotency must be production-authoritative so retrying a task cannot double-charge or duplicate unintended execution.
 
-تفاصيل أكثر (setup ديال server، secrets، troubleshooting) فـ
-`docs/DEPLOYMENT.md` و `ARCHITECTURE.md` §13c.
+### Workspace, library and creations
 
-## Production Deployment (blue/green، deploy يدوي غير)
+Projects, library items, creations, templates and generated artifacts must have durable schemas, ownership, validation, lineage and lifecycle operations. Cross-feature artifacts must be reusable without copying insecure references or losing provenance.
 
-`.github/workflows/deploy-production.yml` — كيخدم غير يدوي
-(`workflow_dispatch` بـ tag محدد)، ماكايتشغلش تلقائي بعد CD ولا بعد
-staging بحال deploy-staging.yml — production خاصو إنسان يختار الـ tag
-بيديه، وخاص GitHub Environment سميتو `production` (فيه required
-reviewers) يوافق قبل ما يبدا أي SSH.
+### Integrations and connections
 
-- **Zero-downtime**: `backend-blue` و`backend-green` خدامين بجوج
-  ديما — nginx قدامهم كيقرر شكون كيدير traffic حقيقي. كل deploy
-  كيمشي غير للـ color اللي ماشي active، كيدير عليه health check
-  مباشرة (بلا nginx)، ومن بعد كيدير `nginx -s reload` (graceful،
-  بلا ما يوقع request حتى وحدة). إلا فشل الـ health check، الـ
-  color اللي active ماكيتبدلش والـ production ماكيتأثرش خالص.
-- **Rollback**: instant — غير flip ديال nginx للـ color اللي كان
-  active قبل، بلا pull ولا restart، حيت هو باقي خدام.
-- محتاج GitHub Environment سميتو `production` فيه 5 secrets (نفس
-  البنية ديال staging) + required reviewers — التفاصيل الكاملة فـ
-  `docs/DEPLOYMENT.md`.
+Connections such as Google services must use real OAuth where required, least-privilege scopes, explicit consent, encrypted/controlled secret handling, granted-scope proof, denied-scope behavior, disconnect/revoke behavior and auditability. A connected external account must never imply unrestricted tool permission.
 
-تفاصيل أكثر فـ `docs/DEPLOYMENT.md` و `ARCHITECTURE.md` §13d.
+### Identity, accounts and personalization
 
-## آخر تصليحات (قبل الإطلاق)
+V1 requires production authentication/session handling, profiles, settings, persistent user state, account lifecycle, secure authorization boundaries and coherent cross-device behavior. User-facing state must not depend on client-side claims for privileged fields.
 
-- **`worker.js`**: الموديلات ديال Replicate (صورة/فيديو) كانو بـ hash
-  غلط/ناقص — image/video ما كانوش غادي يخدمو والو. تصلحو، وفيتشر
-  الفيديو دابا كيستعمل موديل text-to-video حقيقي بدل ما كان كيبعث النص
-  كأنه صورة.
-- **`server.js`**: إلى طاح Redis بزربة بين إنشاء الـ job وإضافتو للـ queue،
-  دابا كيتعمل refund تلقائي بدل ما يبقى الـ job معلق للأبد وهو مخصوم
-  عليه.
-- **`10_profile_column_lockdown.sql`** (جديد): كان اليوزر يقدر تقنيا يبدل
-  `credits_total`/`subscription_status` ديالو من المتصفح مباشرة (RLS
-  كانت كتشيك غير على الـ row، ماشي على الأعمدة). دابا محمي بـ trigger.
-- **`/metrics`**: زدنا `METRICS_TOKEN` اختياري (فـ `.env.example`) باش
-  ماشي أي حد عندو الرابط يشوف المارج الحقيقي ديالك.
+### Plans, credits, usage and billing
 
-## Windows one-click manager (v0.63)
+All paid/limited capabilities must use one authoritative usage system: pricing/model registry, reserve → execute → settle/refund, ledger/audit trail, plan allowances, caps and rate/resource limits. Retries and failures must not double-charge. Billing activation is controlled separately from implementation; historical test authorization must never silently enable live billing.
 
-On Windows, extract the release ZIP and double-click `ROX-MANAGER.cmd`.
-The manager centralizes setup, configuration, start/stop/restart, health repair,
-full tests, logs, backups/restores, safe ZIP updates with rollback, Supabase
-migrations, Stripe sandbox tools, Railway/Vercel deploy helpers, and a redacted
-support-report ZIP.
+### Admin, operations and observability
 
-First run:
+V1 needs operational dashboards and evidence for service health, jobs/tasks, usage/cost, provider health, failures, abuse/security signals and reconciliation. Backend, worker, maintenance/scheduler and frontend deployments must have verifiable health and rollback/recovery paths.
 
-1. Double-click `ROX-SETUP.cmd`.
-2. Enter the service values when prompted. Secrets are written only to
-   `backend/.env`; browser-safe values are written to `frontend/rox-config.js`.
-3. Use `ROX-MANAGER.cmd` for all later work.
+## Security baseline — mandatory, not optional hardening
 
-Detailed instructions: `docs/WINDOWS_ONE_CLICK.md`.
+Owner isolation alone is insufficient. Every applicable endpoint/tool/resource must enforce systematic authorization and least privilege.
+
+V1 must address the relevant OWASP API risk classes, including:
+
+- object-level authorization / BOLA;
+- broken authentication and session handling;
+- object-property authorization / mass assignment;
+- function-level authorization;
+- unrestricted resource consumption and abuse/rate limits;
+- SSRF and outbound-request controls;
+- unsafe consumption of third-party APIs;
+- security misconfiguration;
+- inventory/version/deprecated-endpoint control;
+- sensitive-data and secret handling.
+
+This applies consistently to REST/API routes, tools, agents, background workers, queues, storage objects, files, projects, conversations, generations, OAuth connections, computer-control grants and admin operations. Tests must include positive authorization and negative denial/revocation paths.
+
+## Reliability and data integrity
+
+V1 must tolerate retries, duplicate delivery, worker restarts and partial provider failures without corrupting user state or money. Durable operations need idempotency keys/constraints, authoritative terminal states, reservation reconciliation, cancellation semantics, dead/stale work recovery and cleanup. Database migrations and RLS/policies must be production-verified, not merely present in source.
+
+## UX and accessibility
+
+Every advertised V1 capability needs a complete user path: discover → configure/consent → execute → progress → success/failure → retry/cancel where relevant → history/artifact → usage/cost visibility. Empty/loading/error/denied/offline or unavailable states must be intentional. Mobile and desktop behavior, keyboard/accessibility semantics, localization-ready text and consistent ZUVYR identity are part of V1 quality.
+
+## Performance and cost
+
+Performance, provider latency, queue pressure, payload/file limits, storage lifecycle, resource consumption and total cost per successful task are acceptance concerns. Routing should optimize successful outcomes and cost without hiding degraded quality. Expensive capabilities require explicit pricing/cost gates and measurable usage.
+
+## User outcome layer
+
+ZUVYR should not merely expose tools. It should help the user turn intent into useful outcomes through contextual next actions and connected capabilities. Suggestion/action flows should preserve conversation/project context and make the next legitimate step executable when the platform has permission and capability to do so.
+
+## Production acceptance rule
+
+For a pack to become `LOCKED_VERIFIED`, use the strongest safe evidence applicable to it:
+
+1. reconcile fresh GitHub `main`, PR/CI state and canonical docs;
+2. verify required Supabase production migrations/schema/RLS;
+3. verify relevant Railway/Vercel production deployment and runtime health;
+4. execute controlled production acceptance, including denial/failure paths;
+5. prove authorization, idempotency, accounting and cleanup where relevant;
+6. ensure no unintended provider/customer execution occurred;
+7. remove acceptance fixtures and leave production safe;
+8. create/update the pack receipt and canonical state documents.
+
+A green deployment by itself is **not** completion.
+
+## Canonical continuity
+
+Before continuing implementation, read the canonical continuity chain in this order and reconcile it with live systems:
+
+`ZUVYR_CONTINUE_HERE` → `ZUVYR_MASTER_STATE` → `ZUVYR_MASTER_MATRIX` → `ROADMAP_150` → V1 readiness audit/JSON → user-outcome specification → pack execution appendix → latest pack receipt → fresh GitHub/Supabase/Railway/Vercel evidence.
+
+Historical ZIP plans, old completion percentages and old README instructions are context only when they conflict with fresher canonical/live evidence.
+
+## Current execution boundary
+
+The project is being completed sequentially through PACK150. Do not skip unresolved dependencies, manufacture credentials/evidence, or mark a gate complete from mocks. When an external dependency is genuinely unavailable, record the exact blocker and leave production safe.
+
+**PACK150 is the final V1 gate:** ZUVYR may be declared `V1_READY` only after the entire canonical V1 surface—including all applicable EA-001→EA-240 items and all gaps discovered before final acceptance—is PASS or N/A_WITH_EVIDENCE.
