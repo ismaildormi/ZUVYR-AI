@@ -1,0 +1,4368 @@
+{
+  "schema_version": "2.0",
+  "generated_from": "docs/zuvyr/ROADMAP_150.md",
+  "generated_from_blob_sha": "47d3ef07c644757f31c91e53fffdcd7df84a75df",
+  "generated_at": "2026-09-22",
+  "canonical_range": "EA-001..EA-292",
+  "supersedes": "docs/zuvyr/V1_READINESS_REQUIREMENTS_001_240.json",
+  "final_v1_rule": {
+    "pack150_only_v1_ready": true,
+    "allowed_final_requirement_states": [
+      "PASS",
+      "N/A_WITH_EVIDENCE"
+    ],
+    "blocked_final_states": [
+      "KNOWN_GAP",
+      "UNKNOWN",
+      "DEFERRED",
+      "NOT_TESTED",
+      "PARTIAL",
+      "SOURCE_ONLY",
+      "MOCK_ONLY",
+      "ENGINEERING_ONLY",
+      "BLOCKED_BUT_ADVERTISED"
+    ],
+    "na_rule": "Allowed only when the underlying surface genuinely does not exist anywhere in canonical V1 and is not implied by another V1 capability; canonical V1 work cannot be hidden, removed, relabeled or disabled merely to obtain V1_READY.",
+    "no_known_applicable_gap": true,
+    "fresh_gap_audit_before_pack148": true,
+    "cold_start_reconstruction_test": true
+  },
+  "requirements": [
+    {
+      "id": "EA-001",
+      "requirement_class": "P0",
+      "title": "Strong session/device security",
+      "requirement": "Explicit secure-cookie/token lifecycle, rotation, logout-all, device/session inventory, revocation propagation, fixation/replay defenses, suspicious-session handling.",
+      "routes": [
+        "PACK123",
+        "PACK139",
+        "PACK144",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-002",
+      "requirement_class": "P0",
+      "title": "MFA/passkeys and account recovery",
+      "requirement": "Implement strong MFA with phishing-resistant passkey support where the selected auth/platform stack permits it, plus hardened enrollment, recovery, recovery-code/reset and recent-authentication flows; recovery must not bypass MFA/session controls.",
+      "routes": [
+        "PACK139",
+        "PACK144",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-003",
+      "requirement_class": "P0",
+      "title": "Organization/team/RBAC closure",
+      "requirement": "Owner/admin/member/service identities, invitations, removal, ownership transfer, least privilege and cross-tenant denial must be explicit rather than inferred from owner scoping.",
+      "routes": [
+        "PACK139",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-004",
+      "requirement_class": "P1",
+      "title": "API keys/service accounts",
+      "requirement": "If automation/API access is exposed, use scoped, revocable, expiring credentials with last-used visibility, hash-at-rest semantics and no browser disclosure. Otherwise keep the surface absent.",
+      "routes": [
+        "PACK125",
+        "PACK126",
+        "PACK145",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-005",
+      "requirement_class": "P2",
+      "title": "Enterprise federation boundary",
+      "requirement": "If organization/enterprise federation is part of V1, SSO/OIDC/SAML and SCIM are implemented and tested with tenant/role lifecycle controls. If no federation surface exists anywhere in canonical V1, the row may be `N/A_WITH_EVIDENCE`; merely hiding unfinished federation is not sufficient.",
+      "routes": [
+        "PACK145",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-006",
+      "requirement_class": "P0",
+      "title": "OAuth BCP closure",
+      "requirement": "Exact redirect matching, PKCE/state/nonce where applicable, refresh-token rotation/reuse detection, no open redirectors, minimum scopes and reconnect/revoke tests.",
+      "routes": [
+        "PACK125",
+        "PACK139",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-007",
+      "requirement_class": "P0",
+      "title": "Direct and indirect prompt-injection defense",
+      "requirement": "Treat web pages, emails, files, RAG chunks, plugin output and model output as untrusted data; they may not silently create authority or widen permissions.",
+      "routes": [
+        "PACK122",
+        "PACK127",
+        "PACK139",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-008",
+      "requirement_class": "P0",
+      "title": "Excessive-agency prevention",
+      "requirement": "Capability minimization, least-privilege scopes, consequence classes, approval boundaries, STOP/revoke propagation and bounded autonomy for browser/device/connector/Manager actions.",
+      "routes": [
+        "PACK122",
+        "PACK126",
+        "PACK127",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-009",
+      "requirement_class": "P0",
+      "title": "Improper model/tool output handling",
+      "requirement": "Validate/sanitize outputs before SQL, shell, HTML/DOM, URL navigation, file paths, code execution, connector actions or downstream tool calls.",
+      "routes": [
+        "PACK118",
+        "PACK122",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-010",
+      "requirement_class": "P0",
+      "title": "Sensitive-information/system-prompt leakage tests",
+      "requirement": "Secrets, hidden prompts, connector tokens, other tenants' content and operator data must not become model-visible unless specifically required and authorized.",
+      "routes": [
+        "PACK139",
+        "PACK147",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-011",
+      "requirement_class": "P0",
+      "title": "Unbounded-consumption controls",
+      "requirement": "Bound model/tool loops, recursion, token growth, browser steps, code repair loops, media retries and parallel fan-out; enforce per-task and per-user budgets before cost is incurred.",
+      "routes": [
+        "PACK119",
+        "PACK128",
+        "PACK139",
+        "PACK142"
+      ]
+    },
+    {
+      "id": "EA-012",
+      "requirement_class": "P0",
+      "title": "Multi-agent delegation contract",
+      "requirement": "Child/sub-agents may inherit only the minimum subset of parent authority; delegated scope, depth, budget and consequence receipts are explicit.",
+      "routes": [
+        "PACK122",
+        "PACK127",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-013",
+      "requirement_class": "P0",
+      "title": "Tool/skill provenance and integrity",
+      "requirement": "Pin tool identity/version/schema/permissions; changed tools cannot inherit old approval. Signed/verified package or manifest provenance is required for trusted skills/plugins.",
+      "routes": [
+        "PACK126",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-014",
+      "requirement_class": "P0",
+      "title": "Agent egress controls",
+      "requirement": "SSRF, DNS rebinding, metadata/internal-network access, arbitrary redirects and data exfiltration paths are tested across browser, Code, plugins and device actions, not only Preview.",
+      "routes": [
+        "PACK118",
+        "PACK121",
+        "PACK127",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-015",
+      "requirement_class": "P1",
+      "title": "High-risk Manager change control",
+      "requirement": "Break-glass actions, destructive/admin mutations and security/billing changes require stronger approval policy, explicit audit identity and rollback; support two-person approval where consequence warrants it.",
+      "routes": [
+        "PACK092",
+        "PACK143"
+      ]
+    },
+    {
+      "id": "EA-016",
+      "requirement_class": "P0",
+      "title": "Retrieval-quality evaluation",
+      "requirement": "Versioned eval sets for recall/precision/relevance, reranking, missing-evidence behavior and permission-preserving retrieval.",
+      "routes": [
+        "PACK102",
+        "PACK105",
+        "PACK134",
+        "PACK137"
+      ]
+    },
+    {
+      "id": "EA-017",
+      "requirement_class": "P0",
+      "title": "Citation/source fidelity",
+      "requirement": "Citation must point to the exact supporting source/version; stale, conflicting, inaccessible or weakly supporting sources are surfaced rather than presented as proof.",
+      "routes": [
+        "PACK102",
+        "PACK134",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-018",
+      "requirement_class": "P1",
+      "title": "Freshness/temporal grounding",
+      "requirement": "Time-sensitive research records retrieval time, source version/freshness and distinguishes historical from current evidence.",
+      "routes": [
+        "PACK102",
+        "PACK105",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-019",
+      "requirement_class": "P0",
+      "title": "RAG/vector poisoning defense",
+      "requirement": "Embedding/vector records retain owner/source/provenance/trust state; malicious or newly unauthorized chunks cannot silently contaminate another task/tenant.",
+      "routes": [
+        "PACK105",
+        "PACK132",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-020",
+      "requirement_class": "P1",
+      "title": "Embedding/index lifecycle",
+      "requirement": "Model/version changes require versioned reindex, compatibility policy, rollback and no mixed-index ambiguity.",
+      "routes": [
+        "PACK105",
+        "PACK132",
+        "PACK145"
+      ]
+    },
+    {
+      "id": "EA-021",
+      "requirement_class": "P0",
+      "title": "Memory poisoning/conflict hygiene",
+      "requirement": "New memories are attributable, reviewable and revocable; contradictory/stale/low-confidence memory cannot silently override explicit current user instructions.",
+      "routes": [
+        "PACK105",
+        "PACK131",
+        "PACK139",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-022",
+      "requirement_class": "P1",
+      "title": "Memory lifecycle",
+      "requirement": "Expiry/decay/archive rules, project/account boundary changes, deleted-source behavior and hard-forget propagation are tested at scale.",
+      "routes": [
+        "PACK105",
+        "PACK140"
+      ]
+    },
+    {
+      "id": "EA-023",
+      "requirement_class": "P0",
+      "title": "Hallucination/uncertainty behavior",
+      "requirement": "High-consequence factual flows define abstention/verification rules, confidence is not fabricated, and unsupported claims do not become durable memory/training truth.",
+      "routes": [
+        "PACK134",
+        "PACK147",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-024",
+      "requirement_class": "P1",
+      "title": "Search-index quality and repair",
+      "requirement": "Index lag, reindex, corrupt/missing records, deep-link stability and permission changes are observable and repairable.",
+      "routes": [
+        "PACK105",
+        "PACK142"
+      ]
+    },
+    {
+      "id": "EA-025",
+      "requirement_class": "P0",
+      "title": "End-to-end distributed tracing",
+      "requirement": "Correlate user request → Brain/task → Router/model → tool/connector → queue/worker → DB/storage → settlement with privacy-safe IDs and sampling. Prefer OpenTelemetry-compatible semantics.",
+      "routes": [
+        "PACK091",
+        "PACK143"
+      ]
+    },
+    {
+      "id": "EA-026",
+      "requirement_class": "P0",
+      "title": "Telemetry privacy contract",
+      "requirement": "No prompt/file/secret/customer-content capture by default; field allowlists, redaction, retention and access controls apply to logs/traces/crash reports.",
+      "routes": [
+        "PACK091",
+        "PACK139",
+        "PACK140"
+      ]
+    },
+    {
+      "id": "EA-027",
+      "requirement_class": "P1",
+      "title": "Client crash/performance telemetry",
+      "requirement": "Web/Windows/Android/iOS startup crashes, fatal JS/native errors, ANR/hangs and release-version correlation are measurable without collecting unnecessary content.",
+      "routes": [
+        "PACK091",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-028",
+      "requirement_class": "P0",
+      "title": "Tamper-evident audit trail",
+      "requirement": "Security, permission, billing, connector, Manager, model-promotion and destructive actions have actor/resource/time/outcome receipts with integrity protection and retention policy.",
+      "routes": [
+        "PACK091",
+        "PACK139",
+        "PACK143"
+      ]
+    },
+    {
+      "id": "EA-029",
+      "requirement_class": "P1",
+      "title": "Feature/config/kill-switch governance",
+      "requirement": "Every risky capability has owner, default state, rollout stage, emergency disable path, audit event and stale-flag cleanup policy.",
+      "routes": [
+        "PACK091",
+        "PACK143",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-030",
+      "requirement_class": "P1",
+      "title": "Telemetry schema governance",
+      "requirement": "Version event schemas; define required dimensions/denominators, late events, duplicate suppression and data-quality alarms before analytics drive decisions.",
+      "routes": [
+        "PACK091",
+        "PACK134"
+      ]
+    },
+    {
+      "id": "EA-031",
+      "requirement_class": "P1",
+      "title": "Public status and incident communication path",
+      "requirement": "Service status, user-impact summary, incident updates and post-incident record are defined for launch.",
+      "routes": [
+        "PACK143",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-032",
+      "requirement_class": "P0",
+      "title": "Zero-downtime schema evolution",
+      "requirement": "Expand/backfill/contract discipline, idempotent backfills, compatibility windows, rollback/forward-fix plan and large-table lock-risk checks.",
+      "routes": [
+        "PACK141",
+        "PACK145",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-033",
+      "requirement_class": "P0",
+      "title": "Queue poison/DLQ/backpressure",
+      "requirement": "Poison jobs, retries, dead-letter handling, replay authorization, queue saturation and duplicate delivery are explicit across media/agent/code workloads.",
+      "routes": [
+        "PACK115",
+        "PACK127",
+        "PACK142"
+      ]
+    },
+    {
+      "id": "EA-034",
+      "requirement_class": "P0",
+      "title": "Transactional event/outbox integrity",
+      "requirement": "Where DB state and external async work must agree, prevent committed-without-event / event-without-commit gaps and make retries idempotent.",
+      "routes": [
+        "PACK122",
+        "PACK142"
+      ]
+    },
+    {
+      "id": "EA-035",
+      "requirement_class": "P1",
+      "title": "DB operational health",
+      "requirement": "Pool saturation, long queries, lock/deadlock, index drift, vacuum/storage growth and connection exhaustion have observable limits and recovery.",
+      "routes": [
+        "PACK142",
+        "PACK143"
+      ]
+    },
+    {
+      "id": "EA-036",
+      "requirement_class": "P0",
+      "title": "Backup immutability/PITR",
+      "requirement": "Define immutable/offline-or-separated backup protection where available, point-in-time recovery expectations and restore integrity checks.",
+      "routes": [
+        "PACK141"
+      ]
+    },
+    {
+      "id": "EA-037",
+      "requirement_class": "P0",
+      "title": "Explicit RTO/RPO",
+      "requirement": "Recovery-time and recovery-point objectives are stated per critical store/service and actually measured by the restore drill.",
+      "routes": [
+        "PACK141",
+        "PACK143"
+      ]
+    },
+    {
+      "id": "EA-038",
+      "requirement_class": "P1",
+      "title": "Region/provider outage posture",
+      "requirement": "Either prove failover/recovery for critical dependencies or explicitly document accepted single-region/provider risk and degraded mode.",
+      "routes": [
+        "PACK141",
+        "PACK142",
+        "PACK143"
+      ]
+    },
+    {
+      "id": "EA-039",
+      "requirement_class": "P1",
+      "title": "Object-storage durability lifecycle",
+      "requirement": "Versioning/replication where appropriate, orphan detection, corruption/hash checks, signed-link renewal and restore behavior.",
+      "routes": [
+        "PACK113",
+        "PACK141"
+      ]
+    },
+    {
+      "id": "EA-040",
+      "requirement_class": "P1",
+      "title": "Controlled chaos/fault injection",
+      "requirement": "Validate DB/Redis/provider/storage/network/worker restart failures under nonbillable or approved bounded conditions.",
+      "routes": [
+        "PACK142",
+        "PACK143"
+      ]
+    },
+    {
+      "id": "EA-041",
+      "requirement_class": "P1",
+      "title": "Cache/CDN correctness",
+      "requirement": "Cache keys must include authorization-sensitive dimensions; private responses are never shared; invalidation and stale-while-revalidate behavior are tested.",
+      "routes": [
+        "PACK139",
+        "PACK142",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-042",
+      "requirement_class": "P1",
+      "title": "Clock/lease correctness",
+      "requirement": "Clock skew, expired leases, scheduler locks and reconnect races do not duplicate automation or settlement.",
+      "routes": [
+        "PACK124",
+        "PACK142"
+      ]
+    },
+    {
+      "id": "EA-043",
+      "requirement_class": "P0",
+      "title": "SBOM/dependency/license inventory",
+      "requirement": "Release artifacts enumerate direct/transitive dependencies and relevant licenses; unsupported or critically vulnerable dependencies block release or have an explicit exception.",
+      "routes": [
+        "PACK117",
+        "PACK144",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-044",
+      "requirement_class": "P0",
+      "title": "Dependency/container vulnerability gates",
+      "requirement": "Automated package/container scanning, patch policy and vulnerability ownership are part of release qualification.",
+      "routes": [
+        "PACK117",
+        "PACK139",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-045",
+      "requirement_class": "P0",
+      "title": "Artifact provenance/signing",
+      "requirement": "Web build manifest, server/container image, Windows/Android/iOS artifacts, plugins and owned-model artifacts are tied to exact source and checksum/signature.",
+      "routes": [
+        "PACK126",
+        "PACK144",
+        "PACK147",
+        "PACK150"
+      ]
+    },
+    {
+      "id": "EA-046",
+      "requirement_class": "P0",
+      "title": "Browser security baseline",
+      "requirement": "CSP, CSRF strategy, CORS allowlists, secure cookie attributes, clickjacking protection, MIME/sniffing policy and trusted-origin review.",
+      "routes": [
+        "PACK118",
+        "PACK139",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-047",
+      "requirement_class": "P1",
+      "title": "Secret scanning and rotation",
+      "requirement": "CI/repository/build artifacts are scanned for secrets; production credentials have ownership, rotation/revocation and compromise procedure.",
+      "routes": [
+        "PACK139",
+        "PACK143",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-048",
+      "requirement_class": "P1",
+      "title": "KMS/envelope-encryption decision",
+      "requirement": "Sensitive connector/BYOC secrets use an explicit server-side encryption/key-versioning design; document platform-managed versus application-managed key boundaries.",
+      "routes": [
+        "PACK125",
+        "PACK139",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-049",
+      "requirement_class": "P0",
+      "title": "Code Studio security scanning",
+      "requirement": "Generated/imported code is checked for secrets, dangerous package/install behavior and license/provenance risks before export/deploy; sandbox egress/resource limits remain authoritative.",
+      "routes": [
+        "PACK117",
+        "PACK120",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-050",
+      "requirement_class": "P0",
+      "title": "Dataset/checkpoint cryptographic identity",
+      "requirement": "Exact hashes, tokenizer/prompt-template/config versions and immutable lineage for every promoted model artifact.",
+      "routes": [
+        "PACK132",
+        "PACK147"
+      ]
+    },
+    {
+      "id": "EA-051",
+      "requirement_class": "P0",
+      "title": "Reproducible training environment",
+      "requirement": "Code commit, base model, dataset snapshot, environment/container, hyperparameters, random seeds where meaningful and compute target are retained for candidate reproduction.",
+      "routes": [
+        "PACK132",
+        "PACK147"
+      ]
+    },
+    {
+      "id": "EA-052",
+      "requirement_class": "P0",
+      "title": "Model safety/red-team regression",
+      "requirement": "Prompt injection, sensitive leakage, harmful tool use, jailbreak robustness, tool-call correctness and authorization behavior are tested before promotion.",
+      "routes": [
+        "PACK136",
+        "PACK147",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-053",
+      "requirement_class": "P1",
+      "title": "Drift monitoring",
+      "requirement": "Detect production task-quality, latency, failure mix, language/domain and routing drift; promotion decisions do not rely only on static benchmarks.",
+      "routes": [
+        "PACK134",
+        "PACK137",
+        "PACK147"
+      ]
+    },
+    {
+      "id": "EA-054",
+      "requirement_class": "P1",
+      "title": "Model/system cards",
+      "requirement": "Each production owned model has scope, intended uses, limitations, eval set/version, safety findings, known failures, serving requirements and rollback target.",
+      "routes": [
+        "PACK147",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-055",
+      "requirement_class": "P0",
+      "title": "BYOC endpoint trust",
+      "requirement": "Endpoint ownership, TLS/auth, capability attestation, tenant isolation, credential lifecycle, health proof and compromised-endpoint revocation are explicit.",
+      "routes": [
+        "PACK135",
+        "PACK139",
+        "PACK147"
+      ]
+    },
+    {
+      "id": "EA-056",
+      "requirement_class": "P1",
+      "title": "GPU resource admission",
+      "requirement": "VRAM/CPU/RAM/disk/concurrency/batching/warmup/scale-to-idle limits prevent one model/session from destabilizing the host; measured cost and latency stay attributable.",
+      "routes": [
+        "PACK135",
+        "PACK142"
+      ]
+    },
+    {
+      "id": "EA-057",
+      "requirement_class": "P0",
+      "title": "Model theft/exfiltration controls",
+      "requirement": "Checkpoint download/export, registry access, BYOC secrets and teacher/dataset assets are least-privilege and audited.",
+      "routes": [
+        "PACK139",
+        "PACK147"
+      ]
+    },
+    {
+      "id": "EA-058",
+      "requirement_class": "P0",
+      "title": "Training-rights versioning",
+      "requirement": "Rights/consent/license policy version used by each dataset build is immutable and queryable; unknown rights fail closed.",
+      "routes": [
+        "PACK131",
+        "PACK132",
+        "PACK133",
+        "PACK147"
+      ]
+    },
+    {
+      "id": "EA-059",
+      "requirement_class": "P0",
+      "title": "Chargeback/dispute/refund lifecycle",
+      "requirement": "Payment disputes, refunds after consumption, negative-balance prevention, entitlement rollback and immutable accounting reconciliation are tested.",
+      "routes": [
+        "PACK146",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-060",
+      "requirement_class": "P0",
+      "title": "Fraud/abuse controls",
+      "requirement": "Signup/payment abuse, stolen credentials, promo/top-up abuse, bot bursts and suspicious high-cost consumption have rate/risk controls without corrupting legitimate balances.",
+      "routes": [
+        "PACK139",
+        "PACK146"
+      ]
+    },
+    {
+      "id": "EA-061",
+      "requirement_class": "P1",
+      "title": "Currency/rounding/tax/invoice closure",
+      "requirement": "Integer-money invariants extend to display currency, FX assumptions, taxes/VAT where applicable, invoices/receipts and app-store/platform commissions if used.",
+      "routes": [
+        "PACK128",
+        "PACK130",
+        "PACK146",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-062",
+      "requirement_class": "P1",
+      "title": "User spend controls",
+      "requirement": "User/org budget ceilings, alerts, per-capability spend visibility and safe behavior at exhaustion are explicit, especially for third-party fallback and BYOC metering.",
+      "routes": [
+        "PACK128",
+        "PACK130",
+        "PACK146"
+      ]
+    },
+    {
+      "id": "EA-063",
+      "requirement_class": "P1",
+      "title": "Revenue/cost event reconciliation",
+      "requirement": "Provider corrections, late usage, refunds, support credits, taxes, app-store fees and storage/egress corrections remain attributable to a logical task without double settlement.",
+      "routes": [
+        "PACK128",
+        "PACK130",
+        "PACK146"
+      ]
+    },
+    {
+      "id": "EA-064",
+      "requirement_class": "P1",
+      "title": "First-run onboarding/activation",
+      "requirement": "New user reaches a successful first task with truthful permission/cost explanations, sample/empty states and no hidden paid action.",
+      "routes": [
+        "PACK110",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-065",
+      "requirement_class": "P1",
+      "title": "Product analytics",
+      "requirement": "Privacy-safe activation, task-success, retention, funnel, feature adoption and failure analytics use versioned event definitions; content is not collected merely for analytics.",
+      "routes": [
+        "PACK110",
+        "PACK128",
+        "PACK134"
+      ]
+    },
+    {
+      "id": "EA-066",
+      "requirement_class": "P2",
+      "title": "Experiment framework",
+      "requirement": "A/B or staged product experiments require hypothesis, population, guardrails, stop criteria and no silent billing/permission changes.",
+      "routes": [
+        "PACK129",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-067",
+      "requirement_class": "P1",
+      "title": "Notification center/preferences",
+      "requirement": "In-app/push/email classes, dedupe, retries, quiet preferences, revoked-token cleanup and deep links are defined; security notices cannot be silently suppressed.",
+      "routes": [
+        "PACK109",
+        "PACK143",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-068",
+      "requirement_class": "P0",
+      "title": "Accessibility target",
+      "requirement": "Move from generic accessibility to a declared WCAG-level target for supported surfaces; keyboard, screen reader, contrast, zoom, reduced motion, captions/transcripts and error semantics are tested.",
+      "routes": [
+        "PACK107",
+        "PACK144",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-069",
+      "requirement_class": "P1",
+      "title": "Browser/device compatibility matrix",
+      "requirement": "Supported browser/OS/device versions, graceful unsupported behavior and performance limits are declared and tested.",
+      "routes": [
+        "PACK144",
+        "PACK145"
+      ]
+    },
+    {
+      "id": "EA-070",
+      "requirement_class": "P1",
+      "title": "Performance budgets",
+      "requirement": "Web startup/Core Web Vital-like metrics, API p95/p99, mobile startup/memory/battery/network, queue age and media/code cold-start targets are explicit.",
+      "routes": [
+        "PACK142",
+        "PACK144",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-071",
+      "requirement_class": "P1",
+      "title": "Support and controlled operator access",
+      "requirement": "Support case IDs, user-provided diagnostics, least-privilege admin tools, break-glass audit and no default access to customer content.",
+      "routes": [
+        "PACK143",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-072",
+      "requirement_class": "P1",
+      "title": "User-facing report/feedback flow",
+      "requirement": "Users can report bad output, abuse, connector failures or billing issues and receive a traceable case/reference without exposing secrets.",
+      "routes": [
+        "PACK143",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-073",
+      "requirement_class": "P1",
+      "title": "Public API contract decision",
+      "requirement": "If ZUVYR exposes external APIs, publish versioned OpenAPI/JSON-schema contracts, authentication, scopes, pagination, idempotency and rate-limit semantics. Otherwise do not imply public API availability.",
+      "routes": [
+        "PACK126",
+        "PACK145",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-074",
+      "requirement_class": "P1",
+      "title": "Webhook delivery contract",
+      "requirement": "Signed events, event IDs, retry/backoff, ordering limits, replay protection, endpoint disablement and test delivery.",
+      "routes": [
+        "PACK125",
+        "PACK145"
+      ]
+    },
+    {
+      "id": "EA-075",
+      "requirement_class": "P2",
+      "title": "SDK/developer docs boundary",
+      "requirement": "If public developer APIs/SDKs are exposed in V1, ship supported examples/docs, changelog and deprecation windows. If no public SDK/API product surface exists, use `N/A_WITH_EVIDENCE`; do not imply developer-platform support without it.",
+      "routes": [
+        "PACK145",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-076",
+      "requirement_class": "P0",
+      "title": "Connector/plugin marketplace trust",
+      "requirement": "Publisher identity, manifest/schema validation, requested scopes, permission diffs, version pinning, disable/revoke, security review and malicious-package response.",
+      "routes": [
+        "PACK126",
+        "PACK139",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-077",
+      "requirement_class": "P0",
+      "title": "Connector data-boundary tests",
+      "requirement": "Read-only scopes cannot mutate; tenant/user credentials cannot cross; revoked/expired tokens stop queued actions; reconnect cannot resurrect widened scopes.",
+      "routes": [
+        "PACK125",
+        "PACK127",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-078",
+      "requirement_class": "P0",
+      "title": "Data inventory/classification",
+      "requirement": "Identify stores/classes for profile, conversation, files, embeddings, telemetry, billing, connector data, datasets/checkpoints and support records with owner/retention/access rules.",
+      "routes": [
+        "PACK140",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-079",
+      "requirement_class": "P1",
+      "title": "Data residency/subprocessor register",
+      "requirement": "Regions and third-party processors/providers are documented; unsupported residency promises are not made.",
+      "routes": [
+        "PACK140",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-080",
+      "requirement_class": "P0",
+      "title": "Consent/policy versioning",
+      "requirement": "Record the exact privacy/training/terms consent version and timestamp needed for each governed use; policy changes do not retroactively create rights.",
+      "routes": [
+        "PACK131",
+        "PACK140",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-081",
+      "requirement_class": "P0",
+      "title": "Complete export/delete workflow",
+      "requirement": "Account export/delete covers projects, assets, memories, connectors, telemetry where applicable, support references and future dataset exclusion while truthfully recording checkpoint limitations.",
+      "routes": [
+        "PACK140",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-082",
+      "requirement_class": "P1",
+      "title": "Content moderation/reporting decision",
+      "requirement": "Define reachable prohibited-abuse categories, reporting/appeal/operator handling and provider-policy mismatch behavior for chat/media/agents; do not rely only on upstream provider rejection.",
+      "routes": [
+        "PACK139",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-083",
+      "requirement_class": "P1",
+      "title": "IP/copyright/media provenance",
+      "requirement": "Preserve source/operation/model metadata, strip sensitive EXIF where appropriate, track user-supplied asset rights declarations where needed and support takedown/report handling.",
+      "routes": [
+        "PACK113",
+        "PACK140",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-084",
+      "requirement_class": "P1",
+      "title": "Age/child-safety product boundary",
+      "requirement": "State intended age boundary and ensure onboarding, terms, data collection and high-risk agent features do not imply unsupported minor use.",
+      "routes": [
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-085",
+      "requirement_class": "P0",
+      "title": "File/media ingestion hardening",
+      "requirement": "MIME/content sniffing, decompression/archive bombs, malformed PDF/media, macro/active-content treatment, image bombs and antivirus/malware strategy where relevant.",
+      "routes": [
+        "PACK113",
+        "PACK139",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-086",
+      "requirement_class": "P0",
+      "title": "Risk register and exception ownership",
+      "requirement": "Every unresolved P0/P1 has owner, reason, exposure, mitigation, expiry/review date and product-surface consequence; “unknown” is not silently treated as pass.",
+      "routes": [
+        "PACK143",
+        "PACK148",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-087",
+      "requirement_class": "P0",
+      "title": "Release manifest completeness",
+      "requirement": "PACK150 release manifest includes exact source commits, DB migrations, config/feature flags, provider/model versions, client artifacts, SBOM/provenance, owned-model hashes, rollback targets and known limitations.",
+      "routes": [
+        "PACK150"
+      ]
+    },
+    {
+      "id": "EA-088",
+      "requirement_class": "P0",
+      "title": "Production test-data isolation",
+      "requirement": "Real production acceptance uses isolated tagged test identities/resources with deterministic cleanup; tests never broaden privileges or leave billable/user-visible residue.",
+      "routes": [
+        "PACK148",
+        "PACK150"
+      ]
+    },
+    {
+      "id": "EA-089",
+      "requirement_class": "P0",
+      "title": "Claim/advertising truth audit",
+      "requirement": "Every public claim about models, privacy, free usage, BYOC, supported platforms, speed, security, automation or capabilities has dated evidence; absent evidence means the claim is removed/qualified.",
+      "routes": [
+        "PACK149",
+        "PACK150"
+      ]
+    },
+    {
+      "id": "EA-090",
+      "requirement_class": "P0",
+      "title": "Final horizontal-plane checkpoint",
+      "requirement": "PACK148 must demonstrate at least one representative journey that crosses identity/session → context/RAG → model/router → tools/agent → async worker/storage → billing → observability/audit → recovery, with denial/failure/rollback variants.",
+      "routes": [
+        "PACK148",
+        "PACK150"
+      ]
+    },
+    {
+      "id": "EA-091",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Canonical API inventory and attack-surface registry",
+      "requirement": "Maintain a machine-readable inventory of every public/internal/operator/worker/webhook/preview/device/connector endpoint, method, auth mode, owner, version, data class, rate policy and deprecation state. Unknown/debug/legacy endpoints fail launch inventory reconciliation.",
+      "routes": [
+        "PACK139",
+        "PACK145",
+        "PACK148",
+        "PACK150"
+      ]
+    },
+    {
+      "id": "EA-092",
+      "requirement_class": "V1_REQUIRED",
+      "title": "BOLA / object-level authorization",
+      "requirement": "Every API that accepts an object identifier must authorize that exact object against the authenticated principal/tenant/resource scope server-side. UUID unpredictability is not authorization. Include projects, conversations, files, assets, jobs, tasks, memories, connectors, devices, deployments, billing objects, datasets, checkpoints and support/audit resources.",
+      "routes": [
+        "PACK139",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-093",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Object-property authorization / mass-assignment defense",
+      "requirement": "Use explicit writable/readable field allowlists per role and operation. Prevent clients from setting privileged fields such as owner, role, plan, balance, status, internal flags, provider IDs, model promotion stage, audit fields or cross-tenant foreign keys. Responses must also avoid excessive property exposure.",
+      "routes": [
+        "PACK139",
+        "PACK145",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-094",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Function-level authorization",
+      "requirement": "Admin/operator/support/Manager/model-promotion/billing/security functions require explicit role/capability checks independent of route hiding or UI visibility. Include method variants and alternate endpoints.",
+      "routes": [
+        "PACK092",
+        "PACK139",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-095",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Sensitive business-flow abuse protection",
+      "requirement": "Protect high-value flows against automated abuse: signup, login/recovery, invitation, top-up/checkout, refunds, trial/promo, connector authorization, share/invite, generation bursts, exports, account deletion, support actions and model/Manager operations.",
+      "routes": [
+        "PACK139",
+        "PACK146",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-096",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Resource-consumption enforcement",
+      "requirement": "Apply request/body/file/page/token/tool-step/query/fan-out/concurrency/runtime/storage/egress limits before expensive work. Enforce per-user, per-tenant, per-IP/risk context and per-capability ceilings with bounded queue admission.",
+      "routes": [
+        "PACK119",
+        "PACK128",
+        "PACK139",
+        "PACK142"
+      ]
+    },
+    {
+      "id": "EA-097",
+      "requirement_class": "V1_REQUIRED",
+      "title": "API authentication token validation",
+      "requirement": "Validate issuer, audience, signature, expiry, not-before, token type, revocation/session state and intended client/resource. Do not accept a valid token in the wrong service/context.",
+      "routes": [
+        "PACK123",
+        "PACK139",
+        "PACK144",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-098",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Strict request/response schema validation",
+      "requirement": "Version request/response schemas; reject unknown privileged fields, invalid enums, oversized nested objects, duplicate/conflicting parameters and type confusion. Validate normalized data after decoding, not only raw input.",
+      "routes": [
+        "PACK139",
+        "PACK145"
+      ]
+    },
+    {
+      "id": "EA-099",
+      "requirement_class": "V1_REQUIRED",
+      "title": "API idempotency/replay contract",
+      "requirement": "Mutating endpoints that can be retried must define idempotency identity, replay window, conflict behavior and response replay semantics. Financial and irreversible actions require stronger replay protection.",
+      "routes": [
+        "PACK122",
+        "PACK124",
+        "PACK146",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-100",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Unsafe third-party API consumption defense",
+      "requirement": "Treat provider/connector/API responses as untrusted: enforce TLS, domain/redirect policy, timeouts, maximum response size, schema validation, content-type validation and sanitized downstream handling. Provider compromise must not automatically become ZUVYR compromise.",
+      "routes": [
+        "PACK125",
+        "PACK127",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-101",
+      "requirement_class": "V1_REQUIRED",
+      "title": "URL fetch / SSRF system-wide policy",
+      "requirement": "All URL-consuming features—web reader, browser, webhooks, imports, previews, media fetch, plugins, connector callbacks—must block metadata/internal/private/link-local destinations, unsafe redirects, DNS rebinding and protocol smuggling according to an explicit egress policy.",
+      "routes": [
+        "PACK118",
+        "PACK121",
+        "PACK127",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-102",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Fail-secure API exceptional-condition semantics",
+      "requirement": "Authentication/authorization/parser/provider/DB/queue/timeouts and unexpected exceptions must not accidentally succeed, leak stack traces/secrets, partially mutate unsafe state, or return ambiguous success.",
+      "routes": [
+        "PACK139",
+        "PACK143",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-103",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Distributed rate limiting and fairness",
+      "requirement": "Rate limiting must work across replicas/workers, distinguish identities and expensive capabilities, resist header spoofing, expose safe retry semantics, and not allow one tenant to starve others.",
+      "routes": [
+        "PACK111",
+        "PACK139",
+        "PACK142"
+      ]
+    },
+    {
+      "id": "EA-104",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Query/pagination/filter complexity limits",
+      "requirement": "Bound page sizes, filter/sort cardinality, search/index fan-out, date spans, exports and aggregate queries. Cursor identity must preserve authorization and stable ordering.",
+      "routes": [
+        "PACK105",
+        "PACK139",
+        "PACK142"
+      ]
+    },
+    {
+      "id": "EA-105",
+      "requirement_class": "V1_REQUIRED",
+      "title": "API version/deprecation/debug retirement",
+      "requirement": "No forgotten beta/debug/internal/old-version endpoint may remain reachable with weaker policy. Publish supported version windows internally and remove or gate obsolete routes intentionally.",
+      "routes": [
+        "PACK145",
+        "PACK149",
+        "PACK150"
+      ]
+    },
+    {
+      "id": "EA-106",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Tenant context propagation invariant",
+      "requirement": "Authenticated user/org/tenant/resource scope must survive API → task → queue → worker → storage → callback → billing → telemetry hops without trusting client-supplied tenant identity.",
+      "routes": [
+        "PACK122",
+        "PACK127",
+        "PACK139",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-107",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Threat model per major surface",
+      "requirement": "Maintain data-flow/trust-boundary threat models for Chat/Research, uploads, media, Code, Browser, Device/IP, Automations, Connectors/MCP, Manager, Model Lab, billing and clients. Update them when authority/dataflow changes.",
+      "routes": [
+        "PACK139",
+        "PACK143",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-108",
+      "requirement_class": "V1_REQUIRED",
+      "title": "ASVS 5.0 control crosswalk",
+      "requirement": "Map applicable web/API controls to OWASP ASVS 5.0 domains: encoding/sanitization, validation/business logic, frontend, APIs, files, authentication, sessions, authorization, tokens/OAuth, cryptography, secure communication, configuration, data protection, architecture, logging/error handling and WebRTC if used.",
+      "routes": [
+        "PACK139",
+        "PACK144",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-109",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Injection prevention matrix",
+      "requirement": "Explicitly test SQL/NoSQL/command/shell/template/path/header/log/LDAP/XML/XXE/CSV-formula and code/template injection where relevant. Use parameterization/structured APIs; never rely on model instruction as an injection boundary.",
+      "routes": [
+        "PACK117",
+        "PACK118",
+        "PACK139",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-110",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Browser output encoding / DOM XSS prevention",
+      "requirement": "User/model/provider/connector/content output rendered as HTML/Markdown/UI must use context-correct escaping/sanitization; generated links and rich content cannot execute unsafe script/event handlers/URL schemes.",
+      "routes": [
+        "PACK118",
+        "PACK139",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-111",
+      "requirement_class": "V1_REQUIRED",
+      "title": "CSRF and browser session-boundary policy",
+      "requirement": "Cookie-authenticated mutations require a documented SameSite/origin/CSRF strategy; cross-origin requests and websocket upgrades must not bypass session intent.",
+      "routes": [
+        "PACK118",
+        "PACK139",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-112",
+      "requirement_class": "V1_REQUIRED",
+      "title": "TLS/HSTS/transport baseline",
+      "requirement": "HTTPS/TLS is mandatory for public/API/connector/BYOC transports unless a documented local-only exception exists. Define certificate validation, redirect behavior, HSTS and insecure-protocol rejection.",
+      "routes": [
+        "PACK139",
+        "PACK144",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-113",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Encryption-at-rest and key lifecycle",
+      "requirement": "Classify which data relies on platform encryption and which requires application-level protection; define key ownership, rotation, versioning, backup/restore behavior and compromised-key response.",
+      "routes": [
+        "PACK125",
+        "PACK139",
+        "PACK140",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-114",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Secret lifecycle",
+      "requirement": "Every production secret has owner, purpose, environment, storage boundary, rotation/revocation path and exposure response. No secrets in client bundles, repo, logs, prompts, traces, exports or support bundles.",
+      "routes": [
+        "PACK139",
+        "PACK143",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-115",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Secure configuration schema/defaults",
+      "requirement": "All security-sensitive feature flags/env/config entries have typed schema, safe default, allowed values, startup validation and environment ownership. Missing security config fails closed.",
+      "routes": [
+        "PACK091",
+        "PACK139",
+        "PACK143"
+      ]
+    },
+    {
+      "id": "EA-116",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Environment/config drift control",
+      "requirement": "Production/staging/test differences that affect security, billing, auth, migrations, providers or feature flags are inventoried. Unexpected production drift is detected before release.",
+      "routes": [
+        "PACK143",
+        "PACK145",
+        "PACK150"
+      ]
+    },
+    {
+      "id": "EA-117",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Browser security headers",
+      "requirement": "Define CSP, frame-ancestors/clickjacking policy, nosniff, referrer policy, permissions policy, cache-control for private data and CORS allowlists for each public origin.",
+      "routes": [
+        "PACK118",
+        "PACK139",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-118",
+      "requirement_class": "V1_REQUIRED",
+      "title": "HTTP/proxy normalization",
+      "requirement": "Reject ambiguous/conflicting Content-Length/Transfer-Encoding, duplicated security headers/parameters, malformed encodings and proxy trust mistakes; define trusted proxy/header boundaries.",
+      "routes": [
+        "PACK139",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-119",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Filesystem/path/temp safety",
+      "requirement": "Prevent traversal, symlink escapes, unsafe archive extraction, predictable sensitive temp files and host-path exposure across uploads, exports, Code, media and worker pipelines.",
+      "routes": [
+        "PACK113",
+        "PACK117",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-120",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Operator/debug surface closure",
+      "requirement": "Debug consoles, source maps where sensitive, internal admin tools, profiling endpoints, metrics, job dashboards and database/operator routes are authenticated, environment-gated and inventoried.",
+      "routes": [
+        "PACK091",
+        "PACK139",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-121",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Secure error handling",
+      "requirement": "User errors are actionable without exposing internals; logs contain correlation IDs and protected technical detail; errors never silently convert a denied action into a permissive fallback.",
+      "routes": [
+        "PACK091",
+        "PACK139",
+        "PACK143"
+      ]
+    },
+    {
+      "id": "EA-122",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Sensitive account-change reauthentication",
+      "requirement": "Email/password/MFA/passkey, billing identity, ownership transfer, API key creation, connector export/revoke and destructive account actions require recent authentication where appropriate.",
+      "routes": [
+        "PACK139",
+        "PACK144",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-123",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Password/recovery quality if passwords exist",
+      "requirement": "Use modern password hashing/provider controls, breached-password protection when available, non-enumerating reset flows, expiring single-use recovery tokens and no recovery path that weakens MFA/session policy.",
+      "routes": [
+        "PACK139",
+        "PACK144",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-124",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Credential-stuffing and auth-abuse defense",
+      "requirement": "Risk-aware throttling, anomaly detection and safe challenge/escalation for login/recovery/verification flows; protect without leaking whether an account exists.",
+      "routes": [
+        "PACK139",
+        "PACK143",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-125",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Account/session enumeration resistance",
+      "requirement": "Authentication/recovery/invite APIs return timing/message/rate behavior that does not unnecessarily reveal account, organization or resource existence.",
+      "routes": [
+        "PACK139",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-126",
+      "requirement_class": "V1_REQUIRED",
+      "title": "User-visible session/device center",
+      "requirement": "Where technically supported, users can review active sessions/devices, revoke them, log out all, and understand recent security-sensitive sign-ins without exposing secrets.",
+      "routes": [
+        "PACK123",
+        "PACK144",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-127",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Organization membership lifecycle",
+      "requirement": "If organizations/teams are supported: invitation expiry, acceptance identity, removal, role change, ownership transfer, last-owner protection, pending invites, domain/guest policy and resource ownership consequences are deterministic.",
+      "routes": [
+        "PACK139",
+        "PACK145",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-128",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Privileged-role matrix",
+      "requirement": "Define exactly which owner/admin/operator/support/service identities may perform each high-risk action, with least privilege and separation between customer admin and ZUVYR operator authority.",
+      "routes": [
+        "PACK092",
+        "PACK139",
+        "PACK143"
+      ]
+    },
+    {
+      "id": "EA-129",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Support/operator access boundary",
+      "requirement": "No silent customer impersonation. Any support-assisted access is least-privilege, user-visible where appropriate, reason-bound, time-limited and audit-receipted.",
+      "routes": [
+        "PACK143",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-130",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Account closure terminal-state correctness",
+      "requirement": "Account deletion/closure terminates sessions, tokens, connectors, automations, sharing, device pairings and future billable work; preserves only legally/financially required records under declared retention.",
+      "routes": [
+        "PACK140",
+        "PACK146",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-131",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Agent goal-hijack resistance",
+      "requirement": "External content cannot silently rewrite the governing user goal, system constraints, permission policy or billing budget. The active goal/intent lock is inspectable at consequence boundaries.",
+      "routes": [
+        "PACK122",
+        "PACK127",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-132",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Tool-misuse policy",
+      "requirement": "Authorization to a tool is not authorization to every use of that tool. Validate intent, parameters, target resource, consequence class and amount/scope immediately before execution.",
+      "routes": [
+        "PACK122",
+        "PACK127",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-133",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Agent identity and privilege containment",
+      "requirement": "Each executing agent/subagent/tool call has attributable identity, parent task, delegated scope, short-lived authority where possible and no ambient inheritance of browser/operator/customer credentials.",
+      "routes": [
+        "PACK122",
+        "PACK127",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-134",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Agentic/MCP supply-chain trust",
+      "requirement": "MCP servers, skills, prompts, tool schemas, extensions and remote agent endpoints have publisher/source identity, version/hash, capability manifest, permission diff and revocation/disable path.",
+      "routes": [
+        "PACK126",
+        "PACK139",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-135",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Unexpected code execution containment",
+      "requirement": "Natural-language/tool/provider output cannot become host code execution. Code execution is restricted to intended sandboxes/runtimes with explicit policy, resource limits and no host-secret inheritance.",
+      "routes": [
+        "PACK117",
+        "PACK118",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-136",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Persistent memory/context poisoning containment",
+      "requirement": "Untrusted repository/web/email/file/plugin content cannot persist instructions into memory/context without a governed attribution/approval rule. Memory from compromised sources can be traced and revoked.",
+      "routes": [
+        "PACK105",
+        "PACK131",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-137",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Inter-agent communication integrity",
+      "requirement": "If agents/subagents communicate, messages carry authenticated task identity, schema/version, delegated authority and origin. Text claiming to be another agent is not trusted as authority.",
+      "routes": [
+        "PACK122",
+        "PACK127",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-138",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Cascading-failure containment",
+      "requirement": "Agent chains have circuit breakers, depth/fan-out/time/cost limits, dependency health awareness and blast-radius boundaries so one bad signal/provider/tool does not recursively amplify failure.",
+      "routes": [
+        "PACK119",
+        "PACK127",
+        "PACK142"
+      ]
+    },
+    {
+      "id": "EA-139",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Human-agent trust-exploitation defense",
+      "requirement": "Confirmation UX for consequential actions displays the real target/action/amount/data scope from trusted structured state, not a model-authored persuasive summary alone.",
+      "routes": [
+        "PACK047",
+        "PACK092",
+        "PACK122",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-140",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Rogue-agent/runtime containment",
+      "requirement": "Agents cannot self-expand privileges, disable monitoring, rewrite policy, spawn unbounded descendants or conceal actions. Runtime kill/revoke/STOP remains outside agent control.",
+      "routes": [
+        "PACK087",
+        "PACK127",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-141",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Runtime policy middleware / Agent Control hooks",
+      "requirement": "Agent execution exposes policy interception points for tool selection, parameters, credential acquisition, network access, delegation, memory write, consequence confirmation and termination. Keep controls framework-independent where practical.",
+      "routes": [
+        "PACK127",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-142",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Tool-result provenance and spoof resistance",
+      "requirement": "A tool result includes tool identity/version, call ID, target, timestamp/outcome and trusted metadata separately from untrusted textual content. Model-visible text cannot forge privileged result state.",
+      "routes": [
+        "PACK126",
+        "PACK127",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-143",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Multimodal prompt-injection tests",
+      "requirement": "Test hidden/visible instructions in PDFs, OCR, images, screenshots, audio, video subtitles/metadata, webpages, code comments and documents. Extracted content stays untrusted and cannot widen authority.",
+      "routes": [
+        "PACK053",
+        "PACK115",
+        "PACK139",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-144",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Golden eval suite per advertised capability",
+      "requirement": "Maintain versioned representative evals for Chat, Research, documents, image/video/audio, Code, Browser, device, automation, connectors, 3D and Manager/model paths that are actually advertised.",
+      "routes": [
+        "PACK134",
+        "PACK137",
+        "PACK147",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-145",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Multilingual/Darija/RTL eval coverage",
+      "requirement": "Evaluate Arabic, Moroccan Darija, French, English and mixed-language flows for intent preservation, citations, tools, structured data, filenames, code and UI—not only text fluency.",
+      "routes": [
+        "PACK108",
+        "PACK134",
+        "PACK147"
+      ]
+    },
+    {
+      "id": "EA-146",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Multimodal quality evals",
+      "requirement": "For image/audio/video/document understanding and generation, measure task-appropriate fidelity, instruction following, reference consistency, transcription/OCR correctness and artifact validity.",
+      "routes": [
+        "PACK115",
+        "PACK134",
+        "PACK147"
+      ]
+    },
+    {
+      "id": "EA-147",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Structured output/tool-call correctness",
+      "requirement": "Measure schema validity, tool selection, argument correctness, authorization-target correctness and repair rate separately from natural-language quality.",
+      "routes": [
+        "PACK127",
+        "PACK134",
+        "PACK147"
+      ]
+    },
+    {
+      "id": "EA-148",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Planner/orchestration correctness",
+      "requirement": "Evaluate whether the Brain selects necessary steps, avoids unnecessary spend/actions, respects hard requirements, preserves intent lock and terminates when the goal is satisfied.",
+      "routes": [
+        "PACK127",
+        "PACK134",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-149",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Fallback quality equivalence policy",
+      "requirement": "Fallback may change provider/model but must not silently lose required modality, context, tools, privacy region, language, output schema, safety boundary or user-approved cost/risk constraints.",
+      "routes": [
+        "PACK136",
+        "PACK147",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-150",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Uncertainty/calibration verification",
+      "requirement": "Where confidence matters, evaluate whether uncertainty, source quality and verification behavior correlate with actual correctness; no numeric confidence theater without calibration.",
+      "routes": [
+        "PACK134",
+        "PACK147",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-151",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Statistical release thresholds",
+      "requirement": "Model/router/product eval promotion defines sample set/version, metric denominator, minimum sample size where applicable, acceptable variance and regression threshold. One lucky run cannot promote a release.",
+      "routes": [
+        "PACK134",
+        "PACK137",
+        "PACK147"
+      ]
+    },
+    {
+      "id": "EA-152",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Provider/model version change gate",
+      "requirement": "Provider/model/API changes trigger targeted compatibility/eval/cost/safety regression before becoming primary. Auto-upgraded provider aliases must not bypass evidence.",
+      "routes": [
+        "PACK022",
+        "PACK024",
+        "PACK147"
+      ]
+    },
+    {
+      "id": "EA-153",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Bias/fairness checks where decisions can affect people",
+      "requirement": "For use cases involving people/opportunities/ranking/recommendation, define relevant fairness/bias tests and avoid inventing protected-attribute inferences. Record limitations rather than claiming universal neutrality.",
+      "routes": [
+        "PACK134",
+        "PACK147",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-154",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Feedback-to-learning integrity",
+      "requirement": "Thumbs/report/correction/support feedback is attributable to the exact output/task/model/version, resistant to duplicate/abusive poisoning, and does not automatically become training truth.",
+      "routes": [
+        "PACK094",
+        "PACK132",
+        "PACK134"
+      ]
+    },
+    {
+      "id": "EA-155",
+      "requirement_class": "V1_REQUIRED",
+      "title": "MASVS/MASTG mobile baseline",
+      "requirement": "Android/iOS release qualification maps applicable controls for storage, crypto, auth, network, platform, code, resilience and privacy using OWASP MASVS/MASTG as a test baseline.",
+      "routes": [
+        "PACK098",
+        "PACK099",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-156",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Local sensitive-data storage and logout purge",
+      "requirement": "Tokens/secrets use platform secure storage; caches/downloads/previews/logs are classified; logout/account removal purges locally retained sensitive state according to policy.",
+      "routes": [
+        "PACK097",
+        "PACK098",
+        "PACK099",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-157",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Deep-link/custom-scheme validation",
+      "requirement": "Universal/app/custom links validate scheme/host/path/parameters and authenticated target ownership; links cannot trigger hidden privileged actions or token leakage.",
+      "routes": [
+        "PACK097",
+        "PACK098",
+        "PACK099",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-158",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Push-token lifecycle",
+      "requirement": "Push tokens are user/device scoped, rotated/revoked, deduplicated and removed after logout/uninstall signals where available; notification payloads avoid unnecessary sensitive content.",
+      "routes": [
+        "PACK098",
+        "PACK099",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-159",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Permission lifecycle UX",
+      "requirement": "Camera/mic/photos/files/notifications/local-network/device-control permissions explain why, request only when needed, handle denial/revocation and never treat OS permission as ZUVYR authorization.",
+      "routes": [
+        "PACK097",
+        "PACK098",
+        "PACK099",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-160",
+      "requirement_class": "V1_REQUIRED",
+      "title": "App integrity/tamper posture",
+      "requirement": "Define and test the V1 stance for rooted/jailbroken/debuggable/tampered clients and platform attestation (e.g. Play Integrity/App Attest/DeviceCheck where appropriate) without falsely treating attestation as sole authorization.",
+      "routes": [
+        "PACK098",
+        "PACK099",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-161",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Mobile resource/battery/network budgets",
+      "requirement": "Background jobs, uploads, voice, preview/browser and media tasks respect OS background limits, battery, metered network and interruption behavior; no runaway wake/network loop.",
+      "routes": [
+        "PACK098",
+        "PACK099",
+        "PACK109",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-162",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Clipboard/screenshot/sensitive-screen policy",
+      "requirement": "Define handling of copied secrets/tokens, previews and sensitive account/billing screens; avoid accidental clipboard persistence and use platform protections where justified.",
+      "routes": [
+        "PACK097",
+        "PACK098",
+        "PACK099",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-163",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Client local-log privacy",
+      "requirement": "Desktop/mobile logs and crash reports exclude tokens, prompts/files by default, use bounded retention and attach release/correlation metadata safely.",
+      "routes": [
+        "PACK091",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-164",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Desktop updater/signing/IPC/custom-protocol security",
+      "requirement": "Windows updater verifies signature/source/version, prevents downgrade/tamper where appropriate, secures local IPC/loopback endpoints and validates custom protocol/open-with inputs.",
+      "routes": [
+        "PACK097",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-165",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Offline/cache/reconnect conflict policy",
+      "requirement": "When clients cache drafts/projects/uploads/task state, reconnection resolves versions deterministically, never replays a paid/irreversible action blindly and does not expose another account’s cached data after account switch.",
+      "routes": [
+        "PACK109",
+        "PACK116",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-166",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Plan transition/proration/entitlement atomicity",
+      "requirement": "Upgrade/downgrade/pause/resume/cancel changes entitlements at defined times; invoice/proration and product access cannot diverge silently during webhook delay or retry.",
+      "routes": [
+        "PACK146",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-167",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Failed-payment/dunning/grace policy",
+      "requirement": "Define invoice failure, retry, grace, suspension, recovery and eventual cancellation behavior without losing purchased non-expiring balance or double-settling usage.",
+      "routes": [
+        "PACK146",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-168",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Pricing-version and grandfathering semantics",
+      "requirement": "Every paid plan/top-up price has immutable version/effective dates; existing subscriptions, renewals and upgrades have deterministic grandfather/migration behavior.",
+      "routes": [
+        "PACK128",
+        "PACK130",
+        "PACK146"
+      ]
+    },
+    {
+      "id": "EA-169",
+      "requirement_class": "V1_REQUIRED_IF_SURFACE_EXISTS",
+      "title": "App-store billing entitlement reconciliation",
+      "requirement": "If digital subscriptions/top-ups are sold in iOS/Android apps, reconcile store purchase/restore/refund/chargeback/commission/server notifications with the canonical entitlement ledger and platform rules.",
+      "routes": [
+        "PACK098",
+        "PACK099",
+        "PACK146",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-170",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Invoice/tax/FX/display rounding closure",
+      "requirement": "Money display and receipts distinguish billing currency, taxes/VAT where applicable, FX assumptions and rounding from internal micro-USD cost accounting.",
+      "routes": [
+        "PACK128",
+        "PACK130",
+        "PACK146"
+      ]
+    },
+    {
+      "id": "EA-171",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Refund/dispute after consumption",
+      "requirement": "Define partial/full refund, chargeback, reversed payment and already-consumed credit behavior with immutable accounting and no negative-balance corruption.",
+      "routes": [
+        "PACK146",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-172",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Trial/promo/top-up abuse resistance",
+      "requirement": "Free/discount/promotional balance creation and redemption have identity/risk/device/payment abuse controls, expiry semantics where intended and no path to mint paid-equivalent balance arbitrarily.",
+      "routes": [
+        "PACK139",
+        "PACK146"
+      ]
+    },
+    {
+      "id": "EA-173",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Spend controls and anomaly stop",
+      "requirement": "Users/orgs can set or understand applicable spend/usage limits; abnormal cost spikes/provider price changes/agent loops trigger alerts or fail-safe ceilings before uncontrolled spend.",
+      "routes": [
+        "PACK128",
+        "PACK130",
+        "PACK143",
+        "PACK146"
+      ]
+    },
+    {
+      "id": "EA-174",
+      "requirement_class": "V1_REQUIRED",
+      "title": "First-run activation journey",
+      "requirement": "A new account can discover capabilities, understand free/paid boundaries, grant only needed permissions, complete a real first successful task and see where the result was saved.",
+      "routes": [
+        "PACK110",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-175",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Universal interaction-state matrix",
+      "requirement": "Every user-facing operation covers loading/progress, empty, validation, permission denied, offline/dependency down, timeout, cancel, retry, resume/reopen, partial success and final success without dead controls or silent failure.",
+      "routes": [
+        "PACK110",
+        "PACK115",
+        "PACK120",
+        "PACK127",
+        "PACK144",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-176",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Draft/autosave/version/conflict recovery",
+      "requirement": "Editable text/doc/sheet/slide/code/project/media metadata surfaces define draft persistence, autosave, explicit save where appropriate, conflict handling, version history and recovery after crash/reconnect.",
+      "routes": [
+        "PACK104",
+        "PACK106",
+        "PACK116",
+        "PACK144",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-177",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Notification delivery semantics",
+      "requirement": "Security, billing, task completion/failure, automation and incident notifications have channel preference, dedupe, retry, read/deep-link behavior and security-critical exceptions.",
+      "routes": [
+        "PACK109",
+        "PACK143",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-178",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Help/changelog/support knowledge path",
+      "requirement": "Users can identify current version, known limitations, supported platforms/capabilities, relevant help, release changes and a support/report path without needing hidden operator knowledge.",
+      "routes": [
+        "PACK143",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-179",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Security verification program before launch",
+      "requirement": "Run and record SAST/dependency/secret/container scans where applicable, DAST/API tests, targeted fuzz/property tests for parsers/critical invariants, adversarial AI tests, and an independent or clearly separated penetration-style review of launch surfaces. Findings have severity, owner and closure evidence.",
+      "routes": [
+        "PACK139",
+        "PACK144",
+        "PACK148",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-180",
+      "requirement_class": "V1_REQUIRED",
+      "title": "PACK150 completeness baseline",
+      "requirement": "PACK150 must produce one machine-readable matrix for `EA-001…EA-292` and every PACK001–PACK150 acceptance item. Every applicable row is `PASS`; true non-applicable rows are `N/A_WITH_EVIDENCE`. There are no hidden/known/deferred/untested applicable gaps, no misleading advertised blocked capability, no unresolved release blocker, and rollback/recovery are proven against the exact release manifest.",
+      "routes": [
+        "PACK148",
+        "PACK149",
+        "PACK150"
+      ]
+    },
+    {
+      "id": "EA-181",
+      "requirement_class": "V1_REQUIRED_IF_SURFACE_EXISTS",
+      "title": "WebSocket handshake/session security",
+      "requirement": "Realtime WebSocket endpoints must authenticate at handshake, validate trusted Origin, bind the connection to the intended user/session/project, re-check revocation/expiry, use WSS in production, reject unauthorized upgrades and prevent cross-site WebSocket hijacking.",
+      "routes": [
+        "PACK073",
+        "PACK121",
+        "PACK139",
+        "PACK144",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-182",
+      "requirement_class": "V1_REQUIRED_IF_SURFACE_EXISTS",
+      "title": "WebSocket message schema, rate and authorization",
+      "requirement": "Every inbound realtime message has a versioned schema, maximum size/rate, per-message authorization where consequences differ, bounded connection counts and safe malformed-message handling. Long-lived connections do not inherit stale privilege after logout/revoke/role change.",
+      "routes": [
+        "PACK073",
+        "PACK121",
+        "PACK139",
+        "PACK142"
+      ]
+    },
+    {
+      "id": "EA-183",
+      "requirement_class": "V1_REQUIRED_IF_SURFACE_EXISTS",
+      "title": "Realtime backpressure/heartbeat/reconnect correctness",
+      "requirement": "Define heartbeat/idle timeout, bounded outbound buffers, disconnect detection, reconnect resume cursor, duplicate suppression and replay semantics so reconnect cannot duplicate billing, tool actions or transcript turns.",
+      "routes": [
+        "PACK073",
+        "PACK109",
+        "PACK121",
+        "PACK142"
+      ]
+    },
+    {
+      "id": "EA-184",
+      "requirement_class": "V1_REQUIRED_IF_SURFACE_EXISTS",
+      "title": "Streaming partial-output consequence boundary",
+      "requirement": "Partial model/voice/streaming output is untrusted and non-final. ZUVYR must not execute tool calls, billing changes, file mutations or external actions from incomplete/aborted streaming fragments unless a structured protocol explicitly commits the action.",
+      "routes": [
+        "PACK073",
+        "PACK122",
+        "PACK127",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-185",
+      "requirement_class": "V1_REQUIRED_IF_SURFACE_EXISTS",
+      "title": "Voice/audio consent, hot-mic and retention controls",
+      "requirement": "Microphone/listening/recording state is visible and fail-safe; STOP/mute works immediately; retention/transcription state is explicit; background capture is not silently enabled; sensitive audio is not retained in logs/telemetry by default.",
+      "routes": [
+        "PACK071",
+        "PACK073",
+        "PACK140",
+        "PACK144",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-186",
+      "requirement_class": "V1_REQUIRED_IF_SURFACE_EXISTS",
+      "title": "WebRTC/STUN/TURN privacy and authorization",
+      "requirement": "If WebRTC is used, authenticate signaling, constrain ICE/TURN credentials and lifetime, document IP-exposure/privacy behavior, validate peer/session binding and prevent cross-tenant media attachment. If V1 does not use WebRTC, record `N/A_WITH_EVIDENCE`.",
+      "routes": [
+        "PACK073",
+        "PACK139",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-187",
+      "requirement_class": "V1_REQUIRED_IF_SURFACE_EXISTS",
+      "title": "Share-link security",
+      "requirement": "Public/private share links are scoped, revocable, optionally expiring, non-indexed when intended, resistant to token leakage through referrers/logs, and never substitute for owner checks on protected resources.",
+      "routes": [
+        "PACK104",
+        "PACK139",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-188",
+      "requirement_class": "V1_REQUIRED_IF_SURFACE_EXISTS",
+      "title": "Collaboration authorization lifecycle",
+      "requirement": "Shared project/resource membership changes, invite expiry, role changes, removal, ownership transfer and account closure propagate to files/assets/history/search/tasks without stale access.",
+      "routes": [
+        "PACK104",
+        "PACK127",
+        "PACK139",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-189",
+      "requirement_class": "V1_REQUIRED_IF_SURFACE_EXISTS",
+      "title": "Collaborative conflict semantics",
+      "requirement": "Where more than one user can edit the same resource, define optimistic concurrency/version checks, conflict presentation, merge/restore behavior and audit identity; never silently last-write-win privileged changes.",
+      "routes": [
+        "PACK104",
+        "PACK116",
+        "PACK145"
+      ]
+    },
+    {
+      "id": "EA-190",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Export/share secret and metadata redaction",
+      "requirement": "Exports, support bundles, public shares and downloadable project packages must exclude connector tokens, API keys, hidden prompts, internal IDs/diagnostics and other secrets; metadata inclusion is explicit and policy-driven.",
+      "routes": [
+        "PACK104",
+        "PACK140",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-191",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Import trust boundary",
+      "requirement": "Imported projects/files/archives/templates/manifests are treated as untrusted: validate schema/version/paths, remap ownership safely, do not import credentials, and prevent imported content from creating hidden permissions, automations or executable actions.",
+      "routes": [
+        "PACK104",
+        "PACK117",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-192",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Send-To / external publishing provenance",
+      "requirement": "Cross-surface and external publishing/export preserve source/version/model/tool lineage, user ownership and rights metadata where applicable; destination success/failure is receipted and cannot cause duplicate publish on retry.",
+      "routes": [
+        "PACK049",
+        "PACK103",
+        "PACK122",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-193",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Bulk export/exfiltration guard",
+      "requirement": "Large/bulk exports and connector/device transfers obey tenant/resource authorization, rate/size limits, audit logging and consequence confirmation where appropriate; one compromised agent cannot silently exfiltrate an account.",
+      "routes": [
+        "PACK122",
+        "PACK127",
+        "PACK139",
+        "PACK140"
+      ]
+    },
+    {
+      "id": "EA-194",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Shared-resource privacy/search isolation",
+      "requirement": "Shared/private/public visibility is consistently enforced by search, recommendations, history, context retrieval, caches, signed URLs and generated previews; changing visibility invalidates stale access.",
+      "routes": [
+        "PACK105",
+        "PACK139",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-195",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Delete/forget propagation to derived state",
+      "requirement": "Deletion/forget requests propagate to caches, search indexes, vectors/embeddings, previews, thumbnails, derived assets, pending queues, analytics references and future dataset admission according to declared retention rules.",
+      "routes": [
+        "PACK105",
+        "PACK131",
+        "PACK140",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-196",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Backup/tombstone deletion semantics",
+      "requirement": "When immutable/PITR backups cannot be immediately rewritten, deletion state/tombstones and restore procedures prevent deleted data from silently reappearing into active service; limitations are documented truthfully.",
+      "routes": [
+        "PACK140",
+        "PACK141",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-197",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Production-data isolation from test/staging",
+      "requirement": "Do not copy live customer content/secrets into local, staging, CI or external debugging systems by default. Any approved diagnostic fixture is minimized, access-controlled, time-bounded and traceable.",
+      "routes": [
+        "PACK139",
+        "PACK140",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-198",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Pseudonymization/anonymization quality",
+      "requirement": "Analytics/training/support exports labeled anonymous or pseudonymous have a defined transformation and re-identification risk assessment; stable identifiers are not casually exposed across datasets.",
+      "routes": [
+        "PACK094",
+        "PACK134",
+        "PACK140"
+      ]
+    },
+    {
+      "id": "EA-199",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Data portability integrity",
+      "requirement": "Account/project exports are versioned, checksum-verifiable, ownership-scoped and re-importable where claimed; missing non-portable dependencies/connector references are explicit rather than silently dropped.",
+      "routes": [
+        "PACK104",
+        "PACK140",
+        "PACK145"
+      ]
+    },
+    {
+      "id": "EA-200",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Retention-job idempotency and coverage",
+      "requirement": "Retention/deletion/archive jobs are idempotent, observable and coverage-tested across DB rows, storage, vectors, logs, telemetry, support and model-learning candidate stores; failures generate actionable receipts.",
+      "routes": [
+        "PACK140",
+        "PACK143"
+      ]
+    },
+    {
+      "id": "EA-201",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Data-integrity checks and corruption detection",
+      "requirement": "Critical persisted objects and release artifacts use hashes/checksums/invariants where appropriate; orphaned/corrupt references, partial writes and impossible ledger/task states are detectable and repairable.",
+      "routes": [
+        "PACK113",
+        "PACK128",
+        "PACK141",
+        "PACK143"
+      ]
+    },
+    {
+      "id": "EA-202",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Data-classification propagation",
+      "requirement": "Sensitivity/tenant/provenance/retention labels follow derived artifacts and workflow handoffs so a public export, lower-trust model/tool or support surface cannot accidentally downgrade protection.",
+      "routes": [
+        "PACK041",
+        "PACK103",
+        "PACK139",
+        "PACK140"
+      ]
+    },
+    {
+      "id": "EA-203",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Parser/transcoder isolation",
+      "requirement": "PDF/DOCX/archive/image/audio/video parsers and transcoders run with bounded CPU/RAM/time/output size, safe temp paths and no host-secret inheritance; malformed files cannot crash or escape the worker boundary.",
+      "routes": [
+        "PACK053",
+        "PACK113",
+        "PACK115",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-204",
+      "requirement_class": "V1_REQUIRED",
+      "title": "EXIF/GPS and hidden metadata policy",
+      "requirement": "Uploads and generated/exported media define whether EXIF/GPS/device/author metadata is preserved, stripped or user-selectable; sensitive location/device metadata is not exposed accidentally.",
+      "routes": [
+        "PACK061",
+        "PACK065",
+        "PACK113",
+        "PACK140"
+      ]
+    },
+    {
+      "id": "EA-205",
+      "requirement_class": "V1_REQUIRED_IF_SURFACE_EXISTS",
+      "title": "Content Credentials / C2PA decision",
+      "requirement": "For generated/edited media where provenance is material, implement preservation/verification of available C2PA/Content Credentials and emit provenance credentials where ZUVYR controls a compatible export path. Per-asset/provider absence must be represented truthfully; do not claim authenticity merely from a visible watermark.",
+      "routes": [
+        "PACK065",
+        "PACK070",
+        "PACK115",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-206",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Synthetic-media labeling policy",
+      "requirement": "Define product behavior for generated/edited image/video/audio labeling/metadata where needed by product policy, provider constraints or distribution destination; do not silently strip provenance that ZUVYR promises to preserve.",
+      "routes": [
+        "PACK065",
+        "PACK070",
+        "PACK115",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-207",
+      "requirement_class": "V1_REQUIRED_IF_SURFACE_EXISTS",
+      "title": "Voice-cloning consent and speaker-right controls",
+      "requirement": "If voice cloning/design is exposed, require explicit speaker/source authorization workflow, preserve provenance, provide revoke/delete handling, block silent reuse across users/projects and add abuse reporting.",
+      "routes": [
+        "PACK072",
+        "PACK074",
+        "PACK139",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-208",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Media-rights and takedown traceability",
+      "requirement": "User-supplied source/reference rights declarations where needed, generation/edit lineage, provider/model version and takedown/report case references remain attributable without claiming legal ownership ZUVYR cannot verify.",
+      "routes": [
+        "PACK062",
+        "PACK063",
+        "PACK113",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-209",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Export codec/container validity",
+      "requirement": "Generated/exported image/video/audio/document files are actually decodable/valid for the claimed format, dimensions/duration/container/codec/charset; MIME, extension and bytes agree.",
+      "routes": [
+        "PACK065",
+        "PACK069",
+        "PACK074",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-210",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Media accessibility outputs",
+      "requirement": "Where media is user-facing, captions/transcripts, keyboard-operable controls, readable error/progress states and accessible export metadata are supported where applicable; unsupported accessibility claims are not made.",
+      "routes": [
+        "PACK070",
+        "PACK107",
+        "PACK144",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-211",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Domain/DNS/certificate expiry monitoring",
+      "requirement": "Production domains, TLS certificates, OAuth redirect hosts, webhook callback hosts and critical DNS records have owner/expiry/renewal monitoring so silent certificate/domain expiry cannot take V1 offline.",
+      "routes": [
+        "PACK143",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-212",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Runtime/EOL lifecycle",
+      "requirement": "Track supported versions and end-of-life dates for Node/runtime, OS/container base, database, Redis/queue libraries, mobile SDK/toolchains and other critical platform dependencies; releases cannot silently depend on unsupported runtime stacks.",
+      "routes": [
+        "PACK117",
+        "PACK144",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-213",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Dependency health/SLA/quota posture",
+      "requirement": "Critical provider/database/storage/queue/email/AI dependencies have documented failure mode, quota limits, health signals and degraded/fallback behavior; a vendor outage does not produce fake success.",
+      "routes": [
+        "PACK024",
+        "PACK091",
+        "PACK142",
+        "PACK143"
+      ]
+    },
+    {
+      "id": "EA-214",
+      "requirement_class": "V1_REQUIRED",
+      "title": "User-visible degraded/maintenance mode",
+      "requirement": "When critical dependencies are unavailable, affected actions are clearly disabled/degraded with preserved drafts and safe retry; the product does not spin forever, charge blindly or display success for an unavailable path.",
+      "routes": [
+        "PACK110",
+        "PACK142",
+        "PACK143",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-215",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Config/flag/schema canary and rollback",
+      "requirement": "Risky config, routing, feature-flag and schema changes use staged rollout/validation and have a tested forward-fix/rollback path; not only model releases receive canary discipline.",
+      "routes": [
+        "PACK091",
+        "PACK143",
+        "PACK145",
+        "PACK150"
+      ]
+    },
+    {
+      "id": "EA-216",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Synthetic user-journey monitoring",
+      "requirement": "Run privacy-safe nonbillable/approved synthetic checks for representative auth, core task, queue/storage and critical external dependency paths so “process alive” is not mistaken for “product works”.",
+      "routes": [
+        "PACK091",
+        "PACK143"
+      ]
+    },
+    {
+      "id": "EA-217",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Time/clock source correctness",
+      "requirement": "Security expiry, billing windows, scheduler leases, OAuth tokens, signed URLs and audit ordering use consistent UTC/monotonic-time semantics where appropriate; clock skew is monitored and tested.",
+      "routes": [
+        "PACK124",
+        "PACK139",
+        "PACK142"
+      ]
+    },
+    {
+      "id": "EA-218",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Continuous invariant/anomaly monitors",
+      "requirement": "Detect impossible states such as negative/duplicated settlement, ownerless resources, stuck reservations, orphan tasks/assets, duplicated external-action receipts, revoked token use and model-promotion lineage breaks.",
+      "routes": [
+        "PACK091",
+        "PACK128",
+        "PACK143"
+      ]
+    },
+    {
+      "id": "EA-219",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Storage quota and garbage-collection correctness",
+      "requirement": "Per-user/org/system storage quotas, temp-file cleanup, failed-job artifacts, preview/runtime leftovers and orphaned multipart uploads are bounded and observable without deleting referenced canonical assets.",
+      "routes": [
+        "PACK113",
+        "PACK120",
+        "PACK142"
+      ]
+    },
+    {
+      "id": "EA-220",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Resource-leak/graceful-shutdown verification",
+      "requirement": "Workers/servers/clients release DB connections, file descriptors, browser/runtime sessions, subprocesses and memory after jobs/cancel/restart; deployments drain or reconcile in-flight work safely.",
+      "routes": [
+        "PACK120",
+        "PACK121",
+        "PACK142",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-221",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Provider schema/contract drift detection",
+      "requirement": "Provider API/model/tool response schema, enum/field/URL changes and deprecations are contract-tested; incompatible drift fails closed or routes to a verified fallback rather than corrupting artifacts/usage.",
+      "routes": [
+        "PACK023",
+        "PACK024",
+        "PACK145",
+        "PACK147"
+      ]
+    },
+    {
+      "id": "EA-222",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Provider pricing/terms/license drift gate",
+      "requirement": "Changed provider price, billing unit, commercial terms, model license or regional availability must invalidate stale cost/eligibility assumptions before paid routing continues.",
+      "routes": [
+        "PACK014",
+        "PACK021",
+        "PACK093",
+        "PACK128",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-223",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Connector API/version deprecation lifecycle",
+      "requirement": "Connected services record API version/scope semantics, provider deprecation notices and migration path; stale connectors fail visibly and do not silently widen permissions.",
+      "routes": [
+        "PACK125",
+        "PACK126",
+        "PACK145"
+      ]
+    },
+    {
+      "id": "EA-224",
+      "requirement_class": "V1_REQUIRED_IF_SURFACE_EXISTS",
+      "title": "Webhook key rotation and delivery observability",
+      "requirement": "Inbound/outbound webhooks support signing-secret rotation, timestamp/replay validation, event IDs, retry/backoff, endpoint disablement and delivery receipts without logging secret payloads.",
+      "routes": [
+        "PACK125",
+        "PACK143",
+        "PACK145"
+      ]
+    },
+    {
+      "id": "EA-225",
+      "requirement_class": "V1_REQUIRED_IF_SURFACE_EXISTS",
+      "title": "Transactional email domain/deliverability readiness",
+      "requirement": "If ZUVYR sends auth/security/billing/task email, sender/domain configuration, bounce/complaint handling, delivery monitoring and anti-spoofing posture are operationally owned; do not rely on “API accepted” as proof of delivery.",
+      "routes": [
+        "PACK143",
+        "PACK144",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-226",
+      "requirement_class": "V1_REQUIRED_IF_SURFACE_EXISTS",
+      "title": "Email link/token safety",
+      "requirement": "Verification/reset/invite/action emails use single-purpose expiring tokens, safe destination validation and no sensitive data in URL/query/log/referrer; replays and account-switch confusion are handled.",
+      "routes": [
+        "PACK139",
+        "PACK144",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-227",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Dependency exception expiry",
+      "requirement": "Any security/license/EOL exception for a dependency has owner, rationale, compensating control and expiry/review date; temporary exceptions cannot become permanent invisible debt.",
+      "routes": [
+        "PACK117",
+        "PACK143",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-228",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Vendor exit/degradation plan",
+      "requirement": "For critical AI, storage, auth, billing, email or connector vendors, record export/recovery/fallback or accepted lock-in risk, including how users retain access to their canonical data if the dependency is unavailable.",
+      "routes": [
+        "PACK141",
+        "PACK143",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-229",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Locale-safe dates/numbers/currency/plurals",
+      "requirement": "UI, receipts, exports and notifications use explicit locale/timezone/currency formatting without changing underlying canonical values; Arabic/French/English mixed flows remain unambiguous.",
+      "routes": [
+        "PACK108",
+        "PACK130",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-230",
+      "requirement_class": "V1_REQUIRED",
+      "title": "User/org timezone model",
+      "requirement": "Store canonical timestamps in UTC while preserving user/org timezone preferences for schedules, history, invoices and notifications; DST/timezone changes do not rewrite past facts.",
+      "routes": [
+        "PACK108",
+        "PACK124",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-231",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Unicode normalization/confusable handling",
+      "requirement": "Identifiers, filenames, search, dedupe and security-sensitive comparisons define Unicode normalization/case behavior and protect against dangerous path/extension/domain confusables without corrupting legitimate multilingual text.",
+      "routes": [
+        "PACK105",
+        "PACK108",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-232",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Low-bandwidth/offline degradation",
+      "requirement": "Uploads, media previews, mobile clients and long tasks expose retry/resume/quality controls appropriate to slow or metered networks and avoid restarting expensive work from zero when resumable state exists.",
+      "routes": [
+        "PACK109",
+        "PACK115",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-233",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Deterministic notification localization",
+      "requirement": "Security/billing/task notifications preserve the exact action/amount/resource identity across translations; localization must not change a consequential meaning or hide required legal/security facts.",
+      "routes": [
+        "PACK108",
+        "PACK143",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-234",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Accessible dynamic/realtime states",
+      "requirement": "Streaming text, progress updates, toast/errors, modals, media controls and realtime voice state have appropriate focus/ARIA/live-region behavior, touch targets and reduced-motion handling under the declared WCAG target.",
+      "routes": [
+        "PACK107",
+        "PACK144",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-235",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Security contact/disclosure channel",
+      "requirement": "Publish/operate a security contact path (and `security.txt` if chosen) for vulnerability reports, with anti-spam handling and no requirement for reporters to expose customer secrets publicly.",
+      "routes": [
+        "PACK143",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-236",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Vulnerability intake/severity/remediation workflow",
+      "requirement": "Security findings from users, scanners, providers or internal review receive case ID, severity, owner, remediation target, retest evidence and release linkage; critical findings cannot disappear in generic support queues.",
+      "routes": [
+        "PACK143",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-237",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Security regression after incident/finding",
+      "requirement": "A fixed security bug produces a targeted regression/adversarial test where feasible so the same class cannot silently return in later Pack/release work.",
+      "routes": [
+        "PACK139",
+        "PACK143",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-238",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Evidence/certification claim discipline",
+      "requirement": "ZUVYR may map controls to OWASP/NIST/WCAG/other frameworks, but must not claim certification/compliance/penetration-test success beyond the exact evidence and scope actually obtained.",
+      "routes": [
+        "PACK149",
+        "PACK150"
+      ]
+    },
+    {
+      "id": "EA-239",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Release freeze/change-control window",
+      "requirement": "Before PACK150 seal, freeze or tightly control unrelated production changes; every post-rehearsal code/config/schema/provider change triggers targeted requalification and updates the manifest/receipt identity.",
+      "routes": [
+        "PACK148",
+        "PACK150"
+      ]
+    },
+    {
+      "id": "EA-240",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Absolute no-known-applicable-gap V1 gate",
+      "requirement": "This supersedes the earlier EA-180 matrix range: PACK150 must reconcile `EA-001…EA-292` plus every PACK001–PACK150 acceptance item. Every applicable row is `PASS`; true non-applicable rows are `N/A_WITH_EVIDENCE`. No known applicable gap—critical or non-critical—may remain hidden, deferred, partial, untested or “planned later” while `V1_READY=true`.",
+      "routes": [
+        "PACK148",
+        "PACK149",
+        "PACK150"
+      ]
+    },
+    {
+      "id": "EA-241",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Browser credential/cookie-profile isolation",
+      "requirement": "Cloud Browser cookies, storage, authenticated sessions and autofill-derived state are isolated by user/task/site scope; one task cannot inherit another user's/browser profile state, and logout/revoke destroys or quarantines reusable session material according to policy.",
+      "routes": [
+        "PACK081",
+        "PACK082",
+        "PACK121",
+        "PACK139",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-242",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Browser auth/CAPTCHA/human-takeover boundary",
+      "requirement": "Authentication prompts, MFA, CAPTCHA, consent walls and anti-bot challenges have an explicit handoff policy. ZUVYR must not bypass access controls, silently capture credentials, or claim success when human completion is required.",
+      "routes": [
+        "PACK082",
+        "PACK121",
+        "PACK127",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-243",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Browser destination/phishing/redirect confirmation",
+      "requirement": "Before consequential actions, the effective destination/domain, final redirect target and structured action target are checked. Suspicious lookalike/redirect/domain changes trigger verification rather than allowing model text to redefine the destination.",
+      "routes": [
+        "PACK082",
+        "PACK122",
+        "PACK127",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-244",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Browser download/upload quarantine",
+      "requirement": "Browser-downloaded or user-uploaded files pass ownership, MIME/content, size, malware/active-content and path checks before entering Library/Project/Code/device flows; unsafe content cannot jump trust boundaries because it came from an authenticated site.",
+      "routes": [
+        "PACK081",
+        "PACK085",
+        "PACK113",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-245",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Browser irreversible-submit commitment",
+      "requirement": "Purchase, send, publish, delete, submit, transfer, booking, account-change or similarly consequential browser actions use trusted structured state for target/amount/data scope and record pre-action confirmation plus post-action outcome/receipt.",
+      "routes": [
+        "PACK082",
+        "PACK122",
+        "PACK127",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-246",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Browser screenshot/DOM privacy lifecycle",
+      "requirement": "Screenshots, DOM snapshots, accessibility trees, downloaded pages and captured form state are classified, minimized, retained only as necessary, and excluded from generic telemetry/training unless separately eligible.",
+      "routes": [
+        "PACK081",
+        "PACK094",
+        "PACK140"
+      ]
+    },
+    {
+      "id": "EA-247",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Device-agent least-privilege service boundary",
+      "requirement": "The local device agent runs with the minimum OS privilege needed; privileged helper/service boundaries, UAC/admin escalation, shell/file access and updater rights are explicit. AI/model output cannot elevate the local agent or persist outside authorized scope.",
+      "routes": [
+        "PACK085",
+        "PACK087",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-248",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Device user/session/lock-state binding",
+      "requirement": "Pairing and actions bind to the intended OS user/session/device. Locked-screen, fast-user-switching, remote-desktop and multi-user cases cannot expose another local user's files, clipboard, windows or credentials.",
+      "routes": [
+        "PACK085",
+        "PACK086",
+        "PACK087",
+        "PACK127"
+      ]
+    },
+    {
+      "id": "EA-249",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Device local STOP/offline-revoke/tamper evidence",
+      "requirement": "Provide an independent local STOP/kill path outside model control; queued actions stop on revoke; offline/reconnect behavior cannot resurrect expired authority; local security/action receipts are tamper-evident enough to investigate misuse.",
+      "routes": [
+        "PACK086",
+        "PACK087",
+        "PACK123",
+        "PACK127"
+      ]
+    },
+    {
+      "id": "EA-250",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Device-agent signed update/rollback safety",
+      "requirement": "Installer/updater packages verify publisher/signature/version/source, resist downgrade/tamper where practical, preserve pairing/security state safely, and have a tested rollback/uninstall path without leaving privileged services or credentials behind.",
+      "routes": [
+        "PACK085",
+        "PACK097",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-251",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Per-run reauthorization of mutable facts",
+      "requirement": "Every automation run revalidates permission, connector/device session, entitlement/funding, target ownership, relevant price/cost ceiling and policy state at execution time rather than trusting stale creation-time approval.",
+      "routes": [
+        "PACK088",
+        "PACK124",
+        "PACK125",
+        "PACK146"
+      ]
+    },
+    {
+      "id": "EA-252",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Automation concurrency/catch-up bounds",
+      "requirement": "Define overlap policy, maximum catch-up/missed runs, backlog age, duplicate-trigger handling and concurrency limits; recovery cannot unleash an unbounded burst of stale actions.",
+      "routes": [
+        "PACK088",
+        "PACK124",
+        "PACK127",
+        "PACK142"
+      ]
+    },
+    {
+      "id": "EA-253",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Recurring high-consequence approval lifetime",
+      "requirement": "A prior approval for a recurring workflow has explicit scope and lifetime. Material target/amount/content/action changes invalidate consent; high-consequence repeated actions cannot rely forever on one ambiguous confirmation.",
+      "routes": [
+        "PACK036",
+        "PACK047",
+        "PACK088",
+        "PACK122"
+      ]
+    },
+    {
+      "id": "EA-254",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Automation credential-expiry semantics",
+      "requirement": "Expired/revoked/reconnected connector or device credentials move runs to an actionable blocked state; retries do not silently widen scopes or substitute another account/identity.",
+      "routes": [
+        "PACK088",
+        "PACK123",
+        "PACK125",
+        "PACK127"
+      ]
+    },
+    {
+      "id": "EA-255",
+      "requirement_class": "V1_REQUIRED",
+      "title": "User-visible automation run ledger",
+      "requirement": "Users can inspect scheduled/actual run time, trigger, task/version, action target, outcome, skip/retry/cancel reason, cost/usage and next run where applicable; replay/manual retry uses the original logical identity safely.",
+      "routes": [
+        "PACK088",
+        "PACK124",
+        "PACK143"
+      ]
+    },
+    {
+      "id": "EA-256",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Web/source manipulation and sponsored-content separation",
+      "requirement": "Research/search outputs distinguish organic evidence, ads/sponsored/affiliate material and low-trust SEO/manipulated pages where detectable; sponsored status or platform revenue must not silently become evidence quality.",
+      "routes": [
+        "PACK055",
+        "PACK056",
+        "PACK057",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-257",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Research reproducibility snapshot",
+      "requirement": "A saved research result records query set, retrieval time, source URLs/IDs, source/version metadata where available, model/router version and material exclusions so later changes can be distinguished from the original evidence.",
+      "routes": [
+        "PACK054",
+        "PACK056",
+        "PACK102",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-258",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Shopping/local price and availability integrity",
+      "requirement": "Product/business price, availability, merchant/business identity, location and timestamp are kept distinct from inferred commentary; stale or unverified commercial data is visibly qualified and never silently presented as current checkout truth.",
+      "routes": [
+        "PACK057",
+        "PACK102",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-259",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Recommendation and affiliate conflict disclosure",
+      "requirement": "If ranking, affiliate, sponsored or commercial relationships can influence a recommendation, disclose the relationship and preserve a user-interest ranking path. Monetization must not secretly override the user's stated criteria.",
+      "routes": [
+        "PACK057",
+        "PACK093",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-260",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Precise-location privacy and minimization",
+      "requirement": "Location is requested only when necessary, with precision appropriate to the task; exact location is not retained, logged, shared with unrelated providers or reused across tasks beyond declared permission/retention.",
+      "routes": [
+        "PACK047",
+        "PACK057",
+        "PACK140",
+        "PACK144"
+      ]
+    },
+    {
+      "id": "EA-261",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Connected-source revocation during research",
+      "requirement": "If a connected Drive/mail/plugin/source is revoked or its permissions change mid-task, later retrieval stops immediately and saved context/citations respect the new authorization state without leaking cached inaccessible content.",
+      "routes": [
+        "PACK056",
+        "PACK089",
+        "PACK125",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-262",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Document active-content and external-link safety",
+      "requirement": "DOCX/PDF/PPTX/XLSX/CSV imports/exports define treatment of macros, embedded objects, external links, remote images, scripts/actions and active content. Generated documents do not silently embed executable or credential-leaking behavior.",
+      "routes": [
+        "PACK053",
+        "PACK058",
+        "PACK059",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-263",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Spreadsheet calculation/precision/locale correctness",
+      "requirement": "Formula generation, numeric precision, date systems, locale separators, CSV formula injection, recalculation state and error values are validated; values shown to users match exported workbook semantics.",
+      "routes": [
+        "PACK059",
+        "PACK108",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-264",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Document export fidelity and accessibility",
+      "requirement": "Generated DOCX/PDF/PPTX/XLSX outputs preserve intended text, RTL/bidi order, fonts/fallbacks, links, headings/table semantics and accessible reading order where supported; exported files reopen without silent corruption.",
+      "routes": [
+        "PACK058",
+        "PACK059",
+        "PACK108",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-265",
+      "requirement_class": "V1_REQUIRED",
+      "title": "3D parser/viewer isolation",
+      "requirement": "GLB/GLTF/FBX/OBJ/STL/3MF, textures and related imports/previews are treated as untrusted, resource-bounded content. Viewer/parser failures cannot execute host code, fetch arbitrary protected URLs or exhaust unbounded memory/GPU.",
+      "routes": [
+        "PACK083",
+        "PACK084",
+        "PACK090",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-266",
+      "requirement_class": "V1_REQUIRED",
+      "title": "3D geometry/material integrity checks",
+      "requirement": "Validate mesh existence, finite coordinates, normals where required, texture/material references, rig/animation references, bounded polygon/texture sizes and corrupted/missing-resource behavior before claiming an asset is usable.",
+      "routes": [
+        "PACK083",
+        "PACK084",
+        "PACK090"
+      ]
+    },
+    {
+      "id": "EA-267",
+      "requirement_class": "V1_REQUIRED",
+      "title": "3D units/axis/export compatibility",
+      "requirement": "Record units/scale/up-axis/coordinate assumptions and validate each claimed export format by round-trip or compatible parser; extension/MIME/container bytes must match the advertised 3D format.",
+      "routes": [
+        "PACK084",
+        "PACK090",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-268",
+      "requirement_class": "V1_REQUIRED",
+      "title": "3D rights/provenance metadata",
+      "requirement": "Text/image/reference inputs, provider/model version, generated/edited lineage, texture sources and user-supplied rights metadata remain attributable through 3D derivations and exports.",
+      "routes": [
+        "PACK083",
+        "PACK084",
+        "PACK140"
+      ]
+    },
+    {
+      "id": "EA-269",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Multi-tenant inference memory isolation",
+      "requirement": "External or ZUVYR-owned inference serving must prevent cross-request/tenant leakage through KV caches, batching, request logs, shared temporary storage, debugging buffers or reused generation state; tenant identity is preserved through BYOC routing.",
+      "routes": [
+        "PACK135",
+        "PACK139",
+        "PACK147"
+      ]
+    },
+    {
+      "id": "EA-270",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Provider data-use/retention/region routing policy",
+      "requirement": "Provider registry records material prompt/output retention, training/data-use, region and enterprise/privacy options where known. Router privacy requirements must exclude providers whose data-handling policy does not satisfy the task/user/org constraint.",
+      "routes": [
+        "PACK021",
+        "PACK026",
+        "PACK140",
+        "PACK147"
+      ]
+    },
+    {
+      "id": "EA-271",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Prompt/response cache privacy",
+      "requirement": "Semantic/exact caches are tenant/user/context/policy/model-version aware, avoid cross-user leakage, exclude secrets/highly sensitive content when policy requires, and invalidate on permission/context/version changes.",
+      "routes": [
+        "PACK028",
+        "PACK041",
+        "PACK139",
+        "PACK142"
+      ]
+    },
+    {
+      "id": "EA-272",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Training-data secret/credential scrub",
+      "requirement": "Before training admission, scan/redact/reject live credentials, API keys, auth tokens, private keys and other high-risk secrets in addition to ordinary PII processing; discovered live secrets trigger an incident-safe handling path.",
+      "routes": [
+        "PACK094",
+        "PACK132",
+        "PACK140"
+      ]
+    },
+    {
+      "id": "EA-273",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Base-model/source artifact provenance and safe loading",
+      "requirement": "Every training/serving base model records source, exact hash/revision, license/terms and tokenizer/config identity. Prefer safe serialization/loading; untrusted executable model artifacts or remote code do not run implicitly.",
+      "routes": [
+        "PACK095",
+        "PACK132",
+        "PACK147"
+      ]
+    },
+    {
+      "id": "EA-274",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Checkpoint backdoor/anomaly screening",
+      "requirement": "Promotion evaluates anomalous triggers/backdoors, unexpected tool-call behavior, memorized canaries and suspicious regression clusters; unexplained high-risk behavior blocks promotion even if average benchmark score improves.",
+      "routes": [
+        "PACK132",
+        "PACK136",
+        "PACK147"
+      ]
+    },
+    {
+      "id": "EA-275",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Memorization/privacy extraction evaluation",
+      "requirement": "Owned-model release testing includes targeted attempts to recover training examples, secrets/PII/canaries or another user's data. Material memorization/privacy leakage blocks or constrains promotion.",
+      "routes": [
+        "PACK136",
+        "PACK147",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-276",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Emergency model quarantine",
+      "requirement": "A model/checkpoint/provider version can be globally quarantined quickly on security, privacy, quality, rights or cost incident; new routing stops while evidence and rollback/fallback preserve user task/accounting state.",
+      "routes": [
+        "PACK029",
+        "PACK091",
+        "PACK136",
+        "PACK143"
+      ]
+    },
+    {
+      "id": "EA-277",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Learning-signal Sybil/poisoning resistance",
+      "requirement": "User feedback/outcome signals used for evaluation/training are deduplicated, rate/risk weighted where appropriate and protected against one actor/task repeatedly manipulating global learning, routing or benchmark outcomes.",
+      "routes": [
+        "PACK094",
+        "PACK132",
+        "PACK134"
+      ]
+    },
+    {
+      "id": "EA-278",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Tokenizer/prompt-template/tool-schema compatibility pinning",
+      "requirement": "Model deployment pins tokenizer, chat/prompt template, special tokens, tool schema/protocol and context limits; mismatched serving/runtime versions fail qualification rather than silently changing behavior.",
+      "routes": [
+        "PACK095",
+        "PACK135",
+        "PACK147"
+      ]
+    },
+    {
+      "id": "EA-279",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Versioned cross-provider safety policy taxonomy",
+      "requirement": "Define ZUVYR-level policy categories and enforcement behavior across text/image/video/audio/code/3D/agents instead of relying on inconsistent upstream provider labels. Provider refusal differences are normalized and versioned without inventing successful execution.",
+      "routes": [
+        "PACK025",
+        "PACK082",
+        "PACK139",
+        "PACK147"
+      ]
+    },
+    {
+      "id": "EA-280",
+      "requirement_class": "V1_REQUIRED",
+      "title": "High-consequence domain verification/action boundary",
+      "requirement": "For materially consequential medical, legal, financial, employment, housing or similar flows, require stronger source/uncertainty handling and prevent silent autonomous consequential actions without the applicable confirmation/permission boundary.",
+      "routes": [
+        "PACK036",
+        "PACK047",
+        "PACK056",
+        "PACK127",
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-281",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Outbound abuse controls for agentic capabilities",
+      "requirement": "Browser/device/code/connectors/automations must not become an unbounded spam, phishing, credential-theft, malware-delivery, scraping-abuse or harassment engine; suspicious high-volume/known-abuse patterns have rate/action controls and auditability.",
+      "routes": [
+        "PACK087",
+        "PACK088",
+        "PACK127",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-282",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Illegal-content escalation boundary",
+      "requirement": "For media/content surfaces, define detection/escalation/reporting/legal-hold behavior required by applicable law/provider obligations for categories requiring special handling, while minimizing unnecessary operator exposure to harmful content.",
+      "routes": [
+        "PACK065",
+        "PACK070",
+        "PACK074",
+        "PACK139",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-283",
+      "requirement_class": "V1_REQUIRED",
+      "title": "NCII/deepfake/impersonation abuse handling",
+      "requirement": "Provide policy and report/takedown handling for non-consensual intimate imagery, abusive face/voice impersonation and deceptive synthetic media; preserve sufficient provenance/case evidence while minimizing unnecessary sensitive retention.",
+      "routes": [
+        "PACK065",
+        "PACK070",
+        "PACK072",
+        "PACK139",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-284",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Safety false-positive/false-negative evaluation and appeal",
+      "requirement": "Measure representative safety over-blocking/under-blocking across languages/modalities/providers, record policy version, and provide a bounded appeal/report path where product policy supports review.",
+      "routes": [
+        "PACK134",
+        "PACK139",
+        "PACK147",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-285",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Multimodal moderation consistency",
+      "requirement": "Safety classification and enforcement apply to extracted OCR, audio transcripts, images, video frames/subtitles, code, documents and generated artifacts where relevant; unsafe content cannot bypass policy solely by changing modality.",
+      "routes": [
+        "PACK053",
+        "PACK070",
+        "PACK074",
+        "PACK115",
+        "PACK139"
+      ]
+    },
+    {
+      "id": "EA-286",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Biometric/face/voice sensitive-data boundary",
+      "requirement": "Face/voice templates, embeddings or cloning references—if created—have explicit purpose, consent/rights, access, retention and deletion rules and are not silently reused for identity inference or another user's generations.",
+      "routes": [
+        "PACK062",
+        "PACK072",
+        "PACK140",
+        "PACK149"
+      ]
+    },
+    {
+      "id": "EA-287",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Canonical continuity manifest",
+      "requirement": "Maintain one machine-readable continuity manifest naming the canonical boot files, current known active Pack/phase, latest receipt, readiness-range file, freshness rule and new-chat reconstruction procedure. Missing or unreadable manifest blocks continuation until repaired.",
+      "routes": [
+        "PACK143",
+        "PACK148",
+        "PACK150"
+      ]
+    },
+    {
+      "id": "EA-288",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Stale-state conflict detection",
+      "requirement": "If MASTER_STATE, MASTER_MATRIX, LIVE_PROJECT_STATE, CONTINUE_HERE, receipts or production evidence disagree, the system must detect the conflict explicitly and resolve it using the source-of-truth order; it must not silently continue from the first/oldest status encountered.",
+      "routes": [
+        "PACK143",
+        "PACK148",
+        "PACK150"
+      ]
+    },
+    {
+      "id": "EA-289",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Fresh completeness audit before final rehearsal",
+      "requirement": "Immediately before PACK148, run a fresh external-eye V1 gap audit against the then-current architecture, product surfaces, dependencies and applicable standards. Any newly discovered applicable gap is added to the canonical roadmap/matrix and routed to an owning Pack before PACK148 can lock.",
+      "routes": [
+        "PACK148"
+      ]
+    },
+    {
+      "id": "EA-290",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Atomic continuity update after every material checkpoint",
+      "requirement": "After every verified Pack/FIX, production deployment, E2E gate, rollback/recovery event, material blocker or roadmap/readiness change, update canonical continuation/state/matrix/receipt references in the same work session or record an explicit continuity-update blocker.",
+      "routes": [
+        "PACK143",
+        "PACK148",
+        "PACK150"
+      ]
+    },
+    {
+      "id": "EA-291",
+      "requirement_class": "V1_REQUIRED",
+      "title": "Historical evidence preservation and supersession markers",
+      "requirement": "Never erase historical receipts/evidence to make current state look clean. Stale current-status sections are clearly marked superseded by a dated newer override, while evidence identity remains retrievable.",
+      "routes": [
+        "PACK143",
+        "PACK150"
+      ]
+    },
+    {
+      "id": "EA-292",
+      "requirement_class": "V1_REQUIRED",
+      "title": "New-chat reconstruction acceptance test",
+      "requirement": "Before V1 release, perform a cold-start/read-only reconstruction using only canonical project files plus fresh allowed production evidence. The fresh session must independently derive the correct active/final state, readiness requirements, blockers, next legal step and rollback target without relying on private chat memory.",
+      "routes": [
+        "PACK148",
+        "PACK150"
+      ]
+    }
+  ],
+  "pack_ownership": {
+    "PACK123": [
+      "EA-001",
+      "EA-097",
+      "EA-126",
+      "EA-249",
+      "EA-254"
+    ],
+    "PACK139": [
+      "EA-001",
+      "EA-002",
+      "EA-003",
+      "EA-006",
+      "EA-007",
+      "EA-008",
+      "EA-009",
+      "EA-010",
+      "EA-011",
+      "EA-012",
+      "EA-013",
+      "EA-014",
+      "EA-019",
+      "EA-021",
+      "EA-026",
+      "EA-028",
+      "EA-041",
+      "EA-044",
+      "EA-046",
+      "EA-047",
+      "EA-048",
+      "EA-049",
+      "EA-055",
+      "EA-057",
+      "EA-060",
+      "EA-076",
+      "EA-077",
+      "EA-082",
+      "EA-085",
+      "EA-091",
+      "EA-092",
+      "EA-093",
+      "EA-094",
+      "EA-095",
+      "EA-096",
+      "EA-097",
+      "EA-098",
+      "EA-100",
+      "EA-101",
+      "EA-102",
+      "EA-103",
+      "EA-104",
+      "EA-106",
+      "EA-107",
+      "EA-108",
+      "EA-109",
+      "EA-110",
+      "EA-111",
+      "EA-112",
+      "EA-113",
+      "EA-114",
+      "EA-115",
+      "EA-117",
+      "EA-118",
+      "EA-119",
+      "EA-120",
+      "EA-121",
+      "EA-122",
+      "EA-123",
+      "EA-124",
+      "EA-125",
+      "EA-127",
+      "EA-128",
+      "EA-131",
+      "EA-132",
+      "EA-133",
+      "EA-134",
+      "EA-135",
+      "EA-136",
+      "EA-137",
+      "EA-140",
+      "EA-141",
+      "EA-142",
+      "EA-143",
+      "EA-172",
+      "EA-179",
+      "EA-181",
+      "EA-182",
+      "EA-184",
+      "EA-186",
+      "EA-187",
+      "EA-188",
+      "EA-191",
+      "EA-193",
+      "EA-194",
+      "EA-197",
+      "EA-202",
+      "EA-203",
+      "EA-207",
+      "EA-217",
+      "EA-226",
+      "EA-231",
+      "EA-237",
+      "EA-241",
+      "EA-243",
+      "EA-244",
+      "EA-247",
+      "EA-256",
+      "EA-261",
+      "EA-262",
+      "EA-265",
+      "EA-269",
+      "EA-271",
+      "EA-279",
+      "EA-281",
+      "EA-282",
+      "EA-283",
+      "EA-284",
+      "EA-285"
+    ],
+    "PACK144": [
+      "EA-001",
+      "EA-002",
+      "EA-027",
+      "EA-041",
+      "EA-043",
+      "EA-044",
+      "EA-045",
+      "EA-046",
+      "EA-067",
+      "EA-068",
+      "EA-069",
+      "EA-070",
+      "EA-097",
+      "EA-108",
+      "EA-110",
+      "EA-111",
+      "EA-112",
+      "EA-117",
+      "EA-118",
+      "EA-122",
+      "EA-123",
+      "EA-124",
+      "EA-125",
+      "EA-126",
+      "EA-155",
+      "EA-156",
+      "EA-157",
+      "EA-158",
+      "EA-159",
+      "EA-160",
+      "EA-161",
+      "EA-162",
+      "EA-163",
+      "EA-164",
+      "EA-165",
+      "EA-175",
+      "EA-176",
+      "EA-177",
+      "EA-179",
+      "EA-181",
+      "EA-185",
+      "EA-186",
+      "EA-210",
+      "EA-212",
+      "EA-220",
+      "EA-225",
+      "EA-226",
+      "EA-229",
+      "EA-230",
+      "EA-232",
+      "EA-233",
+      "EA-234",
+      "EA-250",
+      "EA-260"
+    ],
+    "PACK148": [
+      "EA-001",
+      "EA-003",
+      "EA-006",
+      "EA-007",
+      "EA-010",
+      "EA-017",
+      "EA-018",
+      "EA-021",
+      "EA-023",
+      "EA-029",
+      "EA-032",
+      "EA-052",
+      "EA-064",
+      "EA-066",
+      "EA-068",
+      "EA-070",
+      "EA-085",
+      "EA-086",
+      "EA-088",
+      "EA-090",
+      "EA-091",
+      "EA-092",
+      "EA-093",
+      "EA-094",
+      "EA-095",
+      "EA-097",
+      "EA-099",
+      "EA-102",
+      "EA-106",
+      "EA-107",
+      "EA-108",
+      "EA-109",
+      "EA-126",
+      "EA-127",
+      "EA-139",
+      "EA-143",
+      "EA-144",
+      "EA-148",
+      "EA-149",
+      "EA-150",
+      "EA-174",
+      "EA-175",
+      "EA-176",
+      "EA-179",
+      "EA-180",
+      "EA-181",
+      "EA-185",
+      "EA-187",
+      "EA-188",
+      "EA-194",
+      "EA-195",
+      "EA-197",
+      "EA-209",
+      "EA-210",
+      "EA-214",
+      "EA-234",
+      "EA-237",
+      "EA-239",
+      "EA-240",
+      "EA-241",
+      "EA-242",
+      "EA-245",
+      "EA-257",
+      "EA-258",
+      "EA-263",
+      "EA-264",
+      "EA-267",
+      "EA-275",
+      "EA-280",
+      "EA-287",
+      "EA-288",
+      "EA-289",
+      "EA-290",
+      "EA-292"
+    ],
+    "PACK149": [
+      "EA-002",
+      "EA-004",
+      "EA-005",
+      "EA-031",
+      "EA-043",
+      "EA-047",
+      "EA-048",
+      "EA-054",
+      "EA-059",
+      "EA-061",
+      "EA-071",
+      "EA-072",
+      "EA-073",
+      "EA-075",
+      "EA-076",
+      "EA-078",
+      "EA-079",
+      "EA-080",
+      "EA-081",
+      "EA-082",
+      "EA-083",
+      "EA-084",
+      "EA-086",
+      "EA-089",
+      "EA-105",
+      "EA-112",
+      "EA-113",
+      "EA-114",
+      "EA-120",
+      "EA-122",
+      "EA-123",
+      "EA-129",
+      "EA-130",
+      "EA-134",
+      "EA-153",
+      "EA-166",
+      "EA-167",
+      "EA-169",
+      "EA-171",
+      "EA-178",
+      "EA-179",
+      "EA-180",
+      "EA-190",
+      "EA-192",
+      "EA-196",
+      "EA-205",
+      "EA-206",
+      "EA-207",
+      "EA-208",
+      "EA-211",
+      "EA-212",
+      "EA-222",
+      "EA-225",
+      "EA-226",
+      "EA-227",
+      "EA-228",
+      "EA-235",
+      "EA-236",
+      "EA-238",
+      "EA-240",
+      "EA-259",
+      "EA-282",
+      "EA-283",
+      "EA-284",
+      "EA-286"
+    ],
+    "PACK125": [
+      "EA-004",
+      "EA-006",
+      "EA-048",
+      "EA-074",
+      "EA-077",
+      "EA-100",
+      "EA-113",
+      "EA-223",
+      "EA-224",
+      "EA-251",
+      "EA-254",
+      "EA-261"
+    ],
+    "PACK126": [
+      "EA-004",
+      "EA-008",
+      "EA-013",
+      "EA-045",
+      "EA-073",
+      "EA-076",
+      "EA-134",
+      "EA-142",
+      "EA-223"
+    ],
+    "PACK145": [
+      "EA-004",
+      "EA-005",
+      "EA-020",
+      "EA-032",
+      "EA-069",
+      "EA-073",
+      "EA-074",
+      "EA-075",
+      "EA-091",
+      "EA-093",
+      "EA-098",
+      "EA-105",
+      "EA-116",
+      "EA-127",
+      "EA-189",
+      "EA-199",
+      "EA-215",
+      "EA-221",
+      "EA-223",
+      "EA-224"
+    ],
+    "PACK122": [
+      "EA-007",
+      "EA-008",
+      "EA-009",
+      "EA-012",
+      "EA-034",
+      "EA-099",
+      "EA-106",
+      "EA-131",
+      "EA-132",
+      "EA-133",
+      "EA-137",
+      "EA-139",
+      "EA-184",
+      "EA-192",
+      "EA-193",
+      "EA-243",
+      "EA-245",
+      "EA-253"
+    ],
+    "PACK127": [
+      "EA-007",
+      "EA-008",
+      "EA-012",
+      "EA-014",
+      "EA-033",
+      "EA-077",
+      "EA-100",
+      "EA-101",
+      "EA-106",
+      "EA-131",
+      "EA-132",
+      "EA-133",
+      "EA-137",
+      "EA-138",
+      "EA-140",
+      "EA-141",
+      "EA-142",
+      "EA-147",
+      "EA-148",
+      "EA-175",
+      "EA-184",
+      "EA-188",
+      "EA-193",
+      "EA-242",
+      "EA-243",
+      "EA-245",
+      "EA-248",
+      "EA-249",
+      "EA-252",
+      "EA-254",
+      "EA-280",
+      "EA-281"
+    ],
+    "PACK118": [
+      "EA-009",
+      "EA-014",
+      "EA-046",
+      "EA-101",
+      "EA-109",
+      "EA-110",
+      "EA-111",
+      "EA-117",
+      "EA-135"
+    ],
+    "PACK147": [
+      "EA-010",
+      "EA-023",
+      "EA-045",
+      "EA-050",
+      "EA-051",
+      "EA-052",
+      "EA-053",
+      "EA-054",
+      "EA-055",
+      "EA-057",
+      "EA-058",
+      "EA-144",
+      "EA-145",
+      "EA-146",
+      "EA-147",
+      "EA-149",
+      "EA-150",
+      "EA-151",
+      "EA-152",
+      "EA-153",
+      "EA-221",
+      "EA-269",
+      "EA-270",
+      "EA-273",
+      "EA-274",
+      "EA-275",
+      "EA-278",
+      "EA-279",
+      "EA-284"
+    ],
+    "PACK119": [
+      "EA-011",
+      "EA-096",
+      "EA-138"
+    ],
+    "PACK128": [
+      "EA-011",
+      "EA-061",
+      "EA-062",
+      "EA-063",
+      "EA-065",
+      "EA-096",
+      "EA-168",
+      "EA-170",
+      "EA-173",
+      "EA-201",
+      "EA-218",
+      "EA-222"
+    ],
+    "PACK142": [
+      "EA-011",
+      "EA-024",
+      "EA-033",
+      "EA-034",
+      "EA-035",
+      "EA-038",
+      "EA-040",
+      "EA-041",
+      "EA-042",
+      "EA-056",
+      "EA-070",
+      "EA-096",
+      "EA-103",
+      "EA-104",
+      "EA-138",
+      "EA-182",
+      "EA-183",
+      "EA-213",
+      "EA-214",
+      "EA-217",
+      "EA-219",
+      "EA-220",
+      "EA-252",
+      "EA-271"
+    ],
+    "PACK121": [
+      "EA-014",
+      "EA-101",
+      "EA-181",
+      "EA-182",
+      "EA-183",
+      "EA-220",
+      "EA-241",
+      "EA-242"
+    ],
+    "PACK092": [
+      "EA-015",
+      "EA-094",
+      "EA-128",
+      "EA-139"
+    ],
+    "PACK143": [
+      "EA-015",
+      "EA-025",
+      "EA-028",
+      "EA-029",
+      "EA-031",
+      "EA-035",
+      "EA-037",
+      "EA-038",
+      "EA-040",
+      "EA-047",
+      "EA-067",
+      "EA-071",
+      "EA-072",
+      "EA-086",
+      "EA-102",
+      "EA-107",
+      "EA-114",
+      "EA-115",
+      "EA-116",
+      "EA-121",
+      "EA-124",
+      "EA-128",
+      "EA-129",
+      "EA-173",
+      "EA-177",
+      "EA-178",
+      "EA-200",
+      "EA-201",
+      "EA-211",
+      "EA-213",
+      "EA-214",
+      "EA-215",
+      "EA-216",
+      "EA-218",
+      "EA-224",
+      "EA-225",
+      "EA-227",
+      "EA-228",
+      "EA-233",
+      "EA-235",
+      "EA-236",
+      "EA-237",
+      "EA-255",
+      "EA-276",
+      "EA-287",
+      "EA-288",
+      "EA-290",
+      "EA-291"
+    ],
+    "PACK102": [
+      "EA-016",
+      "EA-017",
+      "EA-018",
+      "EA-257",
+      "EA-258"
+    ],
+    "PACK105": [
+      "EA-016",
+      "EA-018",
+      "EA-019",
+      "EA-020",
+      "EA-021",
+      "EA-022",
+      "EA-024",
+      "EA-104",
+      "EA-136",
+      "EA-194",
+      "EA-195",
+      "EA-231"
+    ],
+    "PACK134": [
+      "EA-016",
+      "EA-017",
+      "EA-023",
+      "EA-030",
+      "EA-053",
+      "EA-065",
+      "EA-144",
+      "EA-145",
+      "EA-146",
+      "EA-147",
+      "EA-148",
+      "EA-150",
+      "EA-151",
+      "EA-153",
+      "EA-154",
+      "EA-198",
+      "EA-277",
+      "EA-284"
+    ],
+    "PACK137": [
+      "EA-016",
+      "EA-053",
+      "EA-144",
+      "EA-151"
+    ],
+    "PACK132": [
+      "EA-019",
+      "EA-020",
+      "EA-050",
+      "EA-051",
+      "EA-058",
+      "EA-154",
+      "EA-272",
+      "EA-273",
+      "EA-274",
+      "EA-277"
+    ],
+    "PACK131": [
+      "EA-021",
+      "EA-058",
+      "EA-080",
+      "EA-136",
+      "EA-195"
+    ],
+    "PACK140": [
+      "EA-022",
+      "EA-026",
+      "EA-078",
+      "EA-079",
+      "EA-080",
+      "EA-081",
+      "EA-083",
+      "EA-113",
+      "EA-130",
+      "EA-185",
+      "EA-190",
+      "EA-193",
+      "EA-195",
+      "EA-196",
+      "EA-197",
+      "EA-198",
+      "EA-199",
+      "EA-200",
+      "EA-202",
+      "EA-204",
+      "EA-246",
+      "EA-260",
+      "EA-268",
+      "EA-270",
+      "EA-272",
+      "EA-286"
+    ],
+    "PACK091": [
+      "EA-025",
+      "EA-026",
+      "EA-027",
+      "EA-028",
+      "EA-029",
+      "EA-030",
+      "EA-115",
+      "EA-120",
+      "EA-121",
+      "EA-163",
+      "EA-213",
+      "EA-215",
+      "EA-216",
+      "EA-218",
+      "EA-276"
+    ],
+    "PACK141": [
+      "EA-032",
+      "EA-036",
+      "EA-037",
+      "EA-038",
+      "EA-039",
+      "EA-196",
+      "EA-201",
+      "EA-228"
+    ],
+    "PACK115": [
+      "EA-033",
+      "EA-143",
+      "EA-146",
+      "EA-175",
+      "EA-203",
+      "EA-205",
+      "EA-206",
+      "EA-232",
+      "EA-285"
+    ],
+    "PACK113": [
+      "EA-039",
+      "EA-083",
+      "EA-085",
+      "EA-119",
+      "EA-201",
+      "EA-203",
+      "EA-204",
+      "EA-208",
+      "EA-219",
+      "EA-244"
+    ],
+    "PACK124": [
+      "EA-042",
+      "EA-099",
+      "EA-217",
+      "EA-230",
+      "EA-251",
+      "EA-252",
+      "EA-255"
+    ],
+    "PACK117": [
+      "EA-043",
+      "EA-044",
+      "EA-049",
+      "EA-109",
+      "EA-119",
+      "EA-135",
+      "EA-191",
+      "EA-212",
+      "EA-227"
+    ],
+    "PACK150": [
+      "EA-045",
+      "EA-087",
+      "EA-088",
+      "EA-089",
+      "EA-090",
+      "EA-091",
+      "EA-105",
+      "EA-116",
+      "EA-180",
+      "EA-215",
+      "EA-238",
+      "EA-239",
+      "EA-240",
+      "EA-287",
+      "EA-288",
+      "EA-290",
+      "EA-291",
+      "EA-292"
+    ],
+    "PACK120": [
+      "EA-049",
+      "EA-175",
+      "EA-219",
+      "EA-220"
+    ],
+    "PACK136": [
+      "EA-052",
+      "EA-149",
+      "EA-274",
+      "EA-275",
+      "EA-276"
+    ],
+    "PACK135": [
+      "EA-055",
+      "EA-056",
+      "EA-269",
+      "EA-278"
+    ],
+    "PACK133": [
+      "EA-058"
+    ],
+    "PACK146": [
+      "EA-059",
+      "EA-060",
+      "EA-061",
+      "EA-062",
+      "EA-063",
+      "EA-095",
+      "EA-099",
+      "EA-130",
+      "EA-166",
+      "EA-167",
+      "EA-168",
+      "EA-169",
+      "EA-170",
+      "EA-171",
+      "EA-172",
+      "EA-173",
+      "EA-251"
+    ],
+    "PACK130": [
+      "EA-061",
+      "EA-062",
+      "EA-063",
+      "EA-168",
+      "EA-170",
+      "EA-173",
+      "EA-229"
+    ],
+    "PACK110": [
+      "EA-064",
+      "EA-065",
+      "EA-174",
+      "EA-175",
+      "EA-214"
+    ],
+    "PACK129": [
+      "EA-066"
+    ],
+    "PACK109": [
+      "EA-067",
+      "EA-161",
+      "EA-165",
+      "EA-177",
+      "EA-183",
+      "EA-232"
+    ],
+    "PACK107": [
+      "EA-068",
+      "EA-210",
+      "EA-234"
+    ],
+    "PACK111": [
+      "EA-103"
+    ],
+    "PACK047": [
+      "EA-139",
+      "EA-253",
+      "EA-260",
+      "EA-280"
+    ],
+    "PACK087": [
+      "EA-140",
+      "EA-247",
+      "EA-248",
+      "EA-249",
+      "EA-281"
+    ],
+    "PACK053": [
+      "EA-143",
+      "EA-203",
+      "EA-262",
+      "EA-285"
+    ],
+    "PACK108": [
+      "EA-145",
+      "EA-229",
+      "EA-230",
+      "EA-231",
+      "EA-233",
+      "EA-263",
+      "EA-264"
+    ],
+    "PACK022": [
+      "EA-152"
+    ],
+    "PACK024": [
+      "EA-152",
+      "EA-213",
+      "EA-221"
+    ],
+    "PACK094": [
+      "EA-154",
+      "EA-198",
+      "EA-246",
+      "EA-272",
+      "EA-277"
+    ],
+    "PACK098": [
+      "EA-155",
+      "EA-156",
+      "EA-157",
+      "EA-158",
+      "EA-159",
+      "EA-160",
+      "EA-161",
+      "EA-162",
+      "EA-169"
+    ],
+    "PACK099": [
+      "EA-155",
+      "EA-156",
+      "EA-157",
+      "EA-158",
+      "EA-159",
+      "EA-160",
+      "EA-161",
+      "EA-162",
+      "EA-169"
+    ],
+    "PACK097": [
+      "EA-156",
+      "EA-157",
+      "EA-159",
+      "EA-162",
+      "EA-164",
+      "EA-250"
+    ],
+    "PACK116": [
+      "EA-165",
+      "EA-176",
+      "EA-189"
+    ],
+    "PACK104": [
+      "EA-176",
+      "EA-187",
+      "EA-188",
+      "EA-189",
+      "EA-190",
+      "EA-191",
+      "EA-199"
+    ],
+    "PACK106": [
+      "EA-176"
+    ],
+    "PACK073": [
+      "EA-181",
+      "EA-182",
+      "EA-183",
+      "EA-184",
+      "EA-185",
+      "EA-186"
+    ],
+    "PACK071": [
+      "EA-185"
+    ],
+    "PACK049": [
+      "EA-192"
+    ],
+    "PACK103": [
+      "EA-192",
+      "EA-202"
+    ],
+    "PACK041": [
+      "EA-202",
+      "EA-271"
+    ],
+    "PACK061": [
+      "EA-204"
+    ],
+    "PACK065": [
+      "EA-204",
+      "EA-205",
+      "EA-206",
+      "EA-209",
+      "EA-282",
+      "EA-283"
+    ],
+    "PACK070": [
+      "EA-205",
+      "EA-206",
+      "EA-210",
+      "EA-282",
+      "EA-283",
+      "EA-285"
+    ],
+    "PACK072": [
+      "EA-207",
+      "EA-283",
+      "EA-286"
+    ],
+    "PACK074": [
+      "EA-207",
+      "EA-209",
+      "EA-282",
+      "EA-285"
+    ],
+    "PACK062": [
+      "EA-208",
+      "EA-286"
+    ],
+    "PACK063": [
+      "EA-208"
+    ],
+    "PACK069": [
+      "EA-209"
+    ],
+    "PACK023": [
+      "EA-221"
+    ],
+    "PACK014": [
+      "EA-222"
+    ],
+    "PACK021": [
+      "EA-222",
+      "EA-270"
+    ],
+    "PACK093": [
+      "EA-222",
+      "EA-259"
+    ],
+    "PACK081": [
+      "EA-241",
+      "EA-244",
+      "EA-246"
+    ],
+    "PACK082": [
+      "EA-241",
+      "EA-242",
+      "EA-243",
+      "EA-245",
+      "EA-279"
+    ],
+    "PACK085": [
+      "EA-244",
+      "EA-247",
+      "EA-248",
+      "EA-250"
+    ],
+    "PACK086": [
+      "EA-248",
+      "EA-249"
+    ],
+    "PACK088": [
+      "EA-251",
+      "EA-252",
+      "EA-253",
+      "EA-254",
+      "EA-255",
+      "EA-281"
+    ],
+    "PACK036": [
+      "EA-253",
+      "EA-280"
+    ],
+    "PACK055": [
+      "EA-256"
+    ],
+    "PACK056": [
+      "EA-256",
+      "EA-257",
+      "EA-261",
+      "EA-280"
+    ],
+    "PACK057": [
+      "EA-256",
+      "EA-258",
+      "EA-259",
+      "EA-260"
+    ],
+    "PACK054": [
+      "EA-257"
+    ],
+    "PACK089": [
+      "EA-261"
+    ],
+    "PACK058": [
+      "EA-262",
+      "EA-264"
+    ],
+    "PACK059": [
+      "EA-262",
+      "EA-263",
+      "EA-264"
+    ],
+    "PACK083": [
+      "EA-265",
+      "EA-266",
+      "EA-268"
+    ],
+    "PACK084": [
+      "EA-265",
+      "EA-266",
+      "EA-267",
+      "EA-268"
+    ],
+    "PACK090": [
+      "EA-265",
+      "EA-266",
+      "EA-267"
+    ],
+    "PACK026": [
+      "EA-270"
+    ],
+    "PACK028": [
+      "EA-271"
+    ],
+    "PACK095": [
+      "EA-273",
+      "EA-278"
+    ],
+    "PACK029": [
+      "EA-276"
+    ],
+    "PACK025": [
+      "EA-279"
+    ]
+  }
+}
