@@ -41,7 +41,7 @@ The canonical `docs/zuvyr/ROADMAP_150.md` now includes the mandatory external-ey
 
 - This overlay adds horizontal production requirements without renumbering PACK001–PACK150 and without reopening historical Packs merely for documentation.
 - Each mapped future Pack must reconcile its EA items before truthful LOCK.
-- PACK148–PACK150 must reconcile all EA items, including explicit NOT_ADVERTISED / NOT_IN_V1 decisions where applicable.
+- PACK148–PACK150 must reconcile all EA items. Applicable V1 work cannot be waived as NOT_ADVERTISED/NOT_IN_V1; only genuinely non-applicable surfaces may be `N/A_WITH_EVIDENCE`.
 - The overlay does **not** decide the current active Pack by itself. Fresh Git/production/evidence state still overrides stale active-pack text in this bootstrap file.
 
 
