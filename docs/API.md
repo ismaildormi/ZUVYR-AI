@@ -1,4 +1,6 @@
-# ROX AI — API Reference
+# ZUVYR — Internal API Reference (Legacy Snapshot)
+
+> **Status:** historical internal snapshot. This file is **not** the supported public developer API and may not describe every current ZUVYR route added by later PACKs. For current product truth use the canonical V1 state/roadmap and source. External builders should use only interfaces explicitly published as public contracts.
 
 This is the map of every HTTP endpoint the backend exposes today, plus
 every endpoint reserved for a planned feature. It's generated from
@@ -6,7 +8,7 @@ reading `backend/server.js`, `backend/src/api/v1/futureRoutes.js`, and
 `backend/gatekeeper.js` — if behavior ever drifts from this doc, the
 code is the source of truth; open an issue against this file.
 
-This is the **internal** API used by the ROX AI clients (mobile web app).
+This documents an **internal** API snapshot used by earlier ZUVYR client/runtime work.
 It is not currently sold or documented as a public developer API — see
 §5 for what "public" will mean once `public_api_access` ships.
 
