@@ -162,7 +162,9 @@ assert.equal(
 assert(roadmapMd.includes('MODEL-FIRST PRIORITY OVERRIDE — 2026-09-19'));
 assert(roadmapMd.includes('PACK094 → PACK095 → PACK096 before PACK084–PACK093'));
 assert(roadmapMd.includes('ZUVYR-owned model usage fee: $0'));
-assert(continueHere.includes('HISTORICAL OVERRIDE — MODEL-FIRST + BYO COMPUTE — 2026-09-19'));\nassert(continueHere.includes('CURRENT CANONICAL EXECUTION CAPSULE — 2026-09-22'));\nassert(continueHere.includes('Active Pack:** `PACK089'));
+assert(continueHere.includes('HISTORICAL OVERRIDE — MODEL-FIRST + BYO COMPUTE — 2026-09-19'));
+assert(continueHere.includes('CURRENT CANONICAL EXECUTION CAPSULE — 2026-09-22'));
+assert(continueHere.includes('Active Pack:** `PACK089'));
 assert(continueHere.includes('PACK087 — IP Actions / STOP / Undo'));
 assert(continueHere.includes('### PACK086 ENGINEERING FINALIZED — 2026-09-20'));
 assert(continueHere.includes('### PACK085 ENGINEERING FINALIZED — 2026-09-20'));
