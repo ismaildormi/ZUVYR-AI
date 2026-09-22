@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.0",
+  "updated_at": "2026-09-22",
+  "purpose": "Single anti-loss reconstruction capsule for any new ChatGPT/Work/Codex session. It does not replace fresh production evidence; it tells the session exactly what to load and how to resolve conflicts.",
+  "repository": "ismaildormi/rox-ai",
+  "created_from_git_head": "3400461b13b7dcdf6a2a06e2206faa9b01eda352",
+  "source_of_truth_order": [
+    "Newest explicit user instruction",
+    "Fresh GitHub/production/DB/deployment/live evidence",
+    "ZUVYR_CONTINUITY_MANIFEST.json plus newest Pack receipt",
+    "ZUVYR_CONTINUE_HERE.md / ZUVYR_MASTER_STATE.json / ZUVYR_MASTER_MATRIX.md",
+    "ROADMAP_150 + readiness audit/matrix + execution appendix",
+    "Older chats/memory only for recovery, never to override fresher evidence"
+  ],
+  "canonical_boot_order": [
+    "ZUVYR_CONTINUE_HERE.md",
+    "docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json",
+    "ZUVYR_MASTER_STATE.json",
+    "ZUVYR_MASTER_MATRIX.md",
+    "docs/zuvyr/ROADMAP_150.md",
+    "docs/zuvyr/V1_READINESS_COMPLETENESS_AUDIT_2026-09-22.md",
+    "docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json",
+    "docs/zuvyr/USER_OUTCOME_ENGINE.md",
+    "docs/zuvyr/PACK_EXECUTION_APPENDIX.md",
+    "newest receipt/evidence for the active Pack",
+    "fresh GitHub main + Supabase + Railway + Vercel/live evidence as needed"
+  ],
+  "project_live_state": {
+    "title": "ZUVYR_LIVE_PROJECT_STATE",
+    "google_doc_id": "1QGLTHygt8xIE4GffiO2P-6Iy8jESowYKcHb3geQkdn4",
+    "url": "https://docs.google.com/document/d/1QGLTHygt8xIE4GffiO2P-6Iy8jESowYKcHb3geQkdn4",
+    "rule": "Any older CURRENT MAIN STATUS inside this long-lived document is historical when a newer dated continuity override exists."
+  },
+  "active_work": {
+    "pack": "PACK089",
+    "pack_status": "IN_PROGRESS",
+    "phase": "89E_PRODUCTION_ACCEPTANCE",
+    "phase_status": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_CLIENT_CREDENTIALS",
+    "pack090_allowed": false,
+    "completed_subphases": {
+      "89A": "LOCKED_VERIFIED",
+      "89B": "LOCKED_VERIFIED",
+      "89C": "LOCKED_VERIFIED",
+      "89D": "LOCKED_VERIFIED",
+      "89E_non_external_acceptance": "PASS"
+    },
+    "latest_receipt": "zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json",
+    "remaining_external_values": [
+      "GOOGLE_OAUTH_CLIENT_ID",
+      "GOOGLE_OAUTH_CLIENT_SECRET"
+    ],
+    "configured_redirect_uri": "https://rox-ai-sepia.vercel.app/",
+    "next_legal_step": "Configure legitimate Google OAuth Web client ID + client secret in production, then run real owner-scoped Drive OAuth connect -> granted-scope tool call -> denied-scope proof -> disconnect/revoke -> post-revoke denial -> audit persistence -> Vault/plaintext-secret cleanliness. Do not start PACK090 before PACK089 becomes LOCKED_VERIFIED.",
+    "runtime_identity": {
+      "vercel_commit": "c8157e82b23d842d55ac5b57c4696275268a2104",
+      "vercel_deployment": "dpl_4cQzVSs8ZYdasm8NUuZWU5Vk7USD",
+      "railway_runtime_commit": "93c293c215eb67f864397880c1f40b05ed07052c",
+      "railway_backend_deployment": "bcdc4d43-ba3b-4b21-a268-60fb012a73c9",
+      "railway_worker_deployment": "d512dd05-4e22-4683-bf0b-d772dde4aa21",
+      "railway_maintenance_deployment": "008747dd-40cb-4dea-ab55-bbdb1fea78ff"
+    }
+  },
+  "v1_contract": {
+    "pack_range": "PACK001..PACK150",
+    "readiness_range": "EA-001..EA-292",
+    "final_gate": "PACK150",
+    "v1_ready_only_when": true,
+    "allowed_final_requirement_states": [
+      "PASS",
+      "N/A_WITH_EVIDENCE"
+    ],
+    "na_rule": "Only when the surface genuinely does not exist anywhere in canonical V1 and is not implied by another V1 capability.",
+    "blocked_states": [
+      "KNOWN_GAP",
+      "UNKNOWN",
+      "DEFERRED",
+      "NOT_TESTED",
+      "PARTIAL",
+      "SOURCE_ONLY",
+      "MOCK_ONLY",
+      "ENGINEERING_ONLY",
+      "BLOCKED_BUT_ADVERTISED"
+    ],
+    "cannot_hide_unfinished_v1": true,
+    "fresh_gap_audit_before_pack148": true,
+    "cold_start_reconstruction_test_required": true
+  },
+  "canonical_files_snapshot": {
+    "ZUVYR_CONTINUE_HERE.md": "df8ec8325bce8e0e67fc6528c4010d69787169ac",
+    "ZUVYR_MASTER_STATE.json": "95569a28d0fc26e32b696ac7ddf140f4db4c73da",
+    "ZUVYR_MASTER_MATRIX.md": "7d476e3353c48309bd59735254705e51833177e9",
+    "docs/zuvyr/ROADMAP_150.md": "df5d1bcabe94f3f2c9beb4c3603bae94dd91e7d9",
+    "docs/zuvyr/V1_READINESS_COMPLETENESS_AUDIT_2026-09-22.md": "12e2275dcc7e4bd7cf3f78b168ee84f872f4fae0",
+    "docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json": "dde1d33d3d101afb399ca5fb363af37de0baed06",
+    "docs/zuvyr/USER_OUTCOME_ENGINE.md": "600c485be8e8bf5d7ab40c060ffd3d2750a028a6",
+    "docs/zuvyr/PACK_EXECUTION_APPENDIX.md": "e3e30e4b794ac26f19c2c5bcfc0491280d8e6f40",
+    "zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json": "11eaa0657768804ccc85c75839336e69ad770598"
+  },
+  "snapshot_policy": "Blob SHAs are a known-good snapshot, not a freeze. If a canonical file has a newer SHA on main, inspect the newer change and reconcile it; do not roll it back merely because it differs from this snapshot.",
+  "integrity_expectations": {
+    "readiness_requirement_count": 292,
+    "readiness_missing_ids": 0,
+    "readiness_duplicate_ids": 0,
+    "every_readiness_requirement_has_pack_route": true,
+    "preserve_historical_receipts": true,
+    "secrets_must_never_be_stored_in_manifest": true
+  },
+  "new_chat_command_semantics": {
+    "examples": [
+      "دير audit وكمل من آخر نقطة",
+      "كمل ZUVYR من آخر مرحلة"
+    ],
+    "required_behavior": [
+      "Do not ask the user to re-explain the project.",
+      "Load the canonical boot order.",
+      "Run read-only reconciliation against fresh source/production evidence before deciding the active Pack.",
+      "Explicitly flag stale/conflicting status text instead of silently picking one.",
+      "Load all readiness requirements mapped to the active Pack.",
+      "Continue only the legal next step and preserve Pack gates.",
+      "After any material checkpoint, update continuity sources before leaving the work session."
+    ]
+  },
+  "no_loss_rule": "If continuity files disagree, or the active Pack/receipt cannot be reconstructed with evidence, stop feature work and repair continuity first. Never guess an active Pack, silently drop roadmap additions, or depend on private chat memory as the only source."
+}
