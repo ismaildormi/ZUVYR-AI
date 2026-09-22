@@ -162,7 +162,7 @@ assert.equal(
 assert(roadmapMd.includes('MODEL-FIRST PRIORITY OVERRIDE — 2026-09-19'));
 assert(roadmapMd.includes('PACK094 → PACK095 → PACK096 before PACK084–PACK093'));
 assert(roadmapMd.includes('ZUVYR-owned model usage fee: $0'));
-assert(continueHere.includes('LATEST CANONICAL OVERRIDE — MODEL-FIRST + BYO COMPUTE — 2026-09-19'));
+assert(continueHere.includes('HISTORICAL OVERRIDE — MODEL-FIRST + BYO COMPUTE — 2026-09-19'));\nassert(continueHere.includes('CURRENT CANONICAL EXECUTION CAPSULE — 2026-09-22'));\nassert(continueHere.includes('Active Pack:** `PACK089'));
 assert(continueHere.includes('PACK087 — IP Actions / STOP / Undo'));
 assert(continueHere.includes('### PACK086 ENGINEERING FINALIZED — 2026-09-20'));
 assert(continueHere.includes('### PACK085 ENGINEERING FINALIZED — 2026-09-20'));
@@ -173,7 +173,7 @@ assert(continueHere.includes('PACK150 is the final V1 release/recovery gate'));
 console.log('PASS: Model-First priority is canonical across policy, roadmap, state and continuation files');
 console.log('PASS: ZUVYR-owned model API/software fee = $0 and model usage fee = $0');
 console.log('PASS: BYOC user/org-funded compute is the default serving model');
-console.log('PASS: PACK096 priority sequence is complete, PACK084/085/086 are engineering-finalized, and PACK087 is active');
+console.log('PASS: model-first historical sequencing is preserved while current execution continuity is tracked separately');
 console.log('PASS: PACK094 → PACK095 → PACK096 precede PACK084–PACK093');
 console.log('PASS: V1 coverage guard preserves every canonical PACK001–PACK150 in Markdown + JSON');
 console.log('PASS: PACK088–PACK093 remain deferred, never cancelled; PACK150 remains the final V1 release gate');
