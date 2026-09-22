@@ -106,7 +106,7 @@ Historical source `plugin_installations` is NOT present in production and must n
 - Railway backend/worker/maintenance remain SUCCESS on runtime commit `93c293c215eb67f864397880c1f40b05ed07052c`.
 - Receipt: `zuvyr-pack-evidence/pack-089/2026-09-22-89d/receipt.json`.
 
-### 89E — Production acceptance 🟠 `IN_PROGRESS`
+### 89E — Production acceptance ⛔ `BLOCKED_EXTERNAL_GOOGLE_OAUTH_CREDENTIALS`
 - 89E external gate: Google OAuth client credentials are still missing in production; non-external acceptance continues, but real Google OAuth cannot be claimed until legitimate credentials are configured.
 - real owner-scoped connection journey;
 - connected tool executes only granted scope;
@@ -194,3 +194,15 @@ Canonical next action: `89C_GOOGLE_DRIVE_OAUTH_TOOLS`.
 - Receipt: `zuvyr-pack-evidence/pack-089/2026-09-21-89c/receipt.json`.
 
 Canonical next action: `89D_PRODUCT_UI`.
+
+
+#### 89E NON-EXTERNAL ACCEPTANCE CHECKPOINT — 2026-09-22
+
+- Production plugin lifecycle acceptance: PASS (rollback-only) for owner scope, Vault-only credential reference, deny without grant, install, exact tool/fingerprint invoke, wrong-tool deny, replay deny, wrong-owner deny, immediate revoke, post-revoke deny and audit emission.
+- Production Google Drive permission-layer acceptance: PASS (rollback-only, no network) for exact `drive.file.read` scope, denied `drive.export` and `drive.file.write` outside granted scope, wrong-owner denial, revoke-grant invalidation and post-revoke denial.
+- Source + CI guarantees remain PASS for permission-before-network, write operation fingerprint binding, token redaction, local revoke before remote revoke and missing-OAuth fail-closed behavior.
+- Production cleanliness after rollback: 0 plugin rows, 0 integration rows, 0 OAuth rows, 0 Skills, 0 PACK089 grants/consumptions/audit fixtures.
+- Exact production identity: Vercel `dpl_4cQzVSs8ZYdasm8NUuZWU5Vk7USD` READY on main `c8157e82b23d842d55ac5b57c4696275268a2104`; Railway runtime remains on `93c293c215eb67f864397880c1f40b05ed07052c`.
+- **External blocker:** production has no Google OAuth client ID, client secret or redirect URI. Real Google OAuth connect + granted-scope Drive call + disconnect cannot be honestly executed until legitimate credentials are configured.
+- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json`.
+- PACK089 remains `IN_PROGRESS`; PACK090 remains blocked.
