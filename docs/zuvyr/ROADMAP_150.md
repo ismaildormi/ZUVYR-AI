@@ -55,7 +55,7 @@ V1 must prepare ZUVYR as a continuously improving system rather than a static ch
 <!-- ZUVYR_EXTERNAL_AUDIT_2026-09-22_BEGIN -->
 ## EXTERNAL TECHNICAL ARCHITECTURE AUDIT OVERLAY — 2026-09-22
 
-**Authority:** This section is part of the canonical 001–150 roadmap. It is an acceptance overlay, not a new Pack series and not a renumbering. It does not reopen already locked Packs. Any gap below that belongs to work already completed is routed forward into the listed future Pack(s). A mapped Pack may not be declared `LOCKED_VERIFIED` until its mapped audit requirements are either (a) verified with evidence, or (b) explicitly marked NOT_ADVERTISED / NOT_IN_V1 with a reason and a non-misleading product surface. PACK148–150 must reconcile every `EA-*` item.
+**Authority:** This section is part of the canonical 001–150 roadmap. It is an acceptance overlay, not a new Pack series and not a renumbering. It does not reopen already locked Packs. Any gap below that belongs to work already completed is routed forward into the listed future Pack(s). A mapped Pack may not be declared `LOCKED_VERIFIED` until its mapped audit requirements are verified with evidence. `N/A_WITH_EVIDENCE` is permitted only for a genuinely non-applicable surface that does not exist anywhere in the canonical V1 plan/product/API/pricing/dependency graph; it may not be used to hide unfinished V1 work. PACK148–150 must reconcile every `EA-*` item.
 
 ### External-eye architecture conclusion
 
@@ -84,8 +84,8 @@ These are reference anchors, not claims of certification or legal compliance.
 ### Severity contract
 
 - **P0:** launch-blocking when applicable to an advertised or reachable capability.
-- **P1:** required for production-grade V1 quality; may be explicitly hidden/not-advertised only when the capability is outside V1.
-- **P2:** ecosystem/enterprise maturity requirement; final launch must state whether implemented or intentionally not advertised.
+- **P1:** required for production-grade V1 quality. If the underlying capability is part of canonical V1, it must be implemented/tested; only a genuinely non-applicable surface may be `N/A_WITH_EVIDENCE`.
+- **P2:** ecosystem/enterprise maturity requirement. If applicable to a capability ZUVYR V1 actually exposes, it must be implemented/tested; otherwise it may be `N/A_WITH_EVIDENCE` only when the surface truly does not exist.
 
 ### A. Identity, account and organization trust plane
 
