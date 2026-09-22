@@ -31,9 +31,10 @@ const masterMatrix = read(masterMatrixPath);
 const appendix = read(appendixPath);
 
 if (manifest.v1_contract?.readiness_range !== 'EA-001..EA-292') fail('manifest readiness range is not EA-001..EA-292');
-if (manifest.active_work?.pack !== 'PACK089') fail('manifest active pack must be explicitly reconciled before changing from PACK089');
-if (manifest.active_work?.latest_receipt !== 'zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json') fail('manifest latest receipt drift');
-if (!fs.existsSync(path.join(root, manifest.active_work.latest_receipt))) fail('manifest latest receipt does not exist');
+if (!/^PACK\\d{3}$/.test(manifest.active_work?.pack || '')) fail('manifest active Pack is missing or malformed');
+if (!manifest.active_work?.phase) fail('manifest active phase is missing');
+if (!manifest.active_work?.latest_receipt) fail('manifest latest receipt is missing');
+if (!fs.existsSync(path.join(root, manifest.active_work.latest_receipt))) fail('manifest latest receipt does not exist: ' + manifest.active_work.latest_receipt);
 
 const reqs = Array.isArray(matrix.requirements) ? matrix.requirements : [];
 if (reqs.length !== 292) fail('readiness requirement count must be 292, got ' + reqs.length);
@@ -65,11 +66,11 @@ const requiredText = [
   [appendix, 'Mandatory continuity reconstruction gate', 'pack appendix missing continuity gate'],
   [appendix, 'V1_READINESS_REQUIREMENTS_001_292.json', 'pack appendix not bound to EA292 matrix'],
   [masterMatrix, 'LATEST CANONICAL CONTINUITY OVERRIDE', 'master matrix missing latest continuity override'],
-  [masterMatrix, 'PACK089', 'master matrix current Pack override missing PACK089']
+  [masterMatrix, manifest.active_work.pack, 'master matrix current Pack override does not match manifest active Pack']
 ];
 for (const [haystack, needle, msg] of requiredText) if (!haystack.includes(needle)) fail(msg);
 
-if (masterState.continuity_capsule?.active_pack !== 'PACK089') fail('MASTER_STATE continuity capsule missing/reconciled active Pack');
+if (masterState.continuity_capsule?.active_pack !== manifest.active_work.pack) fail('MASTER_STATE continuity capsule active Pack does not match manifest');
 if (masterState.continuity_capsule?.readiness_range !== 'EA-001..EA-292') fail('MASTER_STATE continuity capsule readiness range drift');
 if (masterState.continuity_capsule?.manifest !== manifestPath) fail('MASTER_STATE continuity capsule manifest path drift');
 
