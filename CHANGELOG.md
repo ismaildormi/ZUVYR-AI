@@ -1,3 +1,7 @@
+# ZUVYR — Historical Changelog
+
+> Historical entries below preserve the names and terminology that were current when those releases were made. They are not the current ZUVYR product identity or current V1 readiness state.
+
 # v0.64.0 — Safe Bridge
 
 - Added isolated Local / Staging / Production private profiles.
