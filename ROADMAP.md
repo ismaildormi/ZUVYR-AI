@@ -1,4 +1,6 @@
-# ROX AI CLI — Roadmap
+# ZUVYR — Legacy CLI Roadmap
+
+> **Status:** historical CLI roadmap. The CLI command name `rox` is a retained compatibility identifier, not the current product brand. Canonical V1 execution is tracked in [docs/zuvyr/ROADMAP_150.md](docs/zuvyr/ROADMAP_150.md).
 
 This is the long-term plan for turning the full requested command list
 into real, working commands — incrementally, without a rewrite, and
