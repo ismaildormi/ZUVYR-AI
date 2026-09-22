@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.2",
+  "schema_version": "1.3",
   "updated_at": "2026-09-22",
   "purpose": "Single anti-loss reconstruction capsule for any new ChatGPT/Work/Codex session. It does not replace fresh production evidence; it tells the session exactly what to load and how to resolve conflicts.",
   "repository": "ismaildormi/rox-ai",
@@ -129,8 +129,8 @@
   "last_reconciled_git_head_before_manifest_update": "73218ae759da366142fea37630223b6f48b31baf",
   "integrity_guard_files": {
     "tools/validate-zuvyr-continuity.cjs": "ef6a2535c920aafcff2fa0aa51987ce4569cced2",
-    "tools/verify-zuvyr-continuity.js": "e1ba86c5c8c19d3c4c1eeb2b780d48d316858b46",
     ".github/workflows/zuvyr-continuity.yml": "ba526ae36bf46c46786f9aa426adcada1e335ffc",
+    "tools/verify-zuvyr-continuity.js": "e1ba86c5c8c19d3c4c1eeb2b780d48d316858b46",
     "package.json": "05babfed9ef591413d4a72c57d7540f6f0933a5f"
   },
   "validation": {
@@ -138,6 +138,6 @@
     "release_wrapper": "tools/verify-zuvyr-continuity.js",
     "dedicated_workflow": ".github/workflows/zuvyr-continuity.yml",
     "release_quality_hook": "package.json#scripts.validate:release",
-    "rule": "Dedicated Continuity Integrity and Release Quality execute the same canonical validator. Any canonical snapshot drift, missing EA ID, route gap, active Pack/receipt mismatch, roadmap/matrix blob mismatch, or stale current-state conflict fails validation and must be reconciled before feature work or Pack lock."
+    "rule": "Any canonical snapshot drift, missing EA ID, route gap, roadmap/matrix blob mismatch, active Pack/receipt mismatch, stale current-state conflict, or guard-file drift fails continuity validation and must be reconciled before feature work or Pack lock."
   }
 }
