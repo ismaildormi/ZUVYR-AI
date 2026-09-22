@@ -10,7 +10,7 @@ Purpose: ensure that finishing PACK150 means **ZUVYR V1 is genuinely READY**, no
 PACK150 may declare `V1_READY` only when all of the following are true:
 
 1. Every advertised V1 capability has real end-to-end production evidence.
-2. Every applicable requirement from `EA-001…EA-180` is `PASS`.
+2. Every applicable requirement from `EA-001…EA-240` is `PASS`.
 3. A requirement may be `N/A_WITH_EVIDENCE` only when the underlying capability truly does not exist in V1 and is not advertised, reachable, implied by pricing, exposed by API, or depended upon by another V1 capability.
 4. `KNOWN_GAP`, `UNKNOWN`, `DEFERRED`, `NOT_TESTED`, `PARTIAL`, `SOURCE_ONLY`, `MOCK_ONLY`, `ENGINEERING_ONLY`, or `BLOCKED_BUT_ADVERTISED` are not acceptable PACK150 states.
 5. No missing security, authorization, data-integrity, billing, privacy, recovery, accessibility, support, observability, release, or model-quality control may be hidden merely by calling it “non-critical”.
@@ -50,6 +50,10 @@ Canonical references:
 - https://www.rfc-editor.org/rfc/rfc9700.html
 - https://opentelemetry.io/docs/specs/semconv/
 - https://slsa.dev/spec/v1.1/provenance
+- https://cheatsheetseries.owasp.org/cheatsheets/WebSocket_Security_Cheat_Sheet.html
+- https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
+- https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html
+- https://c2pa.org/principles/
 
 ## 2. What the first external audit already added
 
@@ -446,11 +450,283 @@ Users can identify current version, known limitations, supported platforms/capab
 Run and record SAST/dependency/secret/container scans where applicable, DAST/API tests, targeted fuzz/property tests for parsers/critical invariants, adversarial AI tests, and an independent or clearly separated penetration-style review of launch surfaces. Findings have severity, owner and closure evidence.  
 **Route:** PACK139, PACK144, PACK148, PACK149.
 
-### EA-180 — V1_REQUIRED — Absolute PACK150 completeness gate
-PACK150 must produce one machine-readable matrix for `EA-001…EA-180` and every PACK001–PACK150 acceptance item. Every applicable row is `PASS`; true non-applicable rows are `N/A_WITH_EVIDENCE`. There are no hidden/known/deferred/untested applicable gaps, no misleading advertised blocked capability, no unresolved release blocker, and rollback/recovery are proven against the exact release manifest.  
+### EA-180 — V1_REQUIRED — PACK150 completeness baseline
+PACK150 must produce one machine-readable matrix for `EA-001…EA-240` and every PACK001–PACK150 acceptance item. Every applicable row is `PASS`; true non-applicable rows are `N/A_WITH_EVIDENCE`. There are no hidden/known/deferred/untested applicable gaps, no misleading advertised blocked capability, no unresolved release blocker, and rollback/recovery are proven against the exact release manifest.  
 **Route:** PACK148, PACK149, PACK150.
 
 ---
+
+---
+
+# U. Realtime, streaming, voice and WebSocket completeness
+
+### EA-181 — V1_REQUIRED_IF_SURFACE_EXISTS — WebSocket handshake/session security
+Realtime WebSocket endpoints must authenticate at handshake, validate trusted Origin, bind the connection to the intended user/session/project, re-check revocation/expiry, use WSS in production, reject unauthorized upgrades and prevent cross-site WebSocket hijacking.  
+**Route:** PACK073, PACK121, PACK139, PACK144, PACK148.
+
+### EA-182 — V1_REQUIRED_IF_SURFACE_EXISTS — WebSocket message schema, rate and authorization
+Every inbound realtime message has a versioned schema, maximum size/rate, per-message authorization where consequences differ, bounded connection counts and safe malformed-message handling. Long-lived connections do not inherit stale privilege after logout/revoke/role change.  
+**Route:** PACK073, PACK121, PACK139, PACK142.
+
+### EA-183 — V1_REQUIRED_IF_SURFACE_EXISTS — Realtime backpressure/heartbeat/reconnect correctness
+Define heartbeat/idle timeout, bounded outbound buffers, disconnect detection, reconnect resume cursor, duplicate suppression and replay semantics so reconnect cannot duplicate billing, tool actions or transcript turns.  
+**Route:** PACK073, PACK109, PACK121, PACK142.
+
+### EA-184 — V1_REQUIRED_IF_SURFACE_EXISTS — Streaming partial-output consequence boundary
+Partial model/voice/streaming output is untrusted and non-final. ZUVYR must not execute tool calls, billing changes, file mutations or external actions from incomplete/aborted streaming fragments unless a structured protocol explicitly commits the action.  
+**Route:** PACK073, PACK122, PACK127, PACK139.
+
+### EA-185 — V1_REQUIRED_IF_SURFACE_EXISTS — Voice/audio consent, hot-mic and retention controls
+Microphone/listening/recording state is visible and fail-safe; STOP/mute works immediately; retention/transcription state is explicit; background capture is not silently enabled; sensitive audio is not retained in logs/telemetry by default.  
+**Route:** PACK071, PACK073, PACK140, PACK144, PACK148.
+
+### EA-186 — V1_REQUIRED_IF_SURFACE_EXISTS — WebRTC/STUN/TURN privacy and authorization
+If WebRTC is used, authenticate signaling, constrain ICE/TURN credentials and lifetime, document IP-exposure/privacy behavior, validate peer/session binding and prevent cross-tenant media attachment. If V1 does not use WebRTC, record `N/A_WITH_EVIDENCE`.  
+**Route:** PACK073, PACK139, PACK144.
+
+---
+
+# V. Sharing, collaboration, import/export and exfiltration boundaries
+
+### EA-187 — V1_REQUIRED_IF_SURFACE_EXISTS — Share-link security
+Public/private share links are scoped, revocable, optionally expiring, non-indexed when intended, resistant to token leakage through referrers/logs, and never substitute for owner checks on protected resources.  
+**Route:** PACK104, PACK139, PACK148.
+
+### EA-188 — V1_REQUIRED_IF_SURFACE_EXISTS — Collaboration authorization lifecycle
+Shared project/resource membership changes, invite expiry, role changes, removal, ownership transfer and account closure propagate to files/assets/history/search/tasks without stale access.  
+**Route:** PACK104, PACK127, PACK139, PACK148.
+
+### EA-189 — V1_REQUIRED_IF_SURFACE_EXISTS — Collaborative conflict semantics
+Where more than one user can edit the same resource, define optimistic concurrency/version checks, conflict presentation, merge/restore behavior and audit identity; never silently last-write-win privileged changes.  
+**Route:** PACK104, PACK116, PACK145.
+
+### EA-190 — V1_REQUIRED — Export/share secret and metadata redaction
+Exports, support bundles, public shares and downloadable project packages must exclude connector tokens, API keys, hidden prompts, internal IDs/diagnostics and other secrets; metadata inclusion is explicit and policy-driven.  
+**Route:** PACK104, PACK140, PACK149.
+
+### EA-191 — V1_REQUIRED — Import trust boundary
+Imported projects/files/archives/templates/manifests are treated as untrusted: validate schema/version/paths, remap ownership safely, do not import credentials, and prevent imported content from creating hidden permissions, automations or executable actions.  
+**Route:** PACK104, PACK117, PACK139.
+
+### EA-192 — V1_REQUIRED — Send-To / external publishing provenance
+Cross-surface and external publishing/export preserve source/version/model/tool lineage, user ownership and rights metadata where applicable; destination success/failure is receipted and cannot cause duplicate publish on retry.  
+**Route:** PACK049, PACK103, PACK122, PACK149.
+
+### EA-193 — V1_REQUIRED — Bulk export/exfiltration guard
+Large/bulk exports and connector/device transfers obey tenant/resource authorization, rate/size limits, audit logging and consequence confirmation where appropriate; one compromised agent cannot silently exfiltrate an account.  
+**Route:** PACK122, PACK127, PACK139, PACK140.
+
+### EA-194 — V1_REQUIRED — Shared-resource privacy/search isolation
+Shared/private/public visibility is consistently enforced by search, recommendations, history, context retrieval, caches, signed URLs and generated previews; changing visibility invalidates stale access.  
+**Route:** PACK105, PACK139, PACK148.
+
+---
+
+# W. Derived-data lifecycle, retention and environment isolation
+
+### EA-195 — V1_REQUIRED — Delete/forget propagation to derived state
+Deletion/forget requests propagate to caches, search indexes, vectors/embeddings, previews, thumbnails, derived assets, pending queues, analytics references and future dataset admission according to declared retention rules.  
+**Route:** PACK105, PACK131, PACK140, PACK148.
+
+### EA-196 — V1_REQUIRED — Backup/tombstone deletion semantics
+When immutable/PITR backups cannot be immediately rewritten, deletion state/tombstones and restore procedures prevent deleted data from silently reappearing into active service; limitations are documented truthfully.  
+**Route:** PACK140, PACK141, PACK149.
+
+### EA-197 — V1_REQUIRED — Production-data isolation from test/staging
+Do not copy live customer content/secrets into local, staging, CI or external debugging systems by default. Any approved diagnostic fixture is minimized, access-controlled, time-bounded and traceable.  
+**Route:** PACK139, PACK140, PACK148.
+
+### EA-198 — V1_REQUIRED — Pseudonymization/anonymization quality
+Analytics/training/support exports labeled anonymous or pseudonymous have a defined transformation and re-identification risk assessment; stable identifiers are not casually exposed across datasets.  
+**Route:** PACK094, PACK134, PACK140.
+
+### EA-199 — V1_REQUIRED — Data portability integrity
+Account/project exports are versioned, checksum-verifiable, ownership-scoped and re-importable where claimed; missing non-portable dependencies/connector references are explicit rather than silently dropped.  
+**Route:** PACK104, PACK140, PACK145.
+
+### EA-200 — V1_REQUIRED — Retention-job idempotency and coverage
+Retention/deletion/archive jobs are idempotent, observable and coverage-tested across DB rows, storage, vectors, logs, telemetry, support and model-learning candidate stores; failures generate actionable receipts.  
+**Route:** PACK140, PACK143.
+
+### EA-201 — V1_REQUIRED — Data-integrity checks and corruption detection
+Critical persisted objects and release artifacts use hashes/checksums/invariants where appropriate; orphaned/corrupt references, partial writes and impossible ledger/task states are detectable and repairable.  
+**Route:** PACK113, PACK128, PACK141, PACK143.
+
+### EA-202 — V1_REQUIRED — Data-classification propagation
+Sensitivity/tenant/provenance/retention labels follow derived artifacts and workflow handoffs so a public export, lower-trust model/tool or support surface cannot accidentally downgrade protection.  
+**Route:** PACK041, PACK103, PACK139, PACK140.
+
+---
+
+# X. Media, parser, voice-clone and content-provenance completeness
+
+### EA-203 — V1_REQUIRED — Parser/transcoder isolation
+PDF/DOCX/archive/image/audio/video parsers and transcoders run with bounded CPU/RAM/time/output size, safe temp paths and no host-secret inheritance; malformed files cannot crash or escape the worker boundary.  
+**Route:** PACK053, PACK113, PACK115, PACK139.
+
+### EA-204 — V1_REQUIRED — EXIF/GPS and hidden metadata policy
+Uploads and generated/exported media define whether EXIF/GPS/device/author metadata is preserved, stripped or user-selectable; sensitive location/device metadata is not exposed accidentally.  
+**Route:** PACK061, PACK065, PACK113, PACK140.
+
+### EA-205 — V1_REQUIRED_IF_SURFACE_EXISTS — Content Credentials / C2PA decision
+For generated/edited media where provenance is material, define whether C2PA/Content Credentials are emitted, preserved, verified or explicitly unsupported. Do not claim authenticity merely from a visible watermark.  
+**Route:** PACK065, PACK070, PACK115, PACK149.
+
+### EA-206 — V1_REQUIRED — Synthetic-media labeling policy
+Define product behavior for generated/edited image/video/audio labeling/metadata where needed by product policy, provider constraints or distribution destination; do not silently strip provenance that ZUVYR promises to preserve.  
+**Route:** PACK065, PACK070, PACK115, PACK149.
+
+### EA-207 — V1_REQUIRED_IF_SURFACE_EXISTS — Voice-cloning consent and speaker-right controls
+If voice cloning/design is exposed, require explicit speaker/source authorization workflow, preserve provenance, provide revoke/delete handling, block silent reuse across users/projects and add abuse reporting.  
+**Route:** PACK072, PACK074, PACK139, PACK149.
+
+### EA-208 — V1_REQUIRED — Media-rights and takedown traceability
+User-supplied source/reference rights declarations where needed, generation/edit lineage, provider/model version and takedown/report case references remain attributable without claiming legal ownership ZUVYR cannot verify.  
+**Route:** PACK062, PACK063, PACK113, PACK149.
+
+### EA-209 — V1_REQUIRED — Export codec/container validity
+Generated/exported image/video/audio/document files are actually decodable/valid for the claimed format, dimensions/duration/container/codec/charset; MIME, extension and bytes agree.  
+**Route:** PACK065, PACK069, PACK074, PACK148.
+
+### EA-210 — V1_REQUIRED — Media accessibility outputs
+Where media is user-facing, captions/transcripts, keyboard-operable controls, readable error/progress states and accessible export metadata are supported where applicable; unsupported accessibility claims are not made.  
+**Route:** PACK070, PACK107, PACK144, PACK148.
+
+---
+
+# Y. Runtime lifecycle, degraded-mode and operational correctness
+
+### EA-211 — V1_REQUIRED — Domain/DNS/certificate expiry monitoring
+Production domains, TLS certificates, OAuth redirect hosts, webhook callback hosts and critical DNS records have owner/expiry/renewal monitoring so silent certificate/domain expiry cannot take V1 offline.  
+**Route:** PACK143, PACK149.
+
+### EA-212 — V1_REQUIRED — Runtime/EOL lifecycle
+Track supported versions and end-of-life dates for Node/runtime, OS/container base, database, Redis/queue libraries, mobile SDK/toolchains and other critical platform dependencies; releases cannot silently depend on unsupported runtime stacks.  
+**Route:** PACK117, PACK144, PACK149.
+
+### EA-213 — V1_REQUIRED — Dependency health/SLA/quota posture
+Critical provider/database/storage/queue/email/AI dependencies have documented failure mode, quota limits, health signals and degraded/fallback behavior; a vendor outage does not produce fake success.  
+**Route:** PACK024, PACK091, PACK142, PACK143.
+
+### EA-214 — V1_REQUIRED — User-visible degraded/maintenance mode
+When critical dependencies are unavailable, affected actions are clearly disabled/degraded with preserved drafts and safe retry; the product does not spin forever, charge blindly or display success for an unavailable path.  
+**Route:** PACK110, PACK142, PACK143, PACK148.
+
+### EA-215 — V1_REQUIRED — Config/flag/schema canary and rollback
+Risky config, routing, feature-flag and schema changes use staged rollout/validation and have a tested forward-fix/rollback path; not only model releases receive canary discipline.  
+**Route:** PACK091, PACK143, PACK145, PACK150.
+
+### EA-216 — V1_REQUIRED — Synthetic user-journey monitoring
+Run privacy-safe nonbillable/approved synthetic checks for representative auth, core task, queue/storage and critical external dependency paths so “process alive” is not mistaken for “product works”.  
+**Route:** PACK091, PACK143.
+
+### EA-217 — V1_REQUIRED — Time/clock source correctness
+Security expiry, billing windows, scheduler leases, OAuth tokens, signed URLs and audit ordering use consistent UTC/monotonic-time semantics where appropriate; clock skew is monitored and tested.  
+**Route:** PACK124, PACK139, PACK142.
+
+### EA-218 — V1_REQUIRED — Continuous invariant/anomaly monitors
+Detect impossible states such as negative/duplicated settlement, ownerless resources, stuck reservations, orphan tasks/assets, duplicated external-action receipts, revoked token use and model-promotion lineage breaks.  
+**Route:** PACK091, PACK128, PACK143.
+
+### EA-219 — V1_REQUIRED — Storage quota and garbage-collection correctness
+Per-user/org/system storage quotas, temp-file cleanup, failed-job artifacts, preview/runtime leftovers and orphaned multipart uploads are bounded and observable without deleting referenced canonical assets.  
+**Route:** PACK113, PACK120, PACK142.
+
+### EA-220 — V1_REQUIRED — Resource-leak/graceful-shutdown verification
+Workers/servers/clients release DB connections, file descriptors, browser/runtime sessions, subprocesses and memory after jobs/cancel/restart; deployments drain or reconcile in-flight work safely.  
+**Route:** PACK120, PACK121, PACK142, PACK144.
+
+---
+
+# Z. Provider, connector, webhook and messaging lifecycle
+
+### EA-221 — V1_REQUIRED — Provider schema/contract drift detection
+Provider API/model/tool response schema, enum/field/URL changes and deprecations are contract-tested; incompatible drift fails closed or routes to a verified fallback rather than corrupting artifacts/usage.  
+**Route:** PACK023, PACK024, PACK145, PACK147.
+
+### EA-222 — V1_REQUIRED — Provider pricing/terms/license drift gate
+Changed provider price, billing unit, commercial terms, model license or regional availability must invalidate stale cost/eligibility assumptions before paid routing continues.  
+**Route:** PACK014, PACK021, PACK093, PACK128, PACK149.
+
+### EA-223 — V1_REQUIRED — Connector API/version deprecation lifecycle
+Connected services record API version/scope semantics, provider deprecation notices and migration path; stale connectors fail visibly and do not silently widen permissions.  
+**Route:** PACK125, PACK126, PACK145.
+
+### EA-224 — V1_REQUIRED_IF_SURFACE_EXISTS — Webhook key rotation and delivery observability
+Inbound/outbound webhooks support signing-secret rotation, timestamp/replay validation, event IDs, retry/backoff, endpoint disablement and delivery receipts without logging secret payloads.  
+**Route:** PACK125, PACK143, PACK145.
+
+### EA-225 — V1_REQUIRED_IF_SURFACE_EXISTS — Transactional email domain/deliverability readiness
+If ZUVYR sends auth/security/billing/task email, sender/domain configuration, bounce/complaint handling, delivery monitoring and anti-spoofing posture are operationally owned; do not rely on “API accepted” as proof of delivery.  
+**Route:** PACK143, PACK144, PACK149.
+
+### EA-226 — V1_REQUIRED_IF_SURFACE_EXISTS — Email link/token safety
+Verification/reset/invite/action emails use single-purpose expiring tokens, safe destination validation and no sensitive data in URL/query/log/referrer; replays and account-switch confusion are handled.  
+**Route:** PACK139, PACK144, PACK149.
+
+### EA-227 — V1_REQUIRED — Dependency exception expiry
+Any security/license/EOL exception for a dependency has owner, rationale, compensating control and expiry/review date; temporary exceptions cannot become permanent invisible debt.  
+**Route:** PACK117, PACK143, PACK149.
+
+### EA-228 — V1_REQUIRED — Vendor exit/degradation plan
+For critical AI, storage, auth, billing, email or connector vendors, record export/recovery/fallback or accepted lock-in risk, including how users retain access to their canonical data if the dependency is unavailable.  
+**Route:** PACK141, PACK143, PACK149.
+
+---
+
+# AA. Internationalization, timezone, low-bandwidth and presentation correctness
+
+### EA-229 — V1_REQUIRED — Locale-safe dates/numbers/currency/plurals
+UI, receipts, exports and notifications use explicit locale/timezone/currency formatting without changing underlying canonical values; Arabic/French/English mixed flows remain unambiguous.  
+**Route:** PACK108, PACK130, PACK144.
+
+### EA-230 — V1_REQUIRED — User/org timezone model
+Store canonical timestamps in UTC while preserving user/org timezone preferences for schedules, history, invoices and notifications; DST/timezone changes do not rewrite past facts.  
+**Route:** PACK108, PACK124, PACK144.
+
+### EA-231 — V1_REQUIRED — Unicode normalization/confusable handling
+Identifiers, filenames, search, dedupe and security-sensitive comparisons define Unicode normalization/case behavior and protect against dangerous path/extension/domain confusables without corrupting legitimate multilingual text.  
+**Route:** PACK105, PACK108, PACK139.
+
+### EA-232 — V1_REQUIRED — Low-bandwidth/offline degradation
+Uploads, media previews, mobile clients and long tasks expose retry/resume/quality controls appropriate to slow or metered networks and avoid restarting expensive work from zero when resumable state exists.  
+**Route:** PACK109, PACK115, PACK144.
+
+### EA-233 — V1_REQUIRED — Deterministic notification localization
+Security/billing/task notifications preserve the exact action/amount/resource identity across translations; localization must not change a consequential meaning or hide required legal/security facts.  
+**Route:** PACK108, PACK143, PACK144.
+
+### EA-234 — V1_REQUIRED — Accessible dynamic/realtime states
+Streaming text, progress updates, toast/errors, modals, media controls and realtime voice state have appropriate focus/ARIA/live-region behavior, touch targets and reduced-motion handling under the declared WCAG target.  
+**Route:** PACK107, PACK144, PACK148.
+
+---
+
+# AB. Vulnerability management, security disclosure and release change-control
+
+### EA-235 — V1_REQUIRED — Security contact/disclosure channel
+Publish/operate a security contact path (and `security.txt` if chosen) for vulnerability reports, with anti-spam handling and no requirement for reporters to expose customer secrets publicly.  
+**Route:** PACK143, PACK149.
+
+### EA-236 — V1_REQUIRED — Vulnerability intake/severity/remediation workflow
+Security findings from users, scanners, providers or internal review receive case ID, severity, owner, remediation target, retest evidence and release linkage; critical findings cannot disappear in generic support queues.  
+**Route:** PACK143, PACK149.
+
+### EA-237 — V1_REQUIRED — Security regression after incident/finding
+A fixed security bug produces a targeted regression/adversarial test where feasible so the same class cannot silently return in later Pack/release work.  
+**Route:** PACK139, PACK143, PACK148.
+
+### EA-238 — V1_REQUIRED — Evidence/certification claim discipline
+ZUVYR may map controls to OWASP/NIST/WCAG/other frameworks, but must not claim certification/compliance/penetration-test success beyond the exact evidence and scope actually obtained.  
+**Route:** PACK149, PACK150.
+
+### EA-239 — V1_REQUIRED — Release freeze/change-control window
+Before PACK150 seal, freeze or tightly control unrelated production changes; every post-rehearsal code/config/schema/provider change triggers targeted requalification and updates the manifest/receipt identity.  
+**Route:** PACK148, PACK150.
+
+### EA-240 — V1_REQUIRED — Absolute no-known-applicable-gap V1 gate
+This supersedes the earlier EA-180 matrix range: PACK150 must reconcile `EA-001…EA-240` plus every PACK001–PACK150 acceptance item. Every applicable row is `PASS`; true non-applicable rows are `N/A_WITH_EVIDENCE`. No known applicable gap—critical or non-critical—may remain hidden, deferred, partial, untested or “planned later” while `V1_READY=true`.  
+**Route:** PACK148, PACK149, PACK150.
 
 # 3. Direct OWASP API Top 10 coverage requirement
 
@@ -486,7 +762,7 @@ A resource is considered protected only when authorization is proven at the serv
 | Human-Agent Trust Exploitation | EA-139 |
 | Rogue Agents | EA-140 + EA-141 |
 
-# 5. Pack ownership expansion for EA-091…EA-180
+# 5. Pack ownership expansion for EA-091…EA-240
 
 | Pack range | Mandatory added ownership |
 |---|---|
@@ -506,7 +782,7 @@ A resource is considered protected only when authorization is proven at the serv
 | 147 | AI eval/version/fallback/quality/security model-release gates |
 | 148 | complete cross-surface security + UX + agent + eval + failure acceptance rehearsal |
 | 149 | external approvals, documentation, support, legal/commercial and security verification closure |
-| 150 | exact release manifest + `EA-001…EA-180` matrix; only PASS / N/A_WITH_EVIDENCE allowed |
+| 150 | exact release manifest + `EA-001…EA-240` matrix; only PASS / N/A_WITH_EVIDENCE allowed |
 
 # 6. Mandatory per-Pack execution rule
 
@@ -577,4 +853,4 @@ May emit `V1_READY=true` only if:
 - all advertised V1 capabilities have dated evidence;
 - all known limitations are non-misleading and genuinely non-applicable rather than hidden unfinished V1 work.
 
-This is the canonical definition of “finishing 150 Packs means ZUVYR V1 is READY.”
+EA-240 is the final completeness superseding gate. This is the canonical definition of “finishing 150 Packs means ZUVYR V1 is READY.”
