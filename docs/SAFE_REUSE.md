@@ -36,7 +36,8 @@ Never add a working credential "just for the demo."
 ## Internal API vs public contract
 Code being visible in a repository does not make every internal endpoint a stable public API. A public API should have an explicit version, authentication model, rate/usage policy, support expectations and compatibility contract.
 
-## Licensing note
-There is currently no explicit repository license file. Do not assume source code reuse rights until the repository owner chooses and publishes a license.
+## Licensing
 
-A future license choice should be deliberate because it affects redistribution, modification, commercial use, warranty disclaimers and—depending on the license—patent terms.
+The reusable public resources in `examples/` and `starter-kits/` are licensed under **Apache License 2.0**. The rest of the repository remains proprietary unless a separate license notice explicitly says otherwise.
+
+Apache-2.0 does not grant rights to ZUVYR trademarks or branding. See the root `LICENSE` and `docs/PUBLIC_USE_POLICY.md` for scope and public-use boundaries.
