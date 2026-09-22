@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "updated_at": "2026-09-22",
   "purpose": "Single anti-loss reconstruction capsule for any new ChatGPT/Work/Codex session. It does not replace fresh production evidence; it tells the session exactly what to load and how to resolve conflicts.",
   "repository": "ismaildormi/rox-ai",
@@ -89,9 +89,9 @@
     "ZUVYR_CONTINUE_HERE.md": "8831d9ce5baf6942fae74a3d00944484a92e0fb7",
     "ZUVYR_MASTER_STATE.json": "1b84584903747195c2a9d5b8bb3699e5c680ce37",
     "ZUVYR_MASTER_MATRIX.md": "f9549ecef9b050bb7a794138a14532712fd8878c",
-    "docs/zuvyr/ROADMAP_150.md": "df5d1bcabe94f3f2c9beb4c3603bae94dd91e7d9",
-    "docs/zuvyr/V1_READINESS_COMPLETENESS_AUDIT_2026-09-22.md": "12e2275dcc7e4bd7cf3f78b168ee84f872f4fae0",
-    "docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json": "dde1d33d3d101afb399ca5fb363af37de0baed06",
+    "docs/zuvyr/ROADMAP_150.md": "c22a1914f10933879b560fbc84786471301e3c54",
+    "docs/zuvyr/V1_READINESS_COMPLETENESS_AUDIT_2026-09-22.md": "57953b17a3e07e68343177a3bd7ba72c4a960645",
+    "docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json": "fc1714734c050306ee35bcecd9b0d6f1fc406c48",
     "docs/zuvyr/USER_OUTCOME_ENGINE.md": "600c485be8e8bf5d7ab40c060ffd3d2750a028a6",
     "docs/zuvyr/PACK_EXECUTION_APPENDIX.md": "4033405914ff0b0b3db944a298858f5531a6e605",
     "zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json": "11eaa0657768804ccc85c75839336e69ad770598"
@@ -107,7 +107,8 @@
     "ci_gate": "npm run validate:release runs tools/verify-zuvyr-continuity.js before release validation",
     "continuity_validator_required": true,
     "continuity_ci_required": true,
-    "snapshot_drift_fails_validation": true
+    "snapshot_drift_fails_validation": true,
+    "release_quality_gate_must_include_continuity_check": true
   },
   "new_chat_command_semantics": {
     "examples": [
@@ -125,10 +126,12 @@
     ]
   },
   "no_loss_rule": "If continuity files disagree, a snapshot drifts without reconciliation, CI/validator fails, or the active Pack/receipt cannot be reconstructed with evidence, stop feature work and repair continuity first. Never guess an active Pack, silently drop roadmap additions, remove canonical V1 work to obtain READY, or depend on private chat memory as the only source.",
-  "last_reconciled_git_head_before_manifest_update": "cd0ccdf3af8d674d3fb7a433ca9210b2625852d9",
+  "last_reconciled_git_head_before_manifest_update": "73218ae759da366142fea37630223b6f48b31baf",
   "integrity_guard_files": {
     "tools/validate-zuvyr-continuity.cjs": "83d916080f6553fda513f49e33b31c8ca128388c",
-    ".github/workflows/zuvyr-continuity.yml": "ba526ae36bf46c46786f9aa426adcada1e335ffc"
+    ".github/workflows/zuvyr-continuity.yml": "ba526ae36bf46c46786f9aa426adcada1e335ffc",
+    "tools/verify-zuvyr-continuity.js": "ff3c9b7f64f1d927a5cbb139eaa2bbb8e0e912fe",
+    "package.json": "05babfed9ef591413d4a72c57d7540f6f0933a5f"
   },
   "validation": {
     "validator": "tools/validate-zuvyr-continuity.cjs",
