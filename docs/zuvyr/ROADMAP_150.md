@@ -4084,7 +4084,7 @@ Pack065 no-cost progression note: Image Studio truth UI, owner-scoped route wiri
 ## PACK150 — V1 final release and recovery gate
 
 - **Objective:** V1 final release and recovery gate
-- **Scope:** Seal exact release manifest for all 150 packs and rerun affected launch journeys after final changes. Produce the machine-readable PACK001–PACK150 + EA-001…EA-240 completeness matrix, exact source/migration/config/flag/provider/model/client/SBOM/provenance identities, known-limitations list, production rollback target and recovery proof. PACK150 is the only gate allowed to emit V1_READY=true.
+- **Scope:** Seal exact release manifest for all 150 packs and rerun affected launch journeys after final changes. Produce/update the canonical machine-readable PACK001–PACK150 + EA-001…EA-240 completeness matrix using `docs/zuvyr/V1_READINESS_REQUIREMENTS_001_240.json`, with exact source/migration/config/flag/provider/model/client/SBOM/provenance identities, known-limitations list, production rollback target and recovery proof. PACK150 is the only gate allowed to emit V1_READY=true.
 - **Dependencies:** 149
 - **Files/systems affected:** Full platform and canonical state
 - **Architecture decisions:** Reuse canonical Brain/Kernel, registry/router, content IDs, permissions and one usage ledger. Extend the existing implementation; do not build a duplicate subsystem.
