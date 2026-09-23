@@ -1,17 +1,20 @@
 #!/usr/bin/env node
 'use strict';
 
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
-const {
-  buildSyntheticCorpus,
-  buildHoldoutEvalSuite
-} = require('../lib/securityDiagnosticsLearning');
+const { buildSyntheticCorpus } = require('../lib/securityDiagnosticsLearning');
+const evalHoldout = require('../fixtures/security-diagnostics-eval-holdout.v1.json');
 
 function arg(name, fallback) {
   const index = process.argv.indexOf(`--${name}`);
   if (index < 0 || index + 1 >= process.argv.length) return fallback;
   return process.argv[index + 1];
+}
+
+function hash(value) {
+  return crypto.createHash('sha256').update(JSON.stringify(value), 'utf8').digest('hex');
 }
 
 const mode = String(arg('mode', 'train')).toLowerCase();
@@ -26,7 +29,10 @@ if (!['train', 'eval'].includes(mode)) {
 }
 
 const corpus = mode === 'eval'
-  ? buildHoldoutEvalSuite()
+  ? {
+      cases: evalHoldout.cases,
+      corpusSha256: hash(evalHoldout.cases)
+    }
   : buildSyntheticCorpus({ count });
 
 const rows = corpus.cases.map(item => JSON.stringify({
