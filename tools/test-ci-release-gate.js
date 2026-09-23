@@ -14,6 +14,9 @@ function has(text) {
   assert.ok(workflow.includes(text), `missing CI contract: ${text}`);
 }
 
+const CHECKOUT_SHA = 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1';
+const SETUP_NODE_SHA = 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020';
+
 for (const required of [
   'name: ZUVYR Release Quality Gate',
   'push:',
@@ -29,6 +32,7 @@ for (const required of [
   'cache-dependency-path: package-lock.json',
   'cache-dependency-path: backend/package-lock.json',
   'run: npm ci',
+  'run: npm audit --omit=dev --audit-level=high',
   'run: node tools/test-release-validator-scope.js',
   'run: npm run validate:release',
   'run: node tools/test-ci-release-gate.js',
@@ -36,14 +40,27 @@ for (const required of [
   'run: npm run test:maintenance',
   'run: node test-readiness-gates.js',
   'run: node test-readiness-lifecycle.js',
+  CHECKOUT_SHA,
+  SETUP_NODE_SHA,
 ]) {
   has(required);
 }
 
 assert.strictEqual(
-  (workflow.match(/uses:\s*actions\/checkout@v4/g) || []).length,
+  (workflow.match(new RegExp(CHECKOUT_SHA.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length,
   2,
-  'both jobs must checkout the exact commit'
+  'both jobs must use the pinned checkout action'
+);
+
+assert.strictEqual(
+  (workflow.match(new RegExp(SETUP_NODE_SHA.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length,
+  2,
+  'both jobs must use the pinned setup-node action'
+);
+
+assert.ok(
+  !/actions\/(checkout|setup-node)@v\d+/.test(workflow),
+  'quality gate actions must be commit-SHA pinned'
 );
 
 assert.ok(
