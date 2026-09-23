@@ -1,0 +1,33 @@
+name: ZUVYR Continuous Improvement Policy
+
+on:
+  pull_request:
+    paths:
+      - 'AGENTS.md'
+      - 'docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md'
+      - 'docs/zuvyr/continuous-improvement-override.v1.json'
+      - 'tools/validate-continuous-improvement-override.cjs'
+      - '.github/workflows/continuous-improvement-policy.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'AGENTS.md'
+      - 'docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md'
+      - 'docs/zuvyr/continuous-improvement-override.v1.json'
+      - 'tools/validate-continuous-improvement-override.cjs'
+      - '.github/workflows/continuous-improvement-policy.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate continuous-improvement override
+        run: node tools/validate-continuous-improvement-override.cjs
