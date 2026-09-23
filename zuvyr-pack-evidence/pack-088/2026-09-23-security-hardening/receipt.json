@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.0",
+  "pack": "088",
+  "title": "Automations & Durable Workflows — SECURITY DEFINER trigger privilege hardening",
+  "change_type": "SECURITY_HARDENING",
+  "verified_at": "2026-09-23T17:23:00Z",
+  "canonical_pack_status": "LOCKED_VERIFIED",
+  "active_pack_after_hardening": "PACK089",
+  "pack090_allowed": false,
+  "finding": {
+    "source": "fresh Supabase production security advisor + direct pg_proc/ACL verification",
+    "severity": "P0_AUTHORIZATION_SURFACE",
+    "affected_functions": [
+      "public.pack088_late_bind_cancel_guard()",
+      "public.pack088_notify_run_transition()"
+    ],
+    "before": {
+      "security_definer": true,
+      "public_execute_inherited": true,
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "service_role_execute": true
+    },
+    "root_cause": "PACK088 migration revoked browser execution from explicit control RPCs but omitted the two internal trigger helper functions; PostgreSQL PUBLIC EXECUTE therefore remained inherited by anon/authenticated."
+  },
+  "source_fix": {
+    "pull_request": 97,
+    "merge_commit": "dab1cf0e2c8796b96e64111c4a13940ab6cfbebc",
+    "migration_file": "backend/92_pack088_88d_trigger_privilege_hardening.sql",
+    "focused_test": "backend/test-pack088-trigger-privilege-hardening.js",
+    "ci_workflow": ".github/workflows/pack088-trigger-privilege-hardening.yml",
+    "behavior_change": "No frontend/user-flow change; only direct EXECUTE privilege hardening for internal trigger helpers."
+  },
+  "ci": {
+    "pack088_trigger_privilege_hardening_run": 35895022636,
+    "pack088_trigger_privilege_hardening_result": "SUCCESS",
+    "release_quality_run": 35895022453,
+    "release_quality_result": "SUCCESS",
+    "vercel": "IGNORED_AS_EXPECTED_NO_FRONTEND_CHANGE"
+  },
+  "production_migration": {
+    "supabase_project": "tqoqsgaymygmqrzddvtu",
+    "version": "20260923172220",
+    "name": "pack088_88d_trigger_privilege_hardening",
+    "status": "APPLIED_VERIFIED"
+  },
+  "production_postconditions": {
+    "pack088_late_bind_cancel_guard": {
+      "security_definer": true,
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_role_execute": true
+    },
+    "pack088_notify_run_transition": {
+      "security_definer": true,
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_role_execute": true
+    },
+    "public_schema_security_definer_functions_executable_by_anon_count": 0,
+    "public_schema_security_definer_functions_executable_by_authenticated_count": 0
+  },
+  "side_effects": {
+    "provider_calls": 0,
+    "payment_mutations": 0,
+    "customer_execution": 0,
+    "frontend_deployment_required": false,
+    "railway_runtime_deployment_required": false
+  },
+  "USER_VALUE": "Prevents browser roles from directly invoking privileged internal automation trigger helpers while preserving normal scheduler-trigger behavior.",
+  "EXECUTABLE_USER_ACTIONS": "Existing automation actions are preserved through authenticated backend/service-role paths; no new browser privilege was added.",
+  "MONEY_OPPORTUNITY_RELEVANCE": "INDIRECT",
+  "MONEY_OPPORTUNITY_NOTES": "Protects billing/task integrity and reduces the risk of unauthorized automation side effects.",
+  "NEXT_BEST_ACTION": "Continue PACK089 89E real Google Drive OAuth production acceptance after continuity reconciliation; do not open PACK090 early.",
+  "SUGGESTION_CHIPS": [],
+  "PROVENANCE_BEHAVIOR": "VERIFIED from GitHub CI, applied Supabase migration, function ACL checks and global SECURITY DEFINER privilege scan.",
+  "PERSONALIZATION_BEHAVIOR": "NONE_REQUIRED_FOR_SECURITY_HARDENING",
+  "HARD_STOP_IMPACT": "NONE; this narrows unauthorized execution only.",
+  "OUTCOME_TESTS": [
+    "focused source privilege contract PASS",
+    "release quality PASS",
+    "production migration applied",
+    "anon/authenticated direct EXECUTE denied",
+    "service_role EXECUTE preserved",
+    "global exposed SECURITY DEFINER count = 0"
+  ],
+  "EXTERNAL_AUDIT_ITEMS_TOUCHED": [
+    "EA-008",
+    "EA-013"
+  ],
+  "EA_RECONCILIATION_STATUS": "PACK088 regression fixed; final EA closure remains owned by mapped future/final Packs.",
+  "UNRESOLVED_P0_P1": [],
+  "NOT_ADVERTISED_DECISIONS": [],
+  "HORIZONTAL_PLANE_TESTS": [
+    "direct role privilege scan",
+    "SECURITY DEFINER exposure scan"
+  ],
+  "CONTINUITY_VALIDATOR_RESULT": "PENDING_RECONCILIATION_PR_CI",
+  "CONTINUITY_MANIFEST_UPDATED": false,
+  "CONTINUITY_CONFLICTS_RESOLVED": [
+    "PACK088 may remain canonical LOCKED_VERIFIED after the newly discovered authorization regression was fixed and production-verified."
+  ]
+}
