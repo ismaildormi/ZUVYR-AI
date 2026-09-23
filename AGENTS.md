@@ -6,12 +6,15 @@ These instructions apply to the entire repository.
 
 Before planning, modifying, validating, or locking any ZUVYR pack, read:
 
-1. `docs/zuvyr/USER_OUTCOME_ENGINE.md`
-2. `docs/zuvyr/PACK_EXECUTION_APPENDIX.md`
-3. `docs/zuvyr/user-outcome-pack-overlay.v1.json`
-4. `docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md`
-5. `docs/zuvyr/continuous-improvement-override.v1.json`
-6. the canonical pack roadmap/state files relevant to the active pack.
+1. `docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json`
+2. `docs/zuvyr/USER_OUTCOME_ENGINE.md`
+3. `docs/zuvyr/PACK_EXECUTION_APPENDIX.md`
+4. `docs/zuvyr/user-outcome-pack-overlay.v1.json`
+5. `docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md`
+6. `docs/zuvyr/continuous-improvement-override.v1.json`
+7. the canonical pack roadmap/state files relevant to the active pack.
+
+The current-state override is a compact dated continuity source. Fresh Git/production evidence and newer explicit user instruction still outrank it. If it disagrees with older state capsules, reconcile the older capsules rather than discarding the fresh evidence.
 
 The User Outcome Engine is a global additive overlay for PACK001–PACK150 and future packs. It does not renumber historical packs or erase previous requirements.
 
