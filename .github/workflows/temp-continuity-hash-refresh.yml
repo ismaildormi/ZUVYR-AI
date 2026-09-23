@@ -1,0 +1,41 @@
+name: TEMP Continuity Hash Refresh
+
+on:
+  push:
+    branches:
+      - fix/pack001-089-cleanliness-hardening-20260923
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    if: ${{ !contains(github.event.head_commit.message, '[continuity-hash-refresh]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.ref }}
+      - name: Refresh exact guarded workflow blob SHA
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const p = 'docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json';
+          const oldSha = 'ba526ae36bf46c46786f9aa426adcada1e335ffc';
+          const newSha = 'a9f8aef5a40431f6f9933668a2efb8a0a0820c90';
+          const raw = fs.readFileSync(p, 'utf8');
+          const hits = raw.split(oldSha).length - 1;
+          if (hits !== 1) throw new Error(`expected exactly one old continuity workflow SHA, found ${hits}`);
+          const next = raw.replace(oldSha, newSha);
+          JSON.parse(next);
+          fs.writeFileSync(p, next);
+          NODE
+          git diff --check
+      - name: Commit guarded snapshot update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json
+          git commit -m "docs: refresh continuity guard hash [continuity-hash-refresh]"
+          git push origin HEAD:${GITHUB_REF_NAME}
