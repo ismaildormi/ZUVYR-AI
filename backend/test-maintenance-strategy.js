@@ -59,11 +59,20 @@ const quietLogger = {
   error() {},
 };
 
+const healthyHygiene = Object.freeze({
+  version: 'zuvyr-runtime-hygiene.v1',
+  ok: true,
+  rls_no_policy_count: 0,
+  unindexed_fk_count: 0,
+  exposed_security_definer_count: 0,
+});
+
 async function testSuccessAndDuplicate() {
   const redis = new FakeRedis();
   const db = fakeSupabase({
     check_credit_audit_mismatches: 2,
     reset_monthly_credits: 3,
+    zuvyr_runtime_hygiene_audit: healthyHygiene,
   });
   const now = Date.UTC(2026, 8, 11, 22, 30, 0);
 
@@ -78,9 +87,14 @@ async function testSuccessAndDuplicate() {
   assert.strictEqual(first.duplicate, false);
   assert.strictEqual(first.receipt.newAlertsRaised, 2);
   assert.strictEqual(first.receipt.accountsReset, 3);
+  assert.strictEqual(first.receipt.hygiene.ok, true);
+  assert.strictEqual(first.receipt.hygiene.rlsNoPolicyCount, 0);
+  assert.strictEqual(first.receipt.hygiene.unindexedFkCount, 0);
+  assert.strictEqual(first.receipt.hygiene.exposedSecurityDefinerCount, 0);
   assert.deepStrictEqual(db.calls, [
     'check_credit_audit_mismatches',
     'reset_monthly_credits',
+    'zuvyr_runtime_hygiene_audit',
   ]);
 
   const second = await runMaintenanceOnce({
@@ -92,7 +106,7 @@ async function testSuccessAndDuplicate() {
 
   assert.strictEqual(second.status, 'duplicate_suppressed');
   assert.strictEqual(second.duplicate, true);
-  assert.strictEqual(db.calls.length, 2, 'duplicate must make no additional RPC calls');
+  assert.strictEqual(db.calls.length, 3, 'duplicate must make no additional RPC calls');
 }
 
 async function testConcurrentLockSuppression() {
@@ -116,6 +130,7 @@ async function testFailureAllowsRetry() {
   const firstDb = fakeSupabase({
     check_credit_audit_mismatches: 1,
     reset_monthly_credits: new Error('reset unavailable'),
+    zuvyr_runtime_hygiene_audit: healthyHygiene,
   });
   const now = Date.UTC(2026, 8, 12, 0, 0, 0);
 
@@ -136,6 +151,7 @@ async function testFailureAllowsRetry() {
   const retryDb = fakeSupabase({
     check_credit_audit_mismatches: 0,
     reset_monthly_credits: 0,
+    zuvyr_runtime_hygiene_audit: healthyHygiene,
   });
   const retry = await runMaintenanceOnce({
     redis,
@@ -145,7 +161,44 @@ async function testFailureAllowsRetry() {
   });
 
   assert.strictEqual(retry.status, 'success');
-  assert.strictEqual(retryDb.calls.length, 2);
+  assert.strictEqual(retryDb.calls.length, 3);
+}
+
+async function testHygieneDriftBlocksSuccessMarker() {
+  const redis = new FakeRedis();
+  const now = Date.UTC(2026, 8, 12, 0, 30, 0);
+  const db = fakeSupabase({
+    check_credit_audit_mismatches: 0,
+    reset_monthly_credits: 0,
+    zuvyr_runtime_hygiene_audit: {
+      version: 'zuvyr-runtime-hygiene.v1',
+      ok: false,
+      rls_no_policy_count: 1,
+      unindexed_fk_count: 2,
+      exposed_security_definer_count: 0,
+    },
+  });
+
+  const result = await runMaintenanceOnce({
+    redis,
+    supabaseAdmin: db,
+    nowMs: now,
+    logger: quietLogger,
+  });
+
+  assert.strictEqual(result.status, 'partial');
+  assert.strictEqual(result.receipt.hygiene.ok, false);
+  assert.strictEqual(result.receipt.hygiene.rlsNoPolicyCount, 1);
+  assert.strictEqual(result.receipt.hygiene.unindexedFkCount, 2);
+  assert(
+    result.receipt.errors.some(item => item.step === 'zuvyr_runtime_hygiene_audit'),
+    'hygiene drift must be recorded in the maintenance receipt'
+  );
+  assert.strictEqual(
+    await redis.get(maintenanceWindowKey(now)),
+    null,
+    'hygiene drift must never create a success marker'
+  );
 }
 
 function mockResponse() {
@@ -190,6 +243,7 @@ function testStrategyGate() {
 function testSourceContracts() {
   const server = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8');
   const runner = fs.readFileSync(path.join(__dirname, 'maintenanceRunner.js'), 'utf8');
+  const coordinator = fs.readFileSync(path.join(__dirname, 'lib', 'maintenanceCoordinator.js'), 'utf8');
 
   const maintenanceRouteGuardOrder =
     /app\.post\(\s*['"]\/internal\/maintenance\/run['"]\s*,\s*requireMaintenanceStrategy\s*,\s*requireCronAccess\s*,/m;
@@ -204,6 +258,10 @@ function testSourceContracts() {
       runner.includes("'x-cron-secret': secret"),
     'runner must keep CRON_SECRET in a header, never in URL/log output'
   );
+  assert(
+    coordinator.includes("supabaseAdmin.rpc('zuvyr_runtime_hygiene_audit')"),
+    'maintenance must continuously enforce the ZUVYR runtime hygiene invariant'
+  );
 }
 
 (async () => {
@@ -212,6 +270,7 @@ function testSourceContracts() {
   await testSuccessAndDuplicate();
   await testConcurrentLockSuppression();
   await testFailureAllowsRetry();
+  await testHygieneDriftBlocksSuccessMarker();
   console.log('PASS: Pack 005 maintenance strategy tests passed.');
 })().catch(error => {
   console.error(error);
