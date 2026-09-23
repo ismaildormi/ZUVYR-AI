@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5",
+  "schema_version": "1.6",
   "updated_at": "2026-09-23",
   "purpose": "Single anti-loss reconstruction capsule for any new ChatGPT/Work/Codex session. It does not replace fresh production evidence; it tells the session exactly what to load and how to resolve conflicts.",
   "repository": "ismaildormi/rox-ai",
@@ -9,7 +9,7 @@
     "Fresh GitHub/production/DB/deployment/live evidence",
     "ZUVYR_CONTINUITY_MANIFEST.json plus newest Pack receipt",
     "ZUVYR_CONTINUE_HERE.md / ZUVYR_MASTER_STATE.json / ZUVYR_MASTER_MATRIX.md",
-    "ROADMAP_150 + Model Factory/Evals amendment + binding reconciliation overlay + readiness audit/matrix + execution appendix",
+    "ROADMAP_150 + Model Factory/Evals overlays + Universal Browser/Connection Authority overlay + readiness audit/matrix + execution appendix",
     "Older chats/memory only for recovery, never to override fresher evidence"
   ],
   "canonical_boot_order": [
@@ -21,6 +21,8 @@
     "docs/zuvyr/ROADMAP_150_MODEL_FACTORY_EVALS_AMENDMENT.md",
     "docs/zuvyr/ROADMAP_150_MODEL_FACTORY_EVALS_RECONCILIATION_2026-09-23.md",
     "docs/zuvyr/model-factory-evals-reconciliation-overlay.v1.json",
+    "docs/zuvyr/ROADMAP_150_UNIVERSAL_BROWSER_SESSION_CONNECTION_AUTHORITY_AMENDMENT_2026-09-23.md",
+    "docs/zuvyr/universal-browser-session-connection-authority-overlay.v1.json",
     "docs/zuvyr/V1_READINESS_COMPLETENESS_AUDIT_2026-09-22.md",
     "docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json",
     "docs/zuvyr/USER_OUTCOME_ENGINE.md",
@@ -96,7 +98,15 @@
     "model_factory_original_pack_scopes_preserved": true,
     "model_factory_implementation_range": "PACK131..PACK147",
     "model_factory_final_acceptance_range": "PACK148..PACK150",
-    "model_factory_requirement_range": "MF-01..MF-24"
+    "model_factory_requirement_range": "MF-01..MF-24",
+    "universal_browser_connection_amendment_required": true,
+    "universal_browser_connection_amendment": "docs/zuvyr/ROADMAP_150_UNIVERSAL_BROWSER_SESSION_CONNECTION_AUTHORITY_AMENDMENT_2026-09-23.md",
+    "universal_browser_connection_overlay": "docs/zuvyr/universal-browser-session-connection-authority-overlay.v1.json",
+    "universal_browser_scope_semantics": "UNION_NOT_REPLACEMENT",
+    "universal_browser_original_pack_scopes_preserved": true,
+    "universal_browser_requirement_range": "UBA-01..UBA-24",
+    "universal_browser_primary_checkpoint": "PACK090",
+    "universal_browser_hardening_range": "PACK101..PACK150"
   },
   "canonical_files_snapshot": {
     "ZUVYR_CONTINUE_HERE.md": "8831d9ce5baf6942fae74a3d00944484a92e0fb7",
@@ -110,7 +120,9 @@
     "docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json": "fc1714734c050306ee35bcecd9b0d6f1fc406c48",
     "docs/zuvyr/USER_OUTCOME_ENGINE.md": "600c485be8e8bf5d7ab40c060ffd3d2750a028a6",
     "docs/zuvyr/PACK_EXECUTION_APPENDIX.md": "4033405914ff0b0b3db944a298858f5531a6e605",
-    "zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json": "11eaa0657768804ccc85c75839336e69ad770598"
+    "zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json": "11eaa0657768804ccc85c75839336e69ad770598",
+    "docs/zuvyr/ROADMAP_150_UNIVERSAL_BROWSER_SESSION_CONNECTION_AUTHORITY_AMENDMENT_2026-09-23.md": "5c4bc0977ca43f8d330ef1c4a3006d157b07e8b2",
+    "docs/zuvyr/universal-browser-session-connection-authority-overlay.v1.json": "535bef1b45dae2786a07939d0df7533ef0dcb013"
   },
   "snapshot_policy": "Blob SHAs are a known-good snapshot, not a freeze. If a canonical file has a newer SHA on main, inspect the newer change and reconcile it; do not roll it back merely because it differs from this snapshot.",
   "integrity_expectations": {
@@ -126,7 +138,11 @@
     "snapshot_drift_fails_validation": true,
     "release_quality_gate_must_include_continuity_check": true,
     "model_factory_evals_overlay_must_be_loaded_for_pack131_150": true,
-    "original_pack131_150_scope_must_not_be_replaced_by_model_factory": true
+    "original_pack131_150_scope_must_not_be_replaced_by_model_factory": true,
+    "universal_browser_connection_overlay_must_be_loaded": true,
+    "universal_browser_uba_01_24_must_be_reconciled_by_pack150": true,
+    "universal_browser_overlay_must_not_reopen_completed_packs": true,
+    "universal_browser_overlay_must_not_replace_original_pack_scopes": true
   },
   "new_chat_command_semantics": {
     "examples": [
@@ -140,12 +156,13 @@
       "Explicitly flag stale/conflicting status text instead of silently picking one.",
       "Load all readiness requirements mapped to the active Pack.",
       "For PACK131..PACK150, enforce the union of the original ROADMAP_150 Pack scope, all applicable EA-001..EA-292 items, the Model Factory/Evals amendment and its binding reconciliation overlay; never replace an original Pack scope with a Model Factory title.",
+      "For PACK090 and mapped future Packs, enforce the Universal Browser Session + Connection Authority amendment and UBA-01..UBA-24 as additive requirements; never treat provider registration as live browser proof.",
       "Continue only the legal next step and preserve Pack gates.",
       "After any material checkpoint, update continuity sources before leaving the work session."
     ]
   },
   "no_loss_rule": "If continuity files disagree, a snapshot drifts without reconciliation, CI/validator fails, or the active Pack/receipt cannot be reconstructed with evidence, stop feature work and repair continuity first. Never guess an active Pack, silently drop roadmap additions, remove canonical V1 work to obtain READY, or depend on private chat memory as the only source.",
-  "last_reconciled_git_head_before_manifest_update": "b9ce1ebc937e4a5fd6fdae14e0a6366bd5e10ccb",
+  "last_reconciled_git_head_before_manifest_update": "b7fcd27375464c1a2ec7b416b301601587829d8c",
   "integrity_guard_files": {
     "tools/validate-zuvyr-continuity.cjs": "ef6a2535c920aafcff2fa0aa51987ce4569cced2",
     ".github/workflows/zuvyr-continuity.yml": "ba526ae36bf46c46786f9aa426adcada1e335ffc",
@@ -184,6 +201,6 @@
       "values_redacted": true,
       "conclusion": "External Google OAuth Web client credentials are still genuinely absent; do not fabricate them."
     },
-    "note": "This block records the last completed CI verification before the 2026-09-23 Model Factory/Evals planning amendment and reconciliation. A fresh continuity workflow must pass after promotion to main before a newer success is recorded here."
+    "note": "Last recorded CI success predates the Universal Browser/Connection Authority continuity registration; run a fresh continuity workflow after this manifest update before recording a newer success."
   }
 }
