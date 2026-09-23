@@ -35,6 +35,9 @@ jobs:
       - name: Install root dependencies
         run: npm ci
 
+      - name: Verify immutable GitHub Action pins
+        run: node tools/test-github-action-pins.cjs
+
       - name: Verify public builder resources
         run: |
           node --check examples/patterns/idempotent-task.js
