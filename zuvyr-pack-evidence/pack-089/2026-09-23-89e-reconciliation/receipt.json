@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "pack": "089",
+  "phase": "89E_PRODUCTION_ACCEPTANCE",
+  "title": "Skills / Plugins / MCP / Connections — OAuth gate reconciliation",
+  "checkpoint_at": "2026-09-23T13:45:00Z",
+  "canonical_pack_status": "IN_PROGRESS",
+  "phase_status": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_VALIDATION_AND_OWNER_CONSENT",
+  "pack090_allowed": false,
+  "fresh_evidence": {
+    "github_main": "d75cb84e30ba57d9ca29c951230d1378696f2b03",
+    "railway_project": "ba460cdb-cc55-4203-bdd0-711846b7564c",
+    "railway_backend_service": "65161b7e-7b83-4adf-bb57-290df3963de1",
+    "railway_environment": "production",
+    "railway_latest_observed_deployment": "88f54bdb-0592-454e-8825-82d368042c57",
+    "railway_variable_names_present": [
+      "GOOGLE_API_KEY",
+      "GOOGLE_OAUTH_CLIENT_ID",
+      "GOOGLE_OAUTH_CLIENT_SECRET",
+      "GOOGLE_OAUTH_REDIRECT_URI"
+    ],
+    "railway_values_redacted": true,
+    "credential_values_nonempty_or_valid": "UNVERIFIED",
+    "google_cloud_configuration_valid": "UNVERIFIED",
+    "interactive_google_consent_completed": false,
+    "workspace_google_oauth_runtime_errors_in_latest_filtered_logs": 0
+  },
+  "source_preflight": {
+    "oauth_config_requires_nonempty_client_id_secret_redirect": "PASS_SOURCE_VERIFIED",
+    "redirect_uri_validation": "PASS_SOURCE_VERIFIED",
+    "pkce_s256": "PASS_SOURCE_VERIFIED",
+    "state_hash_and_expiry": "PASS_SOURCE_VERIFIED",
+    "prompt_consent_and_offline_access": "PASS_SOURCE_VERIFIED",
+    "frontend_code_state_callback_to_backend": "PASS_SOURCE_VERIFIED",
+    "backend_callback_route": "/api/workspace/drive/oauth/callback",
+    "oauth_start_route": "/api/workspace/drive/connect",
+    "disconnect_route": "/api/workspace/drive/:id/disconnect"
+  },
+  "google_cloud_operator": {
+    "plugin_name": "zuvyr-google-cloud-operator",
+    "plugin_id": "plugins_6ab351e30598819184931902ec08f668",
+    "version": "0.1.0",
+    "scope": "USER",
+    "mcp_server": "https://cloudcli.googleapis.com/mcp",
+    "plugin_source_verified": true,
+    "invokable_in_current_chat": false,
+    "note": "The plugin exists and is owned by the user, but the Google Cloud execution surface is not connected as an invokable tool in this chat. Do not treat plugin existence as Google Cloud configuration proof."
+  },
+  "supersedes_stale_fact": {
+    "old_claim": "GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET are absent from Railway production",
+    "new_fact": "Railway production now exposes the variable names; their secret values and Google-side validity remain redacted/unverified",
+    "old_receipt_preserved": "zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json"
+  },
+  "non_external_acceptance": {
+    "status": "PRESERVED_PASS",
+    "source_receipt": "zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json",
+    "rerun_required_before_owner_consent": false
+  },
+  "remaining_acceptance_sequence": [
+    "Start ZUVYR production Google Drive OAuth as the real owner",
+    "Confirm Google accepts the configured OAuth client and redirect URI",
+    "Approve only the requested Drive scopes",
+    "Complete callback and activate the owner-scoped connection",
+    "Execute one real granted-scope Drive tool call",
+    "Prove a non-granted scope/action is denied",
+    "Disconnect and revoke the Google connection",
+    "Prove post-revoke access is denied",
+    "Verify audit persistence",
+    "Verify Vault/token secrecy and no plaintext OAuth material",
+    "Only then mark PACK089 LOCKED_VERIFIED and allow PACK090"
+  ],
+  "deferred_owner_action": {
+    "reason": "Owner is currently away from the computer and interactive Google authorization cannot be completed from this chat execution surface.",
+    "minimum_action_when_available": "Open ZUVYR production, Plugins & Connections, start Google Drive Connect, complete Google account consent if prompted, then return to the project so acceptance can continue.",
+    "password_or_2fa_must_not_be_shared": true
+  },
+  "next": {
+    "pack089": "IN_PROGRESS",
+    "phase89e": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_VALIDATION_AND_OWNER_CONSENT",
+    "pack090_allowed": false,
+    "assistant_can_continue_without_owner": "Only non-interactive preparation/reconciliation; no truthful PACK lock is possible before live OAuth acceptance."
+  }
+}
