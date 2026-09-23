@@ -1,0 +1,196 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-09-23",
+  "title": "ZUVYR Universal Browser Session + Connection Authority Overlay",
+  "base_roadmap": "docs/zuvyr/ROADMAP_150.md",
+  "amendment": "docs/zuvyr/ROADMAP_150_UNIVERSAL_BROWSER_SESSION_CONNECTION_AUTHORITY_AMENDMENT_2026-09-23.md",
+  "pack_range": "PACK001..PACK150",
+  "active_pack_changed_by_overlay": false,
+  "renumber_packs": false,
+  "reopen_completed_packs": false,
+  "scope_semantics": "UNION_NOT_REPLACEMENT",
+  "requirement_range": "UBA-01..UBA-24",
+  "runtime_strategy": {
+    "decision_order": [
+      "connector_api",
+      "plugin_mcp",
+      "self_hosted_or_byoc_browser",
+      "managed_cloud_browser",
+      "local_device_browser",
+      "secure_user_takeover"
+    ],
+    "primary_low_cost_runtime": "self_hosted_or_byoc_playwright_chromium",
+    "managed_fallback": "provider_adapter_only_after_pricing_terms_credentials_live_e2e",
+    "browser_state_rule": "encrypted_secret_reference_only_no_plaintext_git_logs_prompts",
+    "provider_specific_session_ids_are_not_product_identity": true
+  },
+  "connection_authority": {
+    "modes": [
+      "ASK_EVERY_TIME",
+      "AUTO_LOW_RISK",
+      "FULL_TASK_ACCESS",
+      "ALWAYS_ALLOW_APP"
+    ],
+    "maximum_authorized_access": "request only the broadest legitimate provider-supported scopes the user explicitly approves",
+    "consent_screen_autocomplete": "allowed only when exact app/domain/scopes match prior explicit user authorization",
+    "credential_boundary": "password_passkey_2fa_captcha_use_secure_takeover_or_supported_delegated_mechanism",
+    "hard_consequence_gate_preserved": true
+  },
+  "eligible_surfaces": [
+    "Chat",
+    "Research",
+    "Deep Research",
+    "Shopping",
+    "Local",
+    "Images",
+    "Video",
+    "Code Studio",
+    "Documents",
+    "Spreadsheets",
+    "Presentations",
+    "Projects",
+    "Library",
+    "ZUVYR IP",
+    "Automations",
+    "Manager",
+    "Operator",
+    "Web client",
+    "Windows client",
+    "Android client",
+    "iOS client"
+  ],
+  "pack_additive_ownership": {
+    "PACK090": [
+      "universal browser gap audit",
+      "Browser Broker",
+      "provider abstraction",
+      "cross-surface live proof",
+      "connector-first fallback",
+      "STOP"
+    ],
+    "PACK101": [
+      "browser_session_ref",
+      "cross-surface task cursor",
+      "disconnect/reconnect resume",
+      "no duplicate external actions"
+    ],
+    "PACK118": [
+      "browser worker isolation",
+      "SSRF/origin/egress adversarial proof",
+      "live-view takeover isolation"
+    ],
+    "PACK121": [
+      "persistent encrypted browser profile",
+      "worker-loss recovery",
+      "heartbeat",
+      "idle expiry",
+      "resume cursor"
+    ],
+    "PACK122": [
+      "browser consequence receipts",
+      "uncertain-outcome reconciliation",
+      "exactly-once retry"
+    ],
+    "PACK125": [
+      "connector + browser-profile lifecycle",
+      "refresh/reconnect/revoke",
+      "logout/clear-state propagation"
+    ],
+    "PACK126": [
+      "browser-capable tool version pinning",
+      "scope change invalidates stale approval"
+    ],
+    "PACK127": [
+      "connector-browser-local fallback E2E",
+      "secure takeover",
+      "signed-in app proof",
+      "STOP and recovery"
+    ],
+    "PACK139": [
+      "prompt injection",
+      "phishing/lookalike",
+      "redirect",
+      "SSRF",
+      "secret exfiltration",
+      "tenant isolation",
+      "malicious downloads"
+    ],
+    "PACK142": [
+      "browser capacity",
+      "concurrency",
+      "resource budgets",
+      "auto-suspend",
+      "cleanup",
+      "fallback load"
+    ],
+    "PACK144": [
+      "web/windows/android/ios browser progress",
+      "takeover",
+      "STOP",
+      "cross-client handoff"
+    ],
+    "PACK145": [
+      "session/action protocol versioning",
+      "rolling compatibility",
+      "no silent authority widening"
+    ],
+    "PACK148": [
+      "all-surface rehearsal",
+      "background continuation",
+      "signed-in flow",
+      "quarantine",
+      "takeover",
+      "revoke",
+      "recovery"
+    ],
+    "PACK149": [
+      "provider terms/pricing",
+      "OAuth scopes/redirects",
+      "automation policy",
+      "privacy/retention",
+      "external dependencies"
+    ],
+    "PACK150": [
+      "exact browser/runtime/provider/session/policy seal",
+      "UBA acceptance matrix",
+      "rollback/recovery targets"
+    ]
+  },
+  "requirements": {
+    "UBA-01": "Shared Browser Broker",
+    "UBA-02": "Universal chat/surface binding",
+    "UBA-03": "Canonical owner-scoped Browser Session",
+    "UBA-04": "Isolated browser contexts",
+    "UBA-05": "Encrypted persistent authenticated profiles",
+    "UBA-06": "Connector/API-first execution routing",
+    "UBA-07": "Self-hosted/BYOC low-cost browser runtime",
+    "UBA-08": "Optional managed-provider fallback",
+    "UBA-09": "Local Device Browser fallback",
+    "UBA-10": "Maximum Authorized Access connection mode",
+    "UBA-11": "Custom/read-only connection modes",
+    "UBA-12": "Full-task / always-allow app authority policy",
+    "UBA-13": "Secure takeover for credentials/2FA/CAPTCHA",
+    "UBA-14": "Exact pre-authorized consent-screen auto-completion",
+    "UBA-15": "Progress/screenshots/evidence in originating chat",
+    "UBA-16": "Global STOP/cancel/revoke propagation",
+    "UBA-17": "Background continuation and resumable cursor",
+    "UBA-18": "Exactly-once consequence receipts/reconciliation",
+    "UBA-19": "Download/upload quarantine + Library/Project bridge",
+    "UBA-20": "Prompt-injection/phishing/redirect/egress defenses",
+    "UBA-21": "Tenant/session isolation and secret hygiene",
+    "UBA-22": "Dynamic runtime budgets / idle suspend / cost truth",
+    "UBA-23": "Cross-client takeover/handoff compatibility",
+    "UBA-24": "Final all-surface production E2E + recovery proof"
+  },
+  "final_acceptance": {
+    "original_pack_scopes": "ALL_SATISFIED",
+    "applicable_ea_001_292": "PASS_OR_TRUE_NA_WITH_EVIDENCE",
+    "uba_01_24": "PASS_OR_TRUE_NA_WITH_EVIDENCE",
+    "pack090_universal_browser_checkpoint": "PASS",
+    "pack127_agent_browser_connection_checkpoint": "PASS",
+    "pack148_all_surface_rehearsal": "PASS",
+    "pack149_external_rights_terms_privacy": "PASS",
+    "pack150_exact_release_recovery_seal": "PASS",
+    "hidden_partial_deferred_applicable_gap_allowed": false
+  }
+}
