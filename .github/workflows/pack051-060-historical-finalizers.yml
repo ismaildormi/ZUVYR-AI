@@ -1,0 +1,40 @@
+name: PACK051-PACK060 Historical Finalizers
+
+on:
+  pull_request:
+    paths:
+      - 'zuvyr-pack-evidence/reconciliations/2026-09-23-pack051-060-finalizers/receipt.json'
+      - 'zuvyr-pack-evidence/pack-051/receipt.json'
+      - 'zuvyr-pack-evidence/pack-052/receipt.json'
+      - 'zuvyr-pack-evidence/pack-053/receipt.json'
+      - 'zuvyr-pack-evidence/pack-054/receipt.json'
+      - 'zuvyr-pack-evidence/pack-055/receipt.json'
+      - 'zuvyr-pack-evidence/pack-056/receipt.json'
+      - 'zuvyr-pack-evidence/pack-057/receipt.json'
+      - 'zuvyr-pack-evidence/pack-058/receipt.json'
+      - 'zuvyr-pack-evidence/pack-059/receipt.json'
+      - 'zuvyr-pack-evidence/pack-060/receipt.json'
+      - 'zuvyr-pack-evidence/pack-061/2026-09-17-final/receipt.json'
+      - 'tools/validate-pack051-060-historical-finalizers.cjs'
+      - '.github/workflows/pack051-060-historical-finalizers.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'zuvyr-pack-evidence/reconciliations/2026-09-23-pack051-060-finalizers/receipt.json'
+      - 'tools/validate-pack051-060-historical-finalizers.cjs'
+      - '.github/workflows/pack051-060-historical-finalizers.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate historical finalizer chain
+        run: node tools/validate-pack051-060-historical-finalizers.cjs
