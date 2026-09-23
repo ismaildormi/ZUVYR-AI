@@ -6,6 +6,8 @@
 --   2. Add covering indexes for every currently-unindexed ZUVYR-scoped public
 --      foreign key so parent updates/deletes and joins do not accumulate avoidable
 --      performance debt.
+--   3. Install a service-role-only runtime hygiene audit so the 30-minute
+--      maintenance loop can detect future schema/security drift automatically.
 --
 -- Safety:
 --   * nova8_* is intentionally excluded; NOVA8 is a separate product sharing DB.
@@ -92,3 +94,81 @@ begin
   end loop;
 end
 $zuvyr_fk_indexes$;
+
+-- Durable invariant monitor. The function is SECURITY INVOKER and is executable
+-- only by service_role. It reports actionable ZUVYR drift without exposing schema
+-- inventory to browser/client roles.
+create or replace function public.zuvyr_runtime_hygiene_audit()
+returns jsonb
+language sql
+stable
+security invoker
+set search_path = pg_catalog, public
+as $zuvyr_hygiene$
+  with rls_no_policy as (
+    select c.oid
+    from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace
+    where c.relkind = 'r'
+      and n.nspname = 'public'
+      and c.relrowsecurity
+      and c.relname not like 'nova8\_%' escape '\'
+      and not exists (
+        select 1
+        from pg_policy p
+        where p.polrelid = c.oid
+      )
+  ),
+  unindexed_fk as (
+    select con.oid
+    from pg_constraint con
+    join pg_class c on c.oid = con.conrelid
+    join pg_namespace n on n.oid = c.relnamespace
+    where con.contype = 'f'
+      and n.nspname = 'public'
+      and c.relname not like 'nova8\_%' escape '\'
+      and not exists (
+        select 1
+        from pg_index i
+        where i.indrelid = con.conrelid
+          and i.indisvalid
+          and i.indisready
+          and (i.indkey::smallint[])[0:cardinality(con.conkey)-1] @> con.conkey
+          and con.conkey @> (i.indkey::smallint[])[0:cardinality(con.conkey)-1]
+      )
+  ),
+  exposed_security_definer as (
+    select p.oid
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.prosecdef
+      and p.proname not like 'nova8\_%' escape '\'
+      and (
+        has_function_privilege('anon', p.oid, 'EXECUTE')
+        or has_function_privilege('authenticated', p.oid, 'EXECUTE')
+      )
+  ),
+  counts as (
+    select
+      (select count(*)::integer from rls_no_policy) as rls_no_policy_count,
+      (select count(*)::integer from unindexed_fk) as unindexed_fk_count,
+      (select count(*)::integer from exposed_security_definer) as exposed_security_definer_count
+  )
+  select jsonb_build_object(
+    'version', 'zuvyr-runtime-hygiene.v1',
+    'ok',
+      rls_no_policy_count = 0
+      and unindexed_fk_count = 0
+      and exposed_security_definer_count = 0,
+    'rls_no_policy_count', rls_no_policy_count,
+    'unindexed_fk_count', unindexed_fk_count,
+    'exposed_security_definer_count', exposed_security_definer_count
+  )
+  from counts;
+$zuvyr_hygiene$;
+
+revoke all on function public.zuvyr_runtime_hygiene_audit()
+  from public, anon, authenticated;
+grant execute on function public.zuvyr_runtime_hygiene_audit()
+  to service_role;
