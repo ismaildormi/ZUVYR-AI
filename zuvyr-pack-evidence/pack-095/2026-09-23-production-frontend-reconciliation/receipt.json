@@ -1,0 +1,39 @@
+{
+  "schema_version": "zuvyr.pack095.production-frontend-reconciliation.v1",
+  "pack": "095",
+  "date": "2026-09-23",
+  "status": "PRODUCTION_FRONTEND_GATE_RESOLVED_AUTH_ACCEPTANCE_PENDING",
+  "supersedes_only": [
+    "DEFERRED_PRODUCTION_FRONTEND_GATE"
+  ],
+  "does_not_rewrite_historical_receipt": true,
+  "historical_receipt": "zuvyr-pack-evidence/pack-095/2026-09-19-engineering-checkpoint/receipt.json",
+  "historical_claim_reconciled": "Canonical Vercel production promotion is not verified; production remains stale.",
+  "production_evidence": {
+    "canonical_url": "https://rox-ai-sepia.vercel.app/",
+    "active_deployment_id": "dpl_KH1UvrfmvtCumSD3NBcRf3hBUibY",
+    "active_deployment_state": "READY",
+    "asset_url": "https://rox-ai-sepia.vercel.app/zuvyr-unified-ux-v1.js",
+    "asset_http_status": 200,
+    "asset_contains_pack095_marker": true,
+    "asset_contains_model_lab_control_plane": true,
+    "asset_declares_live_execution_off": true,
+    "runtime_errors_last_hour": 0,
+    "verified_at": "2026-09-23"
+  },
+  "current_gate": {
+    "production_frontend_stale": false,
+    "authenticated_owner_admin_model_lab_ui_acceptance": "PENDING_NOT_EXECUTED",
+    "canonical_locked_verified": false,
+    "reason": "The live canonical frontend now serves PACK095 Model Lab source, resolving the stale-frontend sub-gate. A real authenticated owner/admin flow was not executed during this reconciliation, so authenticated UI acceptance is not claimed."
+  },
+  "safety": {
+    "live_training_execution": false,
+    "provider_execution": false,
+    "paid_execution": false,
+    "customer_mutation": false,
+    "database_mutation": false,
+    "pack089_state_changed": false,
+    "pack090_started": false
+  }
+}
