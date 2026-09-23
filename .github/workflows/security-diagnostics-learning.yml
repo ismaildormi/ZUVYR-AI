@@ -1,0 +1,44 @@
+name: Security Diagnostics Learning
+
+on:
+  pull_request:
+    paths:
+      - 'backend/config/security-diagnostics-learning.v1.json'
+      - 'backend/fixtures/security-diagnostics-eval-holdout.v1.json'
+      - 'backend/lib/securityDiagnosticsLearning.js'
+      - 'backend/test-security-diagnostics-learning.js'
+      - 'backend/tools/generate-security-diagnostics-synthetic.cjs'
+      - 'docs/zuvyr/SECURITY_DIAGNOSTICS_LEARNING_FOUNDATION.md'
+      - '.github/workflows/security-diagnostics-learning.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/config/security-diagnostics-learning.v1.json'
+      - 'backend/fixtures/security-diagnostics-eval-holdout.v1.json'
+      - 'backend/lib/securityDiagnosticsLearning.js'
+      - 'backend/test-security-diagnostics-learning.js'
+      - 'backend/tools/generate-security-diagnostics-synthetic.cjs'
+      - 'docs/zuvyr/SECURITY_DIAGNOSTICS_LEARNING_FOUNDATION.md'
+      - '.github/workflows/security-diagnostics-learning.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  governed-learning-foundation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate policy, privacy gates, corpus and adapter contract
+        run: node backend/test-security-diagnostics-learning.js
+      - name: Generate synthetic train artifact
+        run: node backend/tools/generate-security-diagnostics-synthetic.cjs --mode train --count 32 --out /tmp/zuvyr-security-train.jsonl
+      - name: Generate independent holdout artifact
+        run: node backend/tools/generate-security-diagnostics-synthetic.cjs --mode eval --out /tmp/zuvyr-security-eval.jsonl
+      - name: Verify generated artifacts exist
+        run: test -s /tmp/zuvyr-security-train.jsonl && test -s /tmp/zuvyr-security-eval.jsonl

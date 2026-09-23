@@ -1,0 +1,107 @@
+{
+  "version": "zuvyr.security-diagnostics-learning.v1",
+  "status": "source_only_fail_closed",
+  "domain": "security_diagnostics",
+  "integration": {
+    "learningAuthority": "PACK094",
+    "datasetAuthority": "PACK095",
+    "ownedModelRuntimeAuthority": "PACK096",
+    "activePackMustNotChange": "PACK089",
+    "doesNotUnlockPack090": true,
+    "databaseMigrationRequired": false,
+    "productionSecretRequired": false
+  },
+  "dataClasses": [
+    "SAFE_SYNTHETIC",
+    "PUBLIC_NON_PERSONAL",
+    "AUTHORIZED_DIAGNOSTIC",
+    "PERSONAL_SENSITIVE",
+    "BLOCKED_FROM_TRAINING"
+  ],
+  "training": {
+    "default": "deny",
+    "allowed": [
+      "synthetic_telemetry",
+      "documentation_safe_non_personal_examples",
+      "defensive_networking_concepts",
+      "fail_closed_tool_patterns",
+      "privacy_processed_rights_approved_derived_material"
+    ],
+    "rawRealDiagnosticCaptureAllowed": false,
+    "realUserDiagnosticOutputAllowed": false,
+    "requiresExistingPack094RightsGate": true,
+    "runtimeKnowledgeDoesNotImplyTrainingRights": true
+  },
+  "evaluation": {
+    "default": "synthetic_holdout_only",
+    "realUserDiagnosticOutputAllowed": false,
+    "mustRemainDisjointFromTrainingCorpus": true,
+    "requiredSuites": [
+      "network_semantics",
+      "uncertainty_calibration",
+      "unsupported_build_fail_closed",
+      "missing_or_contradictory_telemetry",
+      "privacy_inference_traps",
+      "adapter_permission_and_sandbox"
+    ]
+  },
+  "runtime": {
+    "realDiagnostics": "authorized_runtime_only",
+    "trainingEligibleByDefault": false,
+    "evalEligibleByDefault": false,
+    "ephemeralByDefault": true,
+    "auditRequired": true,
+    "permissionCenterRequired": true,
+    "crossUserReuse": false
+  },
+  "prohibitedRawFields": [
+    "public_ip",
+    "public_endpoints",
+    "private_endpoints",
+    "ipv4",
+    "ipv6",
+    "latitude",
+    "longitude",
+    "coordinates",
+    "geolocation",
+    "phone",
+    "jid",
+    "email",
+    "call_id",
+    "call_ids",
+    "device_fingerprint",
+    "persistent_device_id",
+    "test_bucket",
+    "ab_test_bucket",
+    "audio_level_series",
+    "raw_event_stream",
+    "raw_tool_output"
+  ],
+  "synthetic": {
+    "ipv4DocumentationRangesOnly": [
+      "192.0.2.0/24",
+      "198.51.100.0/24",
+      "203.0.113.0/24"
+    ],
+    "realCoordinatesForbidden": true,
+    "persistentIdentifiersForbidden": true,
+    "generatedCasesMustDeclareSynthetic": true
+  },
+  "adapterContract": {
+    "authorizedOnly": true,
+    "permissionCenterRequired": true,
+    "sandboxRequired": true,
+    "unrestrictedNetworkForbidden": true,
+    "rawSecretAccessForbidden": true,
+    "structuredOutputOnly": true,
+    "unknownVersionBehavior": "fail_closed",
+    "liveCaptureImplementationIncluded": false
+  },
+  "sourceInspiration": {
+    "repository": "0x6rss/chat-apps-osint",
+    "license": "MIT",
+    "usage": "architecture_and_defensive_concepts_only",
+    "vendoredCode": false,
+    "vendoredCapturedData": false
+  }
+}
