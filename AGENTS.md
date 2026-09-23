@@ -9,9 +9,19 @@ Before planning, modifying, validating, or locking any ZUVYR pack, read:
 1. `docs/zuvyr/USER_OUTCOME_ENGINE.md`
 2. `docs/zuvyr/PACK_EXECUTION_APPENDIX.md`
 3. `docs/zuvyr/user-outcome-pack-overlay.v1.json`
-4. the canonical pack roadmap/state files relevant to the active pack.
+4. `docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md`
+5. `docs/zuvyr/continuous-improvement-override.v1.json`
+6. the canonical pack roadmap/state files relevant to the active pack.
 
-The User Outcome Engine is a global additive overlay for PACK001–PACK150 and future packs. It does not renumber historical packs, erase previous requirements, or by itself reopen a verified pack.
+The User Outcome Engine is a global additive overlay for PACK001–PACK150 and future packs. It does not renumber historical packs or erase previous requirements.
+
+## Continuous-improvement rule
+
+A previously completed or `LOCKED_VERIFIED` Pack is not immutable. If fresh evidence, a regression, a security finding, a missing commit/push/deploy/production proof, a better implementation, a new additive V1 requirement, or a new product idea materially improves an older Pack, revisit it through a named FIX/HARDENING/RECONCILIATION without renumbering it or rewriting prior evidence.
+
+Do not redo unchanged work only for ceremony. Preserve the old receipts and verified behavior, then complete the improvement with focused tests, regressions, commit, push, deployment when runtime changed, production verification, a new dated receipt, and canonical-state reconciliation. An older-Pack improvement never authorizes skipping the legal active-Pack gate.
+
+This continuous-improvement rule supersedes older wording that could be read as “never reopen completed Packs.” Older “do not reopen merely to attach this overlay” language remains applicable only to documentation-only ceremony, not substantive fixes or improvements.
 
 For every new or modified pack, before `LOCKED_VERIFIED`, the implementation and evidence must answer:
 
