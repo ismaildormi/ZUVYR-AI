@@ -1,0 +1,48 @@
+{
+  "receipt_type": "ZUVYR_SECURITY_RECONCILIATION",
+  "scope": "Supabase server-only privilege boundary",
+  "date": "2026-09-23",
+  "source_pr": 105,
+  "pre_receipt_head": "a35fedbdf776a4ef9070c1d779f6e6621406a63e",
+  "supabase_project": "tqoqsgaymygmqrzddvtu",
+  "production_migration": {
+    "version": "20260923220810",
+    "name": "zuvyr_server_only_privilege_hardening_20260923",
+    "status": "APPLIED_VERIFIED"
+  },
+  "finding": {
+    "security_advisor_rls_no_policy_count": 103,
+    "rls_no_policy_tables_with_anon_or_authenticated_dml_grants_before": 1,
+    "client_granted_table": "public.conversation_asset_chunks",
+    "rpc": "public.search_conversation_asset_chunks(uuid,uuid[],text,integer)",
+    "runtime_contract": "trusted backend/service_role via supabaseAdmin"
+  },
+  "production_postconditions": {
+    "conversation_asset_chunks_anon_dml": false,
+    "conversation_asset_chunks_authenticated_dml": false,
+    "conversation_asset_chunks_service_role_select_insert_update_delete": true,
+    "conversation_asset_chunks_sequence_anon_usage": false,
+    "conversation_asset_chunks_sequence_authenticated_usage": false,
+    "conversation_asset_chunks_sequence_service_role_usage": true,
+    "search_rpc_anon_execute": false,
+    "search_rpc_authenticated_execute": false,
+    "search_rpc_service_role_execute": true,
+    "rls_no_policy_tables_with_anon_or_authenticated_dml_grants_after": 0,
+    "public_security_definer_functions_executable_by_anon_or_authenticated": 0
+  },
+  "advisor_interpretation": {
+    "rls_enabled_no_policy": "INFO_REMAINS_BY_DESIGN_FOR_SERVER_ONLY_DEFAULT_DENY_TABLES",
+    "client_reachable_rls_no_policy_tables": 0,
+    "do_not_add_fake_deny_policies_only_to_silence_advisor": true,
+    "leaked_password_protection": "REAL_EXTERNAL_SECURITY_GATE_STILL_DISABLED",
+    "leaked_password_historical_gate": "CURRENT_PLAN_UNAVAILABLE_HTTP_402",
+    "leaked_password_fix_claimed": false
+  },
+  "safety": {
+    "nova8_mutated": false,
+    "customer_data_read_or_modified": false,
+    "paid_provider_execution": false,
+    "service_role_backend_path_preserved": true
+  },
+  "status": "PRODUCTION_HARDENING_VERIFIED_PENDING_PR_MERGE"
+}
