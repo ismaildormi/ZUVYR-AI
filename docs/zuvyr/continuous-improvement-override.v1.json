@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "effective_date": "2026-09-23",
+  "status": "CANONICAL_EXECUTION_POLICY_OVERRIDE",
+  "applies_to": "PACK001..PACK150_AND_FUTURE",
+  "completed_packs_are_immutable": false,
+  "renumber_historical_packs": false,
+  "delete_or_rewrite_prior_receipts": false,
+  "redo_unchanged_work_for_ceremony": false,
+  "older_pack_improvement_can_skip_active_gate": false,
+  "revisit_allowed_when": [
+    "fresh_evidence_conflict",
+    "security_or_authorization_defect",
+    "privacy_billing_reliability_data_integrity_accessibility_performance_recovery_defect",
+    "missing_commit_push_deploy_or_production_verification",
+    "new_additive_v1_requirement",
+    "new_product_idea_materially_improves_existing_pack",
+    "deferred_gate_now_truthfully_executable",
+    "better_architecture_or_cost_quality_outcome",
+    "stale_receipt_or_state"
+  ],
+  "allowed_change_labels": [
+    "FIX",
+    "HARDENING",
+    "RECONCILIATION",
+    "ADDITIVE_AMENDMENT"
+  ],
+  "required_loop": [
+    "ground_fresh_state",
+    "preserve_prior_evidence",
+    "implement_narrow_improvement",
+    "focused_test",
+    "regression",
+    "diff_review",
+    "commit",
+    "push",
+    "deploy_changed_runtime_surfaces",
+    "production_verify",
+    "new_dated_receipt",
+    "reconcile_canonical_state"
+  ],
+  "external_gate_rule": "Record truthful blockers; never fabricate success or spend money without explicit authority.",
+  "quality_target": "Higher than minimum requirement while preserving safety, permissions, billing invariants and existing verified behavior."
+}
