@@ -1,0 +1,29 @@
+name: Vercel Ignore Command
+
+on:
+  pull_request:
+    paths:
+      - 'vercel.json'
+      - 'tools/test-vercel-ignore-command.cjs'
+      - '.github/workflows/vercel-ignore-command.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'vercel.json'
+      - 'tools/test-vercel-ignore-command.cjs'
+      - '.github/workflows/vercel-ignore-command.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  ignored-build-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify ignored-build semantics
+        run: node tools/test-vercel-ignore-command.cjs
