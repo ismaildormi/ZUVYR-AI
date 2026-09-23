@@ -32,6 +32,7 @@ for (const required of [
   'cache-dependency-path: package-lock.json',
   'cache-dependency-path: backend/package-lock.json',
   'run: npm ci',
+  'run: node tools/test-github-action-pins.cjs',
   'run: npm audit --omit=dev --audit-level=high',
   'run: node tools/test-release-validator-scope.js',
   'run: npm run validate:release',
@@ -46,14 +47,16 @@ for (const required of [
   has(required);
 }
 
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 assert.strictEqual(
-  (workflow.match(new RegExp(CHECKOUT_SHA.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length,
+  (workflow.match(new RegExp(escapeRegex(CHECKOUT_SHA), 'g')) || []).length,
   2,
   'both jobs must use the pinned checkout action'
 );
 
 assert.strictEqual(
-  (workflow.match(new RegExp(SETUP_NODE_SHA.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length,
+  (workflow.match(new RegExp(escapeRegex(SETUP_NODE_SHA), 'g')) || []).length,
   2,
   'both jobs must use the pinned setup-node action'
 );
