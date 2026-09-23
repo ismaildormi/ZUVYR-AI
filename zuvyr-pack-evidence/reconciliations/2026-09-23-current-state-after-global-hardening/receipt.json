@@ -1,0 +1,73 @@
+{
+  "schema_version": "zuvyr.current-state-reconciliation.v1",
+  "date": "2026-09-23",
+  "source_main": "03c8415f92d55591626c0fe50ad80488d8882979",
+  "purpose": "Remove stale unresolved-state claims after fresh global hardening and preserve only gates still unproven by fresh evidence.",
+  "resolved_stale_state": [
+    {
+      "item": "PACK051..PACK060 historical finalizer/evidence reconciliation",
+      "resolution": "RECONCILED_RESOLVED",
+      "evidence": "zuvyr-pack-evidence/reconciliations/2026-09-23-pack051-060-finalizers/receipt.json"
+    },
+    {
+      "item": "PACK094 stale production frontend sub-gate",
+      "resolution": "RESOLVED_AUTHENTICATED_OWNER_ACCEPTANCE_STILL_PENDING",
+      "evidence": "zuvyr-pack-evidence/pack-094/2026-09-23-production-frontend-reconciliation/receipt.json"
+    },
+    {
+      "item": "PACK095 stale production frontend sub-gate",
+      "resolution": "RESOLVED_AUTHENTICATED_OWNER_ADMIN_ACCEPTANCE_STILL_PENDING",
+      "evidence": "zuvyr-pack-evidence/pack-095/2026-09-23-production-frontend-reconciliation/receipt.json"
+    }
+  ],
+  "fresh_internal_hardening": {
+    "merge_commit": "03c8415f92d55591626c0fe50ad80488d8882979",
+    "receipt": "zuvyr-pack-evidence/global-cleanliness/2026-09-23/receipt.json",
+    "supabase_migration": "20260923223742 zuvyr_global_cleanliness_hardening_20260923",
+    "zuvyr_rls_no_policy": 0,
+    "zuvyr_unindexed_fk": 0,
+    "zuvyr_client_exposed_security_definer": 0,
+    "runtime_hygiene_ok": true,
+    "railway": {
+      "backend": "98f210b7-fb77-4a95-b701-83d4b2743aff SUCCESS",
+      "worker": "44bbd777-25a7-4bbc-a2bf-8480246f90f8 SUCCESS",
+      "maintenance": "23694064-119a-4baf-96e0-142ae51baab5 SUCCESS"
+    },
+    "worker_runtime": "brain-kernel enabled; PACK088 execution enabled; PACK088 scheduler enabled; observed scheduler failures=0"
+  },
+  "remaining_external_or_live_acceptance_gates": [
+    "PACK089 real Google OAuth owner production acceptance",
+    "PACK019/PACK020 real-money Stripe/business-verification gate",
+    "paid media/audio provider E2E gates",
+    "PACK073 real authenticated physical microphone acceptance",
+    "M15/M16 sandbox/runtime/deploy pricing-credentials-real-target gates",
+    "M17 Browserbase credentials/effective-pricing/live gate",
+    "M18 paid 3D plus authenticated real-asset acceptance",
+    "M19 real test-device install/start/uninstall acceptance",
+    "PACK096 M21 rights-approved owned-model/BYOC live loop",
+    "PACK094 authenticated owner Data Rights UI acceptance",
+    "PACK095 authenticated owner/admin Model Lab UI acceptance",
+    "Supabase leaked-password protection account/plan/Auth-setting gate",
+    "GitHub main branch-protection/ruleset repository-admin gate",
+    "Vercel build-rate-limit cooldown for a new merge deployment",
+    "first natural post-merge maintenance receipt containing the new hygiene invariant"
+  ],
+  "vercel": {
+    "new_merge_deployment": "BLOCKED_EXTERNAL_BUILD_RATE_LIMIT_RETRY_IN_24_HOURS",
+    "existing_production_url": "https://rox-ai-sepia.vercel.app/",
+    "existing_production_reachable": true,
+    "frontend_changed_by_global_hardening": false
+  },
+  "safety": {
+    "paid_provider_calls": 0,
+    "customer_data_mutation": false,
+    "nova8_mutation": false,
+    "pack089_state_advanced": false,
+    "pack090_started": false
+  },
+  "non_claims": [
+    "Does not claim the entire ZUVYR project is globally CLEAN while external/live gates remain.",
+    "Does not claim a Vercel deployment succeeded through the active rate limit.",
+    "Does not claim the first post-merge maintenance cron receipt before it is observed."
+  ]
+}
