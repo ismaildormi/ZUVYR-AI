@@ -1,0 +1,177 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-09-23",
+  "title": "ZUVYR Universal Intent Delegation + Messaging/App Automation Overlay",
+  "base_roadmap": "docs/zuvyr/ROADMAP_150.md",
+  "amendment": "docs/zuvyr/ROADMAP_150_UNIVERSAL_INTENT_DELEGATION_MESSAGING_AUTOMATION_AMENDMENT_2026-09-23.md",
+  "scope_semantics": "UNION_NOT_REPLACEMENT",
+  "renumber_packs": false,
+  "reopen_completed_packs": false,
+  "active_pack_changed_by_overlay": false,
+  "requirement_range": "UIA-01..UIA-20",
+  "principle": "Persist user intent as a bounded, versioned authority policy that can drive connector, messaging, browser and device actions across the task without per-click approval inside the granted scope.",
+  "authority_modes": [
+    "DRAFT_ONLY",
+    "AUTO_LOW_RISK",
+    "FULL_TASK_ACCESS",
+    "ALWAYS_ALLOW_APP"
+  ],
+  "execution_paths": [
+    "connector_api",
+    "plugin_mcp",
+    "cloud_browser",
+    "local_device_browser",
+    "secure_user_takeover"
+  ],
+  "conversation_agent": {
+    "event_driven": true,
+    "context_sources": [
+      "current_external_thread",
+      "authorized_zuvyr_conversation",
+      "authorized_project_knowledge",
+      "authorized_memory",
+      "user_authored_business_rules"
+    ],
+    "provider_rule_adaptive": true,
+    "dedupe_required": true,
+    "exactly_once_receipts_required": true,
+    "stop_revoke_required": true,
+    "untrusted_external_message_cannot_widen_authority": true
+  },
+  "whatsapp_reference": {
+    "target": "WhatsApp Business/Cloud API when legitimate provider/account access is available",
+    "preferred_path": "provider_supported_api_and_webhooks",
+    "browser_role": "setup/admin fallback only when appropriate and provider-permitted",
+    "launch_rule": "current platform rules, templates/message restrictions, rate limits, opt-outs and account prerequisites must be verified in PACK149"
+  },
+  "consequence_tiers": {
+    "A": "reversible low-risk actions may auto-execute under standing authority",
+    "B": "bounded sends/publishes/updates may auto-execute only when explicitly covered by standing policy and receipts",
+    "C": "high-consequence financial, destructive, security, sensitive-disclosure, legal or major-publication actions require stronger applicable consequence policy/confirmation unless narrowly and safely pre-authorized"
+  },
+  "eligible_surfaces": [
+    "Chat",
+    "Research",
+    "Deep Research",
+    "Shopping",
+    "Local",
+    "Images",
+    "Video",
+    "Code Studio",
+    "Documents",
+    "Spreadsheets",
+    "Presentations",
+    "Projects",
+    "Library",
+    "ZUVYR IP",
+    "Automations",
+    "Manager",
+    "Operator",
+    "Web client",
+    "Windows client",
+    "Android client",
+    "iOS client"
+  ],
+  "pack_additive_ownership": {
+    "PACK090": [
+      "intent delegation gap audit",
+      "canonical intent_authority_policy",
+      "no-per-click ordinary execution proof",
+      "STOP/revoke/consequence enforcement"
+    ],
+    "PACK101": [
+      "persist mission/policy/cursor across surfaces and reconnect",
+      "no duplicate messages/actions"
+    ],
+    "PACK122": [
+      "consequence tiers for browser/connector/messaging/device",
+      "uncertain outcome reconciliation"
+    ],
+    "PACK124": [
+      "standing app/message automations",
+      "quiet hours and schedule policy",
+      "duplicate event suppression"
+    ],
+    "PACK125": [
+      "connection lifecycle and standing authority",
+      "revoke immediately stops outbound actions"
+    ],
+    "PACK126": [
+      "tool/schema/version pinning",
+      "scope changes invalidate stale authority"
+    ],
+    "PACK127": [
+      "event-driven messaging end-to-end proof",
+      "ordinary multi-step website task without per-click approval"
+    ],
+    "PACK134": [
+      "delegated messaging/action evals",
+      "relevance/policy/uncertainty/escalation"
+    ],
+    "PACK139": [
+      "malicious inbound content",
+      "recipient confusion",
+      "context exfiltration",
+      "replay and cross-tenant tests"
+    ],
+    "PACK142": [
+      "webhook/message burst load",
+      "dedupe/backpressure/rate controls/provider outage"
+    ],
+    "PACK144": [
+      "delegation state and receipts across clients",
+      "cross-client pause/STOP/handoff"
+    ],
+    "PACK145": [
+      "intent/event/message/action contract versioning"
+    ],
+    "PACK148": [
+      "all-surface delegated-action rehearsal",
+      "event-driven messaging",
+      "website/app multi-step execution",
+      "recovery and revoke"
+    ],
+    "PACK149": [
+      "provider messaging/automation rules",
+      "OAuth/webhooks/templates/rate/opt-out/privacy prerequisites"
+    ],
+    "PACK150": [
+      "exact intent-policy/message/connector/action release seal",
+      "UIA acceptance matrix"
+    ]
+  },
+  "requirements": {
+    "UIA-01": "Durable user mission across app/browser actions",
+    "UIA-02": "ALWAYS_ALLOW_APP authorizes bounded execution, not only OAuth consent",
+    "UIA-03": "Versioned owner-scoped intent_authority_policy",
+    "UIA-04": "Universal inbound event/webhook envelope",
+    "UIA-05": "Universal outbound action/message envelope",
+    "UIA-06": "Authorized conversation/project/memory context binding",
+    "UIA-07": "Draft/low-risk-auto/policy-auto/escalation modes",
+    "UIA-08": "Event dedupe and exactly-once external action receipts",
+    "UIA-09": "Ordinary multi-step browser completion without per-click prompts",
+    "UIA-10": "Connector/API-first browser/device fallback without intent loss",
+    "UIA-11": "Background execution schedules and quiet-hour policy",
+    "UIA-12": "Immediate STOP/pause/revoke propagation",
+    "UIA-13": "Recipient/destination/account identity verification",
+    "UIA-14": "Untrusted inbound content cannot widen authority/exfiltrate context",
+    "UIA-15": "Consequence-tier enforcement with minimal unnecessary interruption",
+    "UIA-16": "WhatsApp/business-messaging reference workflow when legitimately connectable",
+    "UIA-17": "Provider-rule adaptive messaging/templates/rates/opt-outs",
+    "UIA-18": "Cross-surface and cross-client handoff",
+    "UIA-19": "Delegated messaging/action eval coverage",
+    "UIA-20": "Final production E2E and recovery proof"
+  },
+  "final_acceptance": {
+    "original_pack_scopes": "ALL_SATISFIED",
+    "applicable_ea_001_292": "PASS_OR_TRUE_NA_WITH_EVIDENCE",
+    "applicable_uba": "PASS_OR_TRUE_NA_WITH_EVIDENCE",
+    "uia_01_20": "PASS_OR_TRUE_NA_WITH_EVIDENCE",
+    "pack090_intent_delegation_checkpoint": "PASS",
+    "pack127_event_driven_messaging_and_browser_action_proof": "PASS",
+    "pack148_delegated_action_rehearsal": "PASS",
+    "pack149_provider_rules_rights_privacy": "PASS",
+    "pack150_exact_intent_action_release_recovery_seal": "PASS",
+    "hidden_partial_deferred_applicable_gap_allowed": false
+  }
+}
