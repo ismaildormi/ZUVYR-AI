@@ -1,15 +1,18 @@
 {
-  "schema_version": "1.0",
-  "updated_at": "2026-09-23T17:27:00Z",
+  "schema_version": "1.1",
+  "updated_at": "2026-09-23T22:46:00Z",
   "status": "CANONICAL_CURRENT_STATE_OVERRIDE",
   "purpose": "Fresh compact continuity override. When this file is newer than older state capsules, it wins subject to even fresher Git/production evidence and explicit user instruction.",
   "repository": "ismaildormi/rox-ai",
-  "source_main_before_this_reconciliation": "c6f9272637bd9320c5caa530527e5493fae030e5",
+  "source_main_before_this_reconciliation": "03c8415f92d55591626c0fe50ad80488d8882979",
   "execution_policy": {
     "continuous_improvement_override": "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md",
     "machine_policy": "docs/zuvyr/continuous-improvement-override.v1.json",
     "completed_packs_immutable": false,
-    "rule": "Older packs may receive FIX/HARDENING/RECONCILIATION or additive improvements when fresh evidence or product quality requires it; preserve historical evidence and never use that repair to skip the legal active-pack gate."
+    "clean_claim_requires_zero_known_actionable_internal_findings": true,
+    "adjacent_discovered_actionable_findings_must_be_resolved": true,
+    "external_blockers_must_be_explicit_and_evidenced": true,
+    "rule": "Older packs may receive FIX/HARDENING/RECONCILIATION or additive improvements when fresh evidence or product quality requires it; preserve historical evidence and never use that repair to skip the legal active-pack gate. Never claim CLEAN/LOCKED_VERIFIED/final/all-green while a known actionable internal finding remains unresolved."
   },
   "active_work": {
     "pack": "PACK089",
@@ -36,44 +39,85 @@
     "next_legal_step": "Run the real owner-scoped Google Drive OAuth flow in production and prove client/redirect acceptance, requested-scope consent, callback activation, one granted-scope Drive call, denied-scope rejection, disconnect/revoke, post-revoke denial, audit persistence and Vault/plaintext-secret cleanliness. Only then lock PACK089 and open PACK090."
   },
   "reconciled_prior_pack_hardening": {
-    "pack": "PACK088",
-    "status": "LOCKED_VERIFIED_AFTER_SECURITY_HARDENING",
-    "source_merge_commit": "dab1cf0e2c8796b96e64111c4a13940ab6cfbebc",
-    "receipt": "zuvyr-pack-evidence/pack-088/2026-09-23-security-hardening/receipt.json",
-    "supabase_migration": "20260923172220 pack088_88d_trigger_privilege_hardening",
-    "finding": "Two internal SECURITY DEFINER trigger helpers inherited PUBLIC EXECUTE.",
-    "postcondition": "anon/authenticated EXECUTE=false, service_role EXECUTE=true; exposed public-schema SECURITY DEFINER function count for anon/authenticated is 0."
+    "pack088": {
+      "status": "LOCKED_VERIFIED_AFTER_SECURITY_HARDENING",
+      "source_merge_commit": "dab1cf0e2c8796b96e64111c4a13940ab6cfbebc",
+      "receipt": "zuvyr-pack-evidence/pack-088/2026-09-23-security-hardening/receipt.json",
+      "supabase_migration": "20260923172220 pack088_88d_trigger_privilege_hardening",
+      "postcondition": "anon/authenticated EXECUTE=false, service_role EXECUTE=true; exposed public-schema SECURITY DEFINER function count for anon/authenticated is 0."
+    },
+    "pack051_060_historical_finalizers": {
+      "status": "RECONCILED_RESOLVED",
+      "receipt": "zuvyr-pack-evidence/reconciliations/2026-09-23-pack051-060-finalizers/receipt.json",
+      "postcondition": "Stale PREPARED/PENDING finalizer metadata reconciled against historical Git/downstream evidence without overwriting historical receipts or fabricating new live acceptance."
+    },
+    "pack094_production_frontend": {
+      "status": "FRONTEND_SUBGATE_RESOLVED_AUTH_ACCEPTANCE_PENDING",
+      "receipt": "zuvyr-pack-evidence/pack-094/2026-09-23-production-frontend-reconciliation/receipt.json"
+    },
+    "pack095_production_frontend": {
+      "status": "FRONTEND_SUBGATE_RESOLVED_AUTH_ACCEPTANCE_PENDING",
+      "receipt": "zuvyr-pack-evidence/pack-095/2026-09-23-production-frontend-reconciliation/receipt.json"
+    },
+    "global_cleanliness_2026_09_23": {
+      "status": "INTERNAL_ACTIONABLE_FINDINGS_PRODUCTION_VERIFIED",
+      "merge_commit": "03c8415f92d55591626c0fe50ad80488d8882979",
+      "receipt": "zuvyr-pack-evidence/global-cleanliness/2026-09-23/receipt.json",
+      "supabase_migration": "20260923223742 zuvyr_global_cleanliness_hardening_20260923",
+      "postconditions": {
+        "zuvyr_rls_enabled_no_policy": 0,
+        "zuvyr_unindexed_foreign_keys": 0,
+        "zuvyr_client_exposed_security_definer_functions": 0,
+        "runtime_hygiene_ok": true,
+        "explicit_server_only_policies": 100,
+        "fk_covering_indexes_created": 164
+      },
+      "continuous_monitoring": "The 30-minute Railway maintenance coordinator calls the service-role-only zuvyr_runtime_hygiene_audit RPC; hygiene drift or RPC failure prevents a success marker."
+    }
   },
   "infrastructure": {
     "supabase_project": "tqoqsgaymygmqrzddvtu",
-    "supabase_status": "ACTIVE_HEALTHY_AT_LATEST_AUDIT",
+    "supabase_status": "ACTIVE_HARDENED_AT_LATEST_AUDIT",
     "railway_project": "ba460cdb-cc55-4203-bdd0-711846b7564c",
     "railway_environment": "production",
-    "railway_services_latest_status": "SUCCESS_AT_LATEST_AUDIT",
+    "railway_services_latest_status": "SUCCESS_ON_GLOBAL_HARDENING_MERGE",
     "railway_pending_work": 0,
+    "railway_backend_deployment": "98f210b7-fb77-4a95-b701-83d4b2743aff",
+    "railway_worker_deployment": "44bbd777-25a7-4bbc-a2bf-8480246f90f8",
+    "railway_maintenance_deployment": "23694064-119a-4baf-96e0-142ae51baab5",
+    "railway_worker_runtime": "brain-kernel=true; pack088-execution=true; pack088-scheduler=true; observed scheduler failures=0",
     "vercel_project": "prj_P6VddfynJKniiK29clC6Epr9byPk",
     "vercel_team": "team_3PYlTi0Euf7SDg7T2NRzGx3q",
-    "vercel_ignore_unchanged_frontend": "VERIFIED_WORKING",
-    "vercel_docs_backend_only_deployments": "IGNORED_AS_EXPECTED"
+    "vercel_current_production_url": "https://rox-ai-sepia.vercel.app/",
+    "vercel_current_production_reachable": true,
+    "vercel_new_merge_deployment": "BLOCKED_EXTERNAL_BUILD_RATE_LIMIT_RETRY_IN_24_HOURS",
+    "vercel_runtime_interpretation": "Existing production frontend remains reachable; the global-hardening merge did not change frontend source, but the Git integration could not create a new deployment because the account hit its daily build-rate limit."
   },
   "known_unresolved_gates": [
     "PACK089 real Google OAuth production acceptance",
-    "PACK019/PACK020 live Stripe real-money acceptance",
+    "PACK019/PACK020 live Stripe real-money acceptance / business verification",
     "deferred paid media/audio provider E2E gates",
     "PACK073 authenticated physical microphone acceptance",
-    "PACK076-PACK080 real sandbox/runtime/deploy gates M15/M16",
-    "PACK081-PACK082 live Browserbase/browser-agent gate M17",
-    "PACK083-PACK084 live 3D gate M18",
-    "PACK085 real install/start/uninstall acceptance",
+    "PACK076-PACK080 real sandbox/runtime/deploy gates M15/M16 (provider/runtime pricing, credentials and real deploy target)",
+    "PACK081-PACK082 live Browserbase/browser-agent gate M17 (verified credentials/effective pricing/live approval)",
+    "PACK083-PACK084 live 3D gate M18 (paid generation + authenticated real-asset viewer/export acceptance)",
+    "PACK085 M19 real test-device install/start/uninstall acceptance",
     "PACK096 M21 real rights-approved owned-model/BYOC learning and serving loop",
-    "historical finalizer/evidence reconciliation for PACK051 and PACK053-PACK060",
-    "fresh authenticated production UI reconciliation for PACK094/PACK095"
+    "PACK094 authenticated owner Data Rights UI acceptance (production frontend sub-gate already resolved)",
+    "PACK095 authenticated owner/admin Model Lab UI acceptance (production frontend sub-gate already resolved)",
+    "Supabase leaked-password protection remains disabled; historical PACK009 attempt recorded plan HTTP 402 and current connected tooling cannot mutate Auth password-security configuration",
+    "GitHub main branch protection/ruleset remains absent; repository-admin mutation is not available through the connected GitHub tool surface",
+    "Vercel new-deployment cooldown/build-rate-limit on merge 03c8415f92d55591626c0fe50ad80488d8882979; existing production remains reachable",
+    "First post-merge scheduled maintenance receipt proving the deployed coordinator consumed zuvyr_runtime_hygiene_audit is pending the next natural */30 cron execution; DB RPC itself is already production-verified healthy"
   ],
   "do_not_claim": [
+    "Entire ZUVYR project globally CLEAN while any known external or authenticated/live acceptance gate remains",
     "PACK089 complete before live OAuth acceptance",
     "PACK090 started",
     "ZUVYR proprietary production model complete before M21",
     "paid-provider acceptance without a real authorized billed call",
+    "Vercel new merge deployed while build-rate-limit remains",
+    "first post-merge maintenance receipt observed before the natural cron actually runs",
     "historical evidence rewritten instead of superseded by a dated reconciliation"
   ]
 }
