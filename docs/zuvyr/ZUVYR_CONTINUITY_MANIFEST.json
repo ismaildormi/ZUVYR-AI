@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.7",
+  "schema_version": "1.8",
   "updated_at": "2026-09-23",
   "purpose": "Single anti-loss reconstruction capsule for any new ChatGPT/Work/Codex session. It does not replace fresh production evidence; it tells the session exactly what to load and how to resolve conflicts.",
   "repository": "ismaildormi/rox-ai",
@@ -8,6 +8,7 @@
     "Newest explicit user instruction",
     "Fresh GitHub/production/DB/deployment/live evidence",
     "ZUVYR_CONTINUITY_MANIFEST.json plus newest Pack receipt",
+    "docs/zuvyr/ZUVYR_V1_COMPLETE_MASTER_PLAN.md as the complete-plan entrypoint/union contract",
     "ZUVYR_CONTINUE_HERE.md / ZUVYR_MASTER_STATE.json / ZUVYR_MASTER_MATRIX.md",
     "ROADMAP_150 + Model Factory/Evals overlays + Universal Browser/Connection Authority overlay + Universal Intent Delegation/Messaging overlay + readiness audit/matrix + execution appendix",
     "Older chats/memory only for recovery, never to override fresher evidence"
@@ -15,6 +16,7 @@
   "canonical_boot_order": [
     "ZUVYR_CONTINUE_HERE.md",
     "docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json",
+    "docs/zuvyr/ZUVYR_V1_COMPLETE_MASTER_PLAN.md",
     "ZUVYR_MASTER_STATE.json",
     "ZUVYR_MASTER_MATRIX.md",
     "docs/zuvyr/ROADMAP_150.md",
@@ -72,6 +74,9 @@
     "readiness_range": "EA-001..EA-292",
     "final_gate": "PACK150",
     "v1_ready_only_when": true,
+    "complete_master_plan_required": true,
+    "complete_master_plan": "docs/zuvyr/ZUVYR_V1_COMPLETE_MASTER_PLAN.md",
+    "complete_master_plan_semantics": "ENTRYPOINT_UNION_CONTRACT_NOT_REPLACEMENT",
     "allowed_final_requirement_states": [
       "PASS",
       "N/A_WITH_EVIDENCE"
@@ -122,6 +127,7 @@
     "ZUVYR_CONTINUE_HERE.md": "8831d9ce5baf6942fae74a3d00944484a92e0fb7",
     "ZUVYR_MASTER_STATE.json": "1b84584903747195c2a9d5b8bb3699e5c680ce37",
     "ZUVYR_MASTER_MATRIX.md": "f9549ecef9b050bb7a794138a14532712fd8878c",
+    "docs/zuvyr/ZUVYR_V1_COMPLETE_MASTER_PLAN.md": "25223ddb19dc50f275cd0e1c6a37d77c7322c394",
     "docs/zuvyr/ROADMAP_150.md": "c22a1914f10933879b560fbc84786471301e3c54",
     "docs/zuvyr/ROADMAP_150_MODEL_FACTORY_EVALS_AMENDMENT.md": "e168ba15d8446419b7f271852c9869d708477b2e",
     "docs/zuvyr/ROADMAP_150_MODEL_FACTORY_EVALS_RECONCILIATION_2026-09-23.md": "80882be33369b6d90e3d8172e710a2953554de05",
@@ -149,6 +155,9 @@
     "continuity_ci_required": true,
     "snapshot_drift_fails_validation": true,
     "release_quality_gate_must_include_continuity_check": true,
+    "complete_master_plan_must_be_loaded": true,
+    "complete_master_plan_snapshot_must_match": true,
+    "complete_master_plan_must_not_replace_original_pack_or_additive_sources": true,
     "model_factory_evals_overlay_must_be_loaded_for_pack131_150": true,
     "original_pack131_150_scope_must_not_be_replaced_by_model_factory": true,
     "universal_browser_connection_overlay_must_be_loaded": true,
@@ -167,7 +176,8 @@
     ],
     "required_behavior": [
       "Do not ask the user to re-explain the project.",
-      "Load the canonical boot order.",
+      "Load the canonical boot order, including docs/zuvyr/ZUVYR_V1_COMPLETE_MASTER_PLAN.md as the complete-plan entrypoint.",
+      "Treat the Master Plan as a union contract: load the original ROADMAP_150 plus all applicable EA/MF/UBA/UIA/outcome/execution sources; never use the Master Plan to discard a source.",
       "Run read-only reconciliation against fresh source/production evidence before deciding the active Pack.",
       "Explicitly flag stale/conflicting status text instead of silently picking one.",
       "Load all readiness requirements mapped to the active Pack.",
@@ -178,8 +188,8 @@
       "After any material checkpoint, update continuity sources before leaving the work session."
     ]
   },
-  "no_loss_rule": "If continuity files disagree, a snapshot drifts without reconciliation, CI/validator fails, or the active Pack/receipt cannot be reconstructed with evidence, stop feature work and repair continuity first. Never guess an active Pack, silently drop roadmap additions, remove canonical V1 work to obtain READY, or depend on private chat memory as the only source.",
-  "last_reconciled_git_head_before_manifest_update": "b7d243c6d7400ec275311c9f4a93655b1cad3b08",
+  "no_loss_rule": "If continuity files disagree, a snapshot drifts without reconciliation, the complete Master Plan or any required source is missing, CI/validator fails, or the active Pack/receipt cannot be reconstructed with evidence, stop feature work and repair continuity first. Never guess an active Pack, silently drop roadmap additions, remove canonical V1 work to obtain READY, or depend on private chat memory as the only source.",
+  "last_reconciled_git_head_before_manifest_update": "6bec3b8960c2279121c23ef1b21125bd0ab0013c",
   "integrity_guard_files": {
     "tools/validate-zuvyr-continuity.cjs": "ef6a2535c920aafcff2fa0aa51987ce4569cced2",
     ".github/workflows/zuvyr-continuity.yml": "ba526ae36bf46c46786f9aa426adcada1e335ffc",
@@ -192,13 +202,13 @@
     "workflow": ".github/workflows/zuvyr-continuity.yml",
     "release_command": "npm run validate:release",
     "continuity_command": "npm run validate:continuity",
-    "rule": "Any canonical snapshot drift, missing EA ID, route gap, active Pack/receipt mismatch, stale current-state conflict, or validator failure is a continuity defect. Reconcile it before feature work or Pack lock."
+    "rule": "Any canonical snapshot drift, missing complete Master Plan/source, missing EA ID, route gap, active Pack/receipt mismatch, stale current-state conflict, or validator failure is a continuity defect. Reconcile it before feature work or Pack lock."
   },
   "latest_continuity_verification": {
     "checked_at": "2026-09-23",
-    "release_quality_run_id": 35833232197,
+    "release_quality_run_id": 35834444986,
     "release_quality_conclusion": "SUCCESS",
-    "continuity_integrity_last_success_run_id": 35833232351,
+    "continuity_integrity_last_success_run_id": 35834444993,
     "canonical_pack_heading_count": 150,
     "canonical_pack_heading_unique_count": 150,
     "readiness_requirement_count": 292,
@@ -218,6 +228,6 @@
       "values_redacted": true,
       "conclusion": "External Google OAuth Web client credentials are still genuinely absent; do not fabricate them."
     },
-    "note": "This records the last completed CI success before the Universal Intent Delegation continuity registration. A fresh continuity and release-quality run on the new manifest commit must pass before recording a newer success."
+    "note": "This records the last completed CI success before the Complete Master Plan continuity registration. Fresh continuity and release-quality runs on this manifest commit must pass before a newer success is recorded."
   }
 }
