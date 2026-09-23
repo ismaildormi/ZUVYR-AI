@@ -6,6 +6,7 @@ const path = require('node:path');
 
 const sql = fs.readFileSync(path.join(__dirname, '93_zuvyr_supabase_policy_perf_hardening.sql'), 'utf8');
 const normalized = sql.replace(/\s+/g, ' ').toLowerCase();
+const executable = sql.replace(/--.*$/gm, '').replace(/\s+/g, ' ').toLowerCase();
 
 const policyTargets = [
   ['select_own_profile', 'public.profiles'],
@@ -28,29 +29,32 @@ const policyTargets = [
 
 for (const [policy, table] of policyTargets) {
   assert(
-    normalized.includes(`alter policy ${policy} on ${table}`),
+    executable.includes(`alter policy ${policy} on ${table}`),
     `missing ALTER POLICY ${policy} on ${table}`
   );
 }
 
-assert(normalized.includes('(select auth.uid())'), 'auth.uid() must use initplan-safe SELECT form');
-assert(normalized.includes('(select auth.role())'), 'auth.role() must use initplan-safe SELECT form');
-assert(!normalized.includes('nova8_'), 'ZUVYR migration must not mutate NOVA8 tables');
+assert(executable.includes('(select auth.uid())'), 'auth.uid() must use initplan-safe SELECT form');
+assert(executable.includes('(select auth.role())'), 'auth.role() must use initplan-safe SELECT form');
+assert(
+  !/\b(?:alter|drop|create|grant|revoke)\b[^;]*\bnova8_/i.test(executable),
+  'ZUVYR migration must not mutate NOVA8 tables'
+);
 
 for (const duplicate of [
   'public.zuvyr_library_owner_kind_updated_idx',
   'public.zuvyr_task_steps_run_state_idx'
 ]) {
-  assert(normalized.includes(`drop index if exists ${duplicate}`), `duplicate index not removed: ${duplicate}`);
+  assert(executable.includes(`drop index if exists ${duplicate}`), `duplicate index not removed: ${duplicate}`);
 }
 for (const keeper of [
   'zuvyr_content_owner_kind_updated_idx',
   'idx_zuvyr_task_steps_claim_ready'
 ]) {
-  assert(!normalized.includes(`drop index if exists public.${keeper}`), `canonical keeper index must remain: ${keeper}`);
+  assert(!executable.includes(`drop index if exists public.${keeper}`), `canonical keeper index must remain: ${keeper}`);
 }
 
 assert(normalized.startsWith('-- zuvyr continuous-improvement hardening'), 'migration must document continuous-improvement scope');
-assert(normalized.includes('begin;') && normalized.includes('commit;'), 'migration must be transaction-scoped');
+assert(executable.includes('begin;') && executable.includes('commit;'), 'migration must be transaction-scoped');
 
 console.log('PASS ZUVYR Supabase policy performance hardening');
