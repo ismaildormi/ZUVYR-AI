@@ -1,0 +1,45 @@
+name: ZUVYR Global Cleanliness Hardening
+
+on:
+  pull_request:
+    paths:
+      - 'backend/zuvyr_global_supabase_cleanliness_hardening_20260923.sql'
+      - 'backend/test-zuvyr-global-supabase-cleanliness-hardening.js'
+      - 'backend/lib/maintenanceCoordinator.js'
+      - 'backend/test-maintenance-strategy.js'
+      - 'AGENTS.md'
+      - 'docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md'
+      - 'docs/zuvyr/continuous-improvement-override.v1.json'
+      - 'tools/validate-continuous-improvement-override.cjs'
+      - '.github/workflows/zuvyr-global-cleanliness-hardening.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'backend/zuvyr_global_supabase_cleanliness_hardening_20260923.sql'
+      - 'backend/test-zuvyr-global-supabase-cleanliness-hardening.js'
+      - 'backend/lib/maintenanceCoordinator.js'
+      - 'backend/test-maintenance-strategy.js'
+      - 'AGENTS.md'
+      - 'docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md'
+      - 'docs/zuvyr/continuous-improvement-override.v1.json'
+      - 'tools/validate-continuous-improvement-override.cjs'
+      - '.github/workflows/zuvyr-global-cleanliness-hardening.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  cleanliness-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - name: Verify Supabase cleanliness migration contract
+        run: node backend/test-zuvyr-global-supabase-cleanliness-hardening.js
+      - name: Verify maintenance drift monitor
+        run: node backend/test-maintenance-strategy.js
+      - name: Verify continuous-improvement completion policy
+        run: node tools/validate-continuous-improvement-override.cjs
