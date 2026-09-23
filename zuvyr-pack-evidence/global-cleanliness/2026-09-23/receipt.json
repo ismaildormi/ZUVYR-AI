@@ -1,0 +1,144 @@
+{
+  "receipt_version": "zuvyr-global-cleanliness.v1",
+  "checked_at": "2026-09-23",
+  "scope": "ZUVYR internal actionable security/reliability/performance hygiene discovered during continuous-improvement reconciliation",
+  "status": "PRODUCTION_VERIFIED_INTERNAL_ACTIONABLE_FINDINGS_CLOSED_WITH_EXPLICIT_EXTERNAL_BLOCKERS",
+  "source": {
+    "repository": "ismaildormi/rox-ai",
+    "pull_request": 106,
+    "branch": "fix/zuvyr-global-cleanliness-20260923",
+    "verified_head_before_receipt": "adcd9d929cf7b7abc0e7a305eb469d8739aaf0cb"
+  },
+  "policy": {
+    "clean_claim_requires_zero_known_actionable_internal_findings": true,
+    "adjacent_discovered_actionable_findings_must_be_resolved": true,
+    "external_blockers_must_be_explicit_and_evidenced": true,
+    "informational_findings_require_documented_rationale": true
+  },
+  "production_migration": {
+    "supabase_project": "tqoqsgaymygmqrzddvtu",
+    "version": "20260923223742",
+    "name": "zuvyr_global_cleanliness_hardening_20260923",
+    "status": "APPLIED_VERIFIED"
+  },
+  "before": {
+    "zuvyr_rls_enabled_no_policy": 100,
+    "zuvyr_unindexed_foreign_keys": 164,
+    "zuvyr_client_exposed_security_definer_functions": 0,
+    "supabase_security_advisor_rls_no_policy_all_products": 103,
+    "supabase_performance_advisor_unindexed_fk_all_products": 167
+  },
+  "after": {
+    "zuvyr_rls_enabled_no_policy": 0,
+    "zuvyr_unindexed_foreign_keys": 0,
+    "zuvyr_client_exposed_security_definer_functions": 0,
+    "explicit_zuvyr_server_only_deny_policies": 100,
+    "zuvyr_fk_covering_indexes_created": 164,
+    "runtime_hygiene": {
+      "version": "zuvyr-runtime-hygiene.v1",
+      "ok": true,
+      "rls_no_policy_count": 0,
+      "unindexed_fk_count": 0,
+      "exposed_security_definer_count": 0
+    },
+    "runtime_hygiene_rpc_permissions": {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_role_execute": true
+    },
+    "supabase_security_advisor_rls_no_policy_all_products": 3,
+    "supabase_performance_advisor_unindexed_fk_all_products": 3,
+    "remaining_rls_no_policy_all_nova8": true,
+    "remaining_unindexed_fk_all_nova8": true
+  },
+  "continuous_monitoring": {
+    "maintenance_interval": "30 minutes",
+    "maintenance_rpc": "public.zuvyr_runtime_hygiene_audit()",
+    "maintenance_behavior": "Any hygiene RPC error or non-zero monitored drift prevents the maintenance coordinator from creating a success marker and is recorded in the maintenance receipt.",
+    "monitored_invariants": [
+      "ZUVYR public RLS-enabled tables with zero policy = 0",
+      "ZUVYR public foreign keys without a covering index = 0",
+      "ZUVYR public SECURITY DEFINER functions executable by anon/authenticated = 0"
+    ]
+  },
+  "ci": {
+    "head": "adcd9d929cf7b7abc0e7a305eb469d8739aaf0cb",
+    "release_quality": "SUCCESS",
+    "backend_quality": "SUCCESS",
+    "continuity_integrity": "SUCCESS",
+    "cleanliness_contract": "SUCCESS",
+    "initial_continuity_failure_was_resolved_not_bypassed": true,
+    "initial_failure_reason": "Canonical continuous-improvement policy files changed without atomically refreshing their manifest blob snapshots; manifest was reconciled and the continuity validator then passed."
+  },
+  "advisor_reconciliation": {
+    "security": {
+      "remaining_rls_no_policy": [
+        "public.nova8_consent_events",
+        "public.nova8_monthly_scores",
+        "public.nova8_ranked_runs"
+      ],
+      "zuvyr_scope_remaining": 0
+    },
+    "performance": {
+      "remaining_unindexed_fk": [
+        "public.nova8_consent_events.nova8_consent_events_user_id_fkey",
+        "public.nova8_monthly_scores.nova8_monthly_scores_user_id_fkey",
+        "public.nova8_monthly_scores.nova8_monthly_scores_verified_run_id_fkey"
+      ],
+      "remaining_auth_rls_initplan": [
+        "public.nova8_profiles.nova8_profile_self_select"
+      ],
+      "zuvyr_scope_remaining_unindexed_fk": 0
+    }
+  },
+  "intentionally_accepted_informational_findings": [
+    {
+      "finding": "no_primary_key on eight tables in historical backup schemas",
+      "decision": "ACCEPT_WITH_RATIONALE",
+      "rationale": "These are backup/receipt/definition snapshots outside the public runtime schema. Adding synthetic primary keys solely to silence an advisor would mutate backup fidelity without a runtime correctness benefit. They remain non-runtime historical artifacts."
+    },
+    {
+      "finding": "unused_index advisor entries, including 164 newly-created FK covering indexes",
+      "decision": "OBSERVE_NOT_DROP",
+      "rationale": "All 164 new FK indexes necessarily had zero scans immediately after creation. They were created to enforce FK-operation/query coverage and need real traffic/statistics time before any removal decision. Existing older unused-index entries also require workload evidence before destructive cleanup; advisor zero-scan alone is insufficient evidence to drop production indexes."
+    },
+    {
+      "finding": "NOVA8 advisor findings",
+      "decision": "OUT_OF_ZUVYR_MUTATION_SCOPE",
+      "rationale": "NOVA8 is a separate product sharing the database. This ZUVYR hardening deliberately does not mutate nova8_* objects."
+    }
+  ],
+  "explicit_external_blockers": [
+    {
+      "id": "SUPABASE_LEAKED_PASSWORD_PROTECTION",
+      "status": "EXTERNAL_BLOCKER",
+      "fresh_evidence": "Supabase Security Advisor still reports auth_leaked_password_protection as WARN / disabled.",
+      "historical_gate_evidence": "PACK009 recorded an HTTP 402/current-plan limitation when attempting the setting.",
+      "why_not_autofixed": "The connected Supabase tool surface does not expose Auth password-security configuration mutation; no fake completion is permitted.",
+      "owner": "Supabase project/account owner",
+      "required_action": "Enable leaked-password protection in Supabase Auth password security once the project plan/settings permit it, then rerun the security advisor and record a fresh receipt."
+    },
+    {
+      "id": "GITHUB_MAIN_BRANCH_PROTECTION",
+      "status": "EXTERNAL_ADMIN_BLOCKER",
+      "fresh_evidence": "GitHub reports main protected=false and repository rulesets=[] on 2026-09-23.",
+      "why_not_autofixed": "The connected GitHub action surface can read branch/ruleset state but does not expose repository-administration writes for branch protection/rulesets.",
+      "owner": "GitHub repository administrator",
+      "required_action": "Enable a main-branch ruleset/branch protection requiring pull requests and the canonical green quality/continuity checks, then verify the ruleset through fresh GitHub evidence."
+    },
+    {
+      "id": "PACK089_GOOGLE_OAUTH_OWNER_ACCEPTANCE",
+      "status": "SEPARATE_ACTIVE_PACK_EXTERNAL_GATE",
+      "fresh_evidence": "Canonical continuity state keeps PACK089 89E blocked on real Google OAuth validation and owner consent; PACK090 remains disallowed.",
+      "owner": "ZUVYR owner / Google Cloud OAuth owner",
+      "required_action": "Complete real owner-scoped production Google OAuth consent, granted-scope action, denied-scope proof, revoke/disconnect proof and audit/secret-cleanliness acceptance before PACK089 can be locked and PACK090 opened."
+    }
+  ],
+  "non_claims": [
+    "This receipt does not claim the entire ZUVYR project is globally CLEAN while external blockers remain.",
+    "This receipt does not claim NOVA8 is clean or modify NOVA8.",
+    "This receipt does not treat newly-created zero-scan indexes as removable without workload evidence.",
+    "This receipt does not advance PACK089 or allow PACK090."
+  ],
+  "result": "All actionable internal ZUVYR database hygiene findings identified by this reconciliation are closed and production-verified; future drift is monitored by the maintenance invariant. Remaining items are explicitly external, separate-product, or intentionally accepted informational findings with rationale."
+}
