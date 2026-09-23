@@ -1,22 +1,31 @@
 {
-  "schema_version": "1.9",
+  "schema_version": "2.0",
   "updated_at": "2026-09-23",
-  "purpose": "Single anti-loss reconstruction capsule for any new ChatGPT/Work/Codex session. It does not replace fresh production evidence; it tells the session exactly what to load and how to resolve conflicts.",
+  "purpose": "Single anti-loss reconstruction capsule for any new ChatGPT/Work/Codex session. Fresh production evidence and explicit current user instruction outrank stale historical state.",
   "repository": "ismaildormi/rox-ai",
-  "created_from_git_head": "c7c26128f4a0ab4a8a1b6cb6ee087eeb745ba867",
+  "created_from_git_head": "c6f9272637bd9320c5caa530527e5493fae030e5",
+  "current_state_override": {
+    "path": "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json",
+    "blob_sha": "a622157f7c17ea970071c86ab447942cd0197a7e",
+    "authority": "Fresh compact current-state authority below even fresher Git/production evidence and explicit user instruction; older long-form state files remain historical ledgers when they disagree."
+  },
   "source_of_truth_order": [
     "Newest explicit user instruction",
     "Fresh GitHub/production/DB/deployment/live evidence",
-    "ZUVYR_CONTINUITY_MANIFEST.json plus newest Pack receipt",
+    "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json",
+    "ZUVYR_CONTINUITY_MANIFEST.json plus newest active-Pack receipt",
     "docs/zuvyr/ZUVYR_V1_COMPLETE_MASTER_PLAN.md as the complete-plan entrypoint plus embedded additive-V1 modification mirror",
-    "ZUVYR_CONTINUE_HERE.md / ZUVYR_MASTER_STATE.json / ZUVYR_MASTER_MATRIX.md",
+    "ZUVYR_CONTINUE_HERE.md / ZUVYR_MASTER_STATE.json / ZUVYR_MASTER_MATRIX.md as historical ledgers when older",
     "ROADMAP_150 + Model Factory/Evals overlays + Universal Browser/Connection Authority overlay + Universal Intent Delegation/Messaging overlay + readiness audit/matrix + execution appendix",
     "Older chats/memory only for recovery, never to override fresher evidence"
   ],
   "canonical_boot_order": [
+    "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json",
     "ZUVYR_CONTINUE_HERE.md",
     "docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json",
     "docs/zuvyr/ZUVYR_V1_COMPLETE_MASTER_PLAN.md",
+    "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md",
+    "docs/zuvyr/continuous-improvement-override.v1.json",
     "ZUVYR_MASTER_STATE.json",
     "ZUVYR_MASTER_MATRIX.md",
     "docs/zuvyr/ROADMAP_150.md",
@@ -38,13 +47,13 @@
     "title": "ZUVYR_LIVE_PROJECT_STATE",
     "google_doc_id": "1QGLTHygt8xIE4GffiO2P-6Iy8jESowYKcHb3geQkdn4",
     "url": "https://docs.google.com/document/d/1QGLTHygt8xIE4GffiO2P-6Iy8jESowYKcHb3geQkdn4",
-    "rule": "Any older CURRENT MAIN STATUS inside this long-lived document is historical when a newer dated continuity override exists."
+    "rule": "Any older CURRENT MAIN STATUS inside this long-lived document is historical when a newer dated continuity override or fresh production evidence exists."
   },
   "active_work": {
     "pack": "PACK089",
     "pack_status": "IN_PROGRESS",
     "phase": "89E_PRODUCTION_ACCEPTANCE",
-    "phase_status": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_CLIENT_CREDENTIALS",
+    "phase_status": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_VALIDATION_AND_OWNER_CONSENT",
     "pack090_allowed": false,
     "completed_subphases": {
       "89A": "LOCKED_VERIFIED",
@@ -53,20 +62,26 @@
       "89D": "LOCKED_VERIFIED",
       "89E_non_external_acceptance": "PASS"
     },
-    "latest_receipt": "zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json",
-    "remaining_external_values": [
+    "latest_receipt": "zuvyr-pack-evidence/pack-089/2026-09-23-89e-reconciliation/receipt.json",
+    "google_oauth_variable_names_present": [
+      "GOOGLE_API_KEY",
       "GOOGLE_OAUTH_CLIENT_ID",
-      "GOOGLE_OAUTH_CLIENT_SECRET"
+      "GOOGLE_OAUTH_CLIENT_SECRET",
+      "GOOGLE_OAUTH_REDIRECT_URI"
     ],
-    "configured_redirect_uri": "https://rox-ai-sepia.vercel.app/",
-    "next_legal_step": "Configure legitimate Google OAuth Web client ID + client secret in production, then run real owner-scoped Drive OAuth connect -> granted-scope tool call -> denied-scope proof -> disconnect/revoke -> post-revoke denial -> audit persistence -> Vault/plaintext-secret cleanliness. Do not start PACK090 before PACK089 becomes LOCKED_VERIFIED.",
-    "runtime_identity": {
-      "vercel_commit": "c8157e82b23d842d55ac5b57c4696275268a2104",
-      "vercel_deployment": "dpl_4cQzVSs8ZYdasm8NUuZWU5Vk7USD",
-      "railway_runtime_commit": "93c293c215eb67f864397880c1f40b05ed07052c",
-      "railway_backend_deployment": "bcdc4d43-ba3b-4b21-a268-60fb012a73c9",
-      "railway_worker_deployment": "d512dd05-4e22-4683-bf0b-d772dde4aa21",
-      "railway_maintenance_deployment": "008747dd-40cb-4dea-ab55-bbdb1fea78ff"
+    "google_oauth_values_redacted": true,
+    "credential_values_nonempty_or_valid": "UNVERIFIED",
+    "google_cloud_configuration_valid": "UNVERIFIED",
+    "interactive_google_consent_completed": false,
+    "next_legal_step": "Start the real owner-scoped Google Drive OAuth flow in production, prove Google accepts the configured client and redirect URI, approve only requested scopes, activate callback, execute one granted-scope Drive tool call, prove an ungranted scope/action is denied, disconnect/revoke, prove post-revoke denial, verify audit persistence and Vault/plaintext-secret cleanliness. Only then mark PACK089 LOCKED_VERIFIED and allow PACK090."
+  },
+  "recent_reconciled_hardening": {
+    "pack088": {
+      "status": "LOCKED_VERIFIED_AFTER_SECURITY_HARDENING",
+      "receipt": "zuvyr-pack-evidence/pack-088/2026-09-23-security-hardening/receipt.json",
+      "merge_commit": "dab1cf0e2c8796b96e64111c4a13940ab6cfbebc",
+      "supabase_migration": "20260923172220 pack088_88d_trigger_privilege_hardening",
+      "postcondition": "anon/authenticated direct EXECUTE denied on both internal SECURITY DEFINER trigger helpers; service_role preserved; global exposed public SECURITY DEFINER function count for anon/authenticated = 0."
     }
   },
   "v1_contract": {
@@ -77,7 +92,13 @@
     "complete_master_plan_required": true,
     "complete_master_plan": "docs/zuvyr/ZUVYR_V1_COMPLETE_MASTER_PLAN.md",
     "complete_master_plan_semantics": "ENTRYPOINT_UNION_WITH_EMBEDDED_ADDITIVE_V1_MIRROR",
-    "future_additive_v1_modification_rule": "Every future additive V1 modification must exist in its detailed source amendment/overlay and be mirrored inside ZUVYR_V1_COMPLETE_MASTER_PLAN.md before it is durable.",
+    "future_additive_v1_modification_rule": "Every future additive V1 modification must exist in a canonical detailed source and be mirrored/registered in the complete V1 contract before final readiness.",
+    "continuous_improvement_required": true,
+    "continuous_improvement_policy": "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md",
+    "continuous_improvement_machine_policy": "docs/zuvyr/continuous-improvement-override.v1.json",
+    "completed_packs_are_immutable": false,
+    "older_pack_fix_does_not_advance_active_gate": true,
+    "preserve_prior_receipts_and_pack_numbers": true,
     "allowed_final_requirement_states": [
       "PASS",
       "N/A_WITH_EVIDENCE"
@@ -137,13 +158,16 @@
     "docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json": "fc1714734c050306ee35bcecd9b0d6f1fc406c48",
     "docs/zuvyr/USER_OUTCOME_ENGINE.md": "600c485be8e8bf5d7ab40c060ffd3d2750a028a6",
     "docs/zuvyr/PACK_EXECUTION_APPENDIX.md": "4033405914ff0b0b3db944a298858f5531a6e605",
-    "zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json": "11eaa0657768804ccc85c75839336e69ad770598",
+    "zuvyr-pack-evidence/pack-089/2026-09-23-89e-reconciliation/receipt.json": "11f93015e678f33601c41fc85e536d83889a1782",
     "docs/zuvyr/ROADMAP_150_UNIVERSAL_BROWSER_SESSION_CONNECTION_AUTHORITY_AMENDMENT_2026-09-23.md": "5c4bc0977ca43f8d330ef1c4a3006d157b07e8b2",
     "docs/zuvyr/universal-browser-session-connection-authority-overlay.v1.json": "535bef1b45dae2786a07939d0df7533ef0dcb013",
     "docs/zuvyr/ROADMAP_150_UNIVERSAL_INTENT_DELEGATION_MESSAGING_AUTOMATION_AMENDMENT_2026-09-23.md": "d0f08ca0007e2111aa625ccf07ff5133be06f8de",
-    "docs/zuvyr/universal-intent-delegation-messaging-automation-overlay.v1.json": "86a5a41ce661cde391259a415b00ecf29c98259d"
+    "docs/zuvyr/universal-intent-delegation-messaging-automation-overlay.v1.json": "86a5a41ce661cde391259a415b00ecf29c98259d",
+    "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json": "a622157f7c17ea970071c86ab447942cd0197a7e",
+    "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md": "e2b6567f1e9ecdb79a746dc964eaa9c666412788",
+    "docs/zuvyr/continuous-improvement-override.v1.json": "690bed7c97301e03dd5f59469af4e4bce55117a9"
   },
-  "snapshot_policy": "Blob SHAs are a known-good snapshot, not a freeze. If a canonical file has a newer SHA on main, inspect the newer change and reconcile it; do not roll it back merely because it differs from this snapshot.",
+  "snapshot_policy": "Blob SHAs are known-good snapshots, not freezes. When a canonical file changes through a reviewed improvement, update the snapshot atomically with the change; never roll back a valid newer change only to satisfy an old hash.",
   "integrity_expectations": {
     "readiness_requirement_count": 292,
     "readiness_missing_ids": 0,
@@ -161,15 +185,17 @@
     "complete_master_plan_must_not_replace_original_pack_or_additive_sources": true,
     "complete_master_plan_must_embed_additive_v1_modification_mirrors": true,
     "future_additive_v1_modification_requires_master_mirror": true,
+    "continuous_improvement_policy_must_be_loaded": true,
+    "substantive_old_pack_improvements_are_allowed_with_new_evidence": true,
     "model_factory_evals_overlay_must_be_loaded_for_pack131_150": true,
     "original_pack131_150_scope_must_not_be_replaced_by_model_factory": true,
     "universal_browser_connection_overlay_must_be_loaded": true,
     "universal_browser_uba_01_24_must_be_reconciled_by_pack150": true,
-    "universal_browser_overlay_must_not_reopen_completed_packs": true,
+    "universal_browser_overlay_alone_does_not_automatically_reopen_completed_packs": true,
     "universal_browser_overlay_must_not_replace_original_pack_scopes": true,
     "universal_intent_delegation_overlay_must_be_loaded": true,
     "universal_intent_uia_01_20_must_be_reconciled_by_pack150": true,
-    "universal_intent_overlay_must_not_reopen_completed_packs": true,
+    "universal_intent_overlay_alone_does_not_automatically_reopen_completed_packs": true,
     "universal_intent_overlay_must_not_replace_original_pack_scopes": true
   },
   "new_chat_command_semantics": {
@@ -179,21 +205,22 @@
     ],
     "required_behavior": [
       "Do not ask the user to re-explain the project.",
+      "Load the fresh current-state override before relying on older long-form status capsules.",
+      "Load the continuous-improvement override: completed Packs are not immutable when a substantive FIX/HARDENING/RECONCILIATION or additive improvement is justified by fresh evidence or the current user instruction.",
+      "Never renumber packs or rewrite prior receipts; preserve history and add dated superseding evidence.",
+      "An older-Pack repair never authorizes skipping the current legal Pack gate.",
       "Load the canonical boot order, including docs/zuvyr/ZUVYR_V1_COMPLETE_MASTER_PLAN.md as the complete-plan entrypoint and embedded additive-V1 modification mirror.",
-      "Treat the Master Plan as a union contract and redundant additive-modification mirror: load the original ROADMAP_150 plus all applicable EA/MF/UBA/UIA/outcome/execution sources; never use the Master Plan to discard a source.",
-      "If a future additive V1 modification is present in an amendment/overlay but missing from the Master Plan mirror, treat continuity as defective and reconcile before feature work.",
-      "Run read-only reconciliation against fresh source/production evidence before deciding the active Pack.",
+      "Treat the Master Plan as a union contract: load the original ROADMAP_150 plus all applicable EA/MF/UBA/UIA/outcome/execution sources; never use the Master Plan to discard a source.",
+      "Run read-only reconciliation against fresh source/production evidence before deciding the next mutation.",
       "Explicitly flag stale/conflicting status text instead of silently picking one.",
-      "Load all readiness requirements mapped to the active Pack.",
-      "For PACK131..PACK150, enforce the union of the original ROADMAP_150 Pack scope, all applicable EA-001..EA-292 items, the Model Factory/Evals amendment and its binding reconciliation overlay; never replace an original Pack scope with a Model Factory title.",
-      "For PACK090 and mapped future Packs, enforce the Universal Browser Session + Connection Authority amendment and UBA-01..UBA-24 as additive requirements; never treat provider registration as live browser proof.",
-      "For PACK090 and mapped future Packs, enforce the Universal Intent Delegation + Messaging/App Automation amendment and UIA-01..UIA-20 as additive requirements; ALWAYS_ALLOW_APP means bounded execution authority across the granted app/site scope, not merely permission to press OAuth Allow.",
+      "For PACK131..PACK150, enforce the union of original Pack scope, applicable EA items and Model Factory/Evals requirements.",
+      "For PACK090 and mapped future Packs, enforce Universal Browser Session + Connection Authority and Universal Intent Delegation as additive requirements.",
       "Continue only the legal next step and preserve Pack gates.",
-      "After any material checkpoint, update continuity sources before leaving the work session."
+      "After any material checkpoint, update continuity sources or record an explicit continuity-update blocker."
     ]
   },
-  "no_loss_rule": "If continuity files disagree, a snapshot drifts without reconciliation, the complete Master Plan or any required source is missing, an additive V1 modification is missing from the Master Plan mirror, CI/validator fails, or the active Pack/receipt cannot be reconstructed with evidence, stop feature work and repair continuity first. Never guess an active Pack, silently drop roadmap additions, remove canonical V1 work to obtain READY, or depend on private chat memory as the only source.",
-  "last_reconciled_git_head_before_manifest_update": "5a74e106e209fec7944f80be5e76c7f20c4943a1",
+  "no_loss_rule": "If continuity sources disagree, use the source-of-truth order, repair the disagreement before feature advancement, preserve all historical evidence, and never guess success. A completed Pack may be improved when fresh evidence justifies it, but the active legal Pack gate still controls roadmap advancement.",
+  "last_reconciled_git_head_before_manifest_update": "c6f9272637bd9320c5caa530527e5493fae030e5",
   "integrity_guard_files": {
     "tools/validate-zuvyr-continuity.cjs": "ef6a2535c920aafcff2fa0aa51987ce4569cced2",
     ".github/workflows/zuvyr-continuity.yml": "ba526ae36bf46c46786f9aa426adcada1e335ffc",
@@ -206,32 +233,30 @@
     "workflow": ".github/workflows/zuvyr-continuity.yml",
     "release_command": "npm run validate:release",
     "continuity_command": "npm run validate:continuity",
-    "rule": "Any canonical snapshot drift, missing complete Master Plan/source, missing embedded additive V1 mirror, missing EA ID, route gap, active Pack/receipt mismatch, stale current-state conflict, or validator failure is a continuity defect. Reconcile it before feature work or Pack lock."
+    "rule": "Fresh current-state override + manifest + active receipt must agree. Older long-form ledgers may contain historical status when they explicitly defer to fresh evidence. Snapshot drift, missing required sources, EA gaps, illegal Pack advancement or validator failure is a continuity defect."
   },
   "latest_continuity_verification": {
     "checked_at": "2026-09-23",
-    "release_quality_run_id": 35835258385,
-    "release_quality_conclusion": "SUCCESS",
-    "continuity_integrity_last_success_run_id": 35835258366,
+    "last_pre_reconciliation_release_quality_run_id": 35895619230,
+    "last_pre_reconciliation_release_quality_conclusion": "SUCCESS",
+    "last_pre_reconciliation_continuity_integrity_run_id": 35895619176,
+    "continuous_improvement_policy_run_id": 35895619269,
+    "continuous_improvement_policy_conclusion": "SUCCESS",
     "canonical_pack_heading_count": 150,
     "canonical_pack_heading_unique_count": 150,
     "readiness_requirement_count": 292,
     "readiness_missing_ids": 0,
     "readiness_duplicate_ids": 0,
     "readiness_unrouted_ids": 0,
-    "roadmap_matrix_blob_match": true,
-    "snapshot_mismatches": 0,
-    "integrity_guard_mismatches": 0,
-    "railway_google_oauth_credentials": {
-      "backend_service": "rox-ai",
-      "backend_has_google_oauth_client_id": false,
-      "backend_has_google_oauth_client_secret": false,
-      "worker_service": "loving-harmony",
-      "worker_has_google_oauth_client_id": false,
-      "worker_has_google_oauth_client_secret": false,
+    "pack088_security_hardening": "PRODUCTION_VERIFIED",
+    "railway_google_oauth_variable_names": {
+      "google_oauth_client_id_name_present": true,
+      "google_oauth_client_secret_name_present": true,
+      "google_oauth_redirect_uri_name_present": true,
       "values_redacted": true,
-      "conclusion": "External Google OAuth Web client credentials are still genuinely absent; do not fabricate them."
+      "values_nonempty_or_google_valid": "UNVERIFIED",
+      "interactive_owner_consent_completed": false
     },
-    "note": "This records the last completed CI success before the embedded additive-V1 Master Plan mirror registration. Fresh continuity and release-quality runs on this manifest commit must pass before a newer success is recorded."
+    "note": "Fresh reconciliation CI for this manifest/current-state change must pass before these files are treated as a completed continuity checkpoint."
   }
 }
