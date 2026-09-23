@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.4",
-  "updated_at": "2026-09-22",
+  "schema_version": "1.5",
+  "updated_at": "2026-09-23",
   "purpose": "Single anti-loss reconstruction capsule for any new ChatGPT/Work/Codex session. It does not replace fresh production evidence; it tells the session exactly what to load and how to resolve conflicts.",
   "repository": "ismaildormi/rox-ai",
   "created_from_git_head": "c7c26128f4a0ab4a8a1b6cb6ee087eeb745ba867",
@@ -9,7 +9,7 @@
     "Fresh GitHub/production/DB/deployment/live evidence",
     "ZUVYR_CONTINUITY_MANIFEST.json plus newest Pack receipt",
     "ZUVYR_CONTINUE_HERE.md / ZUVYR_MASTER_STATE.json / ZUVYR_MASTER_MATRIX.md",
-    "ROADMAP_150 + readiness audit/matrix + execution appendix",
+    "ROADMAP_150 + Model Factory/Evals amendment + binding reconciliation overlay + readiness audit/matrix + execution appendix",
     "Older chats/memory only for recovery, never to override fresher evidence"
   ],
   "canonical_boot_order": [
@@ -18,6 +18,9 @@
     "ZUVYR_MASTER_STATE.json",
     "ZUVYR_MASTER_MATRIX.md",
     "docs/zuvyr/ROADMAP_150.md",
+    "docs/zuvyr/ROADMAP_150_MODEL_FACTORY_EVALS_AMENDMENT.md",
+    "docs/zuvyr/ROADMAP_150_MODEL_FACTORY_EVALS_RECONCILIATION_2026-09-23.md",
+    "docs/zuvyr/model-factory-evals-reconciliation-overlay.v1.json",
     "docs/zuvyr/V1_READINESS_COMPLETENESS_AUDIT_2026-09-22.md",
     "docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json",
     "docs/zuvyr/USER_OUTCOME_ENGINE.md",
@@ -83,13 +86,26 @@
     ],
     "cannot_hide_unfinished_v1": true,
     "fresh_gap_audit_before_pack148": true,
-    "cold_start_reconstruction_test_required": true
+    "cold_start_reconstruction_test_required": true,
+    "model_factory_evals_amendment_required": true,
+    "model_factory_evals_amendment": "docs/zuvyr/ROADMAP_150_MODEL_FACTORY_EVALS_AMENDMENT.md",
+    "model_factory_evals_reconciliation_required": true,
+    "model_factory_evals_reconciliation": "docs/zuvyr/ROADMAP_150_MODEL_FACTORY_EVALS_RECONCILIATION_2026-09-23.md",
+    "model_factory_evals_overlay": "docs/zuvyr/model-factory-evals-reconciliation-overlay.v1.json",
+    "model_factory_scope_semantics": "UNION_NOT_REPLACEMENT",
+    "model_factory_original_pack_scopes_preserved": true,
+    "model_factory_implementation_range": "PACK131..PACK147",
+    "model_factory_final_acceptance_range": "PACK148..PACK150",
+    "model_factory_requirement_range": "MF-01..MF-24"
   },
   "canonical_files_snapshot": {
     "ZUVYR_CONTINUE_HERE.md": "8831d9ce5baf6942fae74a3d00944484a92e0fb7",
     "ZUVYR_MASTER_STATE.json": "1b84584903747195c2a9d5b8bb3699e5c680ce37",
     "ZUVYR_MASTER_MATRIX.md": "f9549ecef9b050bb7a794138a14532712fd8878c",
     "docs/zuvyr/ROADMAP_150.md": "c22a1914f10933879b560fbc84786471301e3c54",
+    "docs/zuvyr/ROADMAP_150_MODEL_FACTORY_EVALS_AMENDMENT.md": "e168ba15d8446419b7f271852c9869d708477b2e",
+    "docs/zuvyr/ROADMAP_150_MODEL_FACTORY_EVALS_RECONCILIATION_2026-09-23.md": "80882be33369b6d90e3d8172e710a2953554de05",
+    "docs/zuvyr/model-factory-evals-reconciliation-overlay.v1.json": "1d12a0b9b9ab97563e119ec13b63c0b4f0718820",
     "docs/zuvyr/V1_READINESS_COMPLETENESS_AUDIT_2026-09-22.md": "57953b17a3e07e68343177a3bd7ba72c4a960645",
     "docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json": "fc1714734c050306ee35bcecd9b0d6f1fc406c48",
     "docs/zuvyr/USER_OUTCOME_ENGINE.md": "600c485be8e8bf5d7ab40c060ffd3d2750a028a6",
@@ -108,7 +124,9 @@
     "continuity_validator_required": true,
     "continuity_ci_required": true,
     "snapshot_drift_fails_validation": true,
-    "release_quality_gate_must_include_continuity_check": true
+    "release_quality_gate_must_include_continuity_check": true,
+    "model_factory_evals_overlay_must_be_loaded_for_pack131_150": true,
+    "original_pack131_150_scope_must_not_be_replaced_by_model_factory": true
   },
   "new_chat_command_semantics": {
     "examples": [
@@ -121,12 +139,13 @@
       "Run read-only reconciliation against fresh source/production evidence before deciding the active Pack.",
       "Explicitly flag stale/conflicting status text instead of silently picking one.",
       "Load all readiness requirements mapped to the active Pack.",
+      "For PACK131..PACK150, enforce the union of the original ROADMAP_150 Pack scope, all applicable EA-001..EA-292 items, the Model Factory/Evals amendment and its binding reconciliation overlay; never replace an original Pack scope with a Model Factory title.",
       "Continue only the legal next step and preserve Pack gates.",
       "After any material checkpoint, update continuity sources before leaving the work session."
     ]
   },
   "no_loss_rule": "If continuity files disagree, a snapshot drifts without reconciliation, CI/validator fails, or the active Pack/receipt cannot be reconstructed with evidence, stop feature work and repair continuity first. Never guess an active Pack, silently drop roadmap additions, remove canonical V1 work to obtain READY, or depend on private chat memory as the only source.",
-  "last_reconciled_git_head_before_manifest_update": "64bf4a9745781480754d6bf19a363f5fc90613d2",
+  "last_reconciled_git_head_before_manifest_update": "b9ce1ebc937e4a5fd6fdae14e0a6366bd5e10ccb",
   "integrity_guard_files": {
     "tools/validate-zuvyr-continuity.cjs": "ef6a2535c920aafcff2fa0aa51987ce4569cced2",
     ".github/workflows/zuvyr-continuity.yml": "ba526ae36bf46c46786f9aa426adcada1e335ffc",
@@ -164,6 +183,7 @@
       "worker_has_google_oauth_client_secret": false,
       "values_redacted": true,
       "conclusion": "External Google OAuth Web client credentials are still genuinely absent; do not fabricate them."
-    }
+    },
+    "note": "This block records the last completed CI verification before the 2026-09-23 Model Factory/Evals planning amendment and reconciliation. A fresh continuity workflow must pass after promotion to main before a newer success is recorded here."
   }
 }
