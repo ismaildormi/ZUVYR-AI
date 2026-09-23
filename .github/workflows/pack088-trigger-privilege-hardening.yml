@@ -1,0 +1,31 @@
+name: PACK088 Trigger Privilege Hardening
+
+on:
+  pull_request:
+    paths:
+      - 'backend/92_pack088_88d_ui_notifications_pause_cancel.sql'
+      - 'backend/92_pack088_88d_trigger_privilege_hardening.sql'
+      - 'backend/test-pack088-trigger-privilege-hardening.js'
+      - '.github/workflows/pack088-trigger-privilege-hardening.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'backend/92_pack088_88d_ui_notifications_pause_cancel.sql'
+      - 'backend/92_pack088_88d_trigger_privilege_hardening.sql'
+      - 'backend/test-pack088-trigger-privilege-hardening.js'
+      - '.github/workflows/pack088-trigger-privilege-hardening.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  privilege-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify PACK088 trigger privilege contract
+        run: node backend/test-pack088-trigger-privilege-hardening.js
