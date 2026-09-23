@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6",
+  "schema_version": "1.7",
   "updated_at": "2026-09-23",
   "purpose": "Single anti-loss reconstruction capsule for any new ChatGPT/Work/Codex session. It does not replace fresh production evidence; it tells the session exactly what to load and how to resolve conflicts.",
   "repository": "ismaildormi/rox-ai",
@@ -9,7 +9,7 @@
     "Fresh GitHub/production/DB/deployment/live evidence",
     "ZUVYR_CONTINUITY_MANIFEST.json plus newest Pack receipt",
     "ZUVYR_CONTINUE_HERE.md / ZUVYR_MASTER_STATE.json / ZUVYR_MASTER_MATRIX.md",
-    "ROADMAP_150 + Model Factory/Evals overlays + Universal Browser/Connection Authority overlay + readiness audit/matrix + execution appendix",
+    "ROADMAP_150 + Model Factory/Evals overlays + Universal Browser/Connection Authority overlay + Universal Intent Delegation/Messaging overlay + readiness audit/matrix + execution appendix",
     "Older chats/memory only for recovery, never to override fresher evidence"
   ],
   "canonical_boot_order": [
@@ -23,6 +23,8 @@
     "docs/zuvyr/model-factory-evals-reconciliation-overlay.v1.json",
     "docs/zuvyr/ROADMAP_150_UNIVERSAL_BROWSER_SESSION_CONNECTION_AUTHORITY_AMENDMENT_2026-09-23.md",
     "docs/zuvyr/universal-browser-session-connection-authority-overlay.v1.json",
+    "docs/zuvyr/ROADMAP_150_UNIVERSAL_INTENT_DELEGATION_MESSAGING_AUTOMATION_AMENDMENT_2026-09-23.md",
+    "docs/zuvyr/universal-intent-delegation-messaging-automation-overlay.v1.json",
     "docs/zuvyr/V1_READINESS_COMPLETENESS_AUDIT_2026-09-22.md",
     "docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json",
     "docs/zuvyr/USER_OUTCOME_ENGINE.md",
@@ -106,7 +108,15 @@
     "universal_browser_original_pack_scopes_preserved": true,
     "universal_browser_requirement_range": "UBA-01..UBA-24",
     "universal_browser_primary_checkpoint": "PACK090",
-    "universal_browser_hardening_range": "PACK101..PACK150"
+    "universal_browser_hardening_range": "PACK101..PACK150",
+    "universal_intent_delegation_amendment_required": true,
+    "universal_intent_delegation_amendment": "docs/zuvyr/ROADMAP_150_UNIVERSAL_INTENT_DELEGATION_MESSAGING_AUTOMATION_AMENDMENT_2026-09-23.md",
+    "universal_intent_delegation_overlay": "docs/zuvyr/universal-intent-delegation-messaging-automation-overlay.v1.json",
+    "universal_intent_scope_semantics": "UNION_NOT_REPLACEMENT",
+    "universal_intent_original_pack_scopes_preserved": true,
+    "universal_intent_requirement_range": "UIA-01..UIA-20",
+    "universal_intent_primary_checkpoint": "PACK090",
+    "universal_intent_hardening_range": "PACK101..PACK150"
   },
   "canonical_files_snapshot": {
     "ZUVYR_CONTINUE_HERE.md": "8831d9ce5baf6942fae74a3d00944484a92e0fb7",
@@ -122,7 +132,9 @@
     "docs/zuvyr/PACK_EXECUTION_APPENDIX.md": "4033405914ff0b0b3db944a298858f5531a6e605",
     "zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json": "11eaa0657768804ccc85c75839336e69ad770598",
     "docs/zuvyr/ROADMAP_150_UNIVERSAL_BROWSER_SESSION_CONNECTION_AUTHORITY_AMENDMENT_2026-09-23.md": "5c4bc0977ca43f8d330ef1c4a3006d157b07e8b2",
-    "docs/zuvyr/universal-browser-session-connection-authority-overlay.v1.json": "535bef1b45dae2786a07939d0df7533ef0dcb013"
+    "docs/zuvyr/universal-browser-session-connection-authority-overlay.v1.json": "535bef1b45dae2786a07939d0df7533ef0dcb013",
+    "docs/zuvyr/ROADMAP_150_UNIVERSAL_INTENT_DELEGATION_MESSAGING_AUTOMATION_AMENDMENT_2026-09-23.md": "d0f08ca0007e2111aa625ccf07ff5133be06f8de",
+    "docs/zuvyr/universal-intent-delegation-messaging-automation-overlay.v1.json": "86a5a41ce661cde391259a415b00ecf29c98259d"
   },
   "snapshot_policy": "Blob SHAs are a known-good snapshot, not a freeze. If a canonical file has a newer SHA on main, inspect the newer change and reconcile it; do not roll it back merely because it differs from this snapshot.",
   "integrity_expectations": {
@@ -142,7 +154,11 @@
     "universal_browser_connection_overlay_must_be_loaded": true,
     "universal_browser_uba_01_24_must_be_reconciled_by_pack150": true,
     "universal_browser_overlay_must_not_reopen_completed_packs": true,
-    "universal_browser_overlay_must_not_replace_original_pack_scopes": true
+    "universal_browser_overlay_must_not_replace_original_pack_scopes": true,
+    "universal_intent_delegation_overlay_must_be_loaded": true,
+    "universal_intent_uia_01_20_must_be_reconciled_by_pack150": true,
+    "universal_intent_overlay_must_not_reopen_completed_packs": true,
+    "universal_intent_overlay_must_not_replace_original_pack_scopes": true
   },
   "new_chat_command_semantics": {
     "examples": [
@@ -157,12 +173,13 @@
       "Load all readiness requirements mapped to the active Pack.",
       "For PACK131..PACK150, enforce the union of the original ROADMAP_150 Pack scope, all applicable EA-001..EA-292 items, the Model Factory/Evals amendment and its binding reconciliation overlay; never replace an original Pack scope with a Model Factory title.",
       "For PACK090 and mapped future Packs, enforce the Universal Browser Session + Connection Authority amendment and UBA-01..UBA-24 as additive requirements; never treat provider registration as live browser proof.",
+      "For PACK090 and mapped future Packs, enforce the Universal Intent Delegation + Messaging/App Automation amendment and UIA-01..UIA-20 as additive requirements; ALWAYS_ALLOW_APP means bounded execution authority across the granted app/site scope, not merely permission to press OAuth Allow.",
       "Continue only the legal next step and preserve Pack gates.",
       "After any material checkpoint, update continuity sources before leaving the work session."
     ]
   },
   "no_loss_rule": "If continuity files disagree, a snapshot drifts without reconciliation, CI/validator fails, or the active Pack/receipt cannot be reconstructed with evidence, stop feature work and repair continuity first. Never guess an active Pack, silently drop roadmap additions, remove canonical V1 work to obtain READY, or depend on private chat memory as the only source.",
-  "last_reconciled_git_head_before_manifest_update": "b7fcd27375464c1a2ec7b416b301601587829d8c",
+  "last_reconciled_git_head_before_manifest_update": "b7d243c6d7400ec275311c9f4a93655b1cad3b08",
   "integrity_guard_files": {
     "tools/validate-zuvyr-continuity.cjs": "ef6a2535c920aafcff2fa0aa51987ce4569cced2",
     ".github/workflows/zuvyr-continuity.yml": "ba526ae36bf46c46786f9aa426adcada1e335ffc",
@@ -178,10 +195,10 @@
     "rule": "Any canonical snapshot drift, missing EA ID, route gap, active Pack/receipt mismatch, stale current-state conflict, or validator failure is a continuity defect. Reconcile it before feature work or Pack lock."
   },
   "latest_continuity_verification": {
-    "checked_at": "2026-09-22",
-    "release_quality_run_id": 35778808559,
+    "checked_at": "2026-09-23",
+    "release_quality_run_id": 35833232197,
     "release_quality_conclusion": "SUCCESS",
-    "continuity_integrity_last_success_run_id": 35778619058,
+    "continuity_integrity_last_success_run_id": 35833232351,
     "canonical_pack_heading_count": 150,
     "canonical_pack_heading_unique_count": 150,
     "readiness_requirement_count": 292,
@@ -201,6 +218,6 @@
       "values_redacted": true,
       "conclusion": "External Google OAuth Web client credentials are still genuinely absent; do not fabricate them."
     },
-    "note": "Last recorded CI success predates the Universal Browser/Connection Authority continuity registration; run a fresh continuity workflow after this manifest update before recording a newer success."
+    "note": "This records the last completed CI success before the Universal Intent Delegation continuity registration. A fresh continuity and release-quality run on the new manifest commit must pass before recording a newer success."
   }
 }
