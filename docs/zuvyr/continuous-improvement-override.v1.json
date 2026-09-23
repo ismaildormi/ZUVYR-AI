@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "effective_date": "2026-09-23",
   "status": "CANONICAL_EXECUTION_POLICY_OVERRIDE",
   "applies_to": "PACK001..PACK150_AND_FUTURE",
@@ -8,6 +8,10 @@
   "delete_or_rewrite_prior_receipts": false,
   "redo_unchanged_work_for_ceremony": false,
   "older_pack_improvement_can_skip_active_gate": false,
+  "clean_claim_requires_zero_known_actionable_internal_findings": true,
+  "adjacent_discovered_actionable_findings_must_be_resolved": true,
+  "external_blockers_must_be_explicit_and_evidenced": true,
+  "informational_findings_may_be_accepted_only_with_documented_rationale": true,
   "revisit_allowed_when": [
     "fresh_evidence_conflict",
     "security_or_authorization_defect",
@@ -39,6 +43,7 @@
     "new_dated_receipt",
     "reconcile_canonical_state"
   ],
+  "clean_claim_rule": "Never claim CLEAN, LOCKED_VERIFIED, final, finished, complete, or all-green while any known actionable internal finding remains unresolved. Resolve safe actionable findings discovered in or adjacent to the task before closure. Only genuinely external blockers may remain, and each must be named with fresh evidence, exact owner, and exact required action.",
   "external_gate_rule": "Record truthful blockers; never fabricate success or spend money without explicit authority.",
   "quality_target": "Higher than minimum requirement while preserving safety, permissions, billing invariants and existing verified behavior."
 }

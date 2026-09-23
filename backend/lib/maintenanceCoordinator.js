@@ -19,6 +19,17 @@ function safeError(error) {
   return String(error.message || error).slice(0, 500);
 }
 
+function hygieneSummary(value) {
+  const source = value && typeof value === 'object' ? value : {};
+  return {
+    version: source.version || null,
+    ok: source.ok === true,
+    rlsNoPolicyCount: Number(source.rls_no_policy_count ?? -1),
+    unindexedFkCount: Number(source.unindexed_fk_count ?? -1),
+    exposedSecurityDefinerCount: Number(source.exposed_security_definer_count ?? -1),
+  };
+}
+
 async function writeReceipt(redis, receipt) {
   const serialized = JSON.stringify(receipt);
   await redis.set(
@@ -102,6 +113,7 @@ async function runMaintenanceOnce({
     finishedAt: null,
     newAlertsRaised: null,
     accountsReset: null,
+    hygiene: null,
     codeSandboxes: null,
     codeRuntime: null,
     cloudBrowser: null,
@@ -137,6 +149,30 @@ async function runMaintenanceOnce({
       );
     } else {
       receipt.accountsReset = reset.data ?? 0;
+    }
+
+    const hygiene = await supabaseAdmin.rpc('zuvyr_runtime_hygiene_audit');
+    if (hygiene.error) {
+      receipt.errors.push({
+        step: 'zuvyr_runtime_hygiene_audit',
+        message: safeError(hygiene.error),
+      });
+      logger.error(
+        '[maintenance] ZUVYR runtime hygiene audit failed:',
+        safeError(hygiene.error)
+      );
+    } else {
+      receipt.hygiene = hygieneSummary(hygiene.data);
+      if (!receipt.hygiene.ok) {
+        const message =
+          'Schema/security hygiene drift detected: ' +
+          JSON.stringify(receipt.hygiene);
+        receipt.errors.push({
+          step: 'zuvyr_runtime_hygiene_audit',
+          message,
+        });
+        logger.error('[maintenance] ZUVYR runtime hygiene drift:', message);
+      }
     }
 
     if (typeof codeSandboxCleanup === 'function') {
@@ -243,6 +279,7 @@ async function runMaintenanceOnce({
         runId,
         newAlertsRaised: receipt.newAlertsRaised,
         accountsReset: receipt.accountsReset,
+        hygiene: receipt.hygiene,
         codeSandboxes: receipt.codeSandboxes,
         codeRuntime: receipt.codeRuntime,
         cloudBrowser: receipt.cloudBrowser,
@@ -253,6 +290,7 @@ async function runMaintenanceOnce({
     const successfulSteps = [
       receipt.newAlertsRaised !== null,
       receipt.accountsReset !== null,
+      receipt.hygiene !== null,
       codeSandboxCleanup === null || receipt.codeSandboxes !== null,
       codeRuntimeReconcile === null || receipt.codeRuntime !== null,
       cloudBrowserCleanup === null || receipt.cloudBrowser !== null,
@@ -291,6 +329,7 @@ module.exports = {
   STRATEGY,
   LOCK_KEY,
   maintenanceWindowKey,
+  hygieneSummary,
   runMaintenanceOnce,
   requireMaintenanceStrategy,
 };

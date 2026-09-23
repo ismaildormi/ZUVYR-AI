@@ -99,6 +99,10 @@
     "completed_packs_are_immutable": false,
     "older_pack_fix_does_not_advance_active_gate": true,
     "preserve_prior_receipts_and_pack_numbers": true,
+    "clean_claim_requires_zero_known_actionable_internal_findings": true,
+    "adjacent_discovered_actionable_findings_must_be_resolved": true,
+    "external_blockers_must_be_explicit_and_evidenced": true,
+    "informational_findings_require_documented_rationale": true,
     "allowed_final_requirement_states": [
       "PASS",
       "N/A_WITH_EVIDENCE"
@@ -164,8 +168,8 @@
     "docs/zuvyr/ROADMAP_150_UNIVERSAL_INTENT_DELEGATION_MESSAGING_AUTOMATION_AMENDMENT_2026-09-23.md": "d0f08ca0007e2111aa625ccf07ff5133be06f8de",
     "docs/zuvyr/universal-intent-delegation-messaging-automation-overlay.v1.json": "86a5a41ce661cde391259a415b00ecf29c98259d",
     "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json": "a622157f7c17ea970071c86ab447942cd0197a7e",
-    "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md": "e2b6567f1e9ecdb79a746dc964eaa9c666412788",
-    "docs/zuvyr/continuous-improvement-override.v1.json": "690bed7c97301e03dd5f59469af4e4bce55117a9"
+    "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md": "1a1b2cb619c51a8a122d93780a06a4fe893d6acf",
+    "docs/zuvyr/continuous-improvement-override.v1.json": "7b465282196f4d9bc5ef1342a40cae627a5e3faa"
   },
   "snapshot_policy": "Blob SHAs are known-good snapshots, not freezes. When a canonical file changes through a reviewed improvement, update the snapshot atomically with the change; never roll back a valid newer change only to satisfy an old hash.",
   "integrity_expectations": {
@@ -187,6 +191,10 @@
     "future_additive_v1_modification_requires_master_mirror": true,
     "continuous_improvement_policy_must_be_loaded": true,
     "substantive_old_pack_improvements_are_allowed_with_new_evidence": true,
+    "clean_claim_requires_zero_known_actionable_internal_findings": true,
+    "adjacent_actionable_findings_must_be_resolved_before_closure": true,
+    "external_blockers_must_be_explicit_and_evidenced": true,
+    "informational_findings_require_documented_risk_rationale": true,
     "model_factory_evals_overlay_must_be_loaded_for_pack131_150": true,
     "original_pack131_150_scope_must_not_be_replaced_by_model_factory": true,
     "universal_browser_connection_overlay_must_be_loaded": true,
@@ -207,6 +215,7 @@
       "Do not ask the user to re-explain the project.",
       "Load the fresh current-state override before relying on older long-form status capsules.",
       "Load the continuous-improvement override: completed Packs are not immutable when a substantive FIX/HARDENING/RECONCILIATION or additive improvement is justified by fresh evidence or the current user instruction.",
+      "Never claim CLEAN/LOCKED_VERIFIED/final/all-green while any known actionable internal finding remains; fix safe adjacent findings before closure and explicitly evidence genuine external blockers.",
       "Never renumber packs or rewrite prior receipts; preserve history and add dated superseding evidence.",
       "An older-Pack repair never authorizes skipping the current legal Pack gate.",
       "Load the canonical boot order, including docs/zuvyr/ZUVYR_V1_COMPLETE_MASTER_PLAN.md as the complete-plan entrypoint and embedded additive-V1 modification mirror.",
@@ -219,7 +228,7 @@
       "After any material checkpoint, update continuity sources or record an explicit continuity-update blocker."
     ]
   },
-  "no_loss_rule": "If continuity sources disagree, use the source-of-truth order, repair the disagreement before feature advancement, preserve all historical evidence, and never guess success. A completed Pack may be improved when fresh evidence justifies it, but the active legal Pack gate still controls roadmap advancement.",
+  "no_loss_rule": "If continuity sources disagree, use the source-of-truth order, repair the disagreement before feature advancement, preserve all historical evidence, and never guess success. A completed Pack may be improved when fresh evidence justifies it, but the active legal Pack gate still controls roadmap advancement. Never claim CLEAN/final while a known actionable internal finding remains; only explicit evidenced external blockers may remain.",
   "last_reconciled_git_head_before_manifest_update": "c6f9272637bd9320c5caa530527e5493fae030e5",
   "integrity_guard_files": {
     "tools/validate-zuvyr-continuity.cjs": "ef6a2535c920aafcff2fa0aa51987ce4569cced2",

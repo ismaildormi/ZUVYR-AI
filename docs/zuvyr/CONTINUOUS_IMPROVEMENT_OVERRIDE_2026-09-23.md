@@ -23,6 +23,16 @@ Continuous improvement does **not** mean rewriting history or restarting work un
 - Never use an older-Pack improvement as permission to skip the active Pack gate or illegally advance the roadmap.
 - Preserve existing verified behavior unless the replacement is measurably safer/better and regression-tested.
 
+## No false CLEAN / LOCKED_VERIFIED claims
+
+`CLEAN`, `LOCKED_VERIFIED`, `final`, `finished`, `complete`, and `all-green` are evidence-backed states, not synonyms for “the originally requested edit was made.”
+
+Never claim any of those states while a **known actionable internal finding** remains unresolved. While executing a task, any safe actionable defect discovered in or adjacent to the task — including security, authorization, privacy, billing, reliability, data integrity, accessibility, performance, recovery, deployment, monitoring, stale-state or regression issues — must be resolved before closure, even when it was not named in the first narrow request.
+
+A finding may remain only when it is genuinely external or unsafe to resolve autonomously, such as missing third-party credentials, account-plan restrictions, missing administrative authority, provider funding, or a required human/legal approval. Every such blocker must be named explicitly with fresh evidence, the exact owner of the blocker, and the exact action required to clear it. It must never be hidden behind a generic “clean” claim.
+
+Informational advisor findings may be accepted without mutation only when there is a documented technical reason and risk analysis showing that changing them would be cosmetic, unnecessary, or more dangerous than preserving the current state.
+
 ## When revisiting an older Pack is required
 
 Revisit the relevant Pack through a named `FIX`, `HARDENING`, `RECONCILIATION`, or additive amendment when any of the following is true:
@@ -63,7 +73,9 @@ A change is not considered complete because code exists. Where applicable, compl
 - deployment of changed runtime surfaces;
 - production/live verification;
 - no hidden credential leakage or unsafe bypass;
+- zero known actionable internal findings at the claimed completion boundary;
 - truthful blocker recording for external gates;
+- documented rationale for intentionally accepted informational findings;
 - new receipt/evidence;
 - continuity reconciliation.
 
