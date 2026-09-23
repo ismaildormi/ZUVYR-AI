@@ -26,6 +26,14 @@ Do not redo unchanged work only for ceremony. Preserve the old receipts and veri
 
 This continuous-improvement rule supersedes older wording that could be read as “never reopen completed Packs.” Older “do not reopen merely to attach this overlay” language remains applicable only to documentation-only ceremony, not substantive fixes or improvements.
 
+### Truthful completion / adjacent-findings rule
+
+Never claim `CLEAN`, `LOCKED_VERIFIED`, final, finished, complete, or all-green while any known actionable internal finding remains unresolved. The requested edit is not the completion boundary: while executing any ZUVYR task, also resolve safe actionable defects discovered in or adjacent to that task when they affect security, authorization, privacy, billing, reliability, data integrity, accessibility, performance, recovery, deployment, monitoring, state correctness, or regression risk.
+
+Only genuinely external blockers may remain at closure, such as missing third-party credentials, account-plan restrictions, missing administrative authority, provider funding, or required human/legal approval. Each external blocker must be explicit, fresh-evidence-backed, and state the exact owner and exact action required. Never hide an external blocker behind a generic clean/final claim.
+
+Informational findings may be intentionally accepted only when there is a documented technical reason and risk analysis showing that changing them would be cosmetic, unnecessary, or riskier than preserving them.
+
 For every new or modified pack, before `LOCKED_VERIFIED`, the implementation and evidence must answer:
 
 - How does this capability concretely improve the user's real-world position?
