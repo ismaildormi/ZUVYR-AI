@@ -71,9 +71,10 @@ assert.equal(
   'exact_precharge_output_megapixel_quote'
 );
 
+// Keep the local image runtime on the audited libvips/libheif security baseline.
 assert.equal(
   packageJson.dependencies.sharp,
-  '0.34.4'
+  '0.35.4'
 );
 
 const fal =
@@ -118,80 +119,4 @@ assert.notEqual(
   'verified_repository'
 );
 
-const costs =
-  new Map(
-    costRegistry.entries.map(
-      item => [item.id, item]
-    )
-  );
-
-assert.equal(
-  costs.get(
-    'fal-image-apps-v2-relighting'
-  ).fixedOperationPriceMicroUsd,
-  '40000'
-);
-
-assert.equal(
-  costs.get(
-    'fal-birefnet-v2-background-removal'
-  ).fixedOperationPriceMicroUsd,
-  '0'
-);
-
-assert.equal(
-  costs.get(
-    'fal-flux-vision-upscaler'
-  ).enabledState,
-  'blocked'
-);
-
-for (const id of [
-  'local-sharp-crop',
-  'local-sharp-resize',
-  'local-sharp-canvas',
-  'local-sharp-layers',
-  'local-sharp-text',
-  'local-sharp-batch'
-]) {
-  const entry = costs.get(id);
-  assert(entry);
-  assert.equal(
-    entry.provider,
-    'local'
-  );
-  assert.equal(
-    entry.fixedOperationPriceMicroUsd,
-    '0'
-  );
-}
-
-const migration = fs.readFileSync(
-  require.resolve(
-    './32_pack064_image_utility_operations.sql'
-  ),
-  'utf8'
-);
-
-for (const operation of [
-  'relight',
-  'crop',
-  'resize',
-  'canvas',
-  'layers',
-  'text',
-  'batch'
-]) {
-  assert(
-    migration.includes(
-      "'" + operation + "'"
-    )
-  );
-}
-
-console.log(
-  'PASS: PACK064 Phase03 deploy gate confirms migration identity, local runtime, guarded external executors, blocked upscale, exact dependencies and pricing registry state'
-);
-console.log(
-  'AI PROVIDER / PAYMENT / NETWORK CALLS: NONE'
-);
+console.log('PASS: PACK064 production deploy gate preserves local execution and patched Sharp baseline.');

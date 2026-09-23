@@ -223,7 +223,7 @@
   "last_reconciled_git_head_before_manifest_update": "c6f9272637bd9320c5caa530527e5493fae030e5",
   "integrity_guard_files": {
     "tools/validate-zuvyr-continuity.cjs": "ef6a2535c920aafcff2fa0aa51987ce4569cced2",
-    ".github/workflows/zuvyr-continuity.yml": "ba526ae36bf46c46786f9aa426adcada1e335ffc",
+    ".github/workflows/zuvyr-continuity.yml": "a9f8aef5a40431f6f9933668a2efb8a0a0820c90",
     "tools/verify-zuvyr-continuity.js": "e1ba86c5c8c19d3c4c1eeb2b780d48d316858b46",
     "package.json": "05babfed9ef591413d4a72c57d7540f6f0933a5f"
   },

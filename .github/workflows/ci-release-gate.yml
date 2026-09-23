@@ -23,10 +23,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout exact commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Use Node.js 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22'
           cache: npm
@@ -34,6 +34,9 @@ jobs:
 
       - name: Install root dependencies
         run: npm ci
+
+      - name: Verify immutable GitHub Action pins
+        run: node tools/test-github-action-pins.cjs
 
       - name: Verify public builder resources
         run: |
@@ -62,10 +65,10 @@ jobs:
         working-directory: backend
     steps:
       - name: Checkout exact commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Use Node.js 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22'
           cache: npm
@@ -73,6 +76,9 @@ jobs:
 
       - name: Install backend dependencies
         run: npm ci
+
+      - name: Audit backend production dependencies
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Run backend unit and safety tests
         run: npm run test:unit
