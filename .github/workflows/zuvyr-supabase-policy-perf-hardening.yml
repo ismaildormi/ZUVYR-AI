@@ -1,0 +1,29 @@
+name: ZUVYR Supabase Policy Performance Hardening
+
+on:
+  pull_request:
+    paths:
+      - 'backend/93_zuvyr_supabase_policy_perf_hardening.sql'
+      - 'backend/test-zuvyr-supabase-policy-perf-hardening.js'
+      - '.github/workflows/zuvyr-supabase-policy-perf-hardening.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'backend/93_zuvyr_supabase_policy_perf_hardening.sql'
+      - 'backend/test-zuvyr-supabase-policy-perf-hardening.js'
+      - '.github/workflows/zuvyr-supabase-policy-perf-hardening.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  source-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify migration contract
+        run: node backend/test-zuvyr-supabase-policy-perf-hardening.js
