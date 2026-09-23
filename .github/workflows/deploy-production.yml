@@ -35,7 +35,7 @@ jobs:
     name: Validate compose file + deploy script
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: docker compose config (structural check only)
         run: |
@@ -49,7 +49,7 @@ jobs:
           rm .env
 
       - name: Shellcheck deploy script
-        uses: ludeeus/action-shellcheck@master
+        uses: ludeeus/action-shellcheck@00b27aa7cb85167568cb48a3838b75f4265f2bca # pinned former master
         with:
           scandir: './scripts/deploy'
 
@@ -63,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Require image_tag unless this is a rollback
         if: ${{ inputs.rollback != true && inputs.image_tag == '' }}
@@ -72,7 +72,7 @@ jobs:
           exit 1
 
       - name: Install SSH key
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
         with:
           ssh-private-key: ${{ secrets.PRODUCTION_SSH_KEY }}
 
