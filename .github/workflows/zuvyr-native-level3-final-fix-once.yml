@@ -15,24 +15,11 @@ jobs:
         with:
           ref: feat/zuvyr-live-ops-level2-3-20260924
           fetch-depth: 1
-      - name: Apply final Level 3 native fixes
+      - name: Apply remaining Level 3 mobile containment fix
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
-
-          ux_path = Path('frontend/zuvyr-unified-ux-v1.js')
-          ux = ux_path.read_text()
-          replacements = [
-              ('<select name="ownershipKind">', '<select name="ownershipKind" aria-label="Compute connector ownership">'),
-              ('<select name="connectorKind">', '<select name="connectorKind" aria-label="Compute connector type">'),
-          ]
-          for old, new in replacements:
-              count = ux.count(old)
-              if count != 1:
-                  raise SystemExit(f'expected one occurrence of {old!r}, got {count}')
-              ux = ux.replace(old, new, 1)
-          ux_path.write_text(ux)
 
           css_path = Path('frontend/rox-brand-blue-violet.css')
           css = css_path.read_text()
@@ -42,15 +29,13 @@ jobs:
           css += '''\n\n/* ZUVYR NATIVE LEVEL 3 MOBILE CONTAINMENT V1 */\n@media (max-width: 760px) {\n  body.zuvyr-ui .feature-screen::before,\n  body.zuvyr-ui .feature-screen::after {\n    display: none !important;\n  }\n\n  body.zuvyr-ui #feature-settings .rox-settings-nav {\n    width: 100% !important;\n    max-width: 100% !important;\n    min-width: 0 !important;\n    overflow-x: auto !important;\n    overflow-y: hidden !important;\n    overscroll-behavior-inline: contain;\n    -webkit-overflow-scrolling: touch;\n    scrollbar-width: none;\n  }\n\n  body.zuvyr-ui #feature-settings .rox-settings-nav::-webkit-scrollbar {\n    display: none;\n  }\n}\n'''
           css_path.write_text(css)
           PY
-
-          node --check frontend/zuvyr-unified-ux-v1.js
           git diff --check
-      - name: Commit fixes and remove one-shot workflow
+      - name: Commit fix and remove one-shot workflow
         shell: bash
         run: |
           git rm .github/workflows/zuvyr-native-level3-final-fix-once.yml
-          git add frontend/zuvyr-unified-ux-v1.js frontend/rox-brand-blue-violet.css
+          git add frontend/rox-brand-blue-violet.css
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'fix: close final native Level 3 mobile findings'
+          git commit -m 'fix: contain native mobile decorative overflow'
           git push origin HEAD:feat/zuvyr-live-ops-level2-3-20260924
