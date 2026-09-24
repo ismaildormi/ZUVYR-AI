@@ -52,9 +52,9 @@ jobs:
           css_path=Path('frontend/zuvyr-chat-workspace-v1.css')
           css=css_path.read_text()
           old='body.zuvyr-ui #feature-chat.zuvyr-chat-workspace {'
-          if css.count(old)!=1:
-              raise SystemExit(f'chat active visibility selector: expected 1 match, got {css.count(old)}')
-          css=css.replace(old,'body.zuvyr-ui #feature-chat.active.zuvyr-chat-workspace {',1)
+          if css.count(old)!=2:
+              raise SystemExit(f'chat active visibility selector: expected 2 matches, got {css.count(old)}')
+          css=css.replace(old,'body.zuvyr-ui #feature-chat.active.zuvyr-chat-workspace {')
           css_path.write_text(css)
 
           qa_path=Path('tools/visual-qa/native-run.mjs')
