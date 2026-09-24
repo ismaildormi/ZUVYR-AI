@@ -67,6 +67,50 @@ grant execute on function public.cleanup_expired_workspace_oauth_pkce_owner_pack
 comment on function public.cleanup_expired_workspace_oauth_pkce_owner_pack089(uuid) is
   'PACK089/89E owner-scoped idempotent cleanup of expired unconsumed Google OAuth PKCE Vault secrets. Session audit rows are preserved and secret values are never returned.';
 
+create or replace function public.cleanup_expired_workspace_oauth_pkce_pack089()
+returns jsonb
+language plpgsql
+security definer
+set search_path=public,pg_temp
+as $pack089_expired_pkce_global_cleanup$
+declare
+  v_owner uuid;
+  v_deleted integer := 0;
+  v_total_deleted integer := 0;
+  v_owners_cleaned integer := 0;
+begin
+  for v_owner in
+    select distinct s.owner_id
+    from public.workspace_oauth_sessions s
+    join vault.secrets v on v.id=s.pkce_verifier_secret_id
+    where s.provider='google_drive'
+      and s.consumed_at is null
+      and s.expires_at <= now()
+  loop
+    v_deleted := public.cleanup_expired_workspace_oauth_pkce_owner_pack089(v_owner);
+    if v_deleted > 0 then
+      v_total_deleted := v_total_deleted + v_deleted;
+      v_owners_cleaned := v_owners_cleaned + 1;
+    end if;
+  end loop;
+
+  return jsonb_build_object(
+    'success',true,
+    'ownersCleaned',v_owners_cleaned,
+    'secretsDeleted',v_total_deleted,
+    'secretValuesExposed',false
+  );
+end;
+$pack089_expired_pkce_global_cleanup$;
+
+revoke all on function public.cleanup_expired_workspace_oauth_pkce_pack089()
+  from public,anon,authenticated;
+grant execute on function public.cleanup_expired_workspace_oauth_pkce_pack089()
+  to service_role;
+
+comment on function public.cleanup_expired_workspace_oauth_pkce_pack089() is
+  'PACK089/89E service-role maintenance cleanup for all expired unconsumed Google OAuth PKCE Vault secrets. Returns counts only.';
+
 create or replace function public.workspace_oauth_expired_pkce_before_insert_pack089()
 returns trigger
 language plpgsql
@@ -90,23 +134,8 @@ create trigger workspace_oauth_expired_pkce_before_insert_pack089
 before insert on public.workspace_oauth_sessions
 for each row execute function public.workspace_oauth_expired_pkce_before_insert_pack089();
 
--- One-time production cleanup for historical expired sessions. Each owner is
--- handled through the same audited helper used by future OAuth starts.
-do $pack089_cleanup_existing$
-declare
-  v_owner uuid;
-begin
-  for v_owner in
-    select distinct s.owner_id
-    from public.workspace_oauth_sessions s
-    join vault.secrets v on v.id=s.pkce_verifier_secret_id
-    where s.provider='google_drive'
-      and s.consumed_at is null
-      and s.expires_at <= now()
-  loop
-    perform public.cleanup_expired_workspace_oauth_pkce_owner_pack089(v_owner);
-  end loop;
-end;
-$pack089_cleanup_existing$;
+-- One-time production cleanup for historical expired sessions. Future cleanup
+-- is performed both before OAuth inserts and by the existing maintenance run.
+select public.cleanup_expired_workspace_oauth_pkce_pack089();
 
 commit;
