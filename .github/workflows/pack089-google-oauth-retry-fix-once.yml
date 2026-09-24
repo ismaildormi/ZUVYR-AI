@@ -49,7 +49,7 @@ jobs:
             return data?.[0] || null;
           }
 
-"""
+          """
           repo = repo.replace(marker, helper + marker, 1)
           ret_marker = "    list,\n    createIntegration,"
           assert repo.count(ret_marker) == 1, f'return marker count={repo.count(ret_marker)}'
@@ -70,7 +70,7 @@ jobs:
             connectionId = connection.id;
             created = true;
           }
-"""
+          """
           assert routes.count(old) == 1, f'drive connect old block count={routes.count(old)}'
           new = """      } else {
             const draft = normalizeIntegrationDraft({
@@ -116,7 +116,7 @@ jobs:
 
             connectionId = connection.id;
           }
-"""
+          """
           routes = routes.replace(old, new, 1)
           routes_path.write_text(routes)
 
@@ -128,7 +128,7 @@ jobs:
             'Drive OAuth config must fail closed before creating a draft connection'
           );
 
-"""
+          """
           assert test.count(test_marker) == 1, f'test marker count={test.count(test_marker)}'
           extra = test_marker + """  assert(repo.includes('findLiveIntegration'));
           assert(repo.includes('workspace_integration_lookup_failed'));
@@ -141,7 +141,7 @@ jobs:
             'OAuth retry must reuse an existing live provider row before attempting a new insert'
           );
 
-"""
+          """
           test = test.replace(test_marker, extra, 1)
           pass_marker = "  console.log('PASS: missing Google OAuth credentials fail closed before network');"
           assert test.count(pass_marker) == 1, f'pass marker count={test.count(pass_marker)}'
