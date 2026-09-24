@@ -39,3 +39,5 @@
     white-space:normal!important;
   }
 }
+
+/* Deployment verification marker: validates cwd-independent Vercel frontend change detection. */
