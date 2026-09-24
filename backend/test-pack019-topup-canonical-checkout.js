@@ -43,16 +43,22 @@ require.cache[stripeClientPath] = {
       ),
     sendBillingUnavailable: (
       res,
-      missing = []
+      missing = [],
+      code = 'billing_not_configured'
     ) =>
       res.status(503).json({
         status: 'error',
-        code:
-          'billing_not_configured',
+        code,
         missing
       }),
     normalizeAppUrl: () =>
-      'https://zuvyr.test'
+      'https://zuvyr.test',
+    billingV1IsActive: () =>
+      String(process.env.ZUVYR_BILLING_V1_ACTIVE || '').toLowerCase() === 'true',
+    billingExecutionStatus: () => ({
+      allowed: true,
+      blockers: []
+    })
   }
 };
 
@@ -86,6 +92,11 @@ assert(
   ),
   'Top-up redirect must preserve the normalized APP_URL root source contract.'
 );
+assert(
+  topupSource.includes('billingV1IsActive') &&
+  topupSource.includes('billingExecutionStatus'),
+  'Top-up checkout must share the explicit billing activation and execution gates.'
+);
 
 function responseMock() {
   return {
@@ -109,7 +120,9 @@ async function invoke(
   const before = { ...process.env };
 
   for (const key of [
+    'ZUVYR_BILLING_V1_ACTIVE',
     'ZUVYR_STRIPE_CANONICAL_CATALOG_ACTIVE',
+    'STRIPE_BILLING_MODE',
     'STRIPE_SECRET_KEY',
     'APP_URL',
     'STRIPE_TOPUP_STANDARD_PRICE_ID',
@@ -164,17 +177,21 @@ async function invoke(
   }
 }
 
+const baseBillingEnv = {
+  ZUVYR_BILLING_V1_ACTIVE: 'true',
+  STRIPE_BILLING_MODE: 'test',
+  STRIPE_SECRET_KEY: 'sk_test_placeholder',
+  APP_URL: 'https://zuvyr.test'
+};
+
 (async () => {
   let result =
     await invoke(
       1000,
       {
+        ...baseBillingEnv,
         ZUVYR_STRIPE_CANONICAL_CATALOG_ACTIVE:
           'true',
-        STRIPE_SECRET_KEY:
-          'sk_test_placeholder',
-        APP_URL:
-          'https://zuvyr.test',
         STRIPE_TOPUP_STANDARD_PRICE_ID:
           'price_topup_standard_test',
         STRIPE_TOPUP_BULK_PRICE_ID:
@@ -223,12 +240,9 @@ async function invoke(
     await invoke(
       5000,
       {
+        ...baseBillingEnv,
         ZUVYR_STRIPE_CANONICAL_CATALOG_ACTIVE:
           'true',
-        STRIPE_SECRET_KEY:
-          'sk_test_placeholder',
-        APP_URL:
-          'https://zuvyr.test',
         STRIPE_TOPUP_STANDARD_PRICE_ID:
           'price_topup_standard_test',
         STRIPE_TOPUP_BULK_PRICE_ID:
@@ -265,12 +279,9 @@ async function invoke(
     await invoke(
       1000,
       {
+        ...baseBillingEnv,
         ZUVYR_STRIPE_CANONICAL_CATALOG_ACTIVE:
-          'true',
-        STRIPE_SECRET_KEY:
-          'sk_test_placeholder',
-        APP_URL:
-          'https://zuvyr.test'
+          'true'
       }
     );
 
@@ -286,12 +297,7 @@ async function invoke(
   result =
     await invoke(
       1000,
-      {
-        STRIPE_SECRET_KEY:
-          'sk_test_placeholder',
-        APP_URL:
-          'https://zuvyr.test'
-      }
+      baseBillingEnv
     );
 
   assert.equal(
@@ -329,6 +335,19 @@ async function invoke(
     false
   );
 
+  result = await invoke(
+    1000,
+    {
+      STRIPE_BILLING_MODE: 'test',
+      STRIPE_SECRET_KEY: 'sk_test_placeholder',
+      APP_URL: 'https://zuvyr.test'
+    }
+  );
+
+  assert.equal(result.res.statusCode, 503);
+  assert.equal(result.res.body.code, 'billing_not_active');
+  assert.equal(result.payload, null);
+
   console.log(
     'PASS: canonical top-up checkout uses one-cent Stripe billing units while preserving standard/bulk economics'
   );
@@ -336,7 +355,10 @@ async function invoke(
     'PASS: canonical mode fails closed when required Price bindings are absent'
   );
   console.log(
-    'PASS: legacy dynamic price_data checkout remains compatible until M08 activation'
+    'PASS: legacy dynamic price_data checkout remains compatible only behind the explicit billing activation gate'
+  );
+  console.log(
+    'PASS: top-up checkout is disabled when ZUVYR_BILLING_V1_ACTIVE is not true'
   );
   console.log(
     'NETWORK / DATABASE / STRIPE / MODEL CALLS: NONE'
