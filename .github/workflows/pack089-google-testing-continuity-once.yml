@@ -1,0 +1,217 @@
+name: PACK089 Google Testing Continuity Once
+
+on:
+  push:
+    branches:
+      - fix/pack089-google-testing-continuity-20260924
+
+permissions:
+  contents: write
+
+jobs:
+  persist:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/pack089-google-testing-continuity-20260924
+          fetch-depth: 1
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '22'
+
+      - name: Persist exact PACK089 live state
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, json, re
+
+          ROOT = Path('.')
+          STATUS = 'BLOCKED_EXTERNAL_GOOGLE_OAUTH_TEST_USER_ALLOWLIST_AND_OWNER_CONSENT'
+          RECEIPT = 'zuvyr-pack-evidence/pack-089/2026-09-24-89e-google-testing-retry-fix/receipt.json'
+          MAIN = '244d21142a956dfa754d245f971b8099d452ec9d'
+          BACKEND_DEPLOY = '85d60d3f-b6e4-4081-ad89-b61d0425126b'
+          WORKER_DEPLOY = '4e896bbb-fadf-4e90-bcef-3e14e1f9c05e'
+          MAINT_DEPLOY = '0d7a3e28-7d3e-4262-97a7-1c5ea67f7f3d'
+          OBSERVED = '2026-09-24T16:17:00Z'
+
+          def write_json(path, obj):
+              Path(path).parent.mkdir(parents=True, exist_ok=True)
+              Path(path).write_text(json.dumps(obj, indent=2, ensure_ascii=False) + '\n')
+
+          def read_json(path):
+              return json.loads(Path(path).read_text())
+
+          def blob_sha(text):
+              b = text.encode('utf-8')
+              return hashlib.sha1(b'blob ' + str(len(b)).encode('ascii') + b'\0' + b).hexdigest()
+
+          receipt = {
+            'schema_version': '1.0',
+            'pack': '089',
+            'phase': '89E_PRODUCTION_ACCEPTANCE',
+            'status': STATUS,
+            'observed_at': OBSERVED,
+            'source_main': MAIN,
+            'evidence': {
+              'google_browser_error': '403 access_denied',
+              'google_testing_message_observed': 'OAuth app is currently being tested and access is limited to developer-approved testers.',
+              'google_test_user_allowlist_required_for_current_owner_acceptance': True,
+              'google_oauth_application_config_gate': 'PASS',
+              'production_redirect_uri': 'https://rox-ai-sepia.vercel.app/',
+              'oauth_callback_completed': False,
+              'pre_fix_retry_error': 'workspace_integration_create_failed',
+              'retry_fix_pr': 118,
+              'retry_fix_merge_commit': MAIN,
+              'retry_fix_contract': 'Same-scope retries reuse the existing live Google Drive integration row; requested scope changes fail closed with HTTP 409 until disconnect.',
+              'pack089_connections_regression_suite': 'PASS_89A_THROUGH_89D',
+              'railway': {
+                'backend': {'deployment_id': BACKEND_DEPLOY, 'status': 'SUCCESS'},
+                'worker': {'deployment_id': WORKER_DEPLOY, 'status': 'SUCCESS'},
+                'maintenance': {'deployment_id': MAINT_DEPLOY, 'status': 'SUCCESS'},
+                'pending_work': 0,
+                'backend_startup': 'PASS_LISTENING_8080'
+              }
+            },
+            'interpretation': {
+              'internal_retry_regression': 'FIXED_PRODUCTION_VERIFIED',
+              'remaining_gate': 'EXTERNAL_GOOGLE_TESTING_AUDIENCE_AND_OWNER_CONSENT',
+              'pack089_complete': False,
+              'pack090_started': False
+            },
+            'next': {
+              'pack090_allowed': False,
+              'minimum_owner_action': 'In Google Auth Platform > Audience > Test users, add the same Google account used for the blocked authorization attempt, then retry Google Drive Connect.',
+              'after_allowlist_acceptance_sequence': 'connect -> callback activation -> granted-scope Drive tool call -> denied-scope rejection -> disconnect/revoke -> post-revoke denial -> audit persistence -> Vault/plaintext-secret cleanliness'
+            }
+          }
+          write_json(RECEIPT, receipt)
+
+          current_path = 'docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json'
+          current = read_json(current_path)
+          current['schema_version'] = '1.6'
+          current['updated_at'] = OBSERVED
+          current['source_main_before_this_reconciliation'] = MAIN
+          active = current['active_work']
+          active['phase_status'] = STATUS
+          active['latest_receipt'] = RECEIPT
+          active['google_oauth_values_or_google_side_validity'] = 'APPLICATION_CONFIG_GATE_PASS_GOOGLE_TESTING_AUDIENCE_BLOCK_CONFIRMED'
+          active['interactive_owner_consent_completed'] = False
+          active['google_testing_audience'] = {
+            'status': 'BLOCKED_TEST_USER_ALLOWLIST',
+            'browser_error': '403 access_denied',
+            'observed_at': OBSERVED,
+            'owner_acceptance_path': 'Add the same owner Google account to Google Auth Platform Audience > Test users while the app remains in Testing.'
+          }
+          active['oauth_retry_fix'] = {
+            'status': 'PRODUCTION_VERIFIED',
+            'pr': 118,
+            'merge_commit': MAIN,
+            'backend_deployment': BACKEND_DEPLOY,
+            'worker_deployment': WORKER_DEPLOY,
+            'maintenance_deployment': MAINT_DEPLOY,
+            'same_scope_retry_reuses_live_connection': True,
+            'scope_change_requires_disconnect': True
+          }
+          active['next_legal_step'] = 'Add the same owner Google account used for the blocked authorization attempt to Google Auth Platform > Audience > Test users, retry Google Drive Connect, then verify callback activation -> granted-scope Drive tool call -> denied-scope rejection -> disconnect/revoke -> post-revoke denial -> audit persistence -> Vault/plaintext-secret cleanliness. Do not start PACK090 first.'
+          active['oauth_callback_production'] = {
+            'status': 'NOT_COMPLETED_GOOGLE_403_TESTING_AUDIENCE',
+            'checked_through': OBSERVED
+          }
+          infra = current.get('infrastructure', {})
+          infra['railway_services_latest_status'] = 'SUCCESS_ON_PACK089_OAUTH_RETRY_FIX_MERGE'
+          infra['railway_pending_work'] = 0
+          infra['railway_backend_deployment'] = BACKEND_DEPLOY
+          infra['railway_worker_deployment'] = WORKER_DEPLOY
+          infra['railway_maintenance_deployment'] = MAINT_DEPLOY
+          current['infrastructure'] = infra
+          write_json(current_path, current)
+
+          continue_path = Path('ZUVYR_CONTINUE_HERE.md')
+          continue_text = continue_path.read_text()
+          latest_heading = '## FRESH PACK089 89E GOOGLE TESTING + RETRY FIX CHECKPOINT — 2026-09-24'
+          assert latest_heading not in continue_text
+          checkpoint = '\n'.join([
+            latest_heading,
+            '',
+            '- Google authorization reached the provider but was blocked by **`403 access_denied`** because the OAuth app is in **Testing** and the current owner account is not yet authorized as a developer-approved test user.',
+            '- Production OAuth application-config gate remains **PASS**; the configured production redirect URI remains `https://rox-ai-sepia.vercel.app/`.',
+            '- A real ZUVYR retry regression discovered after the Google denial (`workspace_integration_create_failed`) is **FIXED + PRODUCTION VERIFIED** in PR #118 / main `' + MAIN + '`.',
+            '- Same-scope OAuth retries now reuse the existing live Google Drive connection row. Scope changes fail closed with HTTP 409 and require disconnect first.',
+            '- PACK089 89A→89D regression suite: **PASS**.',
+            '- Railway production: backend **SUCCESS** (`' + BACKEND_DEPLOY + '`), worker **SUCCESS** (`' + WORKER_DEPLOY + '`), maintenance **SUCCESS** (`' + MAINT_DEPLOY + '`), pending work **0**.',
+            '- Remaining external gate: add the same owner Google account used for authorization to **Google Auth Platform → Audience → Test users**, then retry Connect and complete the real callback/tool/revoke acceptance chain.',
+            '- PACK089 remains `IN_PROGRESS`; PACK090 remains **NOT ALLOWED**.',
+            '- Receipt: `' + RECEIPT + '`.',
+            '',
+            ''
+          ])
+          continue_text = continue_text.replace('# ZUVYR — CONTINUE HERE\n\n', '# ZUVYR — CONTINUE HERE\n\n' + checkpoint, 1)
+          continue_text = continue_text.replace('- **Phase status:** `BLOCKED_EXTERNAL_GOOGLE_OAUTH_CLIENT_CREDENTIALS`', '- **Phase status:** `' + STATUS + '`', 1)
+          continue_text = continue_text.replace('- **Latest receipt:** `zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json`', '- **Latest receipt:** `' + RECEIPT + '`', 1)
+          continue_text = continue_text.replace('- **Next legal step:** configure legitimate `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET`, then complete the real owner-scoped Google Drive OAuth acceptance: connect → granted-scope tool call → denied-scope proof → disconnect/revoke → post-revoke denial → audit persistence → Vault/plaintext-secret cleanliness.', '- **Next legal step:** add the same owner Google account to Google Auth Platform → Audience → Test users, retry Google Drive Connect, then complete callback activation → granted-scope tool call → denied-scope proof → disconnect/revoke → post-revoke denial → audit persistence → Vault/plaintext-secret cleanliness.', 1)
+          continue_path.write_text(continue_text)
+
+          master_path = 'ZUVYR_MASTER_STATE.json'
+          master = read_json(master_path)
+          capsule = master['continuity_capsule']
+          capsule['updated_at'] = '2026-09-24'
+          capsule['active_status'] = STATUS
+          capsule['latest_receipt'] = RECEIPT
+          capsule['pack090_allowed'] = False
+          capsule['next_legal_step'] = 'Add the same owner Google account to Google Auth Platform > Audience > Test users, retry Google Drive Connect, then complete the real owner-scoped callback/tool/denied-scope/disconnect-revoke acceptance chain. Do not start PACK090 first.'
+          write_json(master_path, master)
+
+          matrix_path = Path('ZUVYR_MASTER_MATRIX.md')
+          matrix_text = matrix_path.read_text()
+          matrix_text = matrix_text.replace('# ZUVYR MASTER MATRIX — LATEST CANONICAL CONTINUITY OVERRIDE — 2026-09-22', '# ZUVYR MASTER MATRIX — LATEST CANONICAL CONTINUITY OVERRIDE — 2026-09-24', 1)
+          matrix_text = matrix_text.replace('| Current status | `BLOCKED_EXTERNAL_GOOGLE_OAUTH_CLIENT_CREDENTIALS` |', '| Current status | `' + STATUS + '` |', 1)
+          matrix_text = matrix_text.replace('| Latest receipt | `zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json` |', '| Latest receipt | `' + RECEIPT + '` |', 1)
+          matrix_text = matrix_text.replace('| Remaining external values | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` |', '| Remaining external gate | Google Testing audience: owner account must be in `Audience → Test users`, then real owner consent/callback acceptance |', 1)
+          old_next = '**Next legal step:** configure legitimate Google OAuth Web client ID + client secret in production, then complete the real owner-scoped Google Drive OAuth acceptance: connect → granted-scope tool call → denied-scope proof → disconnect/revoke → post-revoke denial → audit persistence → secret/Vault cleanliness. Do **not** start PACK090 first.'
+          new_next = '**Next legal step:** add the same owner Google account to Google Auth Platform → Audience → Test users, retry Google Drive Connect, then complete callback activation → granted-scope tool call → denied-scope proof → disconnect/revoke → post-revoke denial → audit persistence → secret/Vault cleanliness. Do **not** start PACK090 first.'
+          assert old_next in matrix_text
+          matrix_text = matrix_text.replace(old_next, new_next, 1)
+          matrix_path.write_text(matrix_text)
+
+          manifest_path = 'docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json'
+          manifest = read_json(manifest_path)
+          manifest['schema_version'] = '2.6'
+          manifest['updated_at'] = OBSERVED
+          m_active = manifest['active_work']
+          m_active['phase_status'] = STATUS
+          m_active['latest_receipt'] = RECEIPT
+          m_active['credential_values_nonempty_or_valid'] = 'APPLICATION_CONFIG_GATE_PASS_GOOGLE_TESTING_AUDIENCE_BLOCK_CONFIRMED'
+          m_active['google_cloud_configuration_valid'] = 'OAUTH_REQUEST_REACHED_GOOGLE_TESTING_AUDIENCE_BLOCK_CONFIRMED'
+          m_active['interactive_google_consent_completed'] = False
+          m_active['google_testing_audience'] = active['google_testing_audience']
+          m_active['oauth_retry_fix'] = active['oauth_retry_fix']
+          m_active['next_legal_step'] = active['next_legal_step']
+          m_active['oauth_callback_production'] = active['oauth_callback_production']
+          manifest['current_state_override']['blob_sha'] = blob_sha(Path(current_path).read_text())
+          snapshots = manifest['canonical_files_snapshot']
+          snapshots['ZUVYR_CONTINUE_HERE.md'] = blob_sha(Path('ZUVYR_CONTINUE_HERE.md').read_text())
+          snapshots['ZUVYR_MASTER_STATE.json'] = blob_sha(Path('ZUVYR_MASTER_STATE.json').read_text())
+          snapshots['ZUVYR_MASTER_MATRIX.md'] = blob_sha(Path('ZUVYR_MASTER_MATRIX.md').read_text())
+          write_json(manifest_path, manifest)
+          PY
+
+          node tools/validate-zuvyr-continuity.cjs
+          git diff --check
+          git status --short
+
+      - name: Commit verified continuity and remove one-shot workflow
+        shell: bash
+        run: |
+          rm -f .github/workflows/pack089-google-testing-continuity-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ZUVYR_CONTINUE_HERE.md ZUVYR_MASTER_STATE.json ZUVYR_MASTER_MATRIX.md docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json zuvyr-pack-evidence/pack-089/2026-09-24-89e-google-testing-retry-fix/receipt.json .github/workflows/pack089-google-testing-continuity-once.yml
+          git diff --cached --check
+          node tools/validate-zuvyr-continuity.cjs
+          git commit -m "docs: persist PACK089 Google testing acceptance gate"
+          git push origin HEAD:fix/pack089-google-testing-continuity-20260924
