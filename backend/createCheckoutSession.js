@@ -6,18 +6,14 @@ const {
   missingEnvironmentVariables,
   sendBillingUnavailable,
   normalizeAppUrl,
+  billingV1IsActive,
+  billingExecutionStatus
 } = require('./lib/stripeClient');
 const {
   getSubscriptionOffer
 } = require('./lib/billingCatalog');
 
 const router = express.Router();
-
-function billingV1IsActive(env = process.env) {
-  return String(env.ZUVYR_BILLING_V1_ACTIVE || '')
-    .trim()
-    .toLowerCase() === 'true';
-}
 
 router.post('/', async (req, res) => {
   if (!billingV1IsActive()) {
@@ -26,6 +22,17 @@ router.post('/', async (req, res) => {
       code: 'billing_not_active',
       message: 'The new billing system is not active yet.'
     });
+  }
+
+  const execution = billingExecutionStatus();
+  if (!execution.allowed) {
+    return sendBillingUnavailable(
+      res,
+      execution.blockers,
+      execution.blockers.includes('live_billing_not_allowed')
+        ? 'live_billing_disabled'
+        : 'billing_not_configured'
+    );
   }
 
   const requestedPlan =
@@ -44,8 +51,9 @@ router.post('/', async (req, res) => {
 
   const missing = missingEnvironmentVariables([
     'STRIPE_SECRET_KEY',
+    'STRIPE_BILLING_MODE',
     offer.priceEnvKey,
-    'APP_URL',
+    'APP_URL'
   ]);
   const stripe = getStripeClient();
 
