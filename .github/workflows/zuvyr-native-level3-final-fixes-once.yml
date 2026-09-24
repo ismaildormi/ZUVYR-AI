@@ -1,0 +1,67 @@
+name: ZUVYR Native Level 3 Final Fixes Once
+
+on:
+  push:
+    branches:
+      - feat/zuvyr-live-ops-level2-3-20260924
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: feat/zuvyr-live-ops-level2-3-20260924
+          fetch-depth: 1
+
+      - name: Apply final evidence-based fixes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          ux_path=Path('frontend/zuvyr-unified-ux-v1.js')
+          ux=ux_path.read_text()
+          replacements={
+            '<select name="ownershipKind"><option value="user">User-owned</option><option value="organization">Organization-owned</option></select>':'<select name="ownershipKind" aria-label="Compute ownership"><option value="user">User-owned</option><option value="organization">Organization-owned</option></select>',
+            '<select name="connectorKind"><option value="openai_compatible_https">OpenAI-compatible HTTPS</option><option value="custom_https">Custom HTTPS</option><option value="zuvyr_compute_relay">ZUVYR Compute Relay (PACK096)</option></select>':'<select name="connectorKind" aria-label="Connector type"><option value="openai_compatible_https">OpenAI-compatible HTTPS</option><option value="custom_https">Custom HTTPS</option><option value="zuvyr_compute_relay">ZUVYR Compute Relay (PACK096)</option></select>'
+          }
+          for old,new in replacements.items():
+              count=ux.count(old)
+              if count != 1:
+                  raise SystemExit(f'PACK095 select marker expected once, got {count}: {old[:60]}')
+              ux=ux.replace(old,new,1)
+          ux_path.write_text(ux)
+
+          css_path=Path('frontend/zuvyr-native-responsive-fixes.css')
+          css=css_path.read_text()
+          old='body.zuvyr-ui :is(#feature-images,#feature-videos,#feature-roxip,#feature-chat,#feature-code,#feature-automations,#feature-history,#feature-settings)>.feature-screen{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow-x:hidden!important}'
+          new='body.zuvyr-ui :is(#feature-images,#feature-videos,#feature-roxip,#feature-chat,#feature-code,#feature-automations,#feature-history,#feature-settings){width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow-x:hidden!important}'
+          if css.count(old) != 1:
+              raise SystemExit(f'native root containment marker expected once, got {css.count(old)}')
+          css=css.replace(old,new,1)
+          extra='''\n  body.zuvyr-ui :is(#feature-images,#feature-videos,#feature-roxip,#feature-code,#feature-automations,#feature-history,#feature-settings) :is(.feature-topbar,.modal-topbar,.meta,.s){min-width:0!important;max-width:100%!important}\n  body.zuvyr-ui :is(#feature-images,#feature-videos,#feature-roxip,#feature-code,#feature-automations,#feature-history,#feature-settings) .s{overflow-wrap:anywhere!important;word-break:break-word!important}\n'''
+          needle='  body.zuvyr-ui #feature-settings .rox-settings-nav{'
+          if needle not in css:
+              raise SystemExit('responsive settings-nav marker missing')
+          if 'overflow-wrap:anywhere!important' not in css:
+              css=css.replace(needle,extra+needle,1)
+          css_path.write_text(css)
+          PY
+
+          node --check frontend/zuvyr-unified-ux-v1.js
+          git diff --check
+
+      - name: Commit fixes and remove one-shot workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/zuvyr-native-level3-final-fixes-once.yml
+          git add frontend/zuvyr-unified-ux-v1.js frontend/zuvyr-native-responsive-fixes.css
+          git commit -m "fix: close final native Level 3 findings"
+          git push origin HEAD:feat/zuvyr-live-ops-level2-3-20260924
