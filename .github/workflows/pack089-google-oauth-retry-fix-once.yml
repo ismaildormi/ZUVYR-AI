@@ -1,0 +1,168 @@
+name: PACK089 Google OAuth Retry Fix Once
+
+on:
+  push:
+    branches:
+      - fix/pack089-google-oauth-retry-20260924
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/pack089-google-oauth-retry-20260924
+          fetch-depth: 1
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '22'
+
+      - name: Apply deterministic retry fix and regression guards
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          repo_path = Path('backend/lib/workspaceConnectionRepository.js')
+          repo = repo_path.read_text()
+          marker = "  async function createIntegration({ ownerId, integrationKey, scopes, explicitConsent }) {"
+          assert repo.count(marker) == 1, f'createIntegration marker count={repo.count(marker)}'
+          helper = """  async function findLiveIntegration(ownerId, integrationKey) {
+            const key = String(integrationKey || '').trim().toLowerCase();
+            if (!key) throw storeError('workspace_integration_key_required');
+            const { data, error } = await db
+              .from('workspace_integration_connections')
+              .select('id,integration_key,scopes,explicit_consent,status,connected,read_enabled,write_enabled,provider_subject,account_label,token_expires_at,refresh_token_present,created_at,updated_at,revoked_at,last_error_code')
+              .eq('owner_id', ownerId)
+              .eq('integration_key', key)
+              .neq('status', 'revoked')
+              .is('revoked_at', null)
+              .order('updated_at', { ascending: false })
+              .limit(1);
+            if (error) throw storeError('workspace_integration_lookup_failed', error.message);
+            return data?.[0] || null;
+          }
+
+"""
+          repo = repo.replace(marker, helper + marker, 1)
+          ret_marker = "    list,\n    createIntegration,"
+          assert repo.count(ret_marker) == 1, f'return marker count={repo.count(ret_marker)}'
+          repo = repo.replace(ret_marker, "    list,\n    findLiveIntegration,\n    createIntegration,", 1)
+          repo_path.write_text(repo)
+
+          routes_path = Path('backend/lib/workspaceRoutes.js')
+          routes = routes_path.read_text()
+          old = """      } else {
+            const draft = normalizeIntegrationDraft({
+              ...req.body,
+              integrationKey: 'google_drive'
+            });
+            const connection = await connectionStore.createIntegration({
+              ownerId: req.userId,
+              ...draft
+            });
+            connectionId = connection.id;
+            created = true;
+          }
+"""
+          assert routes.count(old) == 1, f'drive connect old block count={routes.count(old)}'
+          new = """      } else {
+            const draft = normalizeIntegrationDraft({
+              ...req.body,
+              integrationKey: 'google_drive'
+            });
+            const requestedScopes = [...draft.scopes].sort();
+            const matchesRequestedScopes = connection =>
+              Array.isArray(connection?.scopes) &&
+              JSON.stringify([...connection.scopes].sort()) === JSON.stringify(requestedScopes);
+
+            let connection = await connectionStore.findLiveIntegration(
+              req.userId,
+              'google_drive'
+            );
+
+            if (connection && !matchesRequestedScopes(connection)) {
+              res.set('Cache-Control', 'no-store');
+              return res.status(409).json({
+                status: 'error',
+                code: 'workspace_google_drive_scope_change_requires_disconnect',
+                connectionId: connection.id,
+                message: 'Disconnect the existing Google Drive connection before changing scopes.'
+              });
+            }
+
+            if (!connection) {
+              try {
+                connection = await connectionStore.createIntegration({
+                  ownerId: req.userId,
+                  ...draft
+                });
+                created = true;
+              } catch (error) {
+                if (error?.code !== 'workspace_integration_create_failed') throw error;
+                connection = await connectionStore.findLiveIntegration(
+                  req.userId,
+                  'google_drive'
+                );
+                if (!connection || !matchesRequestedScopes(connection)) throw error;
+              }
+            }
+
+            connectionId = connection.id;
+          }
+"""
+          routes = routes.replace(old, new, 1)
+          routes_path.write_text(routes)
+
+          test_path = Path('backend/test-pack089-89c-google-drive-oauth.js')
+          test = test_path.read_text()
+          test_marker = """  assert(
+            driveConnectRoute.indexOf(\"googleDriveRuntime.assertOAuthConfigured();\") <
+            driveConnectRoute.indexOf(\"connectionStore.createIntegration({\"),
+            'Drive OAuth config must fail closed before creating a draft connection'
+          );
+
+"""
+          assert test.count(test_marker) == 1, f'test marker count={test.count(test_marker)}'
+          extra = test_marker + """  assert(repo.includes('findLiveIntegration'));
+          assert(repo.includes('workspace_integration_lookup_failed'));
+          assert(driveConnectRoute.includes('connectionStore.findLiveIntegration('));
+          assert(driveConnectRoute.includes('workspace_google_drive_scope_change_requires_disconnect'));
+          assert(driveConnectRoute.includes(\"error?.code !== 'workspace_integration_create_failed'\"));
+          assert(
+            driveConnectRoute.indexOf('connectionStore.findLiveIntegration(') <
+            driveConnectRoute.indexOf('connectionStore.createIntegration({'),
+            'OAuth retry must reuse an existing live provider row before attempting a new insert'
+          );
+
+"""
+          test = test.replace(test_marker, extra, 1)
+          pass_marker = "  console.log('PASS: missing Google OAuth credentials fail closed before network');"
+          assert test.count(pass_marker) == 1, f'pass marker count={test.count(pass_marker)}'
+          test = test.replace(pass_marker, pass_marker + "\n  console.log('PASS: Google Drive OAuth retries reuse the live provider row and fail closed on scope changes');", 1)
+          test_path.write_text(test)
+          PY
+
+          node --check backend/lib/workspaceConnectionRepository.js
+          node --check backend/lib/workspaceRoutes.js
+          node --check backend/test-pack089-89c-google-drive-oauth.js
+          git diff --check
+          cd backend
+          npm run test:connections
+
+      - name: Commit verified fix and remove one-shot workflow
+        shell: bash
+        run: |
+          rm -f .github/workflows/pack089-google-oauth-retry-fix-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/lib/workspaceConnectionRepository.js backend/lib/workspaceRoutes.js backend/test-pack089-89c-google-drive-oauth.js .github/workflows/pack089-google-oauth-retry-fix-once.yml
+          git diff --cached --check
+          git commit -m "fix: make Google Drive OAuth retries idempotent"
+          git push origin HEAD:fix/pack089-google-oauth-retry-20260924
