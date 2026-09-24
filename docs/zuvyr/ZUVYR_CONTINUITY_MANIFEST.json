@@ -1,12 +1,12 @@
 {
-  "schema_version": "2.2",
+  "schema_version": "2.3",
   "updated_at": "2026-09-24",
   "purpose": "Single anti-loss reconstruction capsule for any new ChatGPT/Work/Codex session. Fresh production evidence and explicit current user instruction outrank stale historical state.",
   "repository": "ismaildormi/rox-ai",
-  "created_from_git_head": "3f0ba3bfb159fa82f6ffee40cdea6c8961b3794c",
+  "created_from_git_head": "26b09a2e7bf149f5197aa7d3b0ec0a3d6a8d6db3",
   "current_state_override": {
     "path": "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json",
-    "blob_sha": "e17c807afb40553dd5e230e7b8a6d915b016af5c",
+    "blob_sha": "1aa433ae6b12b2fc8093d61c4c7557463bbde715",
     "authority": "Fresh compact current-state authority below even fresher Git/production evidence and explicit user instruction; older long-form state files remain historical ledgers when they disagree."
   },
   "source_of_truth_order": [
@@ -90,6 +90,13 @@
       "supabase_migration": "20260923223742 zuvyr_global_cleanliness_hardening_20260923",
       "postcondition": "ZUVYR RLS/no-policy=0, unindexed foreign keys=0, client-exposed public SECURITY DEFINER=0; service-role runtime hygiene audit reports ok=true and is wired into maintenance success semantics.",
       "post_hardening_runtime_monitoring_receipt": "zuvyr-pack-evidence/reconciliations/2026-09-24-post-hardening-maintenance/receipt.json"
+    },
+    "infra_advisors_2026_09_24": {
+      "status": "RECONCILED_CURRENT_TRUTH",
+      "receipt": "zuvyr-pack-evidence/reconciliations/2026-09-24-infra-advisor-reconciliation/receipt.json",
+      "vercel_old_rate_limit": "HISTORICAL_NOT_CURRENT_GATE",
+      "zuvyr_actionable_supabase_database_advisor_findings": 0,
+      "unused_indexes": "INFORMATIONAL_REQUIRES_USAGE_WINDOW"
     }
   },
   "v1_contract": {
@@ -175,10 +182,11 @@
     "docs/zuvyr/universal-browser-session-connection-authority-overlay.v1.json": "535bef1b45dae2786a07939d0df7533ef0dcb013",
     "docs/zuvyr/ROADMAP_150_UNIVERSAL_INTENT_DELEGATION_MESSAGING_AUTOMATION_AMENDMENT_2026-09-23.md": "d0f08ca0007e2111aa625ccf07ff5133be06f8de",
     "docs/zuvyr/universal-intent-delegation-messaging-automation-overlay.v1.json": "86a5a41ce661cde391259a415b00ecf29c98259d",
-    "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json": "e17c807afb40553dd5e230e7b8a6d915b016af5c",
+    "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json": "1aa433ae6b12b2fc8093d61c4c7557463bbde715",
     "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md": "1a1b2cb619c51a8a122d93780a06a4fe893d6acf",
     "docs/zuvyr/continuous-improvement-override.v1.json": "7b465282196f4d9bc5ef1342a40cae627a5e3faa",
-    "zuvyr-pack-evidence/reconciliations/2026-09-24-post-hardening-maintenance/receipt.json": "01737f12bb5ef7f7710f1a8c5ee6a2309da4aba0"
+    "zuvyr-pack-evidence/reconciliations/2026-09-24-post-hardening-maintenance/receipt.json": "01737f12bb5ef7f7710f1a8c5ee6a2309da4aba0",
+    "zuvyr-pack-evidence/reconciliations/2026-09-24-infra-advisor-reconciliation/receipt.json": "692fbd6fd71e9d20a2dd2e5ecac4bf082b37a7bb"
   },
   "snapshot_policy": "Blob SHAs are known-good snapshots, not freezes. When a canonical file changes through a reviewed improvement, update the snapshot atomically with the change; never roll back a valid newer change only to satisfy an old hash.",
   "integrity_expectations": {
@@ -238,7 +246,7 @@
     ]
   },
   "no_loss_rule": "If continuity sources disagree, use the source-of-truth order, repair the disagreement before feature advancement, preserve all historical evidence, and never guess success. A completed Pack may be improved when fresh evidence justifies it, but the active legal Pack gate still controls roadmap advancement. Never claim CLEAN/final while a known actionable internal finding remains; only explicit evidenced external blockers may remain.",
-  "last_reconciled_git_head_before_manifest_update": "3f0ba3bfb159fa82f6ffee40cdea6c8961b3794c",
+  "last_reconciled_git_head_before_manifest_update": "26b09a2e7bf149f5197aa7d3b0ec0a3d6a8d6db3",
   "integrity_guard_files": {
     "tools/validate-zuvyr-continuity.cjs": "ef6a2535c920aafcff2fa0aa51987ce4569cced2",
     ".github/workflows/zuvyr-continuity.yml": "a9f8aef5a40431f6f9933668a2efb8a0a0820c90",
@@ -255,6 +263,8 @@
   },
   "latest_continuity_verification": {
     "checked_at": "2026-09-24",
+    "current_main": "26b09a2e7bf149f5197aa7d3b0ec0a3d6a8d6db3",
+    "current_main_ci": "Continuity Integrity / Backend Quality / Release Quality = SUCCESS",
     "global_cleanliness_merge_commit": "03c8415f92d55591626c0fe50ad80488d8882979",
     "global_cleanliness_receipt": "zuvyr-pack-evidence/global-cleanliness/2026-09-23/receipt.json",
     "supabase_global_cleanliness_migration": "20260923223742 zuvyr_global_cleanliness_hardening_20260923",
@@ -263,10 +273,23 @@
       "worker": "44bbd777-25a7-4bbc-a2bf-8480246f90f8 SUCCESS",
       "maintenance": "23694064-119a-4baf-96e0-142ae51baab5 SUCCESS"
     },
-    "merge_commit_ci": "Release Quality / Backend Quality / Continuity Integrity / cleanliness-contract / validate = SUCCESS",
-    "vercel_new_deployment": "BLOCKED_EXTERNAL_BUILD_RATE_LIMIT_RETRY_IN_24_HOURS",
+    "railway_docs_only_main_changes": "SKIPPED_AS_EXPECTED_NO_RUNTIME_DELTA",
+    "vercel_historical_03c_status": "FAILURE_BUILD_RATE_LIMIT_RETAINED_AS_HISTORY_NOT_CURRENT_GATE",
+    "vercel_pr106_frontend_file_count": 0,
+    "vercel_later_preview": "dpl_7CAHbi5MtZj8mBMUxHHuP9BYGu93 READY",
+    "vercel_current_main": "dpl_93u9NcKG8Bvh3A5UoxpPFe6gqcq5 CANCELED_BY_IGNORED_BUILD_STEP_EXPECTED",
     "vercel_existing_production_reachable": true,
     "first_post_merge_maintenance_receipt": "LOCKED_VERIFIED: zuvyr-pack-evidence/reconciliations/2026-09-24-post-hardening-maintenance/receipt.json; 3 natural cron successes observed; fresh zuvyr_runtime_hygiene_audit ok=true",
+    "supabase_advisors": {
+      "zuvyr_actionable_security_database_findings": 0,
+      "zuvyr_unindexed_fk": 0,
+      "zuvyr_rls_no_policy": 0,
+      "auth_leaked_password_protection": "EXTERNAL_WARN_REMAINS",
+      "nova8_findings": "OUT_OF_ZUVYR_SCOPE",
+      "backup_no_primary_key": "INFORMATIONAL_NON_RUNTIME",
+      "unused_index_count": 261,
+      "unused_index_action": "DEFER_DESTRUCTIVE_REMOVAL_UNTIL_REPRESENTATIVE_USAGE_WINDOW"
+    },
     "canonical_pack_heading_count": 150,
     "canonical_pack_heading_unique_count": 150,
     "readiness_requirement_count": 292,
@@ -282,6 +305,6 @@
       "values_nonempty_or_google_valid": "UNVERIFIED",
       "interactive_owner_consent_completed": false
     },
-    "note": "This checkpoint records internal actionable ZUVYR database hygiene and the deployed recurring maintenance monitor as production-verified while preserving explicit external gates. Fresh reconciliation CI for this manifest/current-state change must pass before these files become the next completed continuity checkpoint."
+    "note": "This checkpoint records current internal ZUVYR database hygiene, recurring monitoring, and stale-infrastructure-gate reconciliation without changing Pack progression. External/live/authenticated gates remain explicit."
   }
 }

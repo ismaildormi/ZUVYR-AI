@@ -1,0 +1,80 @@
+{
+  "schema_version": "zuvyr.infra-advisor-reconciliation.v1",
+  "date": "2026-09-24",
+  "status": "RECONCILED_CURRENT_TRUTH",
+  "source_main": "26b09a2e7bf149f5197aa7d3b0ec0a3d6a8d6db3",
+  "scope": "Reclassify stale Vercel quota evidence and record fresh Supabase advisor findings without unsafe cross-project or destructive changes.",
+  "vercel": {
+    "historical_global_hardening_commit": "03c8415f92d55591626c0fe50ad80488d8882979",
+    "historical_commit_status": "failure",
+    "historical_failure_reason": "build-rate-limit",
+    "historical_status_is_immutable_evidence": true,
+    "pr106_changed_frontend_files": 0,
+    "pr106_changed_files": [
+      ".github/workflows/zuvyr-global-cleanliness-hardening.yml",
+      "AGENTS.md",
+      "backend/lib/maintenanceCoordinator.js",
+      "backend/test-maintenance-strategy.js",
+      "backend/test-zuvyr-global-supabase-cleanliness-hardening.js",
+      "backend/zuvyr_global_supabase_cleanliness_hardening_20260923.sql",
+      "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md",
+      "docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json",
+      "docs/zuvyr/continuous-improvement-override.v1.json",
+      "tools/validate-continuous-improvement-override.cjs",
+      "zuvyr-pack-evidence/global-cleanliness/2026-09-23/receipt.json"
+    ],
+    "later_preview_ready": {
+      "deployment_id": "dpl_7CAHbi5MtZj8mBMUxHHuP9BYGu93",
+      "source_commit": "8ae7f06411c317d6b3142a6d8e4e987e00b447db",
+      "state": "READY"
+    },
+    "current_main": {
+      "commit": "26b09a2e7bf149f5197aa7d3b0ec0a3d6a8d6db3",
+      "deployment_id": "dpl_93u9NcKG8Bvh3A5UoxpPFe6gqcq5",
+      "target": "production",
+      "state": "CANCELED",
+      "reason": "ignored-build-step",
+      "interpretation": "Expected no-build behavior for docs-only/current-source-no-frontend-delta changes, not a build-rate-limit failure or production outage."
+    },
+    "conclusion": "The build-rate-limit attached to commit 03c8415 is historical evidence, not a current unresolved production gate. Existing production stayed reachable and PR106 contained no frontend files requiring promotion."
+  },
+  "supabase_advisors": {
+    "observed_at": "2026-09-24T00:27:14Z",
+    "zuvyr_runtime_hygiene": {
+      "rls_enabled_no_policy": 0,
+      "unindexed_foreign_keys": 0,
+      "client_exposed_security_definer_functions": 0
+    },
+    "security": {
+      "zuvyr_actionable_database_findings": 0,
+      "auth_leaked_password_protection": "WARN_EXTERNAL_REMAINS",
+      "nova8_rls_no_policy_count": 3,
+      "nova8_findings_classification": "OUT_OF_ZUVYR_SCOPE_DO_NOT_MUTATE_FROM_ZUVYR_RECONCILIATION"
+    },
+    "performance": {
+      "nova8_unindexed_fk_count": 3,
+      "nova8_auth_rls_initplan_count": 1,
+      "nova8_findings_classification": "OUT_OF_ZUVYR_SCOPE_DO_NOT_MUTATE_FROM_ZUVYR_RECONCILIATION",
+      "backup_schema_no_primary_key_count": 8,
+      "backup_schema_no_primary_key_classification": "INFORMATIONAL_NON_RUNTIME_BACKUP_METADATA",
+      "unused_index_count": 261,
+      "unused_index_classification": "INFORMATIONAL_NEEDS_REAL_USAGE_WINDOW",
+      "unused_index_action_now": "DO_NOT_DROP_BLINDLY",
+      "unused_index_rationale": "Many indexes were created minutes earlier by the verified FK hardening and cannot have meaningful usage history yet. Immediate deletion could recreate confirmed FK performance debt and harm future production paths. Review after a representative traffic/retention window with query and index usage evidence."
+    }
+  },
+  "safety": {
+    "database_mutation": false,
+    "provider_calls": 0,
+    "paid_execution": false,
+    "customer_mutation": false,
+    "nova8_mutation": false,
+    "pack_progression_changed": false
+  },
+  "remaining_external_or_live_gates": [
+    "PACK089 real Google OAuth production acceptance",
+    "Supabase leaked-password protection / plan-or-admin capability",
+    "GitHub main branch protection / repository-admin capability",
+    "Previously documented paid-provider, authenticated-owner, real-device and M15-M21 live acceptance gates"
+  ]
+}
