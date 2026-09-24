@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/queue/status.js
+// ZUVYR — cli/commands/queue/status.js
 //
 // Reads BullMQ's own job-count API (`Queue.getJobCounts()`) for both
 // queues defined in backend/lib/queue.js — no separate bookkeeping,
@@ -10,7 +10,7 @@ const { tryLoad } = require('../../lib/backendLoader');
 const QUEUE_NAMES = ['imageQueue', 'videoQueue'];
 
 module.exports = async function status() {
-  log.step('ROX AI — queue status');
+  log.step('ZUVYR — queue status');
   loadEnv();
 
   const queueResult = tryLoad('lib/queue');

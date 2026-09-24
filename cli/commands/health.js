@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/health.js
+// ZUVYR — cli/commands/health.js
 //
 // Checks, in order: are the two pm2 processes actually online (not
 // just "started once and crash-looping"), does the API's own /healthz
@@ -151,7 +151,7 @@ async function checkDiskSpace(fix) {
 module.exports = async function health(args) {
   const ctx = getContext();
   const fix = args.includes('--fix') || ctx.fix || ctx.repair;
-  log.step('ROX AI — health check' + (fix ? (ctx.repair ? ' (repair enabled)' : ' (auto-fix enabled)') : '') + (ctx.dryRun ? ' [dry-run]' : ''));
+  log.step('ZUVYR — health check' + (fix ? (ctx.repair ? ' (repair enabled)' : ' (auto-fix enabled)') : '') + (ctx.dryRun ? ' [dry-run]' : ''));
   loadEnv();
 
   const pm2Ok = checkPm2Processes(fix);

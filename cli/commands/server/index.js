@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/server/index.js
+// ZUVYR — cli/commands/server/index.js
 const { makeGroup } = require('../../lib/group');
 
 module.exports = makeGroup({

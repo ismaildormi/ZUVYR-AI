@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/update/models.js
+// ZUVYR — cli/commands/update/models.js
 //
 // "Update all installed AI models." There's no local model download step
 // in this project (that's `local`/self-hosted, a user's own runtime) —
@@ -41,7 +41,7 @@ async function verifyUpstream(provider, model, envVar) {
 }
 
 module.exports = async function updateModels() {
-  log.step('ROX AI — update models');
+  log.step('ZUVYR — update models');
   loadEnv();
 
   await checkModels();

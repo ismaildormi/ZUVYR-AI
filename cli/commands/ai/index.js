@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/ai/index.js
+// ZUVYR — cli/commands/ai/index.js
 //
 // `rox ai <subcommand>` — everything here reads the SAME modules
 // aiRouter.js and server.js use at runtime (src/modules/ai/providers,

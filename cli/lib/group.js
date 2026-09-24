@@ -1,4 +1,4 @@
-// ROX AI — cli/lib/group.js
+// ZUVYR — cli/lib/group.js
 //
 // Every top-level entry in cli/rox.js's `commands` map is a function
 // `(args) => Promise<void>`. A "group" (e.g. `rox ai <sub>`, `rox
@@ -30,7 +30,7 @@ function makeGroup({ name, description, subcommands, defaultSubcommand }) {
     const lines = Object.entries(subcommands).map(
       ([key, { summary }]) => `  rox ${name} ${key.padEnd(12)} ${summary}`
     );
-    return `ROX AI — ${name}${description ? ': ' + description : ''}\n\nSubcommands:\n${lines.join('\n')}\n`;
+    return `ZUVYR — ${name}${description ? ': ' + description : ''}\n\nSubcommands:\n${lines.join('\n')}\n`;
   }
 
   async function group(args = []) {

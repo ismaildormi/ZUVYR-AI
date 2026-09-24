@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/jobs.js
+// ZUVYR — cli/commands/jobs.js
 //
 // Lists individual jobs (not just counts — that's `rox queue status`)
 // via BullMQ's `Queue.getJobs()`. Useful for finding *which* job
@@ -13,7 +13,7 @@ const QUEUE_MAP = { image: 'imageQueue', video: 'videoQueue' };
 const DEFAULT_STATUS = 'failed';
 
 module.exports = async function jobs(args = []) {
-  log.step('ROX AI — jobs');
+  log.step('ZUVYR — jobs');
   loadEnv();
 
   const queueArg = args.find((a) => a.startsWith('--queue='));

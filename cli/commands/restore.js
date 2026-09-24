@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/restore.js
+// ZUVYR — cli/commands/restore.js
 //
 // Restoring a database dump overwrites live data — this is the one
 // command in the whole CLI that refuses to run without an explicit
@@ -21,7 +21,7 @@ const { confirm } = require('../lib/interactive');
 
 module.exports = async function restore(args) {
   const ctx = getContext();
-  log.step('ROX AI — restore' + (ctx.dryRun ? ' [dry-run]' : ''));
+  log.step('ZUVYR — restore' + (ctx.dryRun ? ' [dry-run]' : ''));
 
   const archivePath = args.find((a) => !a.startsWith('--'));
   const skipEnv = args.includes('--no-env');

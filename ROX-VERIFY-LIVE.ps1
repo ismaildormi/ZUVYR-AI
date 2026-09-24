@@ -39,7 +39,7 @@ else { Web 'Supabase public API' "$supa/rest/v1/" @{ apikey=$anon; Authorization
 
 $open = Value 'OPENROUTER_API_KEY'
 if ([string]::IsNullOrWhiteSpace($open)) { Add-Result 'OpenRouter' 'SKIP' 'API key is missing' }
-else { Web 'OpenRouter' 'https://openrouter.ai/api/v1/models' @{ Authorization="Bearer $open"; 'HTTP-Referer'=$app; 'X-Title'='ROX AI verifier' } 'Get' @(200) }
+else { Web 'OpenRouter' 'https://openrouter.ai/api/v1/models' @{ Authorization="Bearer $open"; 'HTTP-Referer'=$app; 'X-Title'='ZUVYR verifier' } 'Get' @(200) }
 
 $replicate = Value 'REPLICATE_API_TOKEN'
 if ([string]::IsNullOrWhiteSpace($replicate)) { Add-Result 'Replicate' 'SKIP' 'API token is missing' }

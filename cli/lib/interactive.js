@@ -1,4 +1,4 @@
-// ROX AI — cli/lib/interactive.js
+// ZUVYR — cli/lib/interactive.js
 //
 // One confirmation prompt shared by any command that's about to do
 // something destructive (restore overwriting the DB, optimize

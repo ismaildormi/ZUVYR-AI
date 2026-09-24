@@ -1,4 +1,4 @@
-// ROX AI — cli/lib/flags.js
+// ZUVYR — cli/lib/flags.js
 //
 // The 12 flags every `rox <command>` accepts (--help, --verbose,
 // --json, --silent, --force, --yes, --dry-run, --fix, --repair,

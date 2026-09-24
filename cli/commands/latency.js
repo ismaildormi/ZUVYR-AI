@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/latency.js
+// ZUVYR — cli/commands/latency.js
 //
 // Measures actual round-trip time to the three kinds of external
 // dependency this app has: Redis (queue + circuit breaker state),
@@ -37,7 +37,7 @@ function report(label, result) {
 }
 
 module.exports = async function latency() {
-  log.step('ROX AI — latency');
+  log.step('ZUVYR — latency');
   loadEnv();
 
   const redisResult = tryLoad('lib/queue');

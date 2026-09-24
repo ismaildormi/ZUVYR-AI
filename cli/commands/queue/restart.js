@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/queue/restart.js
+// ZUVYR — cli/commands/queue/restart.js
 //
 // There's no separate "queue service" to restart — BullMQ queues are
 // just Redis-backed job lists that worker.js's Worker instances poll.
@@ -14,7 +14,7 @@ const { log, loadEnv } = require('../../lib/util');
 const { tryLoad } = require('../../lib/backendLoader');
 
 module.exports = async function restart() {
-  log.step('ROX AI — queue restart (pause + resume)');
+  log.step('ZUVYR — queue restart (pause + resume)');
   loadEnv();
 
   const queueResult = tryLoad('lib/queue');

@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/ai/routing.js
+// ZUVYR — cli/commands/ai/routing.js
 //
 // Prints the actual fallback chains from aiRouter.js (`ROUTES`), plus
 // what getEffectiveChain() will do to them for each load level — the
@@ -12,7 +12,7 @@ const { log, loadEnv } = require('../../lib/util');
 const { loadAiRouter } = require('../../lib/aiBackend');
 
 module.exports = async function routing(args = []) {
-  log.step('ROX AI — routing');
+  log.step('ZUVYR — routing');
   loadEnv();
 
   const loadArg = args.find((a) => a.startsWith('--load='));

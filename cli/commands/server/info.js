@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/server/info.js
+// ZUVYR — cli/commands/server/info.js
 //
 // One-screen machine/process overview: OS-level facts from Node's
 // built-in `os` module (no new dependency), plus the same pm2 `jlist`
@@ -27,7 +27,7 @@ function fmtUptime(seconds) {
 }
 
 module.exports = async function info() {
-  log.step('ROX AI — server info');
+  log.step('ZUVYR — server info');
 
   log.step('Machine');
   console.log(`  hostname: ${os.hostname()}`);

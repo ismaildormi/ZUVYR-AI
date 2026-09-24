@@ -22,4 +22,4 @@ Invoke-RoxCli -Arguments @('start') | Out-Null
 $port = 5500
 if ($envMap.ContainsKey('ROX_FRONTEND_PORT')) { [int]::TryParse([string]$envMap['ROX_FRONTEND_PORT'], [ref]$port) | Out-Null }
 Start-RoxFrontend -Port $port -OpenBrowser:(-not $NoBrowser) | Out-Null
-Write-RoxOk 'ROX AI start sequence completed.'
+Write-RoxOk 'ZUVYR start sequence completed.'

@@ -84,7 +84,7 @@ $ready = [math]::Min(100, $testScore + $configScore)
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $report = Join-Path $script:RoxLogsDir "rox-test-$stamp.txt"
 @(
-  "ROX AI validation - $(Get-Date -Format o)",
+  "ZUVYR validation - $(Get-Date -Format o)",
   "Version: $(Get-RoxVersion)",
   "Active profile: $(Get-RoxActiveProfile)",
   "Passed: $passed",

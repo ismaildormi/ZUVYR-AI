@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// ROX AI — cli/tests/test-production-deploy-config.js
+// ZUVYR — cli/tests/test-production-deploy-config.js
 //
 // Structural/logic checks for the Production Deployment module
 // (docker-compose.production.yml, scripts/deploy/production-deploy.sh,

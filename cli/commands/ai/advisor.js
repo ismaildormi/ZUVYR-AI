@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/ai/advisor.js
+// ZUVYR — cli/commands/ai/advisor.js
 //
 // Thin CLI view onto backend/src/modules/advisor (already fully built:
 // collect -> health/risk/forecast -> insights -> persisted daily report
@@ -83,7 +83,7 @@ function printRecommendations(recs) {
 }
 
 module.exports = async function advisor(args = []) {
-  log.step('ROX AI — advisor');
+  log.step('ZUVYR — advisor');
   loadEnv();
 
   const advisorResult = tryLoad('src/modules/advisor');
