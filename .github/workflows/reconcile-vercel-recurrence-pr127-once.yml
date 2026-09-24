@@ -1,0 +1,56 @@
+name: PR127 Vercel Recurrence Reconciliation Once
+
+on:
+  push:
+    branches:
+      - reconcile/pack089-postmerge-owner-acceptance-20260924
+    paths:
+      - tools/reconcile-vercel-recurrence-pr127-20260924.cjs
+      - .github/workflows/reconcile-vercel-recurrence-pr127-once.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: reconcile/pack089-postmerge-owner-acceptance-20260924
+          fetch-depth: 0
+      - name: Use Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - name: Reconcile Vercel recurrence truth
+        run: node tools/reconcile-vercel-recurrence-pr127-20260924.cjs
+      - name: Remove one-shot files
+        run: |
+          rm -f tools/reconcile-vercel-recurrence-pr127-20260924.cjs
+          rm -f .github/workflows/reconcile-vercel-recurrence-pr127-once.yml
+      - name: Validate continuity
+        run: node tools/validate-zuvyr-continuity.cjs
+      - name: Verify model-first continuity test
+        run: node backend/test-model-first-byo-compute-policy.js
+      - name: Guard active Pack
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const s=JSON.parse(fs.readFileSync('docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json','utf8'));
+          if(s.active_work.pack!=='PACK089'||s.active_work.pack090_allowed!==false) process.exit(1);
+          if(s.infrastructure.vercel_current_production_status!=='READY') process.exit(1);
+          if(s.infrastructure.vercel_build_rate_limit_current_gate!==true) process.exit(1);
+          console.log('PACK089_AND_VERCEL_CLASSIFICATION_PASS');
+          NODE
+      - name: Commit reconciled truth
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'docs: track PR127 Vercel rate-limit recurrence'
+          git push origin HEAD:reconcile/pack089-postmerge-owner-acceptance-20260924
