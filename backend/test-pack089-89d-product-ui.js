@@ -61,9 +61,12 @@ const driveConnectRoute = routes.slice(driveConnectStart, driveCallbackStart);
 assert(driveConnectStart >= 0 && driveCallbackStart > driveConnectStart);
 assert(
   driveConnectRoute.indexOf('googleDriveRuntime.assertOAuthConfigured();') <
-  driveConnectRoute.indexOf('connectionStore.createIntegration({'),
-  'missing OAuth config must fail before draft creation'
+  driveConnectRoute.indexOf('connectionStore.createOrReuseIntegration({'),
+  'missing OAuth config must fail before atomic provider-row creation/reuse'
 );
+assert(driveConnectRoute.includes('connectionStore.createOrReuseIntegration({'));
+assert(!driveConnectRoute.includes('connectionStore.findLiveIntegration('));
+assert(ui.includes('pluginState.oauthCallbackInFlight'));
 
 for (const marker of [
   'ZUVYR PACK089 / 89D',
@@ -76,6 +79,6 @@ for (const marker of [
 ]) assert(css.includes(marker), 'missing 89D CSS marker: ' + marker);
 
 console.log('PASS: Pack089 89D activates real Connections / Plugins / Skills UI');
-console.log('PASS: Google OAuth config fails before draft creation and credentials are absent from UI');
+console.log('PASS: Google OAuth config fails before atomic create/reuse and callback completion is single-flight');
 console.log('PASS: plugin install uses Permission Center challenge/grant before activation with compensation');
 console.log('PASS: loading/error/retry, keyboard Escape, RTL and responsive wiring are present');

@@ -1787,12 +1787,16 @@
       oauthMarkerSet(false);scrubDriveOAuthUrl();renderPluginOAuthMessage();return;
     }
     if(!state){pluginState.oauthMessage={title:'Google Drive callback blocked',message:'The OAuth state is missing, so the callback was not submitted.'};oauthMarkerSet(false);scrubDriveOAuthUrl();renderPluginOAuthMessage();return;}
+    if(pluginState.oauthCallbackInFlight)return pluginState.oauthCallbackInFlight;
     pluginState.oauthMessage={title:'Finishing Google Drive connection…',message:'Validating the one-time OAuth state and storing credentials server-side in Vault.'};renderPluginOAuthMessage();
-    try{
-      await pluginApi('/api/workspace/drive/oauth/callback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code,state:state})});
-      pluginState.oauthMessage={title:'Google Drive connected',message:'The connection is active. Tokens remain server-side in Vault.'};
-    }catch(error){pluginState.oauthMessage={title:'Google Drive callback needs attention',message:error.message};}
-    finally{oauthMarkerSet(false);scrubDriveOAuthUrl();await loadPluginSurface(true);renderPluginOAuthMessage();}
+    pluginState.oauthCallbackInFlight=(async function(){
+      try{
+        await pluginApi('/api/workspace/drive/oauth/callback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code,state:state})});
+        pluginState.oauthMessage={title:'Google Drive connected',message:'The connection is active. Tokens remain server-side in Vault.'};
+      }catch(error){pluginState.oauthMessage={title:'Google Drive callback needs attention',message:error.message};}
+      finally{oauthMarkerSet(false);scrubDriveOAuthUrl();await loadPluginSurface(true);renderPluginOAuthMessage();pluginState.oauthCallbackInFlight=null;}
+    })();
+    return pluginState.oauthCallbackInFlight;
   }
   async function createPluginDraft(form){
     var button=form.querySelector('[data-zs-plugin-create]');if(button)button.disabled=true;
