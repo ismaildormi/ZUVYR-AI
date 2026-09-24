@@ -58,6 +58,22 @@ const { createWorkspaceConnectionStore } = require('./lib/workspaceConnectionRep
   assert(!migration.includes("raise exception 'pack089_oauth_session_invalid'"));
   assert(migration.includes('to service_role'));
 
+  const cleanup = fs.readFileSync('93_pack089_89e_expired_pkce_cleanup.sql','utf8');
+  for (const marker of [
+    'cleanup_expired_workspace_oauth_pkce_owner_pack089',
+    "s.provider='google_drive'",
+    's.consumed_at is null',
+    's.expires_at <= now()',
+    'delete from vault.secrets',
+    'workspace_oauth_expired_pkce_before_insert_pack089',
+    'before insert on public.workspace_oauth_sessions',
+    "'integration_oauth_expired_pkce_cleaned'",
+    "'secretValuesExposed',false",
+    'to service_role'
+  ]) assert(cleanup.includes(marker), marker);
+  assert(!cleanup.includes('vault.decrypted_secrets'));
+  assert(!cleanup.includes('decrypted_secret'));
+
   const routes = fs.readFileSync('lib/workspaceRoutes.js','utf8');
   const start = routes.indexOf("router.post('/drive/connect'");
   const end = routes.indexOf("router.post('/drive/oauth/callback'", start);
@@ -75,5 +91,5 @@ const { createWorkspaceConnectionStore } = require('./lib/workspaceConnectionRep
   assert(mcp.includes('ismaildormi/ZUVYR-AI'));
   assert(!mcp.includes('raw.githubusercontent.com/ismaildormi/rox-ai/main'));
 
-  console.log('PASS: PACK089 OAuth connect is atomic/idempotent and expected callback replay is fail-closed without PostgreSQL ERROR control flow');
+  console.log('PASS: PACK089 OAuth connect is atomic/idempotent, stale callbacks fail closed, and expired PKCE Vault secrets are cleaned owner-scoped without exposing secret values');
 })();
