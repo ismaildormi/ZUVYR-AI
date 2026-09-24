@@ -19,7 +19,6 @@ const browser=await chromium.launch({headless:true});
 function safeName(value){return String(value).replace(/[^a-z0-9_-]+/gi,'-').toLowerCase();}
 
 async function inspectPage(page,view,viewport){
-  const root=page.locator('#screen-zuvyr-tools');
   const state=await page.evaluate(({view,viewport})=>{
     const root=document.getElementById('screen-zuvyr-tools');
     const active=root&&root.querySelector(`[data-zs-view="${view}"]`);
@@ -65,7 +64,7 @@ for(const viewport of viewports){
   page.on('console',msg=>{if(msg.type()==='error')consoleErrors.push(msg.text());});
   page.on('pageerror',err=>consoleErrors.push(err.message));
   await page.goto(`${baseUrl}/tools/visual-qa/harness.html`,{waitUntil:'networkidle'});
-  await page.waitForSelector('#screen-zuvyr-tools');
+  await page.waitForSelector('#screen-zuvyr-tools',{state:'attached'});
 
   for(const target of targets){
     const entry=page.locator(`[data-zuvyr-section="${target}"]`).first();
@@ -91,7 +90,6 @@ for(const viewport of viewports){
   await context.close();
 }
 
-// Capture the real canonical public production response as a second evidence source.
 try{
   const context=await browser.newContext({viewport:{width:390,height:844},colorScheme:'dark'});
   const page=await context.newPage();
