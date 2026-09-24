@@ -1,10 +1,10 @@
 {
-  "schema_version": "1.4",
-  "updated_at": "2026-09-24T00:34:00Z",
+  "schema_version": "1.5",
+  "updated_at": "2026-09-24T02:16:00Z",
   "status": "CANONICAL_CURRENT_STATE_OVERRIDE",
   "purpose": "Fresh compact continuity override. When this file is newer than older state capsules, it wins subject to even fresher Git/production evidence and explicit user instruction.",
   "repository": "ismaildormi/rox-ai",
-  "source_main_before_this_reconciliation": "1d960656d0897beeacd26a09f40a5af7332543ff",
+  "source_main_before_this_reconciliation": "eae255ba3f4dd90676a365691f41cacf7e19fe15",
   "execution_policy": {
     "continuous_improvement_override": "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md",
     "machine_policy": "docs/zuvyr/continuous-improvement-override.v1.json",
@@ -37,6 +37,25 @@
     "google_oauth_values_or_google_side_validity": "UNVERIFIED",
     "interactive_owner_consent_completed": false,
     "next_legal_step": "Run the real owner-scoped Google Drive OAuth flow in production and prove client/redirect acceptance, requested-scope consent, callback activation, one granted-scope Drive call, denied-scope rejection, disconnect/revoke, post-revoke denial, audit persistence and Vault/plaintext-secret cleanliness. Only then lock PACK089 and open PACK090."
+  },
+  "final_v1_activation_order": {
+    "stripe_live_activation": {
+      "status": "DEFERRED_BY_OWNER_TO_FINAL_PACK150_ACTION",
+      "contract": "docs/zuvyr/STRIPE_FINAL_V1_ACTIVATION_GATE_2026-09-24.md",
+      "historical_test_mode": "VERIFIED_M08_M09",
+      "business_verification": "PENDING_EXTERNAL",
+      "live_real_money_acceptance": "PENDING_EXTERNAL",
+      "must_be_last_external_activation_before_v1_ready": true,
+      "v1_ready_forbidden_before_live_acceptance": true,
+      "intermediate_packs_may_continue_when_their_own_gates_pass": true,
+      "production_billing_intent_until_then": "FAIL_CLOSED",
+      "required_production_flags_until_final_activation": {
+        "ZUVYR_BILLING_V1_ACTIVE": false,
+        "LIVE_BILLING_ALLOWED": false,
+        "ZUVYR_STRIPE_TEST_SETTLEMENT_ALLOWED": false
+      },
+      "rule": "Complete every other applicable V1 gate first. Inside PACK150, after all non-Stripe applicable requirements are PASS or true N/A_WITH_EVIDENCE, complete legitimate Stripe business verification and controlled live real-money acceptance as the final external activation action. Only then may V1_READY=true be emitted. This deferral never permits skipping fixable internal Stripe findings."
+    }
   },
   "reconciled_prior_pack_hardening": {
     "pack088": {
@@ -135,7 +154,7 @@
   },
   "known_unresolved_gates": [
     "PACK089 real Google OAuth production acceptance",
-    "PACK019/PACK020 live Stripe real-money acceptance / business verification",
+    "PACK019/PACK020 Stripe live business verification + real-money acceptance is deliberately deferred to the final external activation action inside PACK150; it blocks V1_READY but does not block intermediate Packs whose own gates pass",
     "deferred paid media/audio provider E2E gates",
     "PACK073 authenticated physical microphone acceptance",
     "PACK076-PACK080 real sandbox/runtime/deploy gates M15/M16 (provider/runtime pricing, credentials and real deploy target)",
@@ -152,6 +171,7 @@
     "Entire ZUVYR project globally CLEAN while any known external or authenticated/live acceptance gate remains",
     "PACK089 complete before live OAuth acceptance",
     "PACK090 started",
+    "V1_READY before final Stripe business verification and controlled live real-money acceptance",
     "ZUVYR proprietary production model complete before M21",
     "paid-provider acceptance without a real authorized billed call",
     "historical evidence rewritten instead of superseded by a dated reconciliation",
