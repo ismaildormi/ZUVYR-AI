@@ -14,6 +14,7 @@ let failed=false;
 const browser=await chromium.launch({headless:true});
 
 function safe(value){return String(value).replace(/[^a-z0-9_-]+/gi,'-').toLowerCase();}
+function idSelector(id){return '#'+String(id).replace(/[^A-Za-z0-9_-]/g,ch=>'\\'+ch);}
 
 function fixtureInit(){
   const session={access_token:'zuvyr-native-visual-token',refresh_token:'zuvyr-native-refresh',expires_at:4102444800,user:{id:'00000000-0000-4000-8000-000000000001',email:'visual-owner@example.invalid',user_metadata:{full_name:'ZUVYR Owner'}}};
@@ -108,7 +109,7 @@ async function inspect(page,id,viewport,consoleErrors){
   },{id,viewport});
   if(state.missing)return {...state,consoleErrors};
   let violations=[];
-  try{const axe=await new AxeBuilder({page}).include(`#${CSS.escape(id)}`).analyze();violations=axe.violations.map(v=>({id:v.id,impact:v.impact,help:v.help,nodes:v.nodes.slice(0,20).map(n=>({target:n.target,html:n.html.slice(0,500),failureSummary:n.failureSummary}))}));}catch(error){violations=[{id:'axe-run-failed',impact:'critical',help:String(error?.message||error),nodes:[]}];}
+  try{const axe=await new AxeBuilder({page}).include(idSelector(id)).analyze();violations=axe.violations.map(v=>({id:v.id,impact:v.impact,help:v.help,nodes:v.nodes.slice(0,20).map(n=>({target:n.target,html:n.html.slice(0,500),failureSummary:n.failureSummary}))}));}catch(error){violations=[{id:'axe-run-failed',impact:'critical',help:String(error?.message||error),nodes:[]}];}
   return {...state,consoleErrors:[...new Set(consoleErrors)].slice(0,80),violations};
 }
 
@@ -135,7 +136,7 @@ for(const viewport of viewports){
   for(const item of inventory){
     const ok=await activate(page,item.id);if(!ok){failed=true;report.summary.renderFailures++;viewportReport.screens.push({id:item.id,renderFailure:true,reason:'not_visible_after_activation'});continue;}
     await page.waitForTimeout(80);
-    const locator=page.locator(`#${item.id}`).first();
+    const locator=page.locator(idSelector(item.id)).first();
     const filename=`${safe(item.id)}-${viewport.name}.png`;
     await locator.screenshot({path:path.join(outDir,filename),animations:'disabled'});
     const evidence=await inspect(page,item.id,viewport.name,consoleErrors);evidence.screenshot=filename;
