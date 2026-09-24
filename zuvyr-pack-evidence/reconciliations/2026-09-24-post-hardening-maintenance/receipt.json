@@ -1,0 +1,68 @@
+{
+  "schema_version": "zuvyr.post-hardening-maintenance-reconciliation.v1",
+  "date": "2026-09-24",
+  "scope": "Production proof that the deployed 30-minute Railway maintenance loop consumed the ZUVYR runtime hygiene invariant after global cleanliness hardening.",
+  "status": "LOCKED_VERIFIED_RUNTIME_MONITORING",
+  "source_main": "3f0ba3bfb159fa82f6ffee40cdea6c8961b3794c",
+  "global_hardening_merge": "03c8415f92d55591626c0fe50ad80488d8882979",
+  "railway": {
+    "project_id": "ba460cdb-cc55-4203-bdd0-711846b7564c",
+    "environment_id": "5f533b47-378a-4098-baec-a34c4ddfdf01",
+    "maintenance_service_id": "b093dbfd-7de4-429a-b5b6-55ef401c3d8d",
+    "deployment_id": "23694064-119a-4baf-96e0-142ae51baab5",
+    "deployment_status": "SUCCESS",
+    "cron_schedule": "*/30 * * * *",
+    "observed_runs": [
+      {
+        "observed_at": "2026-09-23T23:01:48.047065039Z",
+        "scheduler_run_id": "4b304000-cb6a-425e-9353-e0400446fed5",
+        "maintenance_run_id": "2042bfbb-484c-411a-a6bb-2bdd8e754011",
+        "http_status": 200,
+        "status": "success",
+        "duplicate": false
+      },
+      {
+        "observed_at": "2026-09-23T23:32:24.408087852Z",
+        "scheduler_run_id": "1cf62296-68f3-4a92-b306-96881ae024c5",
+        "maintenance_run_id": "3f2bc646-68a8-41de-8560-9ba4ff70da46",
+        "http_status": 200,
+        "status": "success",
+        "duplicate": false
+      },
+      {
+        "observed_at": "2026-09-24T00:02:22.237221586Z",
+        "scheduler_run_id": "cdea634b-9455-4d09-bf6c-11ec29bfe8b2",
+        "maintenance_run_id": "320c4f7b-3dff-4818-99b4-3bde730e2004",
+        "http_status": 200,
+        "status": "success",
+        "duplicate": false
+      }
+    ]
+  },
+  "maintenance_success_semantics": {
+    "source": "backend/lib/maintenanceCoordinator.js",
+    "rule": "A run is marked success only when receipt.errors is empty. A failed runtime hygiene RPC or hygiene.ok != true appends an error and prevents success.",
+    "conclusion": "The three observed success runs prove the deployed coordinator executed without hygiene drift or hygiene RPC failure during those windows."
+  },
+  "fresh_supabase_rpc": {
+    "project_id": "tqoqsgaymygmqrzddvtu",
+    "function": "public.zuvyr_runtime_hygiene_audit()",
+    "observed_at": "2026-09-24T00:18:00Z",
+    "result": {
+      "ok": true,
+      "version": "zuvyr-runtime-hygiene.v1",
+      "rls_no_policy_count": 0,
+      "unindexed_fk_count": 0,
+      "exposed_security_definer_count": 0
+    }
+  },
+  "safety": {
+    "provider_calls": 0,
+    "paid_execution": false,
+    "customer_mutation": false,
+    "schema_mutation": false,
+    "pack_progression_changed": false
+  },
+  "resolved_stale_gate": "First post-global-hardening scheduled maintenance receipt pending natural cron execution.",
+  "remaining_scope": "This receipt closes only the post-hardening runtime-monitoring proof. It does not close external provider, owner-authenticated UI, real-device, billing, Vercel cooldown, GitHub admin, or other explicitly deferred gates."
+}
