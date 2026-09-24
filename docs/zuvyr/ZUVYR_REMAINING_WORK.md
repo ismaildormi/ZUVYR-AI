@@ -249,18 +249,23 @@ This external incident does not justify leaving internally actionable Supabase e
 ---
 
 ### RW-018 — Vercel Git build-rate-limit blocks all-green deployment evidence
-Status: `CLOSED`
-Closed: 2026-09-24
+Status: `BLOCKED_EXTERNAL / ACTIVE MONITOR`
 Subsystem: `Vercel Git integration / Level 3 production deployment evidence`
 
-Closure evidence:
-- cooldown/build quota recovered without disabling the Vercel Git safety path;
-- exact production deployment `dpl_DEhSnxP5pC5JUeZmaKhgHRN9nbeU` is **READY**;
-- deployment source SHA is exact merged main `f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea`;
-- GitHub Vercel status on current main is **SUCCESS**;
-- post-merge Visual QA run `36067370611` is **PASS** and its production probe returned HTTP 200.
+Current evidence:
+- exact production deployment `dpl_DEhSnxP5pC5JUeZmaKhgHRN9nbeU` is **READY** on merged main `f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea`; public production remains reachable;
+- the build-rate-limit temporarily recovered and allowed that production deployment;
+- fresh PR #127 head `b7f3baa70cd2705e5defcf70f486fd4d6e055b31` then received GitHub Vercel status **failure** with `upgradeToPro=build-rate-limit`;
+- therefore the provider quota/cooldown is not permanently resolved, even though current production is healthy;
+- RW-016 Visual QA remains CLOSED because it is backed by a successful post-merge production run and this docs/test PR does not change frontend runtime code.
 
-The historical rate-limit failures remain evidence, but they are no longer a current ZUVYR gate.
+Required before permanent closure:
+- wait for Vercel quota/cooldown to permit a fresh deployment again;
+- obtain a green Vercel status on the then-current relevant head/main;
+- verify exact deployment SHA/identity is READY and production probe remains healthy;
+- keep Git deployment safety intact; do not disable the integration merely to hide a red status.
+
+This is an external deployment-evidence blocker, not evidence of a current ZUVYR frontend outage.
 
 
 ## Rules for future additions

@@ -3,7 +3,7 @@
   "pack": "089",
   "phase": "89E_PRODUCTION_ACCEPTANCE",
   "status": "OWNER_AUTH_ACCEPTANCE_PENDING",
-  "observed_at": "2026-09-24T22:46:35.501Z",
+  "observed_at": "2026-09-24T22:52:21.059Z",
   "source_main": "f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea",
   "evidence": {
     "repository": "ismaildormi/ZUVYR-AI",
@@ -32,11 +32,16 @@
     "owner_drive_permission_audit_events_after_deploy": 0,
     "interpretation_of_zero_permission_events": "The real owner has not yet executed the newly deployed Browse files acceptance flow; this must not be fabricated.",
     "vercel": {
-      "status": "READY",
-      "target": "production",
-      "deployment_id": "dpl_DEhSnxP5pC5JUeZmaKhgHRN9nbeU",
-      "github_commit_sha": "f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea",
-      "github_status": "SUCCESS"
+      "production_status": "READY",
+      "production_target": "production",
+      "production_deployment_id": "dpl_DEhSnxP5pC5JUeZmaKhgHRN9nbeU",
+      "production_github_commit_sha": "f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea",
+      "production_runtime_reachable": true,
+      "latest_pr_number": 127,
+      "latest_pr_head_sha": "b7f3baa70cd2705e5defcf70f486fd4d6e055b31",
+      "latest_pr_vercel_status": "FAILURE_BUILD_RATE_LIMIT",
+      "latest_pr_vercel_target_url": "https://vercel.com/rox-ai?upgradeToPro=build-rate-limit",
+      "interpretation": "Production is healthy on exact merged main, but fresh deployment evidence is externally blocked again for PR127. Do not classify the quota/cooldown issue as permanently closed."
     },
     "railway": {
       "environment": "production",
@@ -72,13 +77,15 @@
     "release_quality_run_id": 36067370563,
     "continuity_run_id": 36067370688,
     "rw_016_visual_qa": "CLOSED_WITH_POST_MERGE_EVIDENCE",
-    "rw_018_vercel_build_rate_limit": "CLOSED_COOLDOWN_RECOVERED_EXACT_PRODUCTION_READY"
+    "rw_018_vercel_build_rate_limit": "BLOCKED_EXTERNAL_MONITOR_RECURRED_ON_PR127"
   },
   "interpretation": {
     "pack089_complete": false,
     "pack090_started": false,
     "internally_actionable_owner_acceptance_controls_deployed": true,
-    "only_remaining_pack089_gate": "REAL_OWNER_AUTHENTICATED_ACCEPTANCE_AND_POST_ACCEPTANCE_DB_VAULT_VERIFICATION"
+    "only_remaining_pack089_gate": "REAL_OWNER_AUTHENTICATED_ACCEPTANCE_AND_POST_ACCEPTANCE_DB_VAULT_VERIFICATION",
+    "vercel_production_runtime_gate": "PASS",
+    "vercel_new_deployment_evidence_gate": "BLOCKED_EXTERNAL_BUILD_RATE_LIMIT"
   },
   "next": {
     "pack090_allowed": false,

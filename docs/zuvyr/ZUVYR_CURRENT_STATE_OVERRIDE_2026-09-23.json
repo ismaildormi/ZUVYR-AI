@@ -1,6 +1,6 @@
 {
   "schema_version": "1.9",
-  "updated_at": "2026-09-24T22:46:35.501Z",
+  "updated_at": "2026-09-24T22:52:21.059Z",
   "status": "CANONICAL_CURRENT_STATE_OVERRIDE",
   "purpose": "Fresh compact continuity override. When this file is newer than older state capsules, it wins subject to even fresher Git/production evidence and explicit user instruction.",
   "repository": "ismaildormi/ZUVYR-AI",
@@ -180,7 +180,7 @@
       "public_production_http": 200,
       "actionable_visual_findings": 0,
       "rw_016": "CLOSED",
-      "rw_018": "CLOSED"
+      "rw_018": "BLOCKED_EXTERNAL_MONITOR_RECURRED_ON_PR127"
     }
   },
   "infrastructure": {
@@ -210,8 +210,15 @@
     "vercel_current_production_deployment": "dpl_DEhSnxP5pC5JUeZmaKhgHRN9nbeU",
     "vercel_current_production_source_sha": "f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea",
     "vercel_current_production_status": "READY",
-    "vercel_build_rate_limit_current_gate": false,
-    "vercel_build_rate_limit_resolution": "CLOSED_COOLDOWN_RECOVERED_EXACT_PRODUCTION_READY"
+    "vercel_build_rate_limit_current_gate": true,
+    "vercel_build_rate_limit_resolution": "RECURRED_ON_PR127_HEAD_AFTER_PRODUCTION_RECOVERY",
+    "vercel_latest_pr": {
+      "pr": 127,
+      "head_sha": "b7f3baa70cd2705e5defcf70f486fd4d6e055b31",
+      "status": "FAILURE_BUILD_RATE_LIMIT",
+      "production_impact": "NONE_OBSERVED",
+      "classification": "BLOCKED_EXTERNAL_DEPLOYMENT_EVIDENCE"
+    }
   },
   "advisor_reconciliation": {
     "observed_at": "2026-09-24T00:27:14Z",
@@ -241,7 +248,8 @@
     "PACK094 authenticated owner Data Rights UI acceptance (production frontend sub-gate already resolved)",
     "PACK095 authenticated owner/admin Model Lab UI acceptance (production frontend sub-gate already resolved)",
     "Supabase leaked-password protection remains disabled; historical PACK009 attempt recorded plan HTTP 402 and current connected tooling cannot mutate Auth password-security configuration",
-    "GitHub main branch protection/ruleset remains absent; repository-admin mutation is not available through the connected GitHub tool surface"
+    "GitHub main branch protection/ruleset remains absent; repository-admin mutation is not available through the connected GitHub tool surface",
+    "Vercel Git build-rate-limit recurred on PR #127 head while exact production main remains READY; wait for quota/cooldown recovery and require a fresh green deployment check before closing RW-018 permanently."
   ],
   "do_not_claim": [
     "Entire ZUVYR project globally CLEAN while any known external or authenticated/live acceptance gate remains",

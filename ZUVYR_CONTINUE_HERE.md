@@ -6,9 +6,9 @@
 - Google OAuth owner consent + callback: **PASS**. One owner Google Drive connection remains active with `drive.file.read` + `drive.export`; write is disabled and credentials remain Vault-backed.
 - PACK089 owner acceptance controls are deployed in production: **Browse files → Permission Center challenge/grant → real Drive list/read → expected denied write guard → Disconnect/revoke → post-revoke denial check**.
 - The real owner has **not yet executed** the newly deployed Browse-files permission flow; current permission-audit count for that acceptance is zero. Do not fabricate it.
-- Vercel cooldown/build-rate-limit gate is **CLOSED**: production deployment `dpl_DEhSnxP5pC5JUeZmaKhgHRN9nbeU` is READY on exact main `f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea`.
+- Vercel production remains **READY** on deployment `dpl_DEhSnxP5pC5JUeZmaKhgHRN9nbeU` at exact main `f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea`. Fresh PR #127 deployment evidence is **BLOCKED_EXTERNAL / MONITOR** because the Vercel build-rate-limit recurred on head `b7f3baa70cd2705e5defcf70f486fd4d6e055b31`; production impact is none observed.
 - Railway production backend/worker/maintenance are all **SUCCESS** on the merged source.
-- Post-merge Visual QA is **PASS** (run `36067370611`, artifact `10836762121`): 24 fixture views + 26 native screens, zero overflow/missing views/duplicate IDs/console errors, zero critical/serious/moderate accessibility violations, public production HTTP 200. RW-016 and RW-018 are closed by evidence.
+- Post-merge Visual QA is **PASS** (run `36067370611`, artifact `10836762121`): 24 fixture views + 26 native screens, zero overflow/missing views/duplicate IDs/console errors, zero critical/serious/moderate accessibility violations, public production HTTP 200. RW-016 is CLOSED; RW-018 remains an external deployment-evidence monitor because the Vercel rate limit recurred on PR #127.
 - PACK089 remains `IN_PROGRESS`; PACK090 remains **NOT ALLOWED**.
 - Remaining legal gate: real owner Browse-files permission/read → denied write proof → disconnect/revoke → post-revoke denial → audit persistence → Vault/plaintext-secret cleanliness.
 - Receipt: `zuvyr-pack-evidence/pack-089/2026-09-24-89e-post-merge-owner-acceptance-ready/receipt.json`.

@@ -18,7 +18,8 @@ This dated override is the **current-state entry point**. Older Pack headers/sta
 | PACK090 allowed | **NO** |
 | OAuth owner consent/callback | **PASS** |
 | Owner acceptance controls | **DEPLOYED on main `f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea`** |
-| Vercel cooldown / RW-018 | **CLOSED — exact production READY** |
+| Vercel production | **READY on exact main `f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea`** |
+| Vercel fresh deploy evidence / RW-018 | **BLOCKED_EXTERNAL / MONITOR — rate limit recurred on PR #127** |
 | Visual QA / RW-016 | **CLOSED — post-merge workflow PASS** |
 | Remaining PACK089 gate | Real owner Browse files permission/read → denied write → disconnect/revoke → post-revoke denial → audit/Vault cleanliness |
 | Final release gate | `PACK150` only; `V1_READY=true` requires all applicable `EA-001…EA-292` PASS |
