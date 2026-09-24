@@ -1,12 +1,12 @@
 {
-  "schema_version": "2.6",
-  "updated_at": "2026-09-24T16:17:00Z",
+  "schema_version": "2.7",
+  "updated_at": "2026-09-24T18:16:41.144586Z",
   "purpose": "Single anti-loss reconstruction capsule for any new ChatGPT/Work/Codex session. Fresh production evidence and explicit current user instruction outrank stale historical state.",
-  "repository": "ismaildormi/rox-ai",
+  "repository": "ismaildormi/ZUVYR-AI",
   "created_from_git_head": "1d960656d0897beeacd26a09f40a5af7332543ff",
   "current_state_override": {
     "path": "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json",
-    "blob_sha": "c8a56e08d6e8585efcc0c592ccc9ac98334bf2e2",
+    "blob_sha": "5f2e70740d198691fcacfdcd03b0ad142cdbaf69",
     "authority": "Fresh compact current-state authority below even fresher Git/production evidence and explicit user instruction; older long-form state files remain historical ledgers when they disagree."
   },
   "source_of_truth_order": [
@@ -54,7 +54,7 @@
     "pack": "PACK089",
     "pack_status": "IN_PROGRESS",
     "phase": "89E_PRODUCTION_ACCEPTANCE",
-    "phase_status": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_TEST_USER_ALLOWLIST_AND_OWNER_CONSENT",
+    "phase_status": "OAUTH_CONNECTED_FINAL_ACCEPTANCE_PENDING",
     "pack090_allowed": false,
     "completed_subphases": {
       "89A": "LOCKED_VERIFIED",
@@ -63,7 +63,7 @@
       "89D": "LOCKED_VERIFIED",
       "89E_non_external_acceptance": "PASS"
     },
-    "latest_receipt": "zuvyr-pack-evidence/pack-089/2026-09-24-89e-google-testing-retry-fix/receipt.json",
+    "latest_receipt": "zuvyr-pack-evidence/pack-089/2026-09-24-89e-oauth-connected-reconciliation/receipt.json",
     "google_oauth_variable_names_present": [
       "GOOGLE_API_KEY",
       "GOOGLE_OAUTH_CLIENT_ID",
@@ -71,10 +71,10 @@
       "GOOGLE_OAUTH_REDIRECT_URI"
     ],
     "google_oauth_values_redacted": true,
-    "credential_values_nonempty_or_valid": "APPLICATION_CONFIG_GATE_PASS_GOOGLE_TESTING_AUDIENCE_BLOCK_CONFIRMED",
-    "google_cloud_configuration_valid": "OAUTH_REQUEST_REACHED_GOOGLE_TESTING_AUDIENCE_BLOCK_CONFIRMED",
-    "interactive_google_consent_completed": false,
-    "next_legal_step": "Add the same owner Google account used for the blocked authorization attempt to Google Auth Platform > Audience > Test users, retry Google Drive Connect, then verify callback activation -> granted-scope Drive tool call -> denied-scope rejection -> disconnect/revoke -> post-revoke denial -> audit persistence -> Vault/plaintext-secret cleanliness. Do not start PACK090 first.",
+    "credential_values_nonempty_or_valid": "PRODUCTION_OWNER_CONSENT_AND_CALLBACK_CONFIRMED",
+    "google_cloud_configuration_valid": "PRODUCTION_OWNER_CONSENT_AND_CALLBACK_CONFIRMED",
+    "interactive_google_consent_completed": true,
+    "next_legal_step": "Verify a granted-scope Google Drive read/export tool call, prove denied write/scope behavior, disconnect/revoke, prove post-revoke denial, then verify audit persistence and Vault/plaintext-secret cleanliness. Do not start PACK090 first.",
     "oauth_start_production": {
       "status": "PASS",
       "http_status": 201,
@@ -82,14 +82,13 @@
       "route": "/api/workspace/drive/connect"
     },
     "oauth_callback_production": {
-      "status": "NOT_COMPLETED_GOOGLE_403_TESTING_AUDIENCE",
-      "checked_through": "2026-09-24T16:17:00Z"
+      "status": "PASS_OWNER_CONSENT_CALLBACK_COMPLETED",
+      "checked_through": "2026-09-24T18:16:41.144586Z"
     },
     "google_testing_audience": {
-      "status": "BLOCKED_TEST_USER_ALLOWLIST",
-      "browser_error": "403 access_denied",
-      "observed_at": "2026-09-24T16:17:00Z",
-      "owner_acceptance_path": "Add the same owner Google account to Google Auth Platform Audience > Test users while the app remains in Testing."
+      "status": "RESOLVED_OWNER_CONSENT_COMPLETED",
+      "previous_status": "BLOCKED_TEST_USER_ALLOWLIST",
+      "resolution_evidence": "Fresh production DB shows one active connected Google Drive connection after one consumed OAuth session."
     },
     "oauth_retry_fix": {
       "status": "PRODUCTION_VERIFIED",
@@ -100,6 +99,21 @@
       "maintenance_deployment": "0d7a3e28-7d3e-4262-97a7-1c5ea67f7f3d",
       "same_scope_retry_reuses_live_connection": true,
       "scope_change_requires_disconnect": true
+    },
+    "google_drive_connection_current": {
+      "status": "active",
+      "connected": true,
+      "scopes": [
+        "drive.export",
+        "drive.file.read"
+      ],
+      "explicit_consent": true,
+      "read_enabled": true,
+      "write_enabled": false,
+      "consumed_oauth_sessions": 1,
+      "active_unconsumed_oauth_sessions": 0,
+      "pack089_temporary_vault_residue_count": 0,
+      "observed_from": "fresh Supabase production evidence 2026-09-24"
     }
   },
   "recent_reconciled_hardening": {
@@ -215,7 +229,7 @@
     "docs/zuvyr/ROADMAP_150_UNIVERSAL_INTENT_DELEGATION_MESSAGING_AUTOMATION_AMENDMENT_2026-09-23.md": "d0f08ca0007e2111aa625ccf07ff5133be06f8de",
     "docs/zuvyr/universal-intent-delegation-messaging-automation-overlay.v1.json": "86a5a41ce661cde391259a415b00ecf29c98259d",
     "docs/zuvyr/STRIPE_FINAL_V1_ACTIVATION_GATE_2026-09-24.md": "2fde8bdbc5b5bfc9012a9ff4afb61f7e5196cb9a",
-    "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json": "c8a56e08d6e8585efcc0c592ccc9ac98334bf2e2",
+    "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json": "5f2e70740d198691fcacfdcd03b0ad142cdbaf69",
     "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md": "1a1b2cb619c51a8a122d93780a06a4fe893d6acf",
     "docs/zuvyr/continuous-improvement-override.v1.json": "7b465282196f4d9bc5ef1342a40cae627a5e3faa",
     "zuvyr-pack-evidence/reconciliations/2026-09-24-post-hardening-maintenance/receipt.json": "01737f12bb5ef7f7710f1a8c5ee6a2309da4aba0",
@@ -283,12 +297,12 @@
     ]
   },
   "no_loss_rule": "If continuity sources disagree, use the source-of-truth order, repair the disagreement before feature advancement, preserve all historical evidence, and never guess success. A completed Pack may be improved when fresh evidence justifies it, but the active legal Pack gate still controls roadmap advancement. Never claim CLEAN/final while a known actionable internal finding remains; only explicit evidenced external blockers may remain. Stripe business verification and live real-money acceptance is intentionally the final external activation inside PACK150, but all fixable internal Stripe findings remain immediately actionable.",
-  "last_reconciled_git_head_before_manifest_update": "eae255ba3f4dd90676a365691f41cacf7e19fe15",
+  "last_reconciled_git_head_before_manifest_update": "928c09ccfde3b03d1cc31ca417a2fc2ba258efa5",
   "integrity_guard_files": {
     "tools/validate-zuvyr-continuity.cjs": "ef6a2535c920aafcff2fa0aa51987ce4569cced2",
     ".github/workflows/zuvyr-continuity.yml": "a9f8aef5a40431f6f9933668a2efb8a0a0820c90",
     "tools/verify-zuvyr-continuity.js": "e1ba86c5c8c19d3c4c1eeb2b780d48d316858b46",
-    "package.json": "05babfed9ef591413d4a72c57d7540f6f0933a5f"
+    "package.json": "542e81792f74aa7248253b6057bf467994145ab5"
   },
   "validation": {
     "validator": "tools/validate-zuvyr-continuity.cjs",

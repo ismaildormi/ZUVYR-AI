@@ -47,8 +47,10 @@ Live evidence now confirmed:
 - `write_enabled=false`;
 - credentials are stored server-side through the existing Vault-backed path.
 
+Closed during the current PACK089 acceptance:
+- duplicate-connect/callback cleanliness defects: `CLOSED` on 2026-09-24 via PR #121, production migration `pack089_89e_clean_oauth_idempotency`, idempotency RPC acceptance, and a clean post-migration Supabase log window.
+
 Still required before PACK090:
-- close the duplicate-connect/callback cleanliness defects discovered from Supabase production logs and verify a clean post-fix window;
 - one granted-scope Drive tool call;
 - denied-scope/action proof;
 - disconnect/revoke;

@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "pack": "089",
+  "phase": "89E_PRODUCTION_ACCEPTANCE",
+  "status": "OAUTH_CONNECTED_FINAL_ACCEPTANCE_PENDING",
+  "observed_at": "2026-09-24T18:16:41.144586Z",
+  "source_main": "928c09ccfde3b03d1cc31ca417a2fc2ba258efa5",
+  "evidence": {
+    "repository": "ismaildormi/ZUVYR-AI",
+    "google_oauth_owner_consent_completed": true,
+    "oauth_callback_completed": true,
+    "google_drive_connection": {
+      "status": "active",
+      "connected": true,
+      "scopes": [
+        "drive.export",
+        "drive.file.read"
+      ],
+      "explicit_consent": true,
+      "read_enabled": true,
+      "write_enabled": false
+    },
+    "oauth_sessions": {
+      "consumed": 1,
+      "active_unconsumed": 0
+    },
+    "pack089_temporary_vault_residue_count": 0,
+    "idempotency_migration": "pack089_89e_clean_oauth_idempotency",
+    "idempotency_rpc_acceptance": {
+      "exact_scope_retry_reused_connection": true,
+      "retry_created_new_row": false,
+      "stale_state_structured_denial": "pack089_oauth_session_invalid",
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_role_execute": true
+    },
+    "supabase_post_migration_clean_window": {
+      "postgres_warning_error_fatal_panic": 0,
+      "edge_api_observed_http_200": 92,
+      "error_exception_fatal_matches": 0
+    },
+    "railway_main_928c": {
+      "backend_deployment": "a5b8514a-db05-4307-99c2-ce379d86006b",
+      "worker_deployment": "cb23049c-be86-4b6f-b7d1-b3f3c00f1483",
+      "maintenance_deployment": "bac8ad1c-46d4-4201-8d76-bbb29aaf0e0c",
+      "all_success": true,
+      "pending_work": 0
+    },
+    "vercel_main_928c": "READY"
+  },
+  "interpretation": {
+    "google_testing_allowlist_blocker": "RESOLVED_BY_REAL_OWNER_CONSENT_AND_CALLBACK",
+    "duplicate_connect_callback_cleanliness": "CLOSED_PRODUCTION_VERIFIED",
+    "pack089_complete": false,
+    "pack090_started": false,
+    "remaining_gate": "GRANTED_CALL_DENIED_WRITE_REVOKE_POST_REVOKE_AUDIT_SECRET_CLEANLINESS"
+  },
+  "next": {
+    "pack090_allowed": false,
+    "required_sequence": "granted read/export call -> denied write/scope proof -> disconnect/revoke -> post-revoke denial -> audit persistence -> Vault/plaintext-secret cleanliness"
+  }
+}
