@@ -1,10 +1,10 @@
 {
-  "schema_version": "1.1",
-  "updated_at": "2026-09-23T22:46:00Z",
+  "schema_version": "1.2",
+  "updated_at": "2026-09-24T00:18:00Z",
   "status": "CANONICAL_CURRENT_STATE_OVERRIDE",
   "purpose": "Fresh compact continuity override. When this file is newer than older state capsules, it wins subject to even fresher Git/production evidence and explicit user instruction.",
   "repository": "ismaildormi/rox-ai",
-  "source_main_before_this_reconciliation": "03c8415f92d55591626c0fe50ad80488d8882979",
+  "source_main_before_this_reconciliation": "3f0ba3bfb159fa82f6ffee40cdea6c8961b3794c",
   "execution_policy": {
     "continuous_improvement_override": "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md",
     "machine_policy": "docs/zuvyr/continuous-improvement-override.v1.json",
@@ -72,7 +72,19 @@
         "explicit_server_only_policies": 100,
         "fk_covering_indexes_created": 164
       },
-      "continuous_monitoring": "The 30-minute Railway maintenance coordinator calls the service-role-only zuvyr_runtime_hygiene_audit RPC; hygiene drift or RPC failure prevents a success marker."
+      "continuous_monitoring": "The 30-minute Railway maintenance coordinator calls the service-role-only zuvyr_runtime_hygiene_audit RPC; hygiene drift or RPC failure prevents a success marker.",
+      "post_merge_runtime_monitoring": {
+        "status": "LOCKED_VERIFIED",
+        "receipt": "zuvyr-pack-evidence/reconciliations/2026-09-24-post-hardening-maintenance/receipt.json",
+        "observed_successful_cron_runs": 3,
+        "latest_observed_maintenance_run_id": "320c4f7b-3dff-4818-99b4-3bde730e2004",
+        "fresh_hygiene_rpc": {
+          "ok": true,
+          "rls_no_policy_count": 0,
+          "unindexed_fk_count": 0,
+          "exposed_security_definer_count": 0
+        }
+      }
     }
   },
   "infrastructure": {
@@ -86,6 +98,7 @@
     "railway_worker_deployment": "44bbd777-25a7-4bbc-a2bf-8480246f90f8",
     "railway_maintenance_deployment": "23694064-119a-4baf-96e0-142ae51baab5",
     "railway_worker_runtime": "brain-kernel=true; pack088-execution=true; pack088-scheduler=true; observed scheduler failures=0",
+    "railway_maintenance_runtime_monitoring": "3 consecutive natural cron runs observed SUCCESS after global-hardening deployment; latest at 2026-09-24T00:02:22Z; fresh DB hygiene RPC remains ok=true.",
     "vercel_project": "prj_P6VddfynJKniiK29clC6Epr9byPk",
     "vercel_team": "team_3PYlTi0Euf7SDg7T2NRzGx3q",
     "vercel_current_production_url": "https://rox-ai-sepia.vercel.app/",
@@ -107,8 +120,7 @@
     "PACK095 authenticated owner/admin Model Lab UI acceptance (production frontend sub-gate already resolved)",
     "Supabase leaked-password protection remains disabled; historical PACK009 attempt recorded plan HTTP 402 and current connected tooling cannot mutate Auth password-security configuration",
     "GitHub main branch protection/ruleset remains absent; repository-admin mutation is not available through the connected GitHub tool surface",
-    "Vercel new-deployment cooldown/build-rate-limit on merge 03c8415f92d55591626c0fe50ad80488d8882979; existing production remains reachable",
-    "First post-merge scheduled maintenance receipt proving the deployed coordinator consumed zuvyr_runtime_hygiene_audit is pending the next natural */30 cron execution; DB RPC itself is already production-verified healthy"
+    "Vercel new-deployment cooldown/build-rate-limit on merge 03c8415f92d55591626c0fe50ad80488d8882979; existing production remains reachable"
   ],
   "do_not_claim": [
     "Entire ZUVYR project globally CLEAN while any known external or authenticated/live acceptance gate remains",
@@ -117,7 +129,6 @@
     "ZUVYR proprietary production model complete before M21",
     "paid-provider acceptance without a real authorized billed call",
     "Vercel new merge deployed while build-rate-limit remains",
-    "first post-merge maintenance receipt observed before the natural cron actually runs",
     "historical evidence rewritten instead of superseded by a dated reconciliation"
   ]
 }
