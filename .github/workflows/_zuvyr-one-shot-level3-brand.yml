@@ -1,0 +1,118 @@
+name: ZUVYR One Shot Level3 Brand Transfer
+on:
+  push:
+    branches:
+      - fix/level3-brand-current-main-20260924
+permissions:
+  contents: write
+jobs:
+  transfer:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/level3-brand-current-main-20260924
+          fetch-depth: 1
+      - name: Apply current-main-safe Level3 and active brand fixes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          active = [
+            Path('ROX-BRIDGE.ps1'), Path('ROX-MANAGER.ps1'), Path('ROX-SETUP.ps1'),
+            Path('ROX-SHORTCUT.ps1'), Path('ROX-START.ps1'), Path('ROX-STOP.ps1'),
+            Path('ROX-SUPABASE.ps1'), Path('ROX-SUPPORT.ps1'), Path('ROX-TEST.ps1'),
+            Path('ROX-UPDATE.ps1'), Path('ROX-VERIFY-LIVE.ps1'),
+            Path('backend/server.js'), Path('backend/worker.js'),
+            Path('scripts/windows/ROX.Common.ps1'), Path('tools/live-smoke.js'),
+            Path('tools/rox-ai-admin-dashboard.html'), Path('tools/rox-ai-telemetry.html'),
+          ]
+          active += sorted(Path('cli').rglob('*.js'))
+
+          changed = []
+          for path in active:
+            if not path.exists():
+              raise SystemExit(f'missing expected active file: {path}')
+            text = path.read_text(encoding='utf-8')
+            new = text.replace('ROX AI', 'ZUVYR').replace('Rox AI', 'ZUVYR')
+            if new != text:
+              path.write_text(new, encoding='utf-8')
+              changed.append(str(path))
+
+          # Package identities are user-facing/runtime labels only. Keep rox CLI and legacy files as aliases.
+          replacements = {
+            Path('backend/package.json'): [
+              ('"name": "rox-ai-backend"', '"name": "zuvyr-ai-backend"'),
+              ('"description": "ROX AI backend â€” credits/gatekeeper, model router, hardening (ipGuard/loadGuard/inputValidation), Stripe billing, and Prometheus metrics."', '"description": "ZUVYR backend — credits/gatekeeper, model router, hardening, Stripe billing, and Prometheus metrics."'),
+            ],
+            Path('backend/package-lock.json'): [
+              ('"name": "rox-ai-backend"', '"name": "zuvyr-ai-backend"'),
+            ],
+            Path('package.json'): [
+              ('"name": "rox-ai"', '"name": "zuvyr-ai"'),
+              ('"description": "ROX AI — Safe Bridge release with isolated profiles, read-only live verification, smoke tests, and guarded staging/production deployment."', '"description": "ZUVYR — safe operational tooling, isolated profiles, read-only live verification, smoke tests, and guarded staging/production deployment."'),
+              ('"rox": "./cli/rox.js"', '"rox": "./cli/rox.js",\n    "zuvyr": "./cli/rox.js"'),
+            ],
+            Path('package-lock.json'): [
+              ('"name": "rox-ai"', '"name": "zuvyr-ai"'),
+              ('"rox": "cli/rox.js"', '"rox": "cli/rox.js",\n        "zuvyr": "cli/rox.js"'),
+            ],
+          }
+          for path, pairs in replacements.items():
+            text = path.read_text(encoding='utf-8')
+            new = text
+            for old, replacement in pairs:
+              if old in new:
+                new = new.replace(old, replacement)
+              elif replacement not in new:
+                raise SystemExit(f'expected package marker missing in {path}: {old}')
+            if new != text:
+              path.write_text(new, encoding='utf-8')
+              changed.append(str(path))
+
+          gi = Path('.gitignore')
+          text = gi.read_text(encoding='utf-8')
+          if 'logs/*.log' not in text:
+            marker = 'logs/*.json\n'
+            if marker not in text:
+              raise SystemExit('gitignore insertion marker missing')
+            gi.write_text(text.replace(marker, marker + 'logs/*.log\n', 1), encoding='utf-8')
+            changed.append(str(gi))
+
+          smoke = Path('tools/live-smoke.js')
+          text = smoke.read_text(encoding='utf-8')
+          new = text.replace('/Rox AI/i', '/ZUVYR/i').replace("'ROX marker missing'", "'ZUVYR marker missing'")
+          if new != text:
+            smoke.write_text(new, encoding='utf-8')
+            if str(smoke) not in changed: changed.append(str(smoke))
+
+          css = Path('frontend/rox-brand-blue-violet.css')
+          text = css.read_text(encoding='utf-8')
+          marker = '/* ZUVYR NATIVE LEVEL 3 MOBILE CONTAINMENT V1 */'
+          block = '''\n\n/* ZUVYR NATIVE LEVEL 3 MOBILE CONTAINMENT V1 */\n@media (max-width: 760px) {\n  body.zuvyr-ui .feature-screen::before,\n  body.zuvyr-ui .feature-screen::after {\n    display: none !important;\n  }\n\n  body.zuvyr-ui #feature-settings .rox-settings-nav {\n    width: 100% !important;\n    max-width: 100% !important;\n    min-width: 0 !important;\n    overflow-x: auto !important;\n    overflow-y: hidden !important;\n    overscroll-behavior-inline: contain;\n    -webkit-overflow-scrolling: touch;\n    scrollbar-width: none;\n  }\n\n  body.zuvyr-ui #feature-settings .rox-settings-nav::-webkit-scrollbar {\n    display: none !important;\n  }\n}\n'''
+          if marker not in text:
+            css.write_text(text.rstrip() + block, encoding='utf-8')
+            changed.append(str(css))
+
+          # Guard canonical/history files: this transfer must never rewrite them.
+          forbidden = [
+            'docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json',
+            'docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json',
+            'docs/zuvyr/ZUVYR_REMAINING_WORK.md',
+          ]
+          print('changed files:', len(set(changed)))
+          print('\n'.join(sorted(set(changed))))
+          for item in forbidden:
+            if item in changed:
+              raise SystemExit(f'forbidden canonical state change: {item}')
+          PY
+
+          rm -f .github/workflows/_zuvyr-one-shot-level3-brand.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'fix: transfer Level3 containment and active ZUVYR branding onto current main'
+          git push origin HEAD:fix/level3-brand-current-main-20260924
