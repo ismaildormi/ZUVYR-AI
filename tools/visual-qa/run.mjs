@@ -12,7 +12,7 @@ const viewports=[
   {name:'desktop',width:1440,height:1000},
   {name:'mobile',width:390,height:844},
 ];
-const report={schema:1,generatedAt:new Date().toISOString(),baseUrl,playwright:'1.63.0',axe:'4.13.0',views:[],productionPublic:null,summary:{critical:0,serious:0,overflowFailures:0,duplicateIdFailures:0,missingViews:0}};
+const report={schema:1,generatedAt:new Date().toISOString(),baseUrl,playwright:'1.63.0',axe:'4.13.0',views:[],productionPublic:null,summary:{critical:0,serious:0,moderate:0,overflowFailures:0,duplicateIdFailures:0,missingViews:0}};
 let failed=false;
 const browser=await chromium.launch({headless:true});
 
@@ -30,7 +30,10 @@ async function inspectPage(page,view,viewport){
     const duplicateIds=[...document.querySelectorAll('[id]')].map(el=>el.id).filter((id,i,a)=>id&&a.indexOf(id)!==i).filter((id,i,a)=>a.indexOf(id)===i);
     const namelessControls=visible.filter(el=>['BUTTON','A','INPUT','SELECT','TEXTAREA'].includes(el.tagName)).filter(el=>{
       if(el.tagName==='INPUT'&&['hidden'].includes(el.type))return false;
-      const name=(el.getAttribute('aria-label')||el.getAttribute('title')||el.textContent||el.getAttribute('placeholder')||'').trim();
+      const labelledBy=String(el.getAttribute('aria-labelledby')||'').split(/\s+/).filter(Boolean).map(id=>document.getElementById(id)?.textContent||'').join(' ');
+      const explicitLabel=el.id?(document.querySelector('label[for=\"'+CSS.escape(el.id)+'\"]')?.textContent||''):'';
+      const wrappedLabel=el.closest('label')?.textContent||'';
+      const name=(el.getAttribute('aria-label')||labelledBy||explicitLabel||wrappedLabel||el.getAttribute('title')||el.textContent||el.getAttribute('placeholder')||'').trim();
       return !name;
     }).map(el=>({tag:el.tagName,id:el.id||null,className:el.className||null}));
     const colors={};
@@ -80,10 +83,11 @@ for(const viewport of viewports){
     evidence.consoleErrors=[...new Set(consoleErrors)].slice(0,50);
     const critical=evidence.violations.filter(v=>v.impact==='critical').length;
     const serious=evidence.violations.filter(v=>v.impact==='serious').length;
-    report.summary.critical+=critical;report.summary.serious+=serious;
+    const moderate=evidence.violations.filter(v=>v.impact==='moderate').length;
+    report.summary.critical+=critical;report.summary.serious+=serious;report.summary.moderate+=moderate;
     if(evidence.horizontalOverflow){report.summary.overflowFailures++;failed=true;}
     if(evidence.duplicateIds.length){report.summary.duplicateIdFailures++;failed=true;}
-    if(critical||serious)failed=true;
+    if(critical||serious||moderate)failed=true;
     if(evidence.namelessControls.length)failed=true;
     report.views.push(evidence);
   }
@@ -110,6 +114,7 @@ const summary=[
   `Views: ${report.views.length}`,
   `Critical accessibility violations: ${report.summary.critical}`,
   `Serious accessibility violations: ${report.summary.serious}`,
+  `Moderate accessibility violations: ${report.summary.moderate}`,
   `Horizontal overflow failures: ${report.summary.overflowFailures}`,
   `Duplicate ID failures: ${report.summary.duplicateIdFailures}`,
   `Missing views: ${report.summary.missingViews}`,

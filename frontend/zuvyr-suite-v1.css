@@ -113,7 +113,7 @@
 .zs-tool-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .zs-tool-icon { width:36px;height:36px;display:grid;place-items:center;border-radius:11px;color:#c4b5fd;background:rgba(124,58,237,.15); }
 .zs-tool-state { color:#fcd34d; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
-.zs-tool h3 { margin:14px 0 5px; }.zs-tool p{font-size:12px;}
+.zs-tool h2, .zs-tool h3 { margin:14px 0 5px; font-size:15px; }.zs-tool p{font-size:12px;}
 .zs-empty { min-height:190px; display:grid; place-items:center; text-align:center; border:1px dashed rgba(148,163,184,.22); border-radius:16px; color:var(--zs-muted); }
 .zs-empty strong{display:block;color:#dbe5f5;margin-bottom:5px;}
 .zs-banner { display:flex; align-items:center; gap:13px; margin-bottom:16px; padding:13px 15px; border:1px solid rgba(34,211,238,.19); border-radius:14px; color:#c8f7ff; background:linear-gradient(90deg,rgba(8,145,178,.1),rgba(124,58,237,.08)); font-size:12px; line-height:1.5; }
