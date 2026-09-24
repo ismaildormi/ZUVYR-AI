@@ -1,10 +1,10 @@
 {
-  "schema_version": "1.6",
-  "updated_at": "2026-09-24T16:17:00Z",
+  "schema_version": "1.8",
+  "updated_at": "2026-09-24T19:34:33.539655Z",
   "status": "CANONICAL_CURRENT_STATE_OVERRIDE",
   "purpose": "Fresh compact continuity override. When this file is newer than older state capsules, it wins subject to even fresher Git/production evidence and explicit user instruction.",
-  "repository": "ismaildormi/rox-ai",
-  "source_main_before_this_reconciliation": "244d21142a956dfa754d245f971b8099d452ec9d",
+  "repository": "ismaildormi/ZUVYR-AI",
+  "source_main_before_this_reconciliation": "87e3451cb05b4c197d6d89d49c90cd7bed13685f",
   "execution_policy": {
     "continuous_improvement_override": "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md",
     "machine_policy": "docs/zuvyr/continuous-improvement-override.v1.json",
@@ -18,7 +18,7 @@
     "pack": "PACK089",
     "pack_status": "IN_PROGRESS",
     "phase": "89E_PRODUCTION_ACCEPTANCE",
-    "phase_status": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_TEST_USER_ALLOWLIST_AND_OWNER_CONSENT",
+    "phase_status": "OAUTH_CONNECTED_FINAL_ACCEPTANCE_PENDING",
     "pack090_allowed": false,
     "completed_subphases": {
       "89A": "LOCKED_VERIFIED",
@@ -27,16 +27,16 @@
       "89D": "LOCKED_VERIFIED",
       "89E_non_external_acceptance": "PASS"
     },
-    "latest_receipt": "zuvyr-pack-evidence/pack-089/2026-09-24-89e-google-testing-retry-fix/receipt.json",
+    "latest_receipt": "zuvyr-pack-evidence/pack-089/2026-09-24-89e-connected-current-reconciliation/receipt.json",
     "google_oauth_variable_names_present": [
       "GOOGLE_OAUTH_CLIENT_ID",
       "GOOGLE_OAUTH_CLIENT_SECRET",
       "GOOGLE_OAUTH_REDIRECT_URI"
     ],
     "google_oauth_values_redacted": true,
-    "google_oauth_values_or_google_side_validity": "APPLICATION_CONFIG_GATE_PASS_GOOGLE_TESTING_AUDIENCE_BLOCK_CONFIRMED",
-    "interactive_owner_consent_completed": false,
-    "next_legal_step": "Add the same owner Google account used for the blocked authorization attempt to Google Auth Platform > Audience > Test users, retry Google Drive Connect, then verify callback activation -> granted-scope Drive tool call -> denied-scope rejection -> disconnect/revoke -> post-revoke denial -> audit persistence -> Vault/plaintext-secret cleanliness. Do not start PACK090 first.",
+    "google_oauth_values_or_google_side_validity": "PRODUCTION_OWNER_CONSENT_AND_CALLBACK_CONFIRMED",
+    "interactive_owner_consent_completed": true,
+    "next_legal_step": "Verify a granted-scope Google Drive read/export tool call, prove denied write/scope behavior, disconnect/revoke, prove post-revoke denial, then verify audit persistence and Vault/plaintext-secret cleanliness. Do not start PACK090 first.",
     "oauth_start_production": {
       "status": "PASS",
       "http_status": 201,
@@ -44,14 +44,13 @@
       "route": "/api/workspace/drive/connect"
     },
     "oauth_callback_production": {
-      "status": "NOT_COMPLETED_GOOGLE_403_TESTING_AUDIENCE",
-      "checked_through": "2026-09-24T16:17:00Z"
+      "status": "PASS_OWNER_CONSENT_CALLBACK_COMPLETED",
+      "checked_through": "2026-09-24T19:34:33.539655Z"
     },
     "google_testing_audience": {
-      "status": "BLOCKED_TEST_USER_ALLOWLIST",
-      "browser_error": "403 access_denied",
-      "observed_at": "2026-09-24T16:17:00Z",
-      "owner_acceptance_path": "Add the same owner Google account to Google Auth Platform Audience > Test users while the app remains in Testing."
+      "status": "RESOLVED_OWNER_CONSENT_COMPLETED",
+      "previous_status": "BLOCKED_TEST_USER_ALLOWLIST",
+      "resolution_evidence": "Fresh production DB shows one active connected Google Drive connection after one consumed OAuth session."
     },
     "oauth_retry_fix": {
       "status": "PRODUCTION_VERIFIED",
@@ -62,6 +61,31 @@
       "maintenance_deployment": "0d7a3e28-7d3e-4262-97a7-1c5ea67f7f3d",
       "same_scope_retry_reuses_live_connection": true,
       "scope_change_requires_disconnect": true
+    },
+    "google_drive_connection_current": {
+      "status": "active",
+      "connected": true,
+      "scopes": [
+        "drive.export",
+        "drive.file.read"
+      ],
+      "explicit_consent": true,
+      "read_enabled": true,
+      "write_enabled": false,
+      "consumed_oauth_sessions": 1,
+      "active_unconsumed_oauth_sessions": 0,
+      "credential_storage": "VAULT_BACKED",
+      "observed_from": "fresh Supabase production evidence 2026-09-24"
+    },
+    "pack089_pkce_cleanup": {
+      "status": "PRODUCTION_VERIFIED",
+      "merged_pr": 123,
+      "expired_unconsumed_sessions": 3,
+      "historical_pkce_secret_references_preserved": 3,
+      "live_expired_pkce_vault_secrets": 0,
+      "cleanup_audit_event_observed": true,
+      "maintenance_runs_observed_success": true,
+      "interpretation": "Session rows and secret UUID references are intentionally preserved for audit; corresponding Vault secret rows are deleted."
     }
   },
   "final_v1_activation_order": {
@@ -140,10 +164,10 @@
   },
   "infrastructure": {
     "supabase_project": "tqoqsgaymygmqrzddvtu",
-    "supabase_status": "ACTIVE_HARDENED_AT_LATEST_AUDIT",
+    "supabase_status": "ACTIVE_HEALTHY_EU_WEST_1_PROVIDER_LIFECYCLE_INCIDENT_MONITORED",
     "railway_project": "ba460cdb-cc55-4203-bdd0-711846b7564c",
     "railway_environment": "production",
-    "railway_services_latest_status": "SUCCESS_ON_PACK089_OAUTH_RETRY_FIX_MERGE",
+    "railway_services_latest_status": "SUCCESS_ON_MAIN_87E3451",
     "railway_pending_work": 0,
     "railway_backend_deployment": "85d60d3f-b6e4-4081-ad89-b61d0425126b",
     "railway_worker_deployment": "4e896bbb-fadf-4e90-bcef-3e14e1f9c05e",
@@ -160,8 +184,8 @@
     "vercel_pr106_frontend_file_count": 0,
     "vercel_later_preview_ready": "dpl_7CAHbi5MtZj8mBMUxHHuP9BYGu93 READY",
     "vercel_latest_evaluated_docs_only_production_deployment": "dpl_93u9NcKG8Bvh3A5UoxpPFe6gqcq5 for source main 26b09a2e7bf149f5197aa7d3b0ec0a3d6a8d6db3 CANCELED_BY_IGNORED_BUILD_STEP",
-    "vercel_post_reconciliation_main_behavior": "For source main 1d960656d0897beeacd26a09f40a5af7332543ff, no new deployment appeared in the immediate post-merge observation window, consistent with docs-only ignored-build behavior.",
-    "vercel_runtime_interpretation": "No current Vercel outage or quota blocker is claimed. The old rate-limit status remains historical evidence only; PR106 had no frontend changes, a later preview build succeeded, and docs-only commits are intentionally ignored by the configured build-step rule."
+    "vercel_post_reconciliation_main_behavior": "Main 87e3451cb05b4c197d6d89d49c90cd7bed13685f has fresh Vercel SUCCESS after build-rate-limit cooldown recovery.",
+    "vercel_runtime_interpretation": "Build-rate-limit was observed as an external deployment-evidence blocker and later recovered; current main Vercel status is success. Do not treat the provider incident as a ZUVYR code fix."
   },
   "advisor_reconciliation": {
     "observed_at": "2026-09-24T00:27:14Z",
@@ -179,7 +203,7 @@
     }
   },
   "known_unresolved_gates": [
-    "PACK089 real Google OAuth production acceptance",
+    "PACK089 final Google Drive production acceptance: granted read/export call, denied write/scope proof, disconnect/revoke, post-revoke denial, audit persistence and Vault/plaintext-secret cleanliness",
     "PACK019/PACK020 Stripe live business verification + real-money acceptance is deliberately deferred to the final external activation action inside PACK150; it blocks V1_READY but does not block intermediate Packs whose own gates pass",
     "deferred paid media/audio provider E2E gates",
     "PACK073 authenticated physical microphone acceptance",

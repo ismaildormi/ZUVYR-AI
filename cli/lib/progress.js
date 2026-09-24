@@ -1,4 +1,4 @@
-// ROX AI — cli/lib/progress.js
+// ZUVYR — cli/lib/progress.js
 //
 // One progress-bar implementation shared by any command that does
 // multi-step or long-running work (backup/restore archiving, setup's

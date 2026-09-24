@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// ROX AI — cli/rox.js
+// ZUVYR — cli/rox.js
 //
 // The one CLI the whole platform is managed through. Every subcommand
 // is its own file in cli/commands/ — this is just dispatch + help, so
@@ -57,7 +57,7 @@ const PLUGIN_HELP_BLOCK = pluginHelpLines.length
   ? `\nPlugin commands (installed on top of the above — see 'rox plugins'):\n${pluginHelpLines.join('\n')}\n`
   : '';
 
-const HELP = `ROX AI — platform CLI
+const HELP = `ZUVYR — platform CLI
 
 Usage: rox <command> [options]
 

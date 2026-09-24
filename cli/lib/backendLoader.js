@@ -1,4 +1,4 @@
-// ROX AI — cli/lib/backendLoader.js
+// ZUVYR — cli/lib/backendLoader.js
 //
 // Generic version of the try/catch require pattern cli/commands/health.js
 // originated (for diskMonitor) and cli/lib/aiBackend.js formalized for

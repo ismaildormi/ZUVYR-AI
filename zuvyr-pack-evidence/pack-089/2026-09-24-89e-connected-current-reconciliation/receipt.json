@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "pack": "089",
+  "phase": "89E_PRODUCTION_ACCEPTANCE",
+  "status": "OAUTH_CONNECTED_FINAL_ACCEPTANCE_PENDING",
+  "observed_at": "2026-09-24T19:34:33.539655Z",
+  "source_main": "87e3451cb05b4c197d6d89d49c90cd7bed13685f",
+  "evidence": {
+    "repository": "ismaildormi/ZUVYR-AI",
+    "google_oauth_owner_consent_completed": true,
+    "oauth_callback_completed": true,
+    "google_drive_connection": {
+      "status": "active",
+      "connected": true,
+      "scopes": [
+        "drive.export",
+        "drive.file.read"
+      ],
+      "explicit_consent": true,
+      "read_enabled": true,
+      "write_enabled": false,
+      "credential_storage": "VAULT_BACKED"
+    },
+    "oauth_sessions": {
+      "consumed": 1,
+      "active_unconsumed": 0
+    },
+    "expired_unconsumed_sessions": 3,
+    "expired_session_historical_pkce_refs": 3,
+    "live_expired_pkce_vault_secrets": 0,
+    "pkce_cleanup_audit_event_observed": true,
+    "maintenance_cleanup_observed_success": true,
+    "supabase_project_status": "ACTIVE_HEALTHY",
+    "supabase_eu_west_1_provider_lifecycle_incident": "EXTERNAL_MONITOR",
+    "main_87e3451_combined_status": "VERCEL_PLUS_RAILWAY_BACKEND_WORKER_MAINTENANCE_SUCCESS"
+  },
+  "interpretation": {
+    "pack089_complete": false,
+    "pack090_started": false,
+    "historical_pkce_refs_are_not_live_secrets": true,
+    "remaining_gate": "GRANTED_CALL_DENIED_WRITE_REVOKE_POST_REVOKE_AUDIT_SECRET_CLEANLINESS"
+  },
+  "next": {
+    "pack090_allowed": false,
+    "required_sequence": "granted read/export call -> denied write/scope proof -> disconnect/revoke -> post-revoke denial -> audit persistence -> Vault/plaintext-secret cleanliness"
+  }
+}

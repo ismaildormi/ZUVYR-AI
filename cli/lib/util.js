@@ -1,4 +1,4 @@
-// ROX AI — cli/lib/util.js
+// ZUVYR — cli/lib/util.js
 const path = require('path');
 const fs = require('fs');
 // cross-spawn (not node's built-in child_process directly) because

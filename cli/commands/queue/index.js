@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/queue/index.js
+// ZUVYR — cli/commands/queue/index.js
 const { makeGroup } = require('../../lib/group');
 
 module.exports = makeGroup({

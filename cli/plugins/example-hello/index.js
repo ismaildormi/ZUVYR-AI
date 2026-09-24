@@ -1,4 +1,4 @@
-// ROX AI — cli/plugins/example-hello/index.js
+// ZUVYR — cli/plugins/example-hello/index.js
 //
 // Reference plugin. Run `rox hello` (or `rox hello --name=Ada`) to see
 // it work, then `rox plugins` to see it listed. Delete this whole
@@ -20,7 +20,7 @@ module.exports = async function hello(args = []) {
   const nameArg = args.find((a) => a.startsWith('--name='));
   const name = nameArg ? nameArg.split('=')[1] : 'world';
 
-  log.step('ROX AI — hello (plugin)');
+  log.step('ZUVYR — hello (plugin)');
   log.ok(`Hello, ${name}! This command came from cli/plugins/example-hello/, not cli/commands/.`);
 
   const ctx = getContext();

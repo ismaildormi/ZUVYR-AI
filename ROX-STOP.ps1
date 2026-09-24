@@ -2,4 +2,4 @@
 Write-RoxHeader 'Stop all services'
 Stop-RoxFrontend
 if (Test-RoxCommand 'node') { Invoke-RoxCli -Arguments @('stop') -AllowFailure | Out-Null }
-Write-RoxOk 'ROX AI services stopped.'
+Write-RoxOk 'ZUVYR services stopped.'

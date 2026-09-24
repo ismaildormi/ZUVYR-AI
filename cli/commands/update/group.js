@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/update/group.js
+// ZUVYR — cli/commands/update/group.js
 //
 // `rox update` (no args) still runs the full update exactly as before
 // (git pull -> npm install -> migrations -> pm2 reload) — that behavior

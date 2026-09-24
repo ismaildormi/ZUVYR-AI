@@ -36,7 +36,7 @@ while ($true) {
   Write-RoxHeader "Windows Manager v$(Get-RoxVersion) | profile: $(Get-RoxActiveProfile)"
   Write-Host ' 1. First-time setup / repair install'
   Write-Host ' 2. Configure current profile keys and URLs'
-  Write-Host ' 3. Start everything and open ROX AI'
+  Write-Host ' 3. Start everything and open ZUVYR'
   Write-Host ' 4. Stop everything'
   Write-Host ' 5. Restart everything'
   Write-Host ' 6. Health check + automatic fixes'
@@ -50,7 +50,7 @@ while ($true) {
   Write-Host '14. Stripe tools and webhook testing'
   Write-Host '15. Guarded Railway / Vercel deployment'
   Write-Host '16. Create safe support ZIP'
-  Write-Host '17. Open ROX AI in browser'
+  Write-Host '17. Open ZUVYR in browser'
   Write-Host '18. Create desktop shortcut'
   Write-Host '19. Local / Staging / Production profiles'
   Write-Host '20. Safe Bridge into existing Git project'

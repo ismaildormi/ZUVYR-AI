@@ -1,8 +1,8 @@
 {
-  "name": "rox-ai-backend",
+  "name": "zuvyr-ai-backend",
   "version": "0.64.0",
   "private": true,
-  "description": "ROX AI backend â€” credits/gatekeeper, model router, hardening (ipGuard/loadGuard/inputValidation), Stripe billing, and Prometheus metrics.",
+  "description": "ZUVYR backend — credits/gatekeeper, model router, hardening, Stripe billing, and Prometheus metrics.",
   "main": "server.js",
   "engines": {
     "node": ">=22"

@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/doctor.js
+// ZUVYR — cli/commands/doctor.js
 //
 // `rox health` answers one question fast ("is everything up?") and is
 // what you'd point a monitor at. `rox doctor` is the slower, human-
@@ -15,7 +15,7 @@ const { BACKEND_DIR, log, loadEnv, getContext } = require('../lib/util');
 module.exports = async function doctor(args) {
   const ctx = getContext();
   const fix = args.includes('--fix') || ctx.fix || ctx.repair;
-  log.step('ROX AI — doctor' + (fix ? (ctx.repair ? ' (repair enabled)' : ' (fix enabled)') : '') + (ctx.dryRun ? ' [dry-run]' : ''));
+  log.step('ZUVYR — doctor' + (fix ? (ctx.repair ? ' (repair enabled)' : ' (fix enabled)') : '') + (ctx.dryRun ? ' [dry-run]' : ''));
   loadEnv();
 
   console.log('\n== Services ==');

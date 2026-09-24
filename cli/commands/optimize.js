@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/optimize.js
+// ZUVYR — cli/commands/optimize.js
 //
 // Default (`rox optimize`): runs every non-destructive-to-user-data
 // action once (temp/cache/old logs/compress logs/docker images —
@@ -67,7 +67,7 @@ async function listConfirmations(maintenance, fmtBytes) {
 }
 
 module.exports = async function optimize(args) {
-  log.step('ROX AI — optimize');
+  log.step('ZUVYR — optimize');
   loadEnv();
   const { diskMonitor, maintenance } = loadModules();
 

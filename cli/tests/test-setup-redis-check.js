@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// ROX AI — cli/tests/test-setup-redis-check.js
+// ZUVYR — cli/tests/test-setup-redis-check.js
 //
 // Regression test for a confirmed bug in cli/commands/setup.js's
 // checkRedis(): the connectivity probe was run via

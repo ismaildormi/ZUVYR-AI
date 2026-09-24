@@ -1,4 +1,4 @@
-// ROX AI ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Worker (hardened)
+// ZUVYR ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Worker (hardened)
 //
 // Credits are now reserved by server.js BEFORE the job is even enqueued
 // (see handleGenerationRequest), so this worker no longer charges
@@ -2170,4 +2170,4 @@ console.log(
   })
 );
 
-console.log(`ROX AI worker running (concurrency: image=${CONCURRENCY}, video=${Math.max(1, Math.floor(CONCURRENCY / 2))}, model3d=1, audio=1, attachment=${ATTACHMENT_WORKER_CONCURRENCY})`);
+console.log(`ZUVYR worker running (concurrency: image=${CONCURRENCY}, video=${Math.max(1, Math.floor(CONCURRENCY / 2))}, model3d=1, audio=1, attachment=${ATTACHMENT_WORKER_CONCURRENCY})`);

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// ROX AI — cli/tests/test-cross-platform.js
+// ZUVYR — cli/tests/test-cross-platform.js
 //
 // This sandbox only has a Linux runner available, so these tests
 // can't launch a real Windows process — what they CAN do is verify

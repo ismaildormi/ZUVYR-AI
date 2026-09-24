@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/start.js
+// ZUVYR — cli/commands/start.js
 //
 // Starts both processes (rox-api, rox-worker) under pm2, which is what
 // gives auto-recovery for free: if either crashes, pm2 restarts it
@@ -30,7 +30,7 @@ function tryStartLocalRedis() {
 }
 
 module.exports = function start() {
-  log.step('ROX AI — start');
+  log.step('ZUVYR — start');
   loadEnv();
 
   if (!fs.existsSync(path.join(BACKEND_DIR, '.env'))) {

@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/ai/forecast.js
+// ZUVYR — cli/commands/ai/forecast.js
 //
 // Just the `forecast` field of the latest advisor report
 // (backend/src/modules/advisor/forecast.js's computeForecast() output),
@@ -11,7 +11,7 @@ const { log, loadEnv } = require('../../lib/util');
 const { tryLoad } = require('../../lib/aiBackend');
 
 module.exports = async function forecast() {
-  log.step('ROX AI — forecast');
+  log.step('ZUVYR — forecast');
   loadEnv();
 
   const advisorResult = tryLoad('src/modules/advisor');

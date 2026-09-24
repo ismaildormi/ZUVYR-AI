@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/ai/status.js
+// ZUVYR — cli/commands/ai/status.js
 //
 // One-screen composite: provider credentials, routed model pricing
 // coverage, and the planned-but-not-yet-enabled AI feature flags
@@ -11,7 +11,7 @@ const { log, loadEnv } = require('../../lib/util');
 const { loadProviders, loadConfig, loadAiRouter, PROVIDER_ENV_VAR } = require('../../lib/aiBackend');
 
 module.exports = async function status() {
-  log.step('ROX AI — AI subsystem status');
+  log.step('ZUVYR — AI subsystem status');
   loadEnv();
 
   const providersResult = loadProviders();

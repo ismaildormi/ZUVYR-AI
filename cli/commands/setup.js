@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/setup.js
+// ZUVYR — cli/commands/setup.js
 //
 // One-shot: install deps, create .env if missing, make sure Redis is
 // reachable (starting a local Docker container if that's the obvious
@@ -121,7 +121,7 @@ function registerPm2Startup() {
 }
 
 module.exports = function setup() {
-  log.step('ROX AI — setup');
+  log.step('ZUVYR — setup');
   ensureDir(LOGS_DIR);
   ensureDir(BACKUPS_DIR);
   ensureEnvFile();

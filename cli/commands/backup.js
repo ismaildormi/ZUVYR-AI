@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/backup.js
+// ZUVYR — cli/commands/backup.js
 //
 // One archive per backup: backups/rox-backup-<timestamp>.tar.gz,
 // containing:
@@ -50,7 +50,7 @@ function chmodSecretsFile(filePath) {
 }
 
 module.exports = async function backup(args) {
-  log.step('ROX AI — backup');
+  log.step('ZUVYR — backup');
   loadEnv();
   ensureDir(BACKUPS_DIR);
 

@@ -1,10 +1,11 @@
 {
-  "name": "rox-ai",
+  "name": "zuvyr-ai",
   "version": "0.64.0",
   "private": true,
-  "description": "ROX AI — Safe Bridge release with isolated profiles, read-only live verification, smoke tests, and guarded staging/production deployment.",
+  "description": "ZUVYR — safe operational tooling, isolated profiles, read-only live verification, smoke tests, and guarded staging/production deployment.",
   "bin": {
-    "rox": "./cli/rox.js"
+    "rox": "./cli/rox.js",
+    "zuvyr": "./cli/rox.js"
   },
   "engines": {
     "node": ">=22"

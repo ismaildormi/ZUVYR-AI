@@ -1,4 +1,4 @@
-// ROX AI — cli/lib/pluginLoader.js
+// ZUVYR — cli/lib/pluginLoader.js
 //
 // Plugin discovery for the CLI. This is what makes "future commands
 // addable without modifying the existing architecture" literally
