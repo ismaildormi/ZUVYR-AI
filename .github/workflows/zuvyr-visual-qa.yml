@@ -52,8 +52,11 @@ jobs:
           cat /tmp/zuvyr-visual-http.log
           exit 1
 
-      - name: Capture screenshots, styles, text, layout and accessibility evidence
+      - name: Capture ZUVYR Suite screenshots and evidence
         run: node tools/visual-qa/run.mjs
+
+      - name: Capture native shell screenshots and evidence
+        run: node tools/visual-qa/native-run.mjs
 
       - name: Upload immutable visual QA evidence
         if: always()
