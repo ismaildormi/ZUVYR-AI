@@ -1,0 +1,113 @@
+name: ZUVYR one-shot runtime cleanup
+
+on:
+  push:
+    branches:
+      - fix/infra-level3-brand-clean-20260924
+    paths:
+      - .github/workflows/_zuvyr-one-shot-runtime-clean.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/infra-level3-brand-clean-20260924
+          fetch-depth: 0
+      - name: Apply bounded cleanup
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+
+          changed = []
+
+          def write_if_changed(path, new):
+              p = Path(path)
+              old = p.read_text(encoding='utf-8')
+              if old != new:
+                  p.write_text(new, encoding='utf-8')
+                  changed.append(path)
+
+          # Level 3 mobile containment from PR #120, rebased onto fresh main.
+          css_path = 'frontend/rox-brand-blue-violet.css'
+          p = Path(css_path)
+          css = p.read_text(encoding='utf-8')
+          marker = '/* ZUVYR NATIVE LEVEL 3 MOBILE CONTAINMENT V1 */'
+          if marker not in css:
+              css += '''\n\n/* ZUVYR NATIVE LEVEL 3 MOBILE CONTAINMENT V1 */\n@media (max-width: 760px) {\n  body.zuvyr-ui .feature-screen::before,\n  body.zuvyr-ui .feature-screen::after {\n    display: none !important;\n  }\n\n  body.zuvyr-ui #feature-settings .rox-settings-nav {\n    width: 100% !important;\n    max-width: 100% !important;\n    min-width: 0 !important;\n    overflow-x: auto !important;\n    overflow-y: hidden !important;\n    overscroll-behavior-inline: contain;\n    -webkit-overflow-scrolling: touch;\n    scrollbar-width: none;\n  }\n\n  body.zuvyr-ui #feature-settings .rox-settings-nav::-webkit-scrollbar {\n    display: none;\n  }\n}\n'''
+              p.write_text(css, encoding='utf-8')
+              changed.append(css_path)
+
+          # Active runtime branding only. Preserve identifiers/routes for compatibility.
+          for path in ['backend/server.js', 'backend/worker.js']:
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              new = text.replace('ROX AI', 'ZUVYR').replace('Rox AI', 'ZUVYR').replace('Rox service', 'ZUVYR service')
+              write_if_changed(path, new)
+
+          # Keep package metadata aligned so production startup logs carry the current brand.
+          pkg_path = Path('backend/package.json')
+          pkg = json.loads(pkg_path.read_text(encoding='utf-8'))
+          pkg['name'] = 'zuvyr-ai-backend'
+          pkg['description'] = 'ZUVYR backend — credits/gatekeeper, model router, hardening, Stripe billing, and Prometheus metrics.'
+          pkg_text = json.dumps(pkg, ensure_ascii=False, indent=2) + '\n'
+          write_if_changed('backend/package.json', pkg_text)
+
+          lock_path = Path('backend/package-lock.json')
+          if lock_path.exists():
+              lock = json.loads(lock_path.read_text(encoding='utf-8'))
+              lock['name'] = 'zuvyr-ai-backend'
+              if isinstance(lock.get('packages'), dict) and isinstance(lock['packages'].get(''), dict):
+                  lock['packages']['']['name'] = 'zuvyr-ai-backend'
+              lock_text = json.dumps(lock, ensure_ascii=False, indent=2) + '\n'
+              write_if_changed('backend/package-lock.json', lock_text)
+
+          # User-facing operational surfaces: update brand text but deliberately preserve legacy
+          # command/file/function identifiers until an alias-safe rename migration exists.
+          roots = [Path('cli'), Path('tools'), Path('scripts/windows')]
+          root_files = [p for p in Path('.').glob('ROX-*') if p.is_file() and p.suffix.lower() in {'.ps1','.cmd','.bat'}]
+          candidates = []
+          for root in roots:
+              if root.exists():
+                  candidates += [p for p in root.rglob('*') if p.is_file() and p.suffix.lower() in {'.js','.mjs','.cjs','.html','.ps1','.cmd','.md'}]
+          candidates += root_files
+          for p in sorted(set(candidates)):
+              try:
+                  old = p.read_text(encoding='utf-8')
+              except UnicodeDecodeError:
+                  continue
+              new = old.replace('ROX AI', 'ZUVYR').replace('Rox AI', 'ZUVYR')
+              if new != old:
+                  p.write_text(new, encoding='utf-8')
+                  changed.append(str(p))
+
+          report = Path('docs/zuvyr/ACTIVE_BRAND_CLEANUP_2026-09-24.md')
+          report.parent.mkdir(parents=True, exist_ok=True)
+          report.write_text(
+              '# ZUVYR Active Brand Cleanup — 2026-09-24\n\n'
+              'This cleanup updates active runtime and operator-facing brand text after the repository rename. '\
+              'Historical receipts, backups, immutable evidence and compatibility identifiers are intentionally not rewritten.\n\n'
+              'The Level 3 mobile containment from superseded PR #120 is rebased here onto the current main.\n\n'
+              'Changed paths:\n' + ''.join(f'- `{x}`\n' for x in sorted(set(changed))) +
+              '\nCompatibility note: legacy `rox` command/file/function identifiers remain aliases until a dedicated alias-safe migration proves they can be renamed without breaking automation.\n',
+              encoding='utf-8'
+          )
+          changed.append(str(report))
+
+          print('CHANGED_PATHS=' + str(len(set(changed))))
+          for path in sorted(set(changed)):
+              print(path)
+          PY
+
+          rm -f .github/workflows/_zuvyr-one-shot-runtime-clean.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'fix: rebase Level 3 mobile QA and clean active ZUVYR branding'
+          git push origin HEAD:fix/infra-level3-brand-clean-20260924
