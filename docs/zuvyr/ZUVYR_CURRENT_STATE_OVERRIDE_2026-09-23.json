@@ -1,6 +1,6 @@
 {
   "schema_version": "1.5",
-  "updated_at": "2026-09-24T02:16:00Z",
+  "updated_at": "2026-09-24T15:40:00Z",
   "status": "CANONICAL_CURRENT_STATE_OVERRIDE",
   "purpose": "Fresh compact continuity override. When this file is newer than older state capsules, it wins subject to even fresher Git/production evidence and explicit user instruction.",
   "repository": "ismaildormi/rox-ai",
@@ -18,7 +18,7 @@
     "pack": "PACK089",
     "pack_status": "IN_PROGRESS",
     "phase": "89E_PRODUCTION_ACCEPTANCE",
-    "phase_status": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_VALIDATION_AND_OWNER_CONSENT",
+    "phase_status": "BLOCKED_EXTERNAL_GOOGLE_PROVIDER_ACCEPTANCE_AND_OWNER_CONSENT",
     "pack090_allowed": false,
     "completed_subphases": {
       "89A": "LOCKED_VERIFIED",
@@ -27,16 +27,26 @@
       "89D": "LOCKED_VERIFIED",
       "89E_non_external_acceptance": "PASS"
     },
-    "latest_receipt": "zuvyr-pack-evidence/pack-089/2026-09-23-89e-reconciliation/receipt.json",
+    "latest_receipt": "zuvyr-pack-evidence/pack-089/2026-09-24-89e-oauth-start-live/receipt.json",
     "google_oauth_variable_names_present": [
       "GOOGLE_OAUTH_CLIENT_ID",
       "GOOGLE_OAUTH_CLIENT_SECRET",
       "GOOGLE_OAUTH_REDIRECT_URI"
     ],
     "google_oauth_values_redacted": true,
-    "google_oauth_values_or_google_side_validity": "UNVERIFIED",
+    "google_oauth_values_or_google_side_validity": "APPLICATION_CONFIG_GATE_PASS_GOOGLE_SIDE_UNVERIFIED",
     "interactive_owner_consent_completed": false,
-    "next_legal_step": "Run the real owner-scoped Google Drive OAuth flow in production and prove client/redirect acceptance, requested-scope consent, callback activation, one granted-scope Drive call, denied-scope rejection, disconnect/revoke, post-revoke denial, audit persistence and Vault/plaintext-secret cleanliness. Only then lock PACK089 and open PACK090."
+    "next_legal_step": "Complete the real owner Google consent for the production authorization session (or start a fresh session if the 10-minute state expired), then verify callback activation -> granted-scope Drive tool call -> denied-scope rejection -> disconnect/revoke -> post-revoke denial -> audit persistence -> Vault/plaintext-secret cleanliness.",
+    "oauth_start_production": {
+      "status": "PASS",
+      "http_status": 201,
+      "observed_at": "2026-09-24T15:16:53.411Z",
+      "route": "/api/workspace/drive/connect"
+    },
+    "oauth_callback_production": {
+      "status": "NOT_OBSERVED",
+      "checked_through": "2026-09-24T15:40:00Z"
+    }
   },
   "final_v1_activation_order": {
     "stripe_live_activation": {
