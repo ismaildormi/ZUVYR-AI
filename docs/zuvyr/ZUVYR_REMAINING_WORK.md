@@ -174,26 +174,53 @@ Required later:
 ---
 
 ### RW-015 — Private ChatGPT ↔ ZUVYR Ops connector
-Status: `ACTIVE`
+Status: `ACTIVE / AUTH_ACCEPTANCE_PENDING`
 Subsystem: `Operational tooling / owner-scoped MCP`
 
 Owner intent: connect ChatGPT directly to ZUVYR so future chats can inspect the live project state and run safe acceptance checks without relying on screenshots or manual cross-tool reconciliation every time.
 
-Required implementation and acceptance:
-- expose a dedicated inbound ZUVYR MCP / agent-ops surface; current ZUVYR plugin/MCP implementation is outbound-facing and does not provide an inbound ChatGPT control endpoint;
-- authenticate through a real owner-scoped OAuth flow; do not embed API keys, bearer tokens, client secrets, or other credentials in plugin package headers or files;
-- prefer Supabase OAuth 2.1 / OIDC as the identity layer if the live project can support it safely, with PKCE, per-user identity, token verification, scope restriction, and revocation;
-- default tools must be read-only and limited to non-secret operational state: health/readiness, current release identity, canonical PACK/current-state summary, remaining-work ledger, safe provider/config readiness summaries, and non-mutating acceptance probes;
-- redact secrets, tokens, customer data, raw environment values, and sensitive database payloads from all responses and logs;
-- any production-changing tool must remain separate, least-privilege, auditable, and explicitly gated by user approval; payment, deletion, IAM, secret, billing, provider-spend, and destructive actions must never become implicit;
-- add rate limits, audit logging, owner scoping, fail-closed authorization, and regression tests;
-- create a PRIVATE personal ChatGPT plugin for the owner only, pointing to the authenticated ZUVYR MCP endpoint;
-- connect the plugin through the real authorization flow and prove that ChatGPT can read ZUVYR live state;
-- prove denied unauthorized access and revoked-token denial;
-- prove at least one safe live acceptance probe through the plugin;
-- document the final connector contract and how future chats should use it before manual screenshots/log handoffs.
+Implementation completed so far:
+- PRIVATE USER plugin `ZUVYR Live Operator` exists and was upgraded to v0.2.0;
+- production Supabase Edge Function `zuvyr-ops-mcp` version 1 is ACTIVE;
+- inbound MCP is read-only by default and exposes only bounded state/health/acceptance tools;
+- bearer identity is revalidated server-side and access additionally requires `profiles.is_admin=true`;
+- secret-bearing integration fields are excluded from responses;
+- per-owner audit logging and rate limiting are implemented;
+- no payment, billing, IAM, delete, provider-spend, secret, or destructive mutation tool is exposed;
+- plugin package contains the MCP URL but no embedded authorization token, API key, or client secret.
 
-Do not mark this CLOSED until the private plugin is installed/connected and a real authenticated ChatGPT → ZUVYR read + safe test succeeds in production.
+Still required before closure:
+- complete the real plugin authorization flow against ZUVYR Ops MCP;
+- prove a real authenticated ChatGPT → ZUVYR `current_state` read;
+- prove a real `health` safe live probe;
+- prove unauthorized/non-admin access denial and revoked/invalid-token denial;
+- verify audit records are created for the accepted connection/tool calls;
+- reconcile any OAuth-server/DCR configuration required by the live Supabase project without weakening owner scoping;
+- document final connection acceptance evidence.
+
+Do not mark this CLOSED until the private plugin is connected and a real authenticated ChatGPT → ZUVYR read + safe test succeeds in production.
+
+---
+
+### RW-016 — ChatGPT-visible ZUVYR visual and product-experience QA
+Status: `ACTIVE`
+Subsystem: `Visual QA / UX / accessibility / responsive product acceptance`
+
+Owner intent: ChatGPT must be able to evaluate how ZUVYR is actually presented and experienced — layout, colors, copy, typography, responsive behavior, loading/error/success states and important interactions — so V1 quality is not judged from source code alone.
+
+Implementation and acceptance requirements:
+- use the real `frontend/zuvyr-suite-v1.js` and `frontend/zuvyr-suite-v1.css`, not a disconnected mock design;
+- automatically capture representative desktop and mobile screenshots for ZUVYR product surfaces;
+- retain machine-readable evidence for visible text, computed colors, typography, control geometry and viewport overflow;
+- run accessibility checks and fail on current serious/critical actionable violations;
+- detect missing views, duplicate IDs, unnamed interactive controls, browser/page errors and horizontal overflow;
+- include deterministic authenticated fixtures for safe empty/loading/error/success states where real customer/provider data must not be used;
+- retain a canonical public-production screenshot/probe as a second evidence source;
+- upload visual evidence as CI artifacts and make the latest workflow status visible through the ZUVYR Ops MCP;
+- before any UI CLEAN claim, inspect the actual screenshots/report, fix actionable findings, rerun, and require current evidence;
+- add further fixture states whenever a later UI task exposes a state that the visual harness cannot currently represent.
+
+Do not mark this CLOSED until the first full Visual QA workflow completes, its screenshots/report are inspected, all actionable findings from that run are fixed or explicitly evidenced as non-defects, and a rerun passes.
 
 ---
 

@@ -1,0 +1,68 @@
+name: ZUVYR Visual QA
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'tools/visual-qa/**'
+      - '.github/workflows/zuvyr-visual-qa.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'tools/visual-qa/**'
+      - '.github/workflows/zuvyr-visual-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zuvyr-visual-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual-qa:
+    name: Visual QA
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+
+      - name: Install pinned visual QA dependencies
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.63.0 @axe-core/playwright@4.13.0
+          npx playwright install --with-deps chromium
+
+      - name: Start deterministic visual fixture server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/zuvyr-visual-http.log 2>&1 &
+          echo $! > /tmp/zuvyr-visual-http.pid
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/tools/visual-qa/harness.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/zuvyr-visual-http.log
+          exit 1
+
+      - name: Capture ZUVYR Suite screenshots and evidence
+        run: node tools/visual-qa/run.mjs
+
+      - name: Capture native shell screenshots and evidence
+        run: node tools/visual-qa/native-run.mjs
+
+      - name: Upload immutable visual QA evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: zuvyr-visual-qa-${{ github.sha }}
+          path: artifacts/visual-qa
+          if-no-files-found: error
+          retention-days: 30

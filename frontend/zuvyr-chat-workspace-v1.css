@@ -4,7 +4,7 @@ body.zuvyr-ui #feature-chat.active {
 }
 
 body.zuvyr-ui #feature-chat > .zuvyr-chat-workspace,
-body.zuvyr-ui #feature-chat.zuvyr-chat-workspace {
+body.zuvyr-ui #feature-chat.active.zuvyr-chat-workspace {
   display: grid !important;
   grid-template-columns: 268px minmax(0, 1fr) !important;
   width: 100% !important;
@@ -345,7 +345,7 @@ body.zuvyr-ui #feature-chat .zuvyr-chat-main button[data-send="chat"] {
 
 @media (max-width: 760px) {
   body.zuvyr-ui #feature-chat > .zuvyr-chat-workspace,
-  body.zuvyr-ui #feature-chat.zuvyr-chat-workspace {
+  body.zuvyr-ui #feature-chat.active.zuvyr-chat-workspace {
     grid-template-columns: minmax(0, 1fr) !important;
     grid-template-rows: 58px minmax(0, 1fr) !important;
   }

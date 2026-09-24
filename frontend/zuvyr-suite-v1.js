@@ -71,7 +71,7 @@
       analytics:[['Usage','7 and 30 day views'],['Cost','Provider and feature cost'],['Margin','Revenue, profit and risk reserve']],
       settings:[['Account & preferences','Profile, language and appearance'],['Plans, credits & usage','Allowance, top-up credits and billing visibility'],['Privacy & permissions','Permission Center, Memory and data controls']]
     };
-    return '<div class="zs-tool-grid">'+(maps[id] || []).map(function (t) { return '<article class="zs-tool"><div class="zs-tool-top"><span class="zs-tool-icon">✦</span><span class="zs-tool-state">'+(sections.find(function(s){return s[0]===id;})[3] === 'ready' ? 'foundation' : 'connect')+'</span></div><h3>'+t[0]+'</h3><p>'+t[1]+'</p></article>'; }).join('')+'</div>';
+    return '<div class="zs-tool-grid">'+(maps[id] || []).map(function (t) { return '<article class="zs-tool"><div class="zs-tool-top"><span class="zs-tool-icon">✦</span><span class="zs-tool-state">'+(sections.find(function(s){return s[0]===id;})[3] === 'ready' ? 'foundation' : 'connect')+'</span></div><h2>'+t[0]+'</h2><p>'+t[1]+'</p></article>'; }).join('')+'</div>';
   }
   function dashboard() {
     return heading('dashboard')+'<div class="zs-banner"><span>✦</span><div><b>One goal, connected capabilities.</b> ZUVYR passes approved research and assets into the next step instead of isolating every tool.</div></div><div class="zs-grid">'+
@@ -111,8 +111,15 @@
   // Usage UI 18: the Usage/Billing surface shares the exact same account source as the sidebar.
   let usageState='idle', usageData=null, usageRequest=0, usageOwner=null;
 
-  function usageView() {
+  function usageViewNode() {
     return suite.querySelector('[data-zs-view="usage"]');
+  }
+
+  function usageSurfaceView() {
+    return heading('usage') +
+      '<div class="zs-grid"><div class="zs-card wide">' +
+        '<div data-zs-usage-content><div class="zs-muted" role="status">Loading usage…</div></div>' +
+      '</div></div>';
   }
 
   function usageWindowLabel(windowValue) {
@@ -227,7 +234,7 @@
   }
 
   function renderUsage() {
-    const view = usageView();
+    const view = usageViewNode();
     if (!view) return;
 
     const box =
@@ -328,7 +335,8 @@
   }
 
   async function loadUsage(force = false) {
-    const owner = session?.user?.id || null;
+    const activeSession = typeof session !== 'undefined' ? session : (window.session || null);
+    const owner = activeSession?.user?.id || null;
     const request = ++usageRequest;
 
     if (!owner) {
@@ -387,7 +395,7 @@
           '<div class="zs-actions"><button type="submit" class="zs-primary" data-zs-drive-connect>Connect Google Drive</button><span class="zs-hint">0 credits · OAuth authorization only</span></div>'+
         '</form><div class="zs-result" data-zs-drive-result></div></div>'+
         '<div class="zs-card half"><h2>Add plugin or MCP server</h2><p>Manifests are declarative only. MCP endpoints must be HTTPS and private/local network targets are rejected server-side.</p><form data-zs-plugin-form>'+
-          '<div class="zs-document-row"><div class="zs-field"><label>Kind</label><select name="pluginKind"><option value="mcp">MCP server</option><option value="plugin">Built-in delegate plugin</option></select></div><div class="zs-field"><label>Key</label><input name="pluginKey" maxlength="120" required placeholder="my-tools"></div></div>'+
+          '<div class="zs-document-row"><div class="zs-field"><label>Kind</label><select name="pluginKind" aria-label="Connection kind"><option value="mcp">MCP server</option><option value="plugin">Built-in delegate plugin</option></select></div><div class="zs-field"><label>Key</label><input name="pluginKey" maxlength="120" required placeholder="my-tools"></div></div>'+
           '<div class="zs-field"><label>Display name</label><input name="displayName" maxlength="120" required placeholder="My tools"></div>'+
           '<div class="zs-field"><label>MCP endpoint <span class="zs-hint">required for MCP</span></label><input type="url" name="endpointUrl" maxlength="2048" placeholder="https://mcp.example.com/mcp" autocomplete="off"></div>'+
           '<div class="zs-field"><label>Declared scopes</label><div class="zs-checks"><label class="zs-check"><input type="checkbox" name="pluginScopes" value="workspace.items.read" checked> Library read</label><label class="zs-check"><input type="checkbox" name="pluginScopes" value="workspace.items.write"> Library write</label><label class="zs-check"><input type="checkbox" name="pluginScopes" value="projects.read"> Projects read</label><label class="zs-check"><input type="checkbox" name="pluginScopes" value="projects.write"> Projects write</label><label class="zs-check"><input type="checkbox" name="pluginScopes" value="exports.create"> Export create</label></div></div>'+
@@ -415,10 +423,10 @@
       '<div class="zs-grid zs-scheduled-grid">'+
         '<div class="zs-card wide"><div class="zs-actions zs-scheduled-title-row"><div><h2>Create scheduled task</h2><p>Schedule a safe Chat task now. The same Brain, Router, usage ledger and permissions are reused at run time.</p></div><button type="button" class="zs-secondary" data-zs-scheduled-refresh>Refresh</button></div>'+
           '<form data-zs-scheduled-form class="zs-scheduled-form">'+
-            '<div class="zs-document-row"><div class="zs-field"><label>Title</label><input name="title" maxlength="120" required placeholder="Morning research brief"></div><div class="zs-field"><label>Type</label><select name="scheduleType" data-zs-scheduled-type><option value="once">One time</option><option value="recurring">Recurring interval</option></select></div></div>'+
+            '<div class="zs-document-row"><div class="zs-field"><label>Title</label><input name="title" maxlength="120" required placeholder="Morning research brief"></div><div class="zs-field"><label>Type</label><select name="scheduleType" aria-label="Schedule type" data-zs-scheduled-type><option value="once">One time</option><option value="recurring">Recurring interval</option></select></div></div>'+
             '<div class="zs-field"><label>Goal</label><textarea name="goal" maxlength="4000" required placeholder="Summarize the approved task and return the result in this workspace."></textarea></div>'+
-            '<div class="zs-document-row"><div class="zs-field"><label>First run</label><input type="datetime-local" name="runAt" required data-zs-scheduled-run-at></div><div class="zs-field"><label>Timezone</label><input name="timezone" maxlength="64" required list="zs-scheduled-timezones" data-zs-scheduled-timezone placeholder="Africa/Casablanca"><datalist id="zs-scheduled-timezones"><option value="Africa/Casablanca"><option value="UTC"><option value="Europe/Paris"><option value="America/New_York"><option value="America/Los_Angeles"><option value="Asia/Dubai"><option value="Asia/Tokyo"></datalist></div></div>'+
-            '<div class="zs-document-row"><div class="zs-field" data-zs-scheduled-interval-wrap hidden><label>Repeat every</label><select name="intervalMinutes"><option value="60">1 hour</option><option value="360">6 hours</option><option value="720">12 hours</option><option value="1440">24 hours</option><option value="10080">7 days</option></select></div><div class="zs-field"><label>Maximum credits per run</label><input type="number" name="maxCreditsPerRun" min="0" max="10000000" step="1" value="25" required></div></div>'+
+            '<div class="zs-document-row"><div class="zs-field"><label>First run</label><input type="datetime-local" name="runAt" aria-label="First run time" required data-zs-scheduled-run-at></div><div class="zs-field"><label>Timezone</label><input name="timezone" maxlength="64" required list="zs-scheduled-timezones" data-zs-scheduled-timezone placeholder="Africa/Casablanca"><datalist id="zs-scheduled-timezones"><option value="Africa/Casablanca"><option value="UTC"><option value="Europe/Paris"><option value="America/New_York"><option value="America/Los_Angeles"><option value="Asia/Dubai"><option value="Asia/Tokyo"></datalist></div></div>'+
+            '<div class="zs-document-row"><div class="zs-field" data-zs-scheduled-interval-wrap hidden><label>Repeat every</label><select name="intervalMinutes" aria-label="Repeat interval"><option value="60">1 hour</option><option value="360">6 hours</option><option value="720">12 hours</option><option value="1440">24 hours</option><option value="10080">7 days</option></select></div><div class="zs-field"><label>Maximum credits per run</label><input type="number" name="maxCreditsPerRun" aria-label="Maximum credits per run" min="0" max="10000000" step="1" value="25" required></div></div>'+
             '<label class="zs-consent"><input type="checkbox" name="allowTopup"> Allow purchased top-up credits if included allowance is unavailable. This still cannot exceed the per-run cap.</label>'+
             '<div class="zs-scheduled-preview" data-zs-scheduled-preview role="status">Choose the first run time. No credits are charged at schedule creation.</div>'+
             '<div class="zs-actions"><button type="submit" class="zs-primary" data-zs-scheduled-create>Create draft</button><span class="zs-hint">Creation charge: 0 credits · Activation can be paused or cancelled</span></div>'+
@@ -435,7 +443,7 @@
       '<div class="zs-banner" data-zs-document-banner><span>▤</span><div><b>Document Studio is live.</b> Generate local DOCX, PDF, Markdown and text files, keep canonical versions in Library, and link them to Projects without a model call.</div></div>'+
       '<div class="zs-grid">'+
         '<div class="zs-card wide zs-document-editor"><h2>Create document</h2><form data-zs-document-form>'+
-          '<div class="zs-document-row"><div class="zs-field"><label>Title</label><input name="title" maxlength="120" required placeholder="Quarterly research brief"></div><div class="zs-field"><label>Template</label><select name="templateId" data-zs-document-template><option value="builtin:blank">Blank document</option></select></div></div>'+
+          '<div class="zs-document-row"><div class="zs-field"><label>Title</label><input name="title" maxlength="120" required placeholder="Quarterly research brief"></div><div class="zs-field"><label>Template</label><select name="templateId" aria-label="Document template" data-zs-document-template><option value="builtin:blank">Blank document</option></select></div></div>'+
           '<div class="zs-field"><label>Content</label><textarea name="content" maxlength="200000" placeholder="Write or paste the document body here"></textarea></div>'+
           '<div data-zs-document-variables></div>'+
           '<div class="zs-document-row"><div class="zs-field"><label>Project ID <span class="zs-hint">optional</span></label><input name="projectId" placeholder="UUID"></div><div class="zs-field"><label>Verified source record IDs <span class="zs-hint">optional · max 30</span></label><input name="sourceRecordIds" placeholder="UUIDs separated by commas"></div></div>'+
@@ -458,8 +466,8 @@
       '<div class="zs-banner"><span>⌕</span><div><b>Cited research → reusable artifact.</b> Run Web Search, Deep Research, Shopping, Local or Connected Research in Chat, then hand the verified result and source-record IDs here. Conversion is local: no second model/provider call and no duplicate generation credit.</div></div>'+
       '<div class="zs-grid"><div class="zs-card wide"><h2>Research artifact checkpoint</h2>'+
         '<form data-zs-research-artifact-form>'+
-          '<div class="zs-document-row"><div class="zs-field"><label>Title</label><input name="title" maxlength="120" required placeholder="Market research brief"></div><div class="zs-field"><label>Output</label><select name="outputKind"><option value="document">Document · DOCX + PDF</option><option value="spreadsheet">Spreadsheet · XLSX + CSV</option><option value="presentation">Presentation · PPTX</option></select></div></div>'+
-          '<div class="zs-document-row"><div class="zs-field"><label>Research mode</label><select name="researchMode"><option value="deep_research">Deep Research</option><option value="web_search">Web Search</option><option value="shopping">Shopping</option><option value="local_research">Local Research</option><option value="connected_research">Connected Research</option></select></div><div class="zs-field"><label>Project ID <span class="zs-hint">optional</span></label><input name="projectId" placeholder="UUID"></div></div>'+
+          '<div class="zs-document-row"><div class="zs-field"><label>Title</label><input name="title" maxlength="120" required placeholder="Market research brief"></div><div class="zs-field"><label>Output</label><select name="outputKind" aria-label="Output format"><option value="document">Document · DOCX + PDF</option><option value="spreadsheet">Spreadsheet · XLSX + CSV</option><option value="presentation">Presentation · PPTX</option></select></div></div>'+
+          '<div class="zs-document-row"><div class="zs-field"><label>Research mode</label><select name="researchMode" aria-label="Research mode"><option value="deep_research">Deep Research</option><option value="web_search">Web Search</option><option value="shopping">Shopping</option><option value="local_research">Local Research</option><option value="connected_research">Connected Research</option></select></div><div class="zs-field"><label>Project ID <span class="zs-hint">optional</span></label><input name="projectId" placeholder="UUID"></div></div>'+
           '<div class="zs-field"><label>Verified source record IDs <span class="zs-hint">required · 1–30</span></label><input name="sourceRecordIds" required placeholder="UUIDs separated by commas"></div>'+
           '<div class="zs-field"><label>Cited research result</label><textarea name="researchText" required maxlength="120000" placeholder="Paste the completed cited result here. The verified source IDs above remain attached to the artifact."></textarea></div>'+
           '<div class="zs-actions"><button class="zs-primary" type="submit" data-zs-research-artifact-generate>Create artifact</button><span class="zs-hint">Conversion: 0 provider calls · 0 credits · upstream research billing unchanged</span></div>'+
@@ -472,7 +480,7 @@
     return heading('spreadsheets')+
       '<div class="zs-banner"><span>▥</span><div><b>Spreadsheet Studio is live.</b> Build local XLSX/CSV files from bounded tables, persist them canonically, attach verified sources, and keep formulas/macros disabled.</div></div>'+
       '<div class="zs-grid"><div class="zs-card wide"><h2>Create spreadsheet</h2><form data-zs-spreadsheet-form>'+
-        '<div class="zs-document-row"><div class="zs-field"><label>Title</label><input name="title" maxlength="120" required placeholder="Budget model"></div><div class="zs-field"><label>Sheet name</label><input name="sheetName" maxlength="31" value="Sheet 1"></div></div>'+
+        '<div class="zs-document-row"><div class="zs-field"><label>Title</label><input name="title" maxlength="120" required placeholder="Budget model"></div><div class="zs-field"><label>Sheet name</label><input name="sheetName" aria-label="Sheet name" maxlength="31" value="Sheet 1"></div></div>'+
         '<div class="zs-field"><label>Columns <span class="zs-hint">comma separated · max 100</span></label><input name="columns" placeholder="Item, Quantity, Cost"></div>'+
         '<div class="zs-field"><label>Rows <span class="zs-hint">one CSV-like row per line · no formulas</span></label><textarea name="rows" placeholder="Hosting,1,20&#10;Storage,2,8"></textarea></div>'+
         '<div class="zs-document-row"><div class="zs-field"><label>Project ID <span class="zs-hint">optional</span></label><input name="projectId" placeholder="UUID"></div><div class="zs-field"><label>Verified source record IDs <span class="zs-hint">optional</span></label><input name="sourceRecordIds" placeholder="UUIDs separated by commas"></div></div>'+
@@ -1060,8 +1068,8 @@
       '<div class="zs-grid">'+
         '<div class="zs-card half"><h2>Create 3D</h2><form data-zs-3d-form>'+
           '<div class="zs-field"><label>Prompt</label><textarea name="prompt" maxlength="1024" required placeholder="A clean stylized ceramic robot with rounded edges"></textarea></div>'+
-          '<div class="zs-field"><label>Geometry mode</label><select name="generateType"><option value="Normal">Normal + texture</option><option value="Geometry">Geometry only</option></select></div>'+
-          '<div class="zs-field"><label>Face count</label><input name="faceCount" type="number" min="40000" max="1500000" step="10000" value="500000"></div>'+
+          '<div class="zs-field"><label>Geometry mode</label><select name="generateType" aria-label="Geometry mode"><option value="Normal">Normal + texture</option><option value="Geometry">Geometry only</option></select></div>'+
+          '<div class="zs-field"><label>Face count</label><input name="faceCount" aria-label="Face count" type="number" min="40000" max="1500000" step="10000" value="500000"></div>'+
           '<label class="zs-consent"><input name="enablePbr" type="checkbox" checked> Generate PBR material when supported by the selected geometry mode.</label>'+
           '<div class="zs-actions"><button type="submit" class="zs-primary" data-zs-3d-generate disabled>Generate 3D</button><span class="zs-hint" data-zs-3d-generate-hint>Checking M18 and PACK083 execution gates.</span></div>'+
         '</form></div>'+
@@ -1520,7 +1528,7 @@
     var extra=id==='code'?orchestrator('code'):toolCards(id);
     return heading(id)+'<div class="zs-banner"><span>◎</span><div><b>'+(state==='ready'?'Interface foundation is ready.':'Ready to connect safely.')+'</b> '+(state==='ready'?'Use the existing backend foundation and connect verified data next.':'Provider execution stays off until pricing, limits and settlement pass verification.')+'</div></div>'+extra;
   }
-  function viewHtml(id) { if(id==='dashboard')return dashboard(); if(id==='images')return imageStudioView(); if(id==='3d')return model3dStudioView(); if(id==='ip')return ipView(); if(id==='usage')return usageView(); if(id==='research')return researchView(); if(id==='documents')return documentsView(); if(id==='spreadsheets')return spreadsheetsView(); if(id==='presentations')return presentationsView(); if(id==='scheduled')return scheduledView(); if(id==='plugins')return pluginsView(); return genericView(id); }
+  function viewHtml(id) { if(id==='dashboard')return dashboard(); if(id==='images')return imageStudioView(); if(id==='3d')return model3dStudioView(); if(id==='ip')return ipView(); if(id==='usage')return usageSurfaceView(); if(id==='research')return researchView(); if(id==='documents')return documentsView(); if(id==='spreadsheets')return spreadsheetsView(); if(id==='presentations')return presentationsView(); if(id==='scheduled')return scheduledView(); if(id==='plugins')return pluginsView(); return genericView(id); }
 
   // Native navigation integration 01. Existing Chat, Images, Video, Code,
   // IP, Projects, History, Settings and payment handlers retain ownership.
@@ -2957,7 +2965,7 @@
         '<div class="zs-code-pack075-toolbar">' +
           '<div><strong>Code Projects</strong><span>Durable multi-file workspace</span></div>' +
           '<div class="zs-code-pack075-actions">' +
-            '<select data-zs-code-project-select>' + projectOptions() + '</select>' +
+            '<select data-zs-code-project-select aria-label="Code project">' + projectOptions() + '</select>' +
             '<button type="button" data-zs-code-new-project>New project</button>' +
           '</div>' +
         '</div>' +
