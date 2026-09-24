@@ -1,4 +1,4 @@
-# ZUVYR MASTER MATRIX — LATEST CANONICAL CONTINUITY OVERRIDE — 2026-09-22
+# ZUVYR MASTER MATRIX — LATEST CANONICAL CONTINUITY OVERRIDE — 2026-09-24
 
 This dated override is the **current-state entry point**. Older Pack headers/status blocks below are preserved as historical evidence and must not be interpreted as current merely because they appear earlier in the file.
 
@@ -11,15 +11,15 @@ This dated override is the **current-state entry point**. Older Pack headers/sta
 | V1 readiness range | `EA-001…EA-292` |
 | Active main Pack | `PACK089 — Skills / Plugins / MCP / Connections` |
 | Active phase | `89E_PRODUCTION_ACCEPTANCE` |
-| Current status | `BLOCKED_EXTERNAL_GOOGLE_OAUTH_CLIENT_CREDENTIALS` |
+| Current status | `BLOCKED_EXTERNAL_GOOGLE_OAUTH_TEST_USER_ALLOWLIST_AND_OWNER_CONSENT` |
 | 89A / 89B / 89C / 89D | `LOCKED_VERIFIED` |
 | 89E non-external acceptance | `PASS` |
-| Latest receipt | `zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json` |
+| Latest receipt | `zuvyr-pack-evidence/pack-089/2026-09-24-89e-google-testing-retry-fix/receipt.json` |
 | PACK090 allowed | **NO** |
-| Remaining external values | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` |
+| Remaining external gate | Google Testing audience: owner account must be in `Audience → Test users`, then real owner consent/callback acceptance |
 | Final release gate | `PACK150` only; `V1_READY=true` requires all applicable `EA-001…EA-292` PASS |
 
-**Next legal step:** configure legitimate Google OAuth Web client ID + client secret in production, then complete the real owner-scoped Google Drive OAuth acceptance: connect → granted-scope tool call → denied-scope proof → disconnect/revoke → post-revoke denial → audit persistence → secret/Vault cleanliness. Do **not** start PACK090 first.
+**Next legal step:** add the same owner Google account to Google Auth Platform → Audience → Test users, retry Google Drive Connect, then complete callback activation → granted-scope tool call → denied-scope proof → disconnect/revoke → post-revoke denial → audit persistence → secret/Vault cleanliness. Do **not** start PACK090 first.
 
 **Conflict rule:** fresh production/source/receipt evidence beats this override; this override beats older historical matrix sections. If a new session sees disagreement between continuity sources, or the continuity validator/CI fails, it must repair/reconcile continuity before feature work rather than guessing.
 

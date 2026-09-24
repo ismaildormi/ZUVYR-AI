@@ -1,10 +1,10 @@
 {
-  "schema_version": "1.5",
-  "updated_at": "2026-09-24T15:40:00Z",
+  "schema_version": "1.6",
+  "updated_at": "2026-09-24T16:17:00Z",
   "status": "CANONICAL_CURRENT_STATE_OVERRIDE",
   "purpose": "Fresh compact continuity override. When this file is newer than older state capsules, it wins subject to even fresher Git/production evidence and explicit user instruction.",
   "repository": "ismaildormi/rox-ai",
-  "source_main_before_this_reconciliation": "eae255ba3f4dd90676a365691f41cacf7e19fe15",
+  "source_main_before_this_reconciliation": "244d21142a956dfa754d245f971b8099d452ec9d",
   "execution_policy": {
     "continuous_improvement_override": "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md",
     "machine_policy": "docs/zuvyr/continuous-improvement-override.v1.json",
@@ -18,7 +18,7 @@
     "pack": "PACK089",
     "pack_status": "IN_PROGRESS",
     "phase": "89E_PRODUCTION_ACCEPTANCE",
-    "phase_status": "BLOCKED_EXTERNAL_GOOGLE_PROVIDER_ACCEPTANCE_AND_OWNER_CONSENT",
+    "phase_status": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_TEST_USER_ALLOWLIST_AND_OWNER_CONSENT",
     "pack090_allowed": false,
     "completed_subphases": {
       "89A": "LOCKED_VERIFIED",
@@ -27,16 +27,16 @@
       "89D": "LOCKED_VERIFIED",
       "89E_non_external_acceptance": "PASS"
     },
-    "latest_receipt": "zuvyr-pack-evidence/pack-089/2026-09-24-89e-oauth-start-live/receipt.json",
+    "latest_receipt": "zuvyr-pack-evidence/pack-089/2026-09-24-89e-google-testing-retry-fix/receipt.json",
     "google_oauth_variable_names_present": [
       "GOOGLE_OAUTH_CLIENT_ID",
       "GOOGLE_OAUTH_CLIENT_SECRET",
       "GOOGLE_OAUTH_REDIRECT_URI"
     ],
     "google_oauth_values_redacted": true,
-    "google_oauth_values_or_google_side_validity": "APPLICATION_CONFIG_GATE_PASS_GOOGLE_SIDE_UNVERIFIED",
+    "google_oauth_values_or_google_side_validity": "APPLICATION_CONFIG_GATE_PASS_GOOGLE_TESTING_AUDIENCE_BLOCK_CONFIRMED",
     "interactive_owner_consent_completed": false,
-    "next_legal_step": "Complete the real owner Google consent for the production authorization session (or start a fresh session if the 10-minute state expired), then verify callback activation -> granted-scope Drive tool call -> denied-scope rejection -> disconnect/revoke -> post-revoke denial -> audit persistence -> Vault/plaintext-secret cleanliness.",
+    "next_legal_step": "Add the same owner Google account used for the blocked authorization attempt to Google Auth Platform > Audience > Test users, retry Google Drive Connect, then verify callback activation -> granted-scope Drive tool call -> denied-scope rejection -> disconnect/revoke -> post-revoke denial -> audit persistence -> Vault/plaintext-secret cleanliness. Do not start PACK090 first.",
     "oauth_start_production": {
       "status": "PASS",
       "http_status": 201,
@@ -44,8 +44,24 @@
       "route": "/api/workspace/drive/connect"
     },
     "oauth_callback_production": {
-      "status": "NOT_OBSERVED",
-      "checked_through": "2026-09-24T15:40:00Z"
+      "status": "NOT_COMPLETED_GOOGLE_403_TESTING_AUDIENCE",
+      "checked_through": "2026-09-24T16:17:00Z"
+    },
+    "google_testing_audience": {
+      "status": "BLOCKED_TEST_USER_ALLOWLIST",
+      "browser_error": "403 access_denied",
+      "observed_at": "2026-09-24T16:17:00Z",
+      "owner_acceptance_path": "Add the same owner Google account to Google Auth Platform Audience > Test users while the app remains in Testing."
+    },
+    "oauth_retry_fix": {
+      "status": "PRODUCTION_VERIFIED",
+      "pr": 118,
+      "merge_commit": "244d21142a956dfa754d245f971b8099d452ec9d",
+      "backend_deployment": "85d60d3f-b6e4-4081-ad89-b61d0425126b",
+      "worker_deployment": "4e896bbb-fadf-4e90-bcef-3e14e1f9c05e",
+      "maintenance_deployment": "0d7a3e28-7d3e-4262-97a7-1c5ea67f7f3d",
+      "same_scope_retry_reuses_live_connection": true,
+      "scope_change_requires_disconnect": true
     }
   },
   "final_v1_activation_order": {
@@ -127,11 +143,11 @@
     "supabase_status": "ACTIVE_HARDENED_AT_LATEST_AUDIT",
     "railway_project": "ba460cdb-cc55-4203-bdd0-711846b7564c",
     "railway_environment": "production",
-    "railway_services_latest_status": "SUCCESS_ON_GLOBAL_HARDENING_MERGE",
+    "railway_services_latest_status": "SUCCESS_ON_PACK089_OAUTH_RETRY_FIX_MERGE",
     "railway_pending_work": 0,
-    "railway_backend_deployment": "98f210b7-fb77-4a95-b701-83d4b2743aff",
-    "railway_worker_deployment": "44bbd777-25a7-4bbc-a2bf-8480246f90f8",
-    "railway_maintenance_deployment": "23694064-119a-4baf-96e0-142ae51baab5",
+    "railway_backend_deployment": "85d60d3f-b6e4-4081-ad89-b61d0425126b",
+    "railway_worker_deployment": "4e896bbb-fadf-4e90-bcef-3e14e1f9c05e",
+    "railway_maintenance_deployment": "0d7a3e28-7d3e-4262-97a7-1c5ea67f7f3d",
     "railway_worker_runtime": "brain-kernel=true; pack088-execution=true; pack088-scheduler=true; observed scheduler failures=0",
     "railway_maintenance_runtime_monitoring": "3 consecutive natural cron runs observed SUCCESS after global-hardening deployment; latest at 2026-09-24T00:02:22Z; fresh DB hygiene RPC remains ok=true.",
     "railway_latest_evaluated_docs_only_main_change": "1d960656d0897beeacd26a09f40a5af7332543ff SKIPPED_AS_EXPECTED_NO_RUNTIME_DELTA",

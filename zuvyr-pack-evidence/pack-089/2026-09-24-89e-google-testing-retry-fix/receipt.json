@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "pack": "089",
+  "phase": "89E_PRODUCTION_ACCEPTANCE",
+  "status": "BLOCKED_EXTERNAL_GOOGLE_OAUTH_TEST_USER_ALLOWLIST_AND_OWNER_CONSENT",
+  "observed_at": "2026-09-24T16:17:00Z",
+  "source_main": "244d21142a956dfa754d245f971b8099d452ec9d",
+  "evidence": {
+    "google_browser_error": "403 access_denied",
+    "google_testing_message_observed": "OAuth app is currently being tested and access is limited to developer-approved testers.",
+    "google_test_user_allowlist_required_for_current_owner_acceptance": true,
+    "google_oauth_application_config_gate": "PASS",
+    "production_redirect_uri": "https://rox-ai-sepia.vercel.app/",
+    "oauth_callback_completed": false,
+    "pre_fix_retry_error": "workspace_integration_create_failed",
+    "retry_fix_pr": 118,
+    "retry_fix_merge_commit": "244d21142a956dfa754d245f971b8099d452ec9d",
+    "retry_fix_contract": "Same-scope retries reuse the existing live Google Drive integration row; requested scope changes fail closed with HTTP 409 until disconnect.",
+    "pack089_connections_regression_suite": "PASS_89A_THROUGH_89D",
+    "railway": {
+      "backend": {
+        "deployment_id": "85d60d3f-b6e4-4081-ad89-b61d0425126b",
+        "status": "SUCCESS"
+      },
+      "worker": {
+        "deployment_id": "4e896bbb-fadf-4e90-bcef-3e14e1f9c05e",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deployment_id": "0d7a3e28-7d3e-4262-97a7-1c5ea67f7f3d",
+        "status": "SUCCESS"
+      },
+      "pending_work": 0,
+      "backend_startup": "PASS_LISTENING_8080"
+    }
+  },
+  "interpretation": {
+    "internal_retry_regression": "FIXED_PRODUCTION_VERIFIED",
+    "remaining_gate": "EXTERNAL_GOOGLE_TESTING_AUDIENCE_AND_OWNER_CONSENT",
+    "pack089_complete": false,
+    "pack090_started": false
+  },
+  "next": {
+    "pack090_allowed": false,
+    "minimum_owner_action": "In Google Auth Platform > Audience > Test users, add the same Google account used for the blocked authorization attempt, then retry Google Drive Connect.",
+    "after_allowlist_acceptance_sequence": "connect -> callback activation -> granted-scope Drive tool call -> denied-scope rejection -> disconnect/revoke -> post-revoke denial -> audit persistence -> Vault/plaintext-secret cleanliness"
+  }
+}
