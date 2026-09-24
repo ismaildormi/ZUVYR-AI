@@ -1,0 +1,41 @@
+name: Repair PACK089 Continuity Hash Guard Once
+
+on:
+  push:
+    branches:
+      - fix/pack089-google-testing-continuity-20260924
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/pack089-google-testing-continuity-20260924
+          fetch-depth: 1
+      - name: Patch missing canonical snapshot guard
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/pack089-google-testing-continuity-once.yml')
+          s = p.read_text()
+          old = "          snapshots = manifest['canonical_files_snapshot']\n          snapshots['ZUVYR_CONTINUE_HERE.md']"
+          new = "          snapshots = manifest['canonical_files_snapshot']\n          snapshots[current_path] = blob_sha(Path(current_path).read_text())\n          snapshots['ZUVYR_CONTINUE_HERE.md']"
+          assert s.count(old) == 1, s.count(old)
+          p.write_text(s.replace(old, new, 1))
+          PY
+          git diff --check
+      - name: Commit repair and self-remove
+        shell: bash
+        run: |
+          rm -f .github/workflows/repair-pack089-continuity-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/pack089-google-testing-continuity-once.yml .github/workflows/repair-pack089-continuity-once.yml
+          git diff --cached --check
+          git commit -m "ci: fix PACK089 continuity snapshot guard"
+          git push origin HEAD:fix/pack089-google-testing-continuity-20260924
