@@ -9,7 +9,7 @@ await fs.mkdir(outDir,{recursive:true});
 
 const required=['screen-home','feature-chat','feature-images','feature-videos','feature-code','feature-roxip','screen-projects','feature-settings'];
 const viewports=[{name:'native-desktop',width:1440,height:1000},{name:'native-mobile',width:390,height:844}];
-const report={schema:1,generatedAt:new Date().toISOString(),source:'frontend/index.html',required,viewports:[],summary:{screens:0,missingRequired:0,critical:0,serious:0,moderate:0,overflowFailures:0,renderFailures:0,consoleFailures:0,duplicateIdFailures:0}};
+const report={schema:1,generatedAt:new Date().toISOString(),source:'frontend/index.html',required,viewports:[],summary:{screens:0,missingRequired:0,critical:0,serious:0,moderate:0,overflowFailures:0,renderFailures:0,consoleFailures:0,networkFailures:0,duplicateIdFailures:0}};
 let failed=false;
 const browser=await chromium.launch({headless:true});
 
@@ -94,7 +94,7 @@ async function activate(page,id){
   },id);
 }
 
-async function inspect(page,id,viewport,consoleErrors){
+async function inspect(page,id,viewport,consoleErrors,networkErrors){
   const state=await page.evaluate(({id,viewport})=>{
     const el=document.getElementById(id);
     if(!el)return {id,viewport,missing:true};
@@ -107,10 +107,10 @@ async function inspect(page,id,viewport,consoleErrors){
     const visibleText=(el.innerText||'').trim();
     return {id,viewport,title:(el.querySelector('h1,h2,.feature-topbar .t,.modal-topbar .t')?.textContent||'').trim()||null,visibleText:visibleText.slice(0,50000),renderFailure:!visibleText||/^(null|undefined)$/i.test(visibleText),horizontalOverflow:Math.ceil(el.scrollWidth)>Math.ceil(rootRect.width)+3,scrollWidth:el.scrollWidth,clientWidth:Math.round(rootRect.width),duplicateIds,colorInventory:Object.entries(colors).sort((a,b)=>b[1]-a[1]).slice(0,80).map(([value,count])=>({value,count})),typography};
   },{id,viewport});
-  if(state.missing)return {...state,consoleErrors};
+  if(state.missing)return {...state,consoleErrors,networkErrors};
   let violations=[];
   try{const axe=await new AxeBuilder({page}).include(idSelector(id)).analyze();violations=axe.violations.map(v=>({id:v.id,impact:v.impact,help:v.help,nodes:v.nodes.slice(0,20).map(n=>({target:n.target,html:n.html.slice(0,500),failureSummary:n.failureSummary}))}));}catch(error){violations=[{id:'axe-run-failed',impact:'critical',help:String(error?.message||error),nodes:[]}];}
-  return {...state,consoleErrors:[...new Set(consoleErrors)].slice(0,80),violations};
+  return {...state,consoleErrors:[...new Set(consoleErrors)].slice(0,80),networkErrors:[...new Set(networkErrors)].slice(0,80),violations};
 }
 
 for(const viewport of viewports){
@@ -119,12 +119,16 @@ for(const viewport of viewports){
   await context.route('**/*',async route=>{
     const req=route.request();const url=new URL(req.url());
     if(url.origin===new URL(baseUrl).origin)return route.continue();
-    if(['script','stylesheet','font','image','media'].includes(req.resourceType()))return route.abort();
+    if(req.resourceType()==='script')return route.fulfill({status:200,contentType:'application/javascript',body:''});
+    if(req.resourceType()==='stylesheet')return route.fulfill({status:200,contentType:'text/css',body:''});
+    if(['font','image','media'].includes(req.resourceType()))return route.fulfill({status:204,body:''});
     return route.continue();
   });
-  const page=await context.newPage();const consoleErrors=[];
-  page.on('console',msg=>{if(msg.type()==='error')consoleErrors.push(msg.text());});
+  const page=await context.newPage();const consoleErrors=[];const networkErrors=[];
+  page.on('console',msg=>{if(msg.type()==='error'&&!/^Failed to load resource:/i.test(msg.text()))consoleErrors.push(msg.text());});
   page.on('pageerror',err=>consoleErrors.push(err.message));
+  page.on('requestfailed',req=>{try{const u=new URL(req.url());if(u.origin===new URL(baseUrl).origin)networkErrors.push('request_failed '+u.pathname+' '+String(req.failure()?.errorText||''));}catch(_){}});
+  page.on('response',res=>{try{const u=new URL(res.url());if(u.origin===new URL(baseUrl).origin&&res.status()>=400&&u.pathname!=='/favicon.ico')networkErrors.push('http_'+res.status()+' '+u.pathname);}catch(_){}});
   await page.goto(`${baseUrl}/frontend/index.html`,{waitUntil:'domcontentloaded',timeout:30000});
   await page.waitForTimeout(1800);
   await page.evaluate(()=>{const login=document.getElementById('login-overlay');if(login){login.classList.add('hidden');login.style.display='none';}});
@@ -139,7 +143,7 @@ for(const viewport of viewports){
     const locator=page.locator(idSelector(item.id)).first();
     const filename=`${safe(item.id)}-${viewport.name}.png`;
     await locator.screenshot({path:path.join(outDir,filename),animations:'disabled'});
-    const evidence=await inspect(page,item.id,viewport.name,consoleErrors);evidence.screenshot=filename;
+    const evidence=await inspect(page,item.id,viewport.name,consoleErrors,networkErrors);evidence.screenshot=filename;
     const critical=evidence.violations.filter(v=>v.impact==='critical').length;
     const serious=evidence.violations.filter(v=>v.impact==='serious').length;
     const moderate=evidence.violations.filter(v=>v.impact==='moderate').length;
@@ -147,6 +151,7 @@ for(const viewport of viewports){
     if(evidence.horizontalOverflow){report.summary.overflowFailures++;failed=true;}
     if(evidence.renderFailure){report.summary.renderFailures++;failed=true;}
     if(evidence.consoleErrors.length){report.summary.consoleFailures++;failed=true;}
+    if(evidence.networkErrors.length){report.summary.networkFailures++;failed=true;}
     if(evidence.duplicateIds.length){report.summary.duplicateIdFailures++;failed=true;}
     if(critical||serious||moderate)failed=true;
     viewportReport.screens.push(evidence);report.summary.screens++;
@@ -157,7 +162,7 @@ for(const viewport of viewports){
 
 await browser.close();
 await fs.writeFile(path.join(outDir,'native-report.json'),JSON.stringify(report,null,2));
-const summary=['# ZUVYR Native Shell Visual QA','',`Generated: ${report.generatedAt}`,`Captured native screens: ${report.summary.screens}`,`Missing required screens: ${report.summary.missingRequired}`,`Critical accessibility violations: ${report.summary.critical}`,`Serious accessibility violations: ${report.summary.serious}`,`Moderate accessibility violations: ${report.summary.moderate}`,`Horizontal overflow failures: ${report.summary.overflowFailures}`,`Render failures: ${report.summary.renderFailures}`,`Views with console errors: ${report.summary.consoleFailures}`,`Duplicate ID failures: ${report.summary.duplicateIdFailures}`,'',failed?'**RESULT: FAIL**':'**RESULT: PASS**'].join('\n');
+const summary=['# ZUVYR Native Shell Visual QA','',`Generated: ${report.generatedAt}`,`Captured native screens: ${report.summary.screens}`,`Missing required screens: ${report.summary.missingRequired}`,`Critical accessibility violations: ${report.summary.critical}`,`Serious accessibility violations: ${report.summary.serious}`,`Moderate accessibility violations: ${report.summary.moderate}`,`Horizontal overflow failures: ${report.summary.overflowFailures}`,`Render failures: ${report.summary.renderFailures}`,`Views with console errors: ${report.summary.consoleFailures}`,`Views with local network errors: ${report.summary.networkFailures}`,`Duplicate ID failures: ${report.summary.duplicateIdFailures}`,'',failed?'**RESULT: FAIL**':'**RESULT: PASS**'].join('\n');
 await fs.writeFile(path.join(outDir,'NATIVE_SUMMARY.md'),summary);
 console.log(summary);
 if(failed)process.exitCode=1;

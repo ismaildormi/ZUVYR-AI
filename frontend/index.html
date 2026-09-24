@@ -3438,8 +3438,8 @@ html[dir="rtl"] .rox-gpt-menu-item{
       >
     </div>
     <div class="rox-history-view-tabs" role="tablist" aria-label="History view">
-      <button type="button" class="rox-history-view" data-rox-history-view="active" aria-selected="true" data-i18n="history.active">Active</button>
-      <button type="button" class="rox-history-view" data-rox-history-view="archived" aria-selected="false" data-i18n="history.archived">Archived</button>
+      <button type="button" class="rox-history-view" role="tab" data-rox-history-view="active" aria-selected="true" data-i18n="history.active">Active</button>
+      <button type="button" class="rox-history-view" role="tab" data-rox-history-view="archived" aria-selected="false" data-i18n="history.archived">Archived</button>
     </div>
     <div id="roxHistoryList" class="project-list" data-rox-history-list style="margin:20px 16px;"><div class="placeholder-view" data-i18n="history.placeholder">Image generated · Video created · IP connection · Code executed</div></div>
   </div>
@@ -3467,37 +3467,37 @@ html[dir="rtl"] .rox-gpt-menu-item{
 
       <nav
         class="rox-settings-nav"
-        aria-label="Settings categories" data-i18n-aria-label="settings.categories"
+        role="tablist" aria-label="Settings categories" data-i18n-aria-label="settings.categories"
       >
         <button
           type="button"
           class="is-active"
-          data-settings-target="general"
+          role="tab" data-settings-target="general"
          data-i18n="settings.general.title">General</button>
 
         <button
           type="button"
-          data-settings-target="ai"
+          role="tab" data-settings-target="ai"
          data-i18n="settings.ai.title">AI preferences</button>
 
         <button
           type="button"
-          data-settings-target="voice"
+          role="tab" data-settings-target="voice"
          data-i18n="settings.voice.title">Voice</button>
 
         <button
           type="button"
-          data-settings-target="data"
+          role="tab" data-settings-target="data"
          data-i18n="settings.data.title">Chat & data</button>
 
         <button
           type="button"
-          data-settings-target="account"
+          role="tab" data-settings-target="account"
          data-i18n="settings.account.title">Account</button>
 
         <button
           type="button"
-          data-settings-target="privacy"
+          role="tab" data-settings-target="privacy"
          data-i18n="settings.shell.privacyTab">Privacy</button>
       </nav>
 
@@ -14714,7 +14714,7 @@ body.zuvyr-ui{
     chatCard.innerHTML=
       '<div class="fcard-head">'+
         '<div class="fcard-ic">💬</div>'+
-        '<h3>AI Chat</h3>'+
+        '<h3 aria-level="2">AI Chat</h3>'+
       '</div>'+
       '<p>Chat with AI and get instant answers.</p>'+
       '<button type="button" class="fcard-btn">Start AI conversation</button>';
@@ -24043,8 +24043,8 @@ document.addEventListener("DOMContentLoaded", function () {
       >
     </div>
     <div class="rox-history-view-tabs" role="tablist" aria-label="History view">
-      <button type="button" class="rox-history-view" data-rox-history-view="active" aria-selected="true" data-i18n="history.active">Active</button>
-      <button type="button" class="rox-history-view" data-rox-history-view="archived" aria-selected="false" data-i18n="history.archived">Archived</button>
+      <button type="button" class="rox-history-view" role="tab" data-rox-history-view="active" aria-selected="true" data-i18n="history.active">Active</button>
+      <button type="button" class="rox-history-view" role="tab" data-rox-history-view="archived" aria-selected="false" data-i18n="history.archived">Archived</button>
     </div>
     <div class="project-list" data-rox-history-list style="margin:20px;"><div class="placeholder-view" data-i18n="history.placeholder">Image generated · Video created · IP connection · Code executed</div></div>
   </div>
@@ -24075,37 +24075,37 @@ document.addEventListener("DOMContentLoaded", function () {
 
       <nav
         class="rox-settings-nav"
-        aria-label="Settings categories" data-i18n-aria-label="settings.categories"
+        role="tablist" aria-label="Settings categories" data-i18n-aria-label="settings.categories"
       >
         <button
           type="button"
           class="is-active"
-          data-settings-target="general"
+          role="tab" data-settings-target="general"
          data-i18n="settings.general.title">General</button>
 
         <button
           type="button"
-          data-settings-target="ai"
+          role="tab" data-settings-target="ai"
          data-i18n="settings.ai.title">AI preferences</button>
 
         <button
           type="button"
-          data-settings-target="voice"
+          role="tab" data-settings-target="voice"
          data-i18n="settings.voice.title">Voice</button>
 
         <button
           type="button"
-          data-settings-target="data"
+          role="tab" data-settings-target="data"
          data-i18n="settings.data.title">Chat & data</button>
 
         <button
           type="button"
-          data-settings-target="account"
+          role="tab" data-settings-target="account"
          data-i18n="settings.account.title">Account</button>
 
         <button
           type="button"
-          data-settings-target="privacy"
+          role="tab" data-settings-target="privacy"
          data-i18n="settings.shell.privacyTab">Privacy</button>
       </nav>
 
@@ -35431,7 +35431,7 @@ body.zuvyr-ui{
     chatCard.innerHTML=
       '<div class="fcard-head">'+
         '<div class="fcard-ic">💬</div>'+
-        '<h3>AI Chat</h3>'+
+        '<h3 aria-level="2">AI Chat</h3>'+
       '</div>'+
       '<p>Chat with AI and get instant answers.</p>'+
       '<button type="button" class="fcard-btn">Start AI conversation</button>';
