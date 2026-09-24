@@ -12,7 +12,7 @@ const viewports=[
   {name:'desktop',width:1440,height:1000},
   {name:'mobile',width:390,height:844},
 ];
-const report={schema:1,generatedAt:new Date().toISOString(),baseUrl,playwright:'1.63.0',axe:'4.13.0',views:[],productionPublic:null,summary:{critical:0,serious:0,moderate:0,overflowFailures:0,duplicateIdFailures:0,missingViews:0}};
+const report={schema:1,generatedAt:new Date().toISOString(),baseUrl,playwright:'1.63.0',axe:'4.13.0',views:[],productionPublic:null,summary:{critical:0,serious:0,moderate:0,overflowFailures:0,duplicateIdFailures:0,missingViews:0,renderFailures:0,consoleFailures:0}};
 let failed=false;
 const browser=await chromium.launch({headless:true});
 
@@ -47,6 +47,7 @@ async function inspectPage(page,view,viewport){
       view,viewport,
       title:active&&active.querySelector('h1')?.textContent?.trim()||null,
       visibleText:active?.innerText?.slice(0,40000)||'',
+      renderFailure:!active||!active.querySelector('h1')||/^(null|undefined)$/i.test((active.innerText||'').trim()),
       bodyScrollWidth:document.documentElement.scrollWidth,
       viewportWidth:window.innerWidth,
       horizontalOverflow:document.documentElement.scrollWidth>window.innerWidth+2,
@@ -86,6 +87,8 @@ for(const viewport of viewports){
     const moderate=evidence.violations.filter(v=>v.impact==='moderate').length;
     report.summary.critical+=critical;report.summary.serious+=serious;report.summary.moderate+=moderate;
     if(evidence.horizontalOverflow){report.summary.overflowFailures++;failed=true;}
+    if(evidence.renderFailure){report.summary.renderFailures++;failed=true;}
+    if(evidence.consoleErrors.length){report.summary.consoleFailures++;failed=true;}
     if(evidence.duplicateIds.length){report.summary.duplicateIdFailures++;failed=true;}
     if(critical||serious||moderate)failed=true;
     if(evidence.namelessControls.length)failed=true;
@@ -118,6 +121,8 @@ const summary=[
   `Horizontal overflow failures: ${report.summary.overflowFailures}`,
   `Duplicate ID failures: ${report.summary.duplicateIdFailures}`,
   `Missing views: ${report.summary.missingViews}`,
+  `Render failures: ${report.summary.renderFailures}`,
+  `Views with console errors: ${report.summary.consoleFailures}`,
   `Production public status: ${report.productionPublic?.status??'unavailable'}`,
   '',
   failed?'**RESULT: FAIL**':'**RESULT: PASS**',

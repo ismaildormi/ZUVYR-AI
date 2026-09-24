@@ -111,8 +111,15 @@
   // Usage UI 18: the Usage/Billing surface shares the exact same account source as the sidebar.
   let usageState='idle', usageData=null, usageRequest=0, usageOwner=null;
 
-  function usageView() {
+  function usageViewNode() {
     return suite.querySelector('[data-zs-view="usage"]');
+  }
+
+  function usageSurfaceView() {
+    return heading('usage') +
+      '<div class="zs-grid"><div class="zs-card wide">' +
+        '<div data-zs-usage-content><div class="zs-muted" role="status">Loading usage…</div></div>' +
+      '</div></div>';
   }
 
   function usageWindowLabel(windowValue) {
@@ -227,7 +234,7 @@
   }
 
   function renderUsage() {
-    const view = usageView();
+    const view = usageViewNode();
     if (!view) return;
 
     const box =
@@ -1521,7 +1528,7 @@
     var extra=id==='code'?orchestrator('code'):toolCards(id);
     return heading(id)+'<div class="zs-banner"><span>◎</span><div><b>'+(state==='ready'?'Interface foundation is ready.':'Ready to connect safely.')+'</b> '+(state==='ready'?'Use the existing backend foundation and connect verified data next.':'Provider execution stays off until pricing, limits and settlement pass verification.')+'</div></div>'+extra;
   }
-  function viewHtml(id) { if(id==='dashboard')return dashboard(); if(id==='images')return imageStudioView(); if(id==='3d')return model3dStudioView(); if(id==='ip')return ipView(); if(id==='usage')return usageView(); if(id==='research')return researchView(); if(id==='documents')return documentsView(); if(id==='spreadsheets')return spreadsheetsView(); if(id==='presentations')return presentationsView(); if(id==='scheduled')return scheduledView(); if(id==='plugins')return pluginsView(); return genericView(id); }
+  function viewHtml(id) { if(id==='dashboard')return dashboard(); if(id==='images')return imageStudioView(); if(id==='3d')return model3dStudioView(); if(id==='ip')return ipView(); if(id==='usage')return usageSurfaceView(); if(id==='research')return researchView(); if(id==='documents')return documentsView(); if(id==='spreadsheets')return spreadsheetsView(); if(id==='presentations')return presentationsView(); if(id==='scheduled')return scheduledView(); if(id==='plugins')return pluginsView(); return genericView(id); }
 
   // Native navigation integration 01. Existing Chat, Images, Video, Code,
   // IP, Projects, History, Settings and payment handlers retain ownership.
