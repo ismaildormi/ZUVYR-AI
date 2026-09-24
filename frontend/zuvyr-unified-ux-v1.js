@@ -465,132 +465,6 @@
     )).join('');
   }
 
-  function candidateRows() {
-    if (!state.candidates.length) {
-      return '<div class="zuvyr-pack095-empty">No eligible PACK094 training candidates.</div>';
-    }
-    return state.candidates.slice(0,30).map(item => (
-      '<article class="zuvyr-pack095-row">' +
-        '<div class="zuvyr-pack095-row-main">' +
-          '<strong>' + esc(item.domain || item.payloadKind || 'Candidate') + '</strong>' +
-          '<span>Candidate ' + esc(shortId(item.id)) +
-          ' · content ' + esc(shortId(item.contentId)) +
-          ' · rights ' + esc(shortId(item.rightsId)) + '</span>' +
-          '<small>Consent v' + esc(item.consentVersion) +
-          ' · quality ' + esc(item.qualityScore == null ? '—' : item.qualityScore) +
-          ' · learning value ' + esc(item.learningValueScore || 0) +
-          ' · source owner ' + esc(shortId(item.sourceOwnerId)) + '</small>' +
-        '</div>' +
-        badge('ELIGIBLE METADATA','good') +
-      '</article>'
-    )).join('');
-  }
-
-  function failureRows() {
-    if (!state.failures.length) {
-      return '<div class="zuvyr-pack095-empty">Failure Bank has no open patterns.</div>';
-    }
-    return state.failures.slice(0,30).map(item => (
-      '<article class="zuvyr-pack095-row">' +
-        '<div class="zuvyr-pack095-row-main">' +
-          '<strong>' + esc(item.failureCategory || 'Failure pattern') + '</strong>' +
-          '<span>' + esc(item.capability || 'unknown capability') +
-          ' · ' + esc(item.provider || item.modelTool || 'unassigned') + '</span>' +
-          '<small>' + esc(item.occurrences || 0) + ' occurrences · domain ' +
-          esc(item.domain || '—') + ' · last seen ' + esc(dateText(item.lastSeenAt)) + '</small>' +
-        '</div>' +
-        badge('OPEN','warn') +
-      '</article>'
-    )).join('');
-  }
-
-  function skillRows() {
-    if (!state.skills.length) {
-      return '<div class="zuvyr-pack095-empty">No Model Lab skills defined.</div>';
-    }
-    return state.skills.slice(0,30).map(item => (
-      '<article class="zuvyr-pack095-row">' +
-        '<div class="zuvyr-pack095-row-main">' +
-          '<strong>' + esc(item.name || 'Skill') + '</strong>' +
-          '<span>' + esc(item.capability || 'No capability label') + '</span>' +
-          '<small>' + esc(item.description || 'No description') + '</small>' +
-        '</div>' +
-        badge(String(item.status || 'active').toUpperCase(), 'neutral') +
-      '</article>'
-    )).join('');
-  }
-
-  function curriculumRows() {
-    if (!state.curricula.length) {
-      return '<div class="zuvyr-pack095-empty">No curricula defined.</div>';
-    }
-    return state.curricula.slice(0,30).map(item => (
-      '<article class="zuvyr-pack095-row">' +
-        '<div class="zuvyr-pack095-row-main">' +
-          '<strong>' + esc(item.name || 'Curriculum') + '</strong>' +
-          '<span>' + esc(item.description || 'No description') + '</span>' +
-          '<small>Curriculum ' + esc(shortId(item.id)) + '</small>' +
-        '</div>' +
-        badge(String(item.status || 'active').toUpperCase(), 'neutral') +
-      '</article>'
-    )).join('');
-  }
-
-  function benchmarkRows() {
-    if (!state.benchmarks.length) {
-      return '<div class="zuvyr-pack095-empty">No independent benchmarks defined.</div>';
-    }
-    return state.benchmarks.slice(0,30).map(item => (
-      '<article class="zuvyr-pack095-row">' +
-        '<div class="zuvyr-pack095-row-main">' +
-          '<strong>' + esc(item.name || 'Benchmark') + ' · ' + esc(item.version || '') + '</strong>' +
-          '<span>Dataset version ' + esc(shortId(item.dataset_version_id)) + '</span>' +
-          '<small>Benchmark ' + esc(shortId(item.id)) + '</small>' +
-        '</div>' +
-        badge(String(item.status || 'active').toUpperCase(), 'neutral') +
-      '</article>'
-    )).join('');
-  }
-
-  function evaluationRows() {
-    if (!state.evaluations.length) {
-      return '<div class="zuvyr-pack095-empty">No independent evaluations recorded.</div>';
-    }
-    return state.evaluations.slice(0,30).map(item => (
-      '<article class="zuvyr-pack095-row">' +
-        '<div class="zuvyr-pack095-row-main">' +
-          '<strong>Checkpoint ' + esc(shortId(item.checkpoint_id)) + '</strong>' +
-          '<span>Benchmark ' + esc(shortId(item.benchmark_id)) +
-          ' · regression ' + esc(item.regression_status || 'unknown') + '</span>' +
-          '<small>Task success ' +
-          esc(item.task_success_bps == null ? '—' : (Number(item.task_success_bps) / 100).toFixed(2) + '%') +
-          ' · cost/success ' +
-          esc(item.total_cost_per_successful_task_microusd == null ? 'unknown' : item.total_cost_per_successful_task_microusd + ' µUSD') +
-          ' · independent ' + (item.independent === false ? 'no' : 'yes') + '</small>' +
-        '</div>' +
-        badge(String(item.status || 'planned').toUpperCase(), item.status === 'passed' ? 'good' : 'neutral') +
-      '</article>'
-    )).join('');
-  }
-
-  function syntheticRows() {
-    if (!state.syntheticJobs.length) {
-      return '<div class="zuvyr-pack095-empty">No synthetic-data plans recorded.</div>';
-    }
-    return state.syntheticJobs.slice(0,30).map(item => (
-      '<article class="zuvyr-pack095-row">' +
-        '<div class="zuvyr-pack095-row-main">' +
-          '<strong>Synthetic plan ' + esc(shortId(item.id)) + '</strong>' +
-          '<span>Dataset ' + esc(shortId(item.target_dataset_id)) +
-          ' · skill ' + esc(shortId(item.skill_id)) + '</span>' +
-          '<small>Teacher source ' + esc(item.teacher_source || 'owner-created / unspecified') +
-          ' · rights basis ' + esc(item.rights_basis || 'owner_created') + '</small>' +
-        '</div>' +
-        badge(String(item.status || 'planned').toUpperCase(), 'neutral') +
-      '</article>'
-    )).join('');
-  }
-
   function render() {
     const root = panel();
     if (!root) return;
@@ -959,6 +833,132 @@
     state.notice = String(message || '');
     const node = panel()?.querySelector('[data-zuvyr-pack095-notice]');
     if (node) node.textContent = state.notice;
+  }
+
+  function candidateRows() {
+    if (!state.candidates.length) {
+      return '<div class="zuvyr-pack095-empty">No eligible PACK094 training candidates.</div>';
+    }
+    return state.candidates.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.domain || item.payloadKind || 'Candidate') + '</strong>' +
+          '<span>Candidate ' + esc(shortId(item.id)) +
+          ' · content ' + esc(shortId(item.contentId)) +
+          ' · rights ' + esc(shortId(item.rightsId)) + '</span>' +
+          '<small>Consent v' + esc(item.consentVersion) +
+          ' · quality ' + esc(item.qualityScore == null ? '—' : item.qualityScore) +
+          ' · learning value ' + esc(item.learningValueScore || 0) +
+          ' · source owner ' + esc(shortId(item.sourceOwnerId)) + '</small>' +
+        '</div>' +
+        badge('ELIGIBLE METADATA','good') +
+      '</article>'
+    )).join('');
+  }
+
+  function failureRows() {
+    if (!state.failures.length) {
+      return '<div class="zuvyr-pack095-empty">Failure Bank has no open patterns.</div>';
+    }
+    return state.failures.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.failureCategory || 'Failure pattern') + '</strong>' +
+          '<span>' + esc(item.capability || 'unknown capability') +
+          ' · ' + esc(item.provider || item.modelTool || 'unassigned') + '</span>' +
+          '<small>' + esc(item.occurrences || 0) + ' occurrences · domain ' +
+          esc(item.domain || '—') + ' · last seen ' + esc(dateText(item.lastSeenAt)) + '</small>' +
+        '</div>' +
+        badge('OPEN','warn') +
+      '</article>'
+    )).join('');
+  }
+
+  function skillRows() {
+    if (!state.skills.length) {
+      return '<div class="zuvyr-pack095-empty">No Model Lab skills defined.</div>';
+    }
+    return state.skills.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.name || 'Skill') + '</strong>' +
+          '<span>' + esc(item.capability || 'No capability label') + '</span>' +
+          '<small>' + esc(item.description || 'No description') + '</small>' +
+        '</div>' +
+        badge(String(item.status || 'active').toUpperCase(), 'neutral') +
+      '</article>'
+    )).join('');
+  }
+
+  function curriculumRows() {
+    if (!state.curricula.length) {
+      return '<div class="zuvyr-pack095-empty">No curricula defined.</div>';
+    }
+    return state.curricula.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.name || 'Curriculum') + '</strong>' +
+          '<span>' + esc(item.description || 'No description') + '</span>' +
+          '<small>Curriculum ' + esc(shortId(item.id)) + '</small>' +
+        '</div>' +
+        badge(String(item.status || 'active').toUpperCase(), 'neutral') +
+      '</article>'
+    )).join('');
+  }
+
+  function benchmarkRows() {
+    if (!state.benchmarks.length) {
+      return '<div class="zuvyr-pack095-empty">No independent benchmarks defined.</div>';
+    }
+    return state.benchmarks.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>' + esc(item.name || 'Benchmark') + ' · ' + esc(item.version || '') + '</strong>' +
+          '<span>Dataset version ' + esc(shortId(item.dataset_version_id)) + '</span>' +
+          '<small>Benchmark ' + esc(shortId(item.id)) + '</small>' +
+        '</div>' +
+        badge(String(item.status || 'active').toUpperCase(), 'neutral') +
+      '</article>'
+    )).join('');
+  }
+
+  function evaluationRows() {
+    if (!state.evaluations.length) {
+      return '<div class="zuvyr-pack095-empty">No independent evaluations recorded.</div>';
+    }
+    return state.evaluations.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>Checkpoint ' + esc(shortId(item.checkpoint_id)) + '</strong>' +
+          '<span>Benchmark ' + esc(shortId(item.benchmark_id)) +
+          ' · regression ' + esc(item.regression_status || 'unknown') + '</span>' +
+          '<small>Task success ' +
+          esc(item.task_success_bps == null ? '—' : (Number(item.task_success_bps) / 100).toFixed(2) + '%') +
+          ' · cost/success ' +
+          esc(item.total_cost_per_successful_task_microusd == null ? 'unknown' : item.total_cost_per_successful_task_microusd + ' µUSD') +
+          ' · independent ' + (item.independent === false ? 'no' : 'yes') + '</small>' +
+        '</div>' +
+        badge(String(item.status || 'planned').toUpperCase(), item.status === 'passed' ? 'good' : 'neutral') +
+      '</article>'
+    )).join('');
+  }
+
+  function syntheticRows() {
+    if (!state.syntheticJobs.length) {
+      return '<div class="zuvyr-pack095-empty">No synthetic-data plans recorded.</div>';
+    }
+    return state.syntheticJobs.slice(0,30).map(item => (
+      '<article class="zuvyr-pack095-row">' +
+        '<div class="zuvyr-pack095-row-main">' +
+          '<strong>Synthetic plan ' + esc(shortId(item.id)) + '</strong>' +
+          '<span>Dataset ' + esc(shortId(item.target_dataset_id)) +
+          ' · skill ' + esc(shortId(item.skill_id)) + '</span>' +
+          '<small>Teacher source ' + esc(item.teacher_source || 'owner-created / unspecified') +
+          ' · rights basis ' + esc(item.rights_basis || 'owner_created') + '</small>' +
+        '</div>' +
+        badge(String(item.status || 'planned').toUpperCase(), 'neutral') +
+      '</article>'
+    )).join('');
   }
 
   function selectOptions(items, valueKey, labeler, selected, emptyLabel) {

@@ -2965,7 +2965,7 @@
         '<div class="zs-code-pack075-toolbar">' +
           '<div><strong>Code Projects</strong><span>Durable multi-file workspace</span></div>' +
           '<div class="zs-code-pack075-actions">' +
-            '<select data-zs-code-project-select>' + projectOptions() + '</select>' +
+            '<select data-zs-code-project-select aria-label="Code project">' + projectOptions() + '</select>' +
             '<button type="button" data-zs-code-new-project>New project</button>' +
           '</div>' +
         '</div>' +

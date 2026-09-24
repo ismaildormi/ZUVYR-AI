@@ -106,7 +106,7 @@ async function inspect(page,id,viewport,consoleErrors,networkErrors){
     const overflowElements=visible.map(node=>{const r=node.getBoundingClientRect();return {tag:node.tagName,id:node.id||null,className:String(node.className||'').slice(0,180),left:Math.round(r.left),right:Math.round(r.right),width:Math.round(r.width),scrollWidth:node.scrollWidth,clientWidth:node.clientWidth,text:(node.textContent||'').trim().replace(/\s+/g,' ').slice(0,120),outsideLeft:r.left<rootRect.left-3,outsideRight:r.right>rootRect.right+3};}).filter(x=>x.outsideLeft||x.outsideRight).slice(0,40);
     const duplicateIds=[...document.querySelectorAll('[id]')].map(n=>n.id).filter((value,index,array)=>value&&array.indexOf(value)!==index).filter((value,index,array)=>array.indexOf(value)===index);
     const visibleText=(el.innerText||'').trim();
-    return {id,viewport,title:(el.querySelector('h1,h2,.feature-topbar .t,.modal-topbar .t')?.textContent||'').trim()||null,visibleText:visibleText.slice(0,50000),renderFailure:!visibleText||/^(null|undefined)$/i.test(visibleText),horizontalOverflow:Math.ceil(el.scrollWidth)>Math.ceil(rootRect.width)+3,scrollWidth:el.scrollWidth,clientWidth:Math.round(rootRect.width),overflowElements,duplicateIds,colorInventory:Object.entries(colors).sort((a,b)=>b[1]-a[1]).slice(0,80).map(([value,count])=>({value,count})),typography};
+    return {id,viewport,title:(el.querySelector('h1,h2,.feature-topbar .t,.modal-topbar .t')?.textContent||'').trim()||null,visibleText:visibleText.slice(0,50000),renderFailure:!visibleText||/^(null|undefined)$/i.test(visibleText),horizontalOverflow:Math.ceil(el.scrollWidth)>Math.ceil(rootRect.width)+3,scrollWidth:el.scrollWidth,clientWidth:Math.round(rootRect.width),overflowElements,scrollOffenders:visible.map(node=>({tag:node.tagName,id:node.id||null,className:String(node.className||'').slice(0,180),scrollWidth:node.scrollWidth,clientWidth:node.clientWidth,text:(node.textContent||'').trim().replace(/\s+/g,' ').slice(0,100)})).filter(x=>x.scrollWidth>x.clientWidth+3).sort((a,b)=>(b.scrollWidth-b.clientWidth)-(a.scrollWidth-a.clientWidth)).slice(0,40),duplicateIds,colorInventory:Object.entries(colors).sort((a,b)=>b[1]-a[1]).slice(0,80).map(([value,count])=>({value,count})),typography};
   },{id,viewport});
   if(state.missing)return {...state,consoleErrors,networkErrors};
   let violations=[];
@@ -120,6 +120,7 @@ for(const viewport of viewports){
   await context.route('**/*',async route=>{
     const req=route.request();const url=new URL(req.url());
     if(url.origin===new URL(baseUrl).origin){
+      if(req.resourceType()==='media')return route.fulfill({status:204,body:''});
       const rel=url.pathname.replace(/^\/+/, '');
       if(!rel.startsWith('frontend/')&&!rel.startsWith('tools/')&&/\.(?:js|css|png|svg|webp|jpg|jpeg|ico)$/i.test(rel)){
         return route.continue({url:`${baseUrl}/frontend/${rel}${url.search}`});
