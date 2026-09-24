@@ -58,23 +58,22 @@ function createWorkspaceConnectionStore(db) {
     return data?.[0] || null;
   }
 
-  async function createIntegration({ ownerId, integrationKey, scopes, explicitConsent }) {
-    const { data, error } = await db
-      .from('workspace_integration_connections')
-      .insert({
-        owner_id: ownerId,
-        integration_key: integrationKey,
-        scopes,
-        explicit_consent: explicitConsent === true,
-        status: 'draft',
-        connected: false,
-        read_enabled: false,
-        write_enabled: false
-      })
-      .select('id,integration_key,scopes,explicit_consent,status,connected,read_enabled,write_enabled,created_at,updated_at')
-      .single();
-    if (error) throw storeError('workspace_integration_create_failed', error.message);
-    return data;
+  async function createOrReuseIntegration({ ownerId, integrationKey, scopes, explicitConsent }) {
+    const { data, error } = await db.rpc('create_or_reuse_workspace_integration_pack089', {
+      p_owner_id: ownerId,
+      p_integration_key: integrationKey,
+      p_scopes: scopes,
+      p_explicit_consent: explicitConsent === true
+    });
+    if (error) throw storeError('workspace_integration_create_or_reuse_failed', error.message);
+    if (!data || data.success !== true || !data.connection) {
+      throw storeError(String(data?.error || 'workspace_integration_create_or_reuse_failed'));
+    }
+    return Object.freeze({ connection: data.connection, created: data.created === true });
+  }
+
+  async function createIntegration(input) {
+    return (await createOrReuseIntegration(input)).connection;
   }
 
   async function createPlugin({ ownerId, pluginKind, pluginKey, displayName, scopes, explicitConsent, manifest, endpointUrl }) {
@@ -199,6 +198,9 @@ function createWorkspaceConnectionStore(db) {
       p_state_hash: stateHash
     });
     if (error) throw storeError('workspace_oauth_session_consume_failed', error.message);
+    if (!data || data.success === false) {
+      throw storeError(String(data?.error || 'pack089_oauth_session_invalid'));
+    }
     return data;
   }
 
@@ -310,6 +312,7 @@ function createWorkspaceConnectionStore(db) {
   return Object.freeze({
     list,
     findLiveIntegration,
+    createOrReuseIntegration,
     createIntegration,
     createPlugin,
     getIntegrationConnection,

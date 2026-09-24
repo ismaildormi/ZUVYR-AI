@@ -891,12 +891,12 @@ function createWorkspaceRouter(options = {}) {
   router.post('/connections/integrations', async (req, res) => {
     try {
       const draft = normalizeIntegrationDraft(req.body);
-      const connection = await connectionStore.createIntegration({
+      const result = await connectionStore.createOrReuseIntegration({
         ownerId: req.userId,
         ...draft
       });
       res.set('Cache-Control', 'no-store');
-      return res.status(201).json({ status: 'success', connection });
+      return res.status(result.created ? 201 : 200).json({ status: 'success', connection: result.connection });
     } catch (error) {
       return validation(res, error);
     }
@@ -1145,6 +1145,9 @@ function createWorkspaceRouter(options = {}) {
         externalWriteExecuted: false
       });
     }
+    if (code.includes('scope_change_requires_disconnect')) {
+      return res.status(409).json({ status: 'error', code, externalWriteExecuted: false });
+    }
     if (
       code.includes('permission_') ||
       code.includes('owner_mismatch')
@@ -1190,39 +1193,17 @@ function createWorkspaceRouter(options = {}) {
           Array.isArray(connection?.scopes) &&
           JSON.stringify([...connection.scopes].sort()) === JSON.stringify(requestedScopes);
 
-        let connection = await connectionStore.findLiveIntegration(
-          req.userId,
-          'google_drive'
-        );
-
-        if (connection && !matchesRequestedScopes(connection)) {
-          res.set('Cache-Control', 'no-store');
-          return res.status(409).json({
-            status: 'error',
-            code: 'workspace_google_drive_scope_change_requires_disconnect',
-            connectionId: connection.id,
-            message: 'Disconnect the existing Google Drive connection before changing scopes.'
-          });
+        const result = await connectionStore.createOrReuseIntegration({
+          ownerId: req.userId,
+          ...draft
+        });
+        if (!matchesRequestedScopes(result.connection)) {
+          const error = new Error('workspace_google_drive_scope_change_requires_disconnect');
+          error.code = 'workspace_google_drive_scope_change_requires_disconnect';
+          throw error;
         }
-
-        if (!connection) {
-          try {
-            connection = await connectionStore.createIntegration({
-              ownerId: req.userId,
-              ...draft
-            });
-            created = true;
-          } catch (error) {
-            if (error?.code !== 'workspace_integration_create_failed') throw error;
-            connection = await connectionStore.findLiveIntegration(
-              req.userId,
-              'google_drive'
-            );
-            if (!connection || !matchesRequestedScopes(connection)) throw error;
-          }
-        }
-
-        connectionId = connection.id;
+        connectionId = result.connection.id;
+        created = result.created;
       }
 
       const oauth = await googleDriveRuntime.startOAuth({

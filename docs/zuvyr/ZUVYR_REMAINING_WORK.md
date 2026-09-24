@@ -11,6 +11,14 @@ From now on, whenever work on any ZUVYR PACK, audit, deployment, test, security 
 
 Do not rely on chat memory alone for unfinished work.
 
+### Zero-known-actionable-error gate
+
+A ZUVYR stage/PACK may not advance while any **known internally actionable** error, failed check, security gap, runtime defect, integration race, broken deployment, or visual/UX defect remains in GitHub, Supabase, Railway, Vercel, CI, production runtime, security review, or Visual QA.
+
+Provider-wide incidents outside ZUVYR control must be recorded here, their actual ZUVYR impact must be tested, and resilience/fail-closed behavior must be verified. Do not relabel a provider incident as a ZUVYR code fix. Informational findings must be classified with evidence rather than silenced by risky cleanup.
+
+A `CLEAN` claim requires current evidence across the affected work surfaces, not only green source-code tests.
+
 When an item is completed:
 - do **not** delete it silently;
 - mark it `CLOSED`;
@@ -31,13 +39,16 @@ A task may be removed only when its history has been superseded by a canonical r
 ## Current V1 remaining work
 
 ### RW-001 — PACK089 Google OAuth production acceptance
-Status: `ACTIVE / BLOCKED_EXTERNAL`
+Status: `ACTIVE`
 
-Required before PACK090:
-- real owner-scoped Google Drive OAuth start in production;
-- Google accepts configured client and redirect URI;
-- approve only requested scopes;
-- callback activation;
+Live evidence now confirmed:
+- real owner-scoped OAuth reached Google and callback activation succeeded;
+- the single live Google Drive connection is active with `drive.file.read` + `drive.export`;
+- `write_enabled=false`;
+- credentials are stored server-side through the existing Vault-backed path.
+
+Still required before PACK090:
+- close the duplicate-connect/callback cleanliness defects discovered from Supabase production logs and verify a clean post-fix window;
 - one granted-scope Drive tool call;
 - denied-scope/action proof;
 - disconnect/revoke;
@@ -223,6 +234,22 @@ Implementation and acceptance requirements:
 Do not mark this CLOSED until the first full Visual QA workflow completes, its screenshots/report are inspected, all actionable findings from that run are fixed or explicitly evidenced as non-defects, and a rerun passes.
 
 ---
+
+---
+
+### RW-017 — Supabase eu-west-1 provider incident + ZUVYR resilience verification
+Status: `BLOCKED_EXTERNAL / MONITOR`
+Subsystem: `Supabase provider availability / production resilience`
+
+On 2026-09-24 the Supabase dashboard/status surface reported an active technical incident affecting project lifecycle operations in `eu-west-1`. The ZUVYR project itself remained `ACTIVE_HEALTHY` and representative production RPC traffic continued returning HTTP 200, so the provider incident must not be confused with an internal database outage.
+
+Required before closure:
+- Supabase marks the provider incident resolved;
+- re-run project health, Auth, database, Edge Function and representative ZUVYR RPC checks after provider recovery;
+- verify no data-integrity, migration, auth, secret/Vault, or runtime regression was introduced during the incident window;
+- attach dated evidence and close this item.
+
+This external incident does not justify leaving internally actionable Supabase errors unresolved.
 
 ## Rules for future additions
 
