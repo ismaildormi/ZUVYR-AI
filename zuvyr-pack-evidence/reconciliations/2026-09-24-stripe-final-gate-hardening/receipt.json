@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "recorded_at": "2026-09-24T02:42:00Z",
+  "title": "ZUVYR V1 Stripe final-gate hardening runtime receipt",
+  "status": "VERIFIED_FAIL_CLOSED_HARDENING_LIVE_ACTIVATION_DEFERRED",
+  "scope": "Internal Stripe billing hardening, production fail-closed activation state, CI/deployment evidence, and preservation of the final PACK150 live-activation order.",
+  "source": {
+    "repository": "ismaildormi/rox-ai",
+    "pull_request": 111,
+    "pull_request_head": "085fcd7dbbcabb21311754857d9fcf3d4aec0e60",
+    "merge_commit": "7e8adb60142253b1b5931dfed0c9533dc204cd83",
+    "stripe_final_gate_contract": "docs/zuvyr/STRIPE_FINAL_V1_ACTIVATION_GATE_2026-09-24.md"
+  },
+  "ci": {
+    "continuity_integrity": "SUCCESS",
+    "continuity_run_id": 35946996214,
+    "release_quality": "SUCCESS",
+    "backend_quality": "SUCCESS",
+    "release_quality_run_id": 35946996255,
+    "backend_unit_and_safety_tests": "SUCCESS",
+    "stripe_mode_safety_test_in_standard_ci": true,
+    "stripe_webhook_runtime_test_in_standard_ci": true
+  },
+  "verified_internal_hardening": {
+    "all_paid_subscription_price_bindings_validated": [
+      "STRIPE_PLUS_PRICE_ID",
+      "STRIPE_PRO_PRICE_ID",
+      "STRIPE_LEGEND_PRICE_ID",
+      "STRIPE_MAX_PRICE_ID"
+    ],
+    "subscription_checkout_requires_billing_v1_activation": true,
+    "topup_checkout_requires_billing_v1_activation": true,
+    "live_checkout_requires_live_billing_allowed": true,
+    "stripe_secret_and_configured_mode_must_match": true,
+    "wrong_mode_webhook_rejected_before_settlement": true,
+    "production_test_webhook_settlement_requires_explicit_bounded_enablement": true,
+    "duplicate_webhook_and_atomic_settlement_tests_preserved": true
+  },
+  "production": {
+    "railway_project_id": "ba460cdb-cc55-4203-bdd0-711846b7564c",
+    "railway_environment_id": "5f533b47-378a-4098-baec-a34c4ddfdf01",
+    "backend_service_id": "65161b7e-7b83-4adf-bb57-290df3963de1",
+    "merge_deployment_id": "bd07c08b-b1c0-40e2-9e44-d847c7586c6b",
+    "merge_deployment_status": "SUCCESS",
+    "fail_closed_redeploy_id": "92460f59-ca17-4f51-bef0-a5f10bcf413a",
+    "fail_closed_redeploy_status": "SUCCESS",
+    "healthcheck_path": "/readyz",
+    "healthcheck": "PASS",
+    "backend_started_cleanly": true,
+    "fail_closed_flags_written": {
+      "ZUVYR_BILLING_V1_ACTIVE": false,
+      "LIVE_BILLING_ALLOWED": false,
+      "ZUVYR_STRIPE_TEST_SETTLEMENT_ALLOWED": false
+    },
+    "stripe_billing_mode_variable_name_present": true,
+    "stripe_billing_mode_value": "REDACTED_BY_CONNECTOR_NOT_MUTATED_IN_THIS_AUDIT",
+    "stripe_canonical_catalog_activation_variable_name_present": true,
+    "stripe_canonical_catalog_activation_value": "REDACTED_BY_CONNECTOR_NOT_MUTATED_IN_THIS_AUDIT"
+  },
+  "side_effect_accounting": {
+    "stripe_api_calls": 0,
+    "real_money_charges": 0,
+    "refunds": 0,
+    "customer_mutations": 0,
+    "subscription_mutations": 0,
+    "supabase_mutations": 0,
+    "provider_execution": 0
+  },
+  "deferred_final_activation": {
+    "stripe_business_verification": "PENDING_EXTERNAL",
+    "stripe_live_account_activation": "PENDING_EXTERNAL",
+    "controlled_live_subscription_acceptance": "PENDING_EXTERNAL",
+    "controlled_live_topup_acceptance": "PENDING_EXTERNAL",
+    "live_webhook_settlement_acceptance": "PENDING_EXTERNAL",
+    "refund_reversal_reconciliation_acceptance": "PENDING_EXTERNAL",
+    "execution_order": "FINAL_EXTERNAL_ACTIVATION_ACTION_INSIDE_PACK150",
+    "v1_ready_before_completion": false,
+    "intermediate_packs_blocked_by_this_deferred_gate": false
+  },
+  "continuity": {
+    "master_plan_contains_stripe_final_gate": true,
+    "current_state_contains_stripe_final_gate": true,
+    "continuity_manifest_contains_stripe_final_gate": true,
+    "active_pack_changed": false,
+    "pack089_claimed_complete": false,
+    "pack090_started": false,
+    "oauth_assumption_is_not_recorded_as_production_evidence": true
+  },
+  "conclusion": "Stripe internal hardening and production fail-closed posture are verified. Live business verification and real-money acceptance remain intentionally unverified and are preserved as the final external activation action inside PACK150 before V1_READY."
+}
