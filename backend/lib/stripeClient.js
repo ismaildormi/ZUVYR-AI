@@ -79,7 +79,6 @@ function stripeWebhookEventDecision(event, env = process.env) {
   if (!mode.valid) {
     return Object.freeze({
       accepted: false,
-      retryable: true,
       reason: 'stripe_mode_not_configured',
       configuredMode: mode.configuredMode,
       eventMode: event?.livemode === true ? 'live' : 'test'
@@ -90,7 +89,6 @@ function stripeWebhookEventDecision(event, env = process.env) {
   if (eventMode !== mode.configuredMode) {
     return Object.freeze({
       accepted: false,
-      retryable: false,
       reason: 'stripe_event_mode_mismatch',
       configuredMode: mode.configuredMode,
       eventMode
@@ -104,7 +102,6 @@ function stripeWebhookEventDecision(event, env = process.env) {
   ) {
     return Object.freeze({
       accepted: false,
-      retryable: false,
       reason: 'stripe_test_settlement_disabled',
       configuredMode: mode.configuredMode,
       eventMode
@@ -113,11 +110,38 @@ function stripeWebhookEventDecision(event, env = process.env) {
 
   return Object.freeze({
     accepted: true,
-    retryable: false,
     reason: null,
     configuredMode: mode.configuredMode,
     eventMode
   });
+}
+
+function hardenWebhookParser(client, env) {
+  if (
+    !client?.webhooks ||
+    typeof client.webhooks.constructEvent !== 'function'
+  ) {
+    return client;
+  }
+
+  const originalConstructEvent =
+    client.webhooks.constructEvent.bind(client.webhooks);
+
+  client.webhooks.constructEvent = (...args) => {
+    const event = originalConstructEvent(...args);
+    const decision = stripeWebhookEventDecision(event, env);
+
+    if (!decision.accepted) {
+      const error = new Error(decision.reason);
+      error.code = decision.reason;
+      error.stripeModeDecision = decision;
+      throw error;
+    }
+
+    return event;
+  };
+
+  return client;
 }
 
 function getStripeClient(env = process.env) {
@@ -129,7 +153,7 @@ function getStripeClient(env = process.env) {
   }
 
   if (!stripeClient || stripeSecretSnapshot !== secret) {
-    stripeClient = new Stripe(secret);
+    stripeClient = hardenWebhookParser(new Stripe(secret), env);
     stripeSecretSnapshot = secret;
   }
 
@@ -167,6 +191,7 @@ module.exports = {
   liveBillingAllowed,
   billingExecutionStatus,
   stripeWebhookEventDecision,
+  hardenWebhookParser,
   sendBillingUnavailable,
   normalizeAppUrl
 };
