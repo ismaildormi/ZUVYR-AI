@@ -1,0 +1,106 @@
+name: ZUVYR Level 3 Visual QA Autofix Once
+
+on:
+  push:
+    branches:
+      - feat/zuvyr-live-ops-level2-3-20260924
+
+permissions:
+  contents: write
+
+jobs:
+  autofix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: feat/zuvyr-live-ops-level2-3-20260924
+          fetch-depth: 1
+
+      - name: Apply evidence-based Level 3 fixes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly 1 match, found {count}')
+              return text.replace(old, new, 1)
+
+          js_path = Path('frontend/zuvyr-suite-v1.js')
+          js = js_path.read_text()
+          replacements = [
+              ('<select name="generateType">', '<select name="generateType" aria-label="Geometry mode">', '3d generateType label'),
+              ('<input name="faceCount" type="number"', '<input name="faceCount" aria-label="Face count" type="number"', '3d faceCount label'),
+              ('<select name="outputKind">', '<select name="outputKind" aria-label="Output format">', 'research outputKind label'),
+              ('<select name="researchMode">', '<select name="researchMode" aria-label="Research mode">', 'research mode label'),
+              ('<select name="templateId" data-zs-document-template>', '<select name="templateId" aria-label="Document template" data-zs-document-template>', 'document template label'),
+              ('<input name="sheetName" maxlength="31" value="Sheet 1">', '<input name="sheetName" aria-label="Sheet name" maxlength="31" value="Sheet 1">', 'spreadsheet sheetName label'),
+              ('<select name="scheduleType" data-zs-scheduled-type>', '<select name="scheduleType" aria-label="Schedule type" data-zs-scheduled-type>', 'schedule type label'),
+              ('<input type="datetime-local" name="runAt" required data-zs-scheduled-run-at>', '<input type="datetime-local" name="runAt" aria-label="First run time" required data-zs-scheduled-run-at>', 'schedule runAt label'),
+              ('<select name="intervalMinutes">', '<select name="intervalMinutes" aria-label="Repeat interval">', 'schedule interval label'),
+              ('<input type="number" name="maxCreditsPerRun" min="0" max="10000000" step="1" value="25" required>', '<input type="number" name="maxCreditsPerRun" aria-label="Maximum credits per run" min="0" max="10000000" step="1" value="25" required>', 'schedule credit cap label'),
+              ('<select name="pluginKind">', '<select name="pluginKind" aria-label="Connection kind">', 'plugin kind label'),
+              ("const owner = session?.user?.id || null;", "const activeSession = typeof session !== 'undefined' ? session : (window.session || null);\n    const owner = activeSession?.user?.id || null;", 'usage session guard'),
+              ("</div><h3>'+t[0]+'</h3><p>'+t[1]+'</p></article>", "</div><h2>'+t[0]+'</h2><p>'+t[1]+'</p></article>", 'tool card heading order'),
+          ]
+          for old, new, label in replacements:
+              js = replace_once(js, old, new, label)
+          js_path.write_text(js)
+
+          css_path = Path('frontend/zuvyr-suite-v1.css')
+          css = css_path.read_text()
+          css = replace_once(css, '.zs-tool h3 { margin:14px 0 5px; }', '.zs-tool h2, .zs-tool h3 { margin:14px 0 5px; font-size:15px; }', 'tool card heading styles')
+          css_path.write_text(css)
+
+          qa_path = Path('tools/visual-qa/run.mjs')
+          qa = qa_path.read_text()
+          qa = replace_once(
+              qa,
+              "summary:{critical:0,serious:0,overflowFailures:0,duplicateIdFailures:0,missingViews:0}",
+              "summary:{critical:0,serious:0,moderate:0,overflowFailures:0,duplicateIdFailures:0,missingViews:0}",
+              'visual QA moderate summary',
+          )
+          qa = replace_once(
+              qa,
+              "const name=(el.getAttribute('aria-label')||el.getAttribute('title')||el.textContent||el.getAttribute('placeholder')||'').trim();\n      return !name;",
+              "const labelledBy=String(el.getAttribute('aria-labelledby')||'').split(/\\s+/).filter(Boolean).map(id=>document.getElementById(id)?.textContent||'').join(' ');\n      const explicitLabel=el.id?(document.querySelector('label[for=\\\"'+CSS.escape(el.id)+'\\\"]')?.textContent||''):'';\n      const wrappedLabel=el.closest('label')?.textContent||'';\n      const name=(el.getAttribute('aria-label')||labelledBy||explicitLabel||wrappedLabel||el.getAttribute('title')||el.textContent||el.getAttribute('placeholder')||'').trim();\n      return !name;",
+              'visual QA accessible-name checker',
+          )
+          qa = replace_once(
+              qa,
+              "const serious=evidence.violations.filter(v=>v.impact==='serious').length;\n    report.summary.critical+=critical;report.summary.serious+=serious;",
+              "const serious=evidence.violations.filter(v=>v.impact==='serious').length;\n    const moderate=evidence.violations.filter(v=>v.impact==='moderate').length;\n    report.summary.critical+=critical;report.summary.serious+=serious;report.summary.moderate+=moderate;",
+              'visual QA moderate count',
+          )
+          qa = replace_once(
+              qa,
+              "if(critical||serious)failed=true;",
+              "if(critical||serious||moderate)failed=true;",
+              'visual QA moderate gate',
+          )
+          qa = replace_once(
+              qa,
+              "`Serious accessibility violations: ${report.summary.serious}`,",
+              "`Serious accessibility violations: ${report.summary.serious}`,\n  `Moderate accessibility violations: ${report.summary.moderate}`,",
+              'visual QA moderate summary text',
+          )
+          qa_path.write_text(qa)
+          PY
+
+          node --check frontend/zuvyr-suite-v1.js
+          node --check tools/visual-qa/run.mjs
+          git diff --check
+
+      - name: Commit fixes and remove one-shot workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/zuvyr-level3-autofix-once.yml
+          git add frontend/zuvyr-suite-v1.js frontend/zuvyr-suite-v1.css tools/visual-qa/run.mjs
+          git commit -m "fix: close first visual QA findings"
+          git push origin HEAD:feat/zuvyr-live-ops-level2-3-20260924
