@@ -31,6 +31,12 @@ for (const marker of [
   '/api/permissions/challenge',
   '/api/permissions/grants',
   'data-zs-drive-disconnect',
+  'data-zs-drive-browse',
+  '/api/workspace/tools/invoke/challenge',
+  '/api/workspace/tools/invoke',
+  "kind:'drive_browse'",
+  'workspace_drive_write_unexpectedly_available',
+  'postRevokeDenied',
   'data-zs-plugin-revoke',
   'data-zs-skill-toggle',
   'zuvyrPack089GoogleOAuth'
@@ -67,6 +73,10 @@ assert(
 assert(driveConnectRoute.includes('connectionStore.createOrReuseIntegration({'));
 assert(!driveConnectRoute.includes('connectionStore.findLiveIntegration('));
 assert(ui.includes('pluginState.oauthCallbackInFlight'));
+assert(ui.includes("input={pageSize:20}"), 'Drive browse must use a bounded read-only listing');
+assert(ui.includes("tool.source==='google_drive'&&tool.connectionId===connectionId"), 'Drive browse must resolve the live owner tool instead of inventing a connection');
+assert(ui.includes("replace(/:list$/,':write')"), 'denied write proof must be derived from the live list tool key');
+assert(ui.indexOf("'/api/workspace/tools/invoke/challenge'") < ui.indexOf("'/api/workspace/tools/invoke'"), 'Drive challenge must precede real invocation');
 
 for (const marker of [
   'ZUVYR PACK089 / 89D',
