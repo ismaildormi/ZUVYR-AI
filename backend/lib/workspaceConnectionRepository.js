@@ -42,6 +42,22 @@ function createWorkspaceConnectionStore(db) {
     });
   }
 
+  async function findLiveIntegration(ownerId, integrationKey) {
+    const key = String(integrationKey || '').trim().toLowerCase();
+    if (!key) throw storeError('workspace_integration_key_required');
+    const { data, error } = await db
+      .from('workspace_integration_connections')
+      .select('id,integration_key,scopes,explicit_consent,status,connected,read_enabled,write_enabled,provider_subject,account_label,token_expires_at,refresh_token_present,created_at,updated_at,revoked_at,last_error_code')
+      .eq('owner_id', ownerId)
+      .eq('integration_key', key)
+      .neq('status', 'revoked')
+      .is('revoked_at', null)
+      .order('updated_at', { ascending: false })
+      .limit(1);
+    if (error) throw storeError('workspace_integration_lookup_failed', error.message);
+    return data?.[0] || null;
+  }
+
   async function createIntegration({ ownerId, integrationKey, scopes, explicitConsent }) {
     const { data, error } = await db
       .from('workspace_integration_connections')
@@ -293,6 +309,7 @@ function createWorkspaceConnectionStore(db) {
 
   return Object.freeze({
     list,
+    findLiveIntegration,
     createIntegration,
     createPlugin,
     getIntegrationConnection,

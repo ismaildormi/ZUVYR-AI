@@ -1185,12 +1185,44 @@ function createWorkspaceRouter(options = {}) {
           ...req.body,
           integrationKey: 'google_drive'
         });
-        const connection = await connectionStore.createIntegration({
-          ownerId: req.userId,
-          ...draft
-        });
+        const requestedScopes = [...draft.scopes].sort();
+        const matchesRequestedScopes = connection =>
+          Array.isArray(connection?.scopes) &&
+          JSON.stringify([...connection.scopes].sort()) === JSON.stringify(requestedScopes);
+
+        let connection = await connectionStore.findLiveIntegration(
+          req.userId,
+          'google_drive'
+        );
+
+        if (connection && !matchesRequestedScopes(connection)) {
+          res.set('Cache-Control', 'no-store');
+          return res.status(409).json({
+            status: 'error',
+            code: 'workspace_google_drive_scope_change_requires_disconnect',
+            connectionId: connection.id,
+            message: 'Disconnect the existing Google Drive connection before changing scopes.'
+          });
+        }
+
+        if (!connection) {
+          try {
+            connection = await connectionStore.createIntegration({
+              ownerId: req.userId,
+              ...draft
+            });
+            created = true;
+          } catch (error) {
+            if (error?.code !== 'workspace_integration_create_failed') throw error;
+            connection = await connectionStore.findLiveIntegration(
+              req.userId,
+              'google_drive'
+            );
+            if (!connection || !matchesRequestedScopes(connection)) throw error;
+          }
+        }
+
         connectionId = connection.id;
-        created = true;
       }
 
       const oauth = await googleDriveRuntime.startOAuth({
