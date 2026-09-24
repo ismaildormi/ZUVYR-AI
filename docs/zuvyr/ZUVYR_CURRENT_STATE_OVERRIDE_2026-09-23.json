@@ -1,10 +1,10 @@
 {
-  "schema_version": "1.3",
-  "updated_at": "2026-09-24T00:28:00Z",
+  "schema_version": "1.4",
+  "updated_at": "2026-09-24T00:34:00Z",
   "status": "CANONICAL_CURRENT_STATE_OVERRIDE",
   "purpose": "Fresh compact continuity override. When this file is newer than older state capsules, it wins subject to even fresher Git/production evidence and explicit user instruction.",
   "repository": "ismaildormi/rox-ai",
-  "source_main_before_this_reconciliation": "26b09a2e7bf149f5197aa7d3b0ec0a3d6a8d6db3",
+  "source_main_before_this_reconciliation": "1d960656d0897beeacd26a09f40a5af7332543ff",
   "execution_policy": {
     "continuous_improvement_override": "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md",
     "machine_policy": "docs/zuvyr/continuous-improvement-override.v1.json",
@@ -105,7 +105,7 @@
     "railway_maintenance_deployment": "23694064-119a-4baf-96e0-142ae51baab5",
     "railway_worker_runtime": "brain-kernel=true; pack088-execution=true; pack088-scheduler=true; observed scheduler failures=0",
     "railway_maintenance_runtime_monitoring": "3 consecutive natural cron runs observed SUCCESS after global-hardening deployment; latest at 2026-09-24T00:02:22Z; fresh DB hygiene RPC remains ok=true.",
-    "railway_current_docs_only_main_changes": "SKIPPED_AS_EXPECTED_NO_RUNTIME_DELTA",
+    "railway_latest_evaluated_docs_only_main_change": "1d960656d0897beeacd26a09f40a5af7332543ff SKIPPED_AS_EXPECTED_NO_RUNTIME_DELTA",
     "vercel_project": "prj_P6VddfynJKniiK29clC6Epr9byPk",
     "vercel_team": "team_3PYlTi0Euf7SDg7T2NRzGx3q",
     "vercel_current_production_url": "https://rox-ai-sepia.vercel.app/",
@@ -114,8 +114,9 @@
     "vercel_historical_rate_limit_is_current_gate": false,
     "vercel_pr106_frontend_file_count": 0,
     "vercel_later_preview_ready": "dpl_7CAHbi5MtZj8mBMUxHHuP9BYGu93 READY",
-    "vercel_current_main_deployment": "dpl_93u9NcKG8Bvh3A5UoxpPFe6gqcq5 CANCELED_BY_IGNORED_BUILD_STEP",
-    "vercel_runtime_interpretation": "No current Vercel outage or quota blocker is claimed. The old rate-limit status remains historical evidence only; PR106 had no frontend changes, later preview build succeeded, and current docs-only main was intentionally ignored by the configured build-step rule."
+    "vercel_latest_evaluated_docs_only_production_deployment": "dpl_93u9NcKG8Bvh3A5UoxpPFe6gqcq5 for source main 26b09a2e7bf149f5197aa7d3b0ec0a3d6a8d6db3 CANCELED_BY_IGNORED_BUILD_STEP",
+    "vercel_post_reconciliation_main_behavior": "For source main 1d960656d0897beeacd26a09f40a5af7332543ff, no new deployment appeared in the immediate post-merge observation window, consistent with docs-only ignored-build behavior.",
+    "vercel_runtime_interpretation": "No current Vercel outage or quota blocker is claimed. The old rate-limit status remains historical evidence only; PR106 had no frontend changes, a later preview build succeeded, and docs-only commits are intentionally ignored by the configured build-step rule."
   },
   "advisor_reconciliation": {
     "observed_at": "2026-09-24T00:27:14Z",
