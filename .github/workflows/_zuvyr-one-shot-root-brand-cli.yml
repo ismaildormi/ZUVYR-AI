@@ -1,0 +1,63 @@
+name: ZUVYR one-shot root brand and CLI acceptance
+
+on:
+  push:
+    branches:
+      - fix/infra-level3-brand-clean-20260924
+    paths:
+      - .github/workflows/_zuvyr-one-shot-root-brand-cli.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/infra-level3-brand-clean-20260924
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '22'
+      - name: Align root package identity while preserving compatibility alias
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+
+          pkg_path=Path('package.json')
+          pkg=json.loads(pkg_path.read_text(encoding='utf-8'))
+          pkg['name']='zuvyr-ai'
+          pkg['description']='ZUVYR — safe operational tooling, isolated profiles, read-only live verification, smoke tests, and guarded staging/production deployment.'
+          bins=dict(pkg.get('bin') or {})
+          bins['zuvyr']='./cli/rox.js'
+          bins['rox']='./cli/rox.js'
+          pkg['bin']=bins
+          pkg_path.write_text(json.dumps(pkg,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+
+          lock_path=Path('package-lock.json')
+          lock=json.loads(lock_path.read_text(encoding='utf-8'))
+          lock['name']='zuvyr-ai'
+          root=lock.setdefault('packages',{}).setdefault('',{})
+          root['name']='zuvyr-ai'
+          lock_bins=dict(root.get('bin') or {})
+          lock_bins['zuvyr']='cli/rox.js'
+          lock_bins['rox']='cli/rox.js'
+          root['bin']=lock_bins
+          lock_path.write_text(json.dumps(lock,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run test:cli
+          npm run test:deploy
+          npm run validate:release
+          git diff --check
+
+          rm -f .github/workflows/_zuvyr-one-shot-root-brand-cli.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix: align root ZUVYR package identity and CLI alias'
+          git push origin HEAD:fix/infra-level3-brand-clean-20260924
