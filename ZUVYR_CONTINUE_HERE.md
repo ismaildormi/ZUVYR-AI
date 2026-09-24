@@ -1,5 +1,17 @@
 # ZUVYR — CONTINUE HERE
 
+## FRESH PACK089 89E GOOGLE TESTING + RETRY FIX CHECKPOINT — 2026-09-24
+
+- Google authorization reached the provider but was blocked by **`403 access_denied`** because the OAuth app is in **Testing** and the current owner account is not yet authorized as a developer-approved test user.
+- Production OAuth application-config gate remains **PASS**; the configured production redirect URI remains `https://rox-ai-sepia.vercel.app/`.
+- A real ZUVYR retry regression after the Google denial (`workspace_integration_create_failed`) is **FIXED + PRODUCTION VERIFIED** in PR #118 / main `244d21142a956dfa754d245f971b8099d452ec9d`.
+- Same-scope OAuth retries now reuse the existing live Google Drive connection row; scope changes fail closed with HTTP 409 and require disconnect first.
+- PACK089 89A→89D regression suite: **PASS**.
+- Railway production: backend **SUCCESS** (`85d60d3f-b6e4-4081-ad89-b61d0425126b`), worker **SUCCESS** (`4e896bbb-fadf-4e90-bcef-3e14e1f9c05e`), maintenance **SUCCESS** (`0d7a3e28-7d3e-4262-97a7-1c5ea67f7f3d`), pending work **0**.
+- Remaining external gate: add the same owner Google account to **Google Auth Platform → Audience → Test users**, retry Connect, then complete the callback/tool/revoke acceptance chain.
+- PACK089 remains `IN_PROGRESS`; PACK090 remains **NOT ALLOWED**.
+- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-24-89e-google-testing-retry-fix/receipt.json`.
+
 ## FRESH PACK089 89E LIVE OAUTH CHECKPOINT — 2026-09-24
 
 - Production OAuth application-config gate: **PASS**.
@@ -58,12 +70,12 @@ This small section is intentionally duplicated from the machine-readable continu
 - **Active Pack:** `PACK089 — Skills / Plugins / MCP / Connections`
 - **Pack status:** `IN_PROGRESS`
 - **Active phase:** `89E_PRODUCTION_ACCEPTANCE`
-- **Phase status:** `BLOCKED_EXTERNAL_GOOGLE_OAUTH_CLIENT_CREDENTIALS`
+- **Phase status:** `BLOCKED_EXTERNAL_GOOGLE_OAUTH_TEST_USER_ALLOWLIST_AND_OWNER_CONSENT`
 - **89A / 89B / 89C / 89D:** `LOCKED_VERIFIED`
 - **89E non-external acceptance:** `PASS`
-- **Latest receipt:** `zuvyr-pack-evidence/pack-089/2026-09-22-89e/receipt.json`
+- **Latest receipt:** `zuvyr-pack-evidence/pack-089/2026-09-24-89e-google-testing-retry-fix/receipt.json`
 - **PACK090 allowed:** `NO`
-- **Next legal step:** configure legitimate `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET`, then complete the real owner-scoped Google Drive OAuth acceptance: connect → granted-scope tool call → denied-scope proof → disconnect/revoke → post-revoke denial → audit persistence → Vault/plaintext-secret cleanliness.
+- **Next legal step:** add the same owner Google account to Google Auth Platform → Audience → Test users, retry Google Drive Connect, then complete callback activation → granted-scope tool call → denied-scope proof → disconnect/revoke → post-revoke denial → audit persistence → Vault/plaintext-secret cleanliness.
 - **Do not fabricate credentials and do not start PACK090 before PACK089 becomes LOCKED_VERIFIED.**
 - **Continuity validator:** `tools/validate-zuvyr-continuity.cjs`
 - **Continuity CI:** `.github/workflows/zuvyr-continuity.yml`
