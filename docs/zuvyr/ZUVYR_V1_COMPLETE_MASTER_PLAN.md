@@ -1,6 +1,6 @@
 # ZUVYR V1 — COMPLETE MASTER PLAN
 
-Date: 2026-09-23  
+Date: 2026-09-24  
 Status: **CANONICAL MASTER PLAN + EMBEDDED V1 MODIFICATION MIRROR**  
 Range: **PACK001..PACK150**  
 Final readiness gate: **PACK150 only**
@@ -20,6 +20,7 @@ ZUVYR_V1_COMPLETE_PLAN =
 + MODEL_FACTORY_EVALS_MF_01_24
 + UNIVERSAL_BROWSER_CONNECTION_UBA_01_24
 + UNIVERSAL_INTENT_DELEGATION_UIA_01_20
++ STRIPE_FINAL_LIVE_ACTIVATION_ORDER
 + USER_OUTCOME_ENGINE
 + PACK_EXECUTION_APPENDIX
 + FRESH_ACTIVE_PACK_RECEIPTS_AND_PRODUCTION_EVIDENCE
@@ -50,11 +51,14 @@ A session that loads fewer components does **not** have the complete V1 plan.
 10. `docs/zuvyr/universal-intent-delegation-messaging-automation-overlay.v1.json`
     - UIA-01..UIA-20: intent-level authority across connected apps/sites, messaging automation, WhatsApp/business-messaging reference path, browser/app execution without per-click interruption inside user-granted authority, event-driven replies/actions, receipts/recovery, STOP/revoke and cross-client handoff.
 
-11. `docs/zuvyr/USER_OUTCOME_ENGINE.md`
-12. `docs/zuvyr/PACK_EXECUTION_APPENDIX.md`
-13. `docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json`
-14. `ZUVYR_CONTINUE_HERE.md`, `ZUVYR_MASTER_STATE.json`, `ZUVYR_MASTER_MATRIX.md`
-15. Newest receipt/evidence for the active Pack + fresh GitHub/Supabase/Railway/Vercel/live evidence.
+11. `docs/zuvyr/STRIPE_FINAL_V1_ACTIVATION_GATE_2026-09-24.md`
+    - Canonical execution order for the still-unverified Stripe live gate: historical M08/M09 test-mode evidence is preserved, all fixable Stripe engineering/security work must be completed as discovered, and business verification + controlled live real-money acceptance is the final external activation action inside PACK150 immediately before `V1_READY=true`.
+
+12. `docs/zuvyr/USER_OUTCOME_ENGINE.md`
+13. `docs/zuvyr/PACK_EXECUTION_APPENDIX.md`
+14. `docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json`
+15. `ZUVYR_CONTINUE_HERE.md`, `ZUVYR_MASTER_STATE.json`, `ZUVYR_MASTER_MATRIX.md`
+16. Newest receipt/evidence for the active Pack + fresh GitHub/Supabase/Railway/Vercel/live evidence.
 
 ---
 
@@ -232,7 +236,17 @@ Example: a legitimately connected WhatsApp/business-messaging account can receiv
 - **PACK149:** current provider terms, automation/messaging rules, OAuth/scopes, webhook/template/message restrictions, rate limits, opt-out, privacy/retention and account prerequisites.
 - **PACK150:** exact intent-policy schema, connector/message adapters, browser authority, event/dedupe contracts, consequence policy, STOP/revoke and UIA acceptance matrix.
 
-## D. Permission and consequence model embedded in V1
+## D. Final Stripe Live Activation Order
+
+Historical M08/M09 Stripe test-mode engineering and owner E2E evidence remain preserved. The still-unverified Stripe **live** gate is deliberately ordered as the **last external activation action inside PACK150**.
+
+Before that last action, every fixable internal Stripe issue remains subject to the continuous-improvement rule and must be repaired when discovered. Production billing remains fail-closed: billing activation is off, live-money permission is off, key mode must match the configured Stripe mode, and unsafe test/live webhook-mode combinations must be rejected before settlement.
+
+PACK150 may reach the final Stripe step only after every other applicable V1 requirement is `PASS` or true `N/A_WITH_EVIDENCE`. The final step then requires legitimate Stripe business verification, live-account eligibility, verified live Price bindings, authenticated subscription and top-up Checkout proof, signed exactly-once webhook settlement, wrong-mode denial, lifecycle/invoice proof, refund/reversal reconciliation, cleanup and a final no-secret-leakage receipt.
+
+`V1_READY=true` remains forbidden until this final Stripe live acceptance passes. Detailed contract: `docs/zuvyr/STRIPE_FINAL_V1_ACTIVATION_GATE_2026-09-24.md`.
+
+## E. Permission and consequence model embedded in V1
 
 The goal is **maximum useful autonomy with minimum unnecessary interruption inside explicit user authority**.
 
@@ -242,7 +256,7 @@ The goal is **maximum useful autonomy with minimum unnecessary interruption insi
 
 External web/message/file/plugin/model content is data, never authority.
 
-## E. Cross-surface V1 execution target
+## F. Cross-surface V1 execution target
 
 The unified task/authority/browser/messaging/model behavior must work where applicable across:
 
@@ -307,6 +321,7 @@ AND fresh gap audit before PACK148 is closed
 AND PACK148 rehearsal passes
 AND PACK149 external launch reconciliation passes
 AND PACK150 exact release/recovery seal passes
+AND Stripe business verification + controlled live real-money acceptance is the final external activation and PASS
 ```
 
 A route, button, registry entry, mock, provider name, successful deploy, planning document or partial demo is never completion by itself.

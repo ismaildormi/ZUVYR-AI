@@ -5,7 +5,9 @@ const {
   getStripeClient,
   missingEnvironmentVariables,
   sendBillingUnavailable,
-  normalizeAppUrl
+  normalizeAppUrl,
+  billingV1IsActive,
+  billingExecutionStatus
 } = require('./lib/stripeClient');
 const {
   stripeCatalog,
@@ -70,14 +72,29 @@ function invalidCredits(
 }
 
 router.post('/', async (req, res) => {
+  if (!billingV1IsActive()) {
+    return res.status(503).json({
+      status: 'error',
+      code: 'billing_not_active',
+      message: 'The new billing system is not active yet.'
+    });
+  }
+
+  const execution = billingExecutionStatus();
+  if (!execution.allowed) {
+    return sendBillingUnavailable(
+      res,
+      execution.blockers,
+      execution.blockers.includes('live_billing_not_allowed')
+        ? 'live_billing_disabled'
+        : 'billing_not_configured'
+    );
+  }
+
   const userId = req.userId;
   const userEmail = req.userEmail;
-  const credits =
-    Number(req.body?.credits);
-  const canonical =
-    canonicalStripeCatalogActive(
-      process.env
-    );
+  const credits = Number(req.body?.credits);
+  const canonical = canonicalStripeCatalogActive(process.env);
 
   let amountCents;
   let lineItem;
@@ -87,104 +104,60 @@ router.post('/', async (req, res) => {
     let quote;
 
     try {
-      quote =
-        quoteTopupCredits(
-          credits,
-          process.env,
-          {
-            requireConfiguredPrice:
-              true
-          }
-        );
+      quote = quoteTopupCredits(
+        credits,
+        process.env,
+        { requireConfiguredPrice: true }
+      );
     } catch (error) {
-      if (
-        error.code ===
-        'invalid_topup_credits'
-      ) {
-        return invalidCredits(
-          res,
-          {
-            minimumCredits:
-              error.minimumCredits,
-            maximumCredits:
-              error.maximumCredits,
-            minimumUsd: 10
-          }
-        );
+      if (error.code === 'invalid_topup_credits') {
+        return invalidCredits(res, {
+          minimumCredits: error.minimumCredits,
+          maximumCredits: error.maximumCredits,
+          minimumUsd: 10
+        });
       }
 
-      if (
-        error.code ===
-        'stripe_topup_price_not_configured'
-      ) {
-        return sendBillingUnavailable(
-          res,
-          [error.priceEnvKey]
-        );
+      if (error.code === 'stripe_topup_price_not_configured') {
+        return sendBillingUnavailable(res, [error.priceEnvKey]);
       }
 
       throw error;
     }
 
-    const missing =
-      missingEnvironmentVariables([
-        'STRIPE_SECRET_KEY',
-        'APP_URL',
-        quote.priceEnvKey
-      ]);
+    const missing = missingEnvironmentVariables([
+      'STRIPE_SECRET_KEY',
+      'STRIPE_BILLING_MODE',
+      'APP_URL',
+      quote.priceEnvKey
+    ]);
 
-    const stripe =
-      getStripeClient();
+    const stripe = getStripeClient();
 
-    if (
-      missing.length > 0 ||
-      !stripe
-    ) {
-      return sendBillingUnavailable(
-        res,
-        missing
-      );
+    if (missing.length > 0 || !stripe) {
+      return sendBillingUnavailable(res, missing);
     }
 
-    amountCents =
-      quote.amountCents;
+    amountCents = quote.amountCents;
 
     lineItem = {
-      price:
-        quote.stripePriceId,
-      quantity:
-        quote.stripeCheckoutQuantity
+      price: quote.stripePriceId,
+      quantity: quote.stripeCheckoutQuantity
     };
 
     metadata = {
       userId,
       type: 'topup',
-      credits:
-        String(credits),
-      priceUsd:
-        String(
-          amountCents / 100
-        ),
-      stripeCatalogVersion:
-        stripeCatalog.version,
-      topupTier:
-        quote.tierId,
-      unitPriceMicrousd:
-        String(
-          quote.unitPriceMicrousd
-        ),
-      stripeBillingUnitCents:
-        String(
-          quote.stripeBillingUnitCents
-        ),
-      stripeCheckoutQuantity:
-        String(
-          quote.stripeCheckoutQuantity
-        )
+      credits: String(credits),
+      priceUsd: String(amountCents / 100),
+      stripeCatalogVersion: stripeCatalog.version,
+      topupTier: quote.tierId,
+      unitPriceMicrousd: String(quote.unitPriceMicrousd),
+      stripeBillingUnitCents: String(quote.stripeBillingUnitCents),
+      stripeCheckoutQuantity: String(quote.stripeCheckoutQuantity)
     };
 
     return createSession({
-      req,
       res,
       stripe,
       userId,
@@ -197,57 +170,39 @@ router.post('/', async (req, res) => {
     });
   }
 
-  const missing =
-    missingEnvironmentVariables([
-      'STRIPE_SECRET_KEY',
-      'APP_URL'
-    ]);
+  const missing = missingEnvironmentVariables([
+    'STRIPE_SECRET_KEY',
+    'STRIPE_BILLING_MODE',
+    'APP_URL'
+  ]);
 
-  const stripe =
-    getStripeClient();
+  const stripe = getStripeClient();
 
-  if (
-    missing.length > 0 ||
-    !stripe
-  ) {
-    return sendBillingUnavailable(
-      res,
-      missing
-    );
+  if (missing.length > 0 || !stripe) {
+    return sendBillingUnavailable(res, missing);
   }
 
   if (
     !Number.isInteger(credits) ||
-    credits <
-      LEGACY_MIN_TOPUP_CREDITS ||
-    credits >
-      LEGACY_MAX_TOPUP_CREDITS
+    credits < LEGACY_MIN_TOPUP_CREDITS ||
+    credits > LEGACY_MAX_TOPUP_CREDITS
   ) {
-    return invalidCredits(
-      res,
-      {
-        minimumCredits:
-          LEGACY_MIN_TOPUP_CREDITS,
-        maximumCredits:
-          LEGACY_MAX_TOPUP_CREDITS,
-        minimumUsd:
-          LEGACY_MIN_TOPUP_USD
-      }
-    );
+    return invalidCredits(res, {
+      minimumCredits: LEGACY_MIN_TOPUP_CREDITS,
+      maximumCredits: LEGACY_MAX_TOPUP_CREDITS,
+      minimumUsd: LEGACY_MIN_TOPUP_USD
+    });
   }
 
-  amountCents =
-    legacyAmountCents(credits);
+  amountCents = legacyAmountCents(credits);
 
   lineItem = {
     price_data: {
       currency: 'usd',
       product_data: {
-        name:
-          `ZUVYR - ${credits} credits`
+        name: `ZUVYR - ${credits} credits`
       },
-      unit_amount:
-        amountCents
+      unit_amount: amountCents
     },
     quantity: 1
   };
@@ -255,16 +210,11 @@ router.post('/', async (req, res) => {
   metadata = {
     userId,
     type: 'topup',
-    credits:
-      String(credits),
-    priceUsd:
-      String(
-        amountCents / 100
-      )
+    credits: String(credits),
+    priceUsd: String(amountCents / 100)
   };
 
   return createSession({
-    req,
     res,
     stripe,
     userId,
@@ -288,47 +238,27 @@ async function createSession({
   metadata,
   canonical
 }) {
-  const appUrl =
-    normalizeAppUrl();
+  const appUrl = normalizeAppUrl();
 
   try {
-    const session =
-      await stripe
-        .checkout
-        .sessions
-        .create({
-          mode: 'payment',
-          payment_method_types: [
-            'card'
-          ],
-          client_reference_id:
-            userId || undefined,
-          customer_email:
-            userEmail,
-          line_items: [
-            lineItem
-          ],
-          success_url: `${appUrl}/?topup=true`,
-          cancel_url:
-            `${appUrl}/`,
-          metadata
-        });
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'],
+      client_reference_id: userId || undefined,
+      customer_email: userEmail,
+      line_items: [lineItem],
+      success_url: `${appUrl}/?topup=true`,
+      cancel_url: `${appUrl}/`,
+      metadata
+    });
 
     return res.json({
       url: session.url,
       credits,
-      priceUsd:
-        amountCents / 100,
-      pricePerCreditUsd:
-        amountCents /
-        100 /
-        credits,
-      stripeCatalogVersion:
-        canonical
-          ? stripeCatalog.version
-          : null,
-      canonicalCatalog:
-        canonical
+      priceUsd: amountCents / 100,
+      pricePerCreditUsd: amountCents / 100 / credits,
+      stripeCatalogVersion: canonical ? stripeCatalog.version : null,
+      canonicalCatalog: canonical
     });
   } catch (error) {
     console.error(

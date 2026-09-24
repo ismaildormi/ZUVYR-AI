@@ -1,12 +1,12 @@
 {
-  "schema_version": "2.4",
+  "schema_version": "2.5",
   "updated_at": "2026-09-24",
   "purpose": "Single anti-loss reconstruction capsule for any new ChatGPT/Work/Codex session. Fresh production evidence and explicit current user instruction outrank stale historical state.",
   "repository": "ismaildormi/rox-ai",
   "created_from_git_head": "1d960656d0897beeacd26a09f40a5af7332543ff",
   "current_state_override": {
     "path": "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json",
-    "blob_sha": "5854253981c354e6303b31625c8bf501d53c1810",
+    "blob_sha": "e811ed6670f1b63e9758537cf5f50e4e85988a02",
     "authority": "Fresh compact current-state authority below even fresher Git/production evidence and explicit user instruction; older long-form state files remain historical ledgers when they disagree."
   },
   "source_of_truth_order": [
@@ -16,7 +16,7 @@
     "ZUVYR_CONTINUITY_MANIFEST.json plus newest active-Pack receipt",
     "docs/zuvyr/ZUVYR_V1_COMPLETE_MASTER_PLAN.md as the complete-plan entrypoint plus embedded additive-V1 modification mirror",
     "ZUVYR_CONTINUE_HERE.md / ZUVYR_MASTER_STATE.json / ZUVYR_MASTER_MATRIX.md as historical ledgers when older",
-    "ROADMAP_150 + Model Factory/Evals overlays + Universal Browser/Connection Authority overlay + Universal Intent Delegation/Messaging overlay + readiness audit/matrix + execution appendix",
+    "ROADMAP_150 + Model Factory/Evals overlays + Universal Browser/Connection Authority overlay + Universal Intent Delegation/Messaging overlay + Stripe final-live-activation contract + readiness audit/matrix + execution appendix",
     "Older chats/memory only for recovery, never to override fresher evidence"
   ],
   "canonical_boot_order": [
@@ -36,6 +36,7 @@
     "docs/zuvyr/universal-browser-session-connection-authority-overlay.v1.json",
     "docs/zuvyr/ROADMAP_150_UNIVERSAL_INTENT_DELEGATION_MESSAGING_AUTOMATION_AMENDMENT_2026-09-23.md",
     "docs/zuvyr/universal-intent-delegation-messaging-automation-overlay.v1.json",
+    "docs/zuvyr/STRIPE_FINAL_V1_ACTIVATION_GATE_2026-09-24.md",
     "docs/zuvyr/V1_READINESS_COMPLETENESS_AUDIT_2026-09-22.md",
     "docs/zuvyr/V1_READINESS_REQUIREMENTS_001_292.json",
     "docs/zuvyr/USER_OUTCOME_ENGINE.md",
@@ -137,6 +138,11 @@
     "cannot_hide_unfinished_v1": true,
     "fresh_gap_audit_before_pack148": true,
     "cold_start_reconstruction_test_required": true,
+    "stripe_final_activation_contract": "docs/zuvyr/STRIPE_FINAL_V1_ACTIVATION_GATE_2026-09-24.md",
+    "stripe_business_verification_is_final_external_activation_action": true,
+    "stripe_live_real_money_acceptance_required_before_v1_ready": true,
+    "stripe_live_activation_must_not_block_intermediate_packs": true,
+    "stripe_internal_findings_must_still_be_fixed_when_discovered": true,
     "model_factory_evals_amendment_required": true,
     "model_factory_evals_amendment": "docs/zuvyr/ROADMAP_150_MODEL_FACTORY_EVALS_AMENDMENT.md",
     "model_factory_evals_reconciliation_required": true,
@@ -168,7 +174,7 @@
     "ZUVYR_CONTINUE_HERE.md": "8831d9ce5baf6942fae74a3d00944484a92e0fb7",
     "ZUVYR_MASTER_STATE.json": "1b84584903747195c2a9d5b8bb3699e5c680ce37",
     "ZUVYR_MASTER_MATRIX.md": "f9549ecef9b050bb7a794138a14532712fd8878c",
-    "docs/zuvyr/ZUVYR_V1_COMPLETE_MASTER_PLAN.md": "236b4b6821f593fecd73c8dccde7b7f53e46236f",
+    "docs/zuvyr/ZUVYR_V1_COMPLETE_MASTER_PLAN.md": "1c11b7c171e13808eb16326646d7e38aecc5e6e5",
     "docs/zuvyr/ROADMAP_150.md": "c22a1914f10933879b560fbc84786471301e3c54",
     "docs/zuvyr/ROADMAP_150_MODEL_FACTORY_EVALS_AMENDMENT.md": "e168ba15d8446419b7f271852c9869d708477b2e",
     "docs/zuvyr/ROADMAP_150_MODEL_FACTORY_EVALS_RECONCILIATION_2026-09-23.md": "80882be33369b6d90e3d8172e710a2953554de05",
@@ -182,7 +188,8 @@
     "docs/zuvyr/universal-browser-session-connection-authority-overlay.v1.json": "535bef1b45dae2786a07939d0df7533ef0dcb013",
     "docs/zuvyr/ROADMAP_150_UNIVERSAL_INTENT_DELEGATION_MESSAGING_AUTOMATION_AMENDMENT_2026-09-23.md": "d0f08ca0007e2111aa625ccf07ff5133be06f8de",
     "docs/zuvyr/universal-intent-delegation-messaging-automation-overlay.v1.json": "86a5a41ce661cde391259a415b00ecf29c98259d",
-    "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json": "5854253981c354e6303b31625c8bf501d53c1810",
+    "docs/zuvyr/STRIPE_FINAL_V1_ACTIVATION_GATE_2026-09-24.md": "2fde8bdbc5b5bfc9012a9ff4afb61f7e5196cb9a",
+    "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json": "e811ed6670f1b63e9758537cf5f50e4e85988a02",
     "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md": "1a1b2cb619c51a8a122d93780a06a4fe893d6acf",
     "docs/zuvyr/continuous-improvement-override.v1.json": "7b465282196f4d9bc5ef1342a40cae627a5e3faa",
     "zuvyr-pack-evidence/reconciliations/2026-09-24-post-hardening-maintenance/receipt.json": "01737f12bb5ef7f7710f1a8c5ee6a2309da4aba0",
@@ -206,6 +213,8 @@
     "complete_master_plan_must_not_replace_original_pack_or_additive_sources": true,
     "complete_master_plan_must_embed_additive_v1_modification_mirrors": true,
     "future_additive_v1_modification_requires_master_mirror": true,
+    "stripe_final_activation_contract_must_be_loaded": true,
+    "stripe_live_acceptance_must_be_last_external_activation_before_v1_ready": true,
     "continuous_improvement_policy_must_be_loaded": true,
     "substantive_old_pack_improvements_are_allowed_with_new_evidence": true,
     "clean_claim_requires_zero_known_actionable_internal_findings": true,
@@ -237,6 +246,8 @@
       "An older-Pack repair never authorizes skipping the current legal Pack gate.",
       "Load the canonical boot order, including docs/zuvyr/ZUVYR_V1_COMPLETE_MASTER_PLAN.md as the complete-plan entrypoint and embedded additive-V1 modification mirror.",
       "Treat the Master Plan as a union contract: load the original ROADMAP_150 plus all applicable EA/MF/UBA/UIA/outcome/execution sources; never use the Master Plan to discard a source.",
+      "Load docs/zuvyr/STRIPE_FINAL_V1_ACTIVATION_GATE_2026-09-24.md: complete every other applicable V1 gate first; Stripe business verification and controlled live real-money acceptance is the final external activation action inside PACK150 immediately before V1_READY.",
+      "Do not let deferred Stripe live activation hide fixable internal billing/webhook/configuration/security findings; repair those when discovered while keeping production live billing fail-closed until the final PACK150 activation.",
       "Run read-only reconciliation against fresh source/production evidence before deciding the next mutation.",
       "Explicitly flag stale/conflicting status text instead of silently picking one.",
       "For PACK131..PACK150, enforce the union of original Pack scope, applicable EA items and Model Factory/Evals requirements.",
@@ -245,8 +256,8 @@
       "After any material checkpoint, update continuity sources or record an explicit continuity-update blocker."
     ]
   },
-  "no_loss_rule": "If continuity sources disagree, use the source-of-truth order, repair the disagreement before feature advancement, preserve all historical evidence, and never guess success. A completed Pack may be improved when fresh evidence justifies it, but the active legal Pack gate still controls roadmap advancement. Never claim CLEAN/final while a known actionable internal finding remains; only explicit evidenced external blockers may remain.",
-  "last_reconciled_git_head_before_manifest_update": "1d960656d0897beeacd26a09f40a5af7332543ff",
+  "no_loss_rule": "If continuity sources disagree, use the source-of-truth order, repair the disagreement before feature advancement, preserve all historical evidence, and never guess success. A completed Pack may be improved when fresh evidence justifies it, but the active legal Pack gate still controls roadmap advancement. Never claim CLEAN/final while a known actionable internal finding remains; only explicit evidenced external blockers may remain. Stripe business verification and live real-money acceptance is intentionally the final external activation inside PACK150, but all fixable internal Stripe findings remain immediately actionable.",
+  "last_reconciled_git_head_before_manifest_update": "eae255ba3f4dd90676a365691f41cacf7e19fe15",
   "integrity_guard_files": {
     "tools/validate-zuvyr-continuity.cjs": "ef6a2535c920aafcff2fa0aa51987ce4569cced2",
     ".github/workflows/zuvyr-continuity.yml": "a9f8aef5a40431f6f9933668a2efb8a0a0820c90",
@@ -263,8 +274,8 @@
   },
   "latest_continuity_verification": {
     "checked_at": "2026-09-24",
-    "source_main_before_this_reconciliation": "1d960656d0897beeacd26a09f40a5af7332543ff",
-    "source_main_ci": "Continuity Integrity / Backend Quality / Release Quality = SUCCESS",
+    "source_main_before_this_reconciliation": "eae255ba3f4dd90676a365691f41cacf7e19fe15",
+    "source_main_ci": "Continuity Integrity / Backend Quality / Release Quality = SUCCESS before this Stripe hardening branch; branch CI must re-verify after canonical snapshot changes",
     "global_cleanliness_merge_commit": "03c8415f92d55591626c0fe50ad80488d8882979",
     "global_cleanliness_receipt": "zuvyr-pack-evidence/global-cleanliness/2026-09-23/receipt.json",
     "supabase_global_cleanliness_migration": "20260923223742 zuvyr_global_cleanliness_hardening_20260923",
@@ -305,6 +316,12 @@
       "values_redacted": true,
       "values_nonempty_or_google_valid": "UNVERIFIED",
       "interactive_owner_consent_completed": false
+    },
+    "stripe_final_activation_order": {
+      "historical_test_mode": "VERIFIED_M08_M09",
+      "live_business_verification": "PENDING_EXTERNAL_FINAL_PACK150_ACTION",
+      "v1_ready_requires_final_live_acceptance": true,
+      "contract": "docs/zuvyr/STRIPE_FINAL_V1_ACTIVATION_GATE_2026-09-24.md"
     },
     "note": "Fields that refer to a Git head or deployment are explicitly historical/last-evaluated observations, not self-staling claims that they will remain current after the reconciliation commit merges."
   }
