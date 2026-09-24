@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/update.js
+// ZUVYR — cli/commands/update.js
 //
 // Pulls new code (if this is a git checkout), installs any new
 // dependencies, applies any new numbered .sql migration, then reloads
@@ -12,7 +12,7 @@ const path = require('path');
 const { ROOT_DIR, BACKEND_DIR, log, run, pm2, pm2Available, loadEnv } = require('../../lib/util');
 
 module.exports = function update() {
-  log.step('ROX AI — update');
+  log.step('ZUVYR — update');
   loadEnv();
 
   if (fs.existsSync(path.join(ROOT_DIR, '.git'))) {

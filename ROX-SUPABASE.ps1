@@ -9,7 +9,7 @@ function New-MigrationBundle {
   $out = Join-Path $script:RoxBackupsDir ('rox-supabase-migrations-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.sql')
   $files = Get-ChildItem -LiteralPath $script:RoxBackend -Filter '*.sql' -File | Where-Object { $_.Name -match '^\d+_' } | Sort-Object { [int]($_.Name.Split('_')[0]) }
   $content = New-Object System.Collections.Generic.List[string]
-  $content.Add('-- ROX AI combined Supabase migration bundle')
+  $content.Add('-- ZUVYR combined Supabase migration bundle')
   $content.Add('-- Generated: ' + (Get-Date -Format o))
   foreach ($file in $files) {
     $content.Add('')

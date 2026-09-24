@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// ROX AI — cli/tests/test-ops-commands.js
+// ZUVYR — cli/tests/test-ops-commands.js
 //
 // Every command module under cli/commands/{queue,cron,server,jobs.js,
 // latency.js} must be require()-able with zero backend deps installed

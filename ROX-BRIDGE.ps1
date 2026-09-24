@@ -8,7 +8,7 @@ param(
 Write-RoxHeader 'Safe Bridge import into the existing Git project'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-if ([string]::IsNullOrWhiteSpace($TargetPath)) { $TargetPath = Read-Host 'Full path to the existing ROX AI project folder' }
+if ([string]::IsNullOrWhiteSpace($TargetPath)) { $TargetPath = Read-Host 'Full path to the existing ZUVYR project folder' }
 if (-not (Test-Path -LiteralPath $TargetPath)) { throw "Target project not found: $TargetPath" }
 $target = [IO.Path]::GetFullPath((Resolve-Path -LiteralPath $TargetPath).Path)
 $source = [IO.Path]::GetFullPath($script:RoxRoot)

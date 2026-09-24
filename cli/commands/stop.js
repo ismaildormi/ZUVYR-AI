@@ -1,13 +1,13 @@
-// ROX AI — cli/commands/stop.js
+// ZUVYR — cli/commands/stop.js
 //
-// Stops exactly the two ROX AI processes by name — never `pm2
+// Stops exactly the two ZUVYR processes by name — never `pm2
 // kill`/`pm2 stop all`, which would also stop any unrelated process
 // pm2 happens to be managing on the same machine.
 
 const { log, pm2, pm2Available } = require('../lib/util');
 
 module.exports = function stop() {
-  log.step('ROX AI — stop');
+  log.step('ZUVYR — stop');
   if (!pm2Available()) {
     log.warn('pm2 is not installed — nothing is running under it.');
     return;

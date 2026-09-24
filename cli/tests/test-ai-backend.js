@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// ROX AI — cli/tests/test-ai-backend.js
+// ZUVYR — cli/tests/test-ai-backend.js
 //
 // Exercises cli/lib/aiBackend.js and the parts of `rox ai *` that don't
 // need bullmq/ioredis/@supabase/supabase-js installed (providers

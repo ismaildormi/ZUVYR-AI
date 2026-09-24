@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// ROX AI — cli/tests/test-group-dispatch.js
+// ZUVYR — cli/tests/test-group-dispatch.js
 //
 // Standalone smoke test for cli/lib/group.js — the dispatcher every
 // multi-word command (`rox ai <sub>`, `rox update <sub>`) is built on.

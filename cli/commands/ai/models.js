@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/ai/models.js
+// ZUVYR — cli/commands/ai/models.js
 //
 // Cross-checks config/models.json (pricing) against aiRouter.js's ROUTES
 // (what's actually live) instead of just printing the JSON file. Two
@@ -14,7 +14,7 @@ const { log, loadEnv } = require('../../lib/util');
 const { loadConfig, loadAiRouter } = require('../../lib/aiBackend');
 
 module.exports = async function models() {
-  log.step('ROX AI — models');
+  log.step('ZUVYR — models');
   loadEnv();
 
   const configResult = loadConfig();

@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/queue/clear.js
+// ZUVYR — cli/commands/queue/clear.js
 //
 // Removes jobs in a given state from a given queue via BullMQ's own
 // `Queue.clean()` — a destructive action, so it requires --yes like
@@ -15,7 +15,7 @@ const QUEUE_MAP = { image: 'imageQueue', video: 'videoQueue' };
 const ALLOWED_STATUSES = ['completed', 'failed', 'active', 'wait', 'delayed', 'paused'];
 
 module.exports = async function clear(args = []) {
-  log.step('ROX AI — queue clear');
+  log.step('ZUVYR — queue clear');
   loadEnv();
 
   const queueArg = args.find((a) => a.startsWith('--queue='));

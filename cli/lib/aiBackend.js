@@ -1,4 +1,4 @@
-// ROX AI — cli/lib/aiBackend.js
+// ZUVYR — cli/lib/aiBackend.js
 //
 // Shared loader for the `rox ai *` and `rox update models|providers`
 // commands. Several backend/src/modules/ai files have zero external

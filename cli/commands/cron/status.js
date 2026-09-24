@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/cron/status.js
+// ZUVYR — cli/commands/cron/status.js
 //
 // There is no in-process scheduler in this app — /internal/advisor/
 // run-daily, /internal/disk/run-scan, /internal/maintenance/run are
@@ -22,7 +22,7 @@ function hoursAgo(iso) {
 }
 
 module.exports = async function status() {
-  log.step('ROX AI — cron status');
+  log.step('ZUVYR — cron status');
   loadEnv();
 
   if (!process.env.CRON_SECRET) {

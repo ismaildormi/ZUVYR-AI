@@ -13,7 +13,7 @@ const results=[];
 async function check(name,fn){ try{ const detail=await fn(); results.push({name,status:'PASS',detail}); console.log(`PASS ${name} | ${detail}`); }catch(e){ results.push({name,status:'FAIL',detail:e.message}); console.error(`FAIL ${name} | ${e.message}`); } }
 async function request(url,opts={}){ const c=new AbortController(); const timer=setTimeout(()=>c.abort(),12000); try{return await fetch(url,{...opts,signal:c.signal});}finally{clearTimeout(timer);} }
 (async()=>{
- await check('Frontend document',async()=>{const r=await request(app); const t=await r.text(); if(!r.ok) throw new Error(`HTTP ${r.status}`); if(!/Rox AI/i.test(t)) throw new Error('ROX marker missing'); return `HTTP ${r.status}`;});
+ await check('Frontend document',async()=>{const r=await request(app); const t=await r.text(); if(!r.ok) throw new Error(`HTTP ${r.status}`); if(!/ZUVYR/i.test(t)) throw new Error('ROX marker missing'); return `HTTP ${r.status}`;});
  await check('Backend health',async()=>{const r=await request(`${api}/healthz`); const j=await r.json().catch(()=>({})); if(r.status!==200) throw new Error(`HTTP ${r.status}`); return `${r.status} ${j.status||''}`.trim();});
  await check('CORS preflight',async()=>{const r=await request(`${api}/api/chat`,{method:'OPTIONS',headers:{Origin:app,'Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'authorization,content-type'}}); const allow=r.headers.get('access-control-allow-origin'); if(![200,204].includes(r.status)) throw new Error(`HTTP ${r.status}`); if(allow!=='*'&&allow!==app) throw new Error(`origin not allowed (${allow||'missing'})`); return `HTTP ${r.status}`;});
  for(const endpoint of ['/api/chat','/api/generate-image','/api/generate-video']){

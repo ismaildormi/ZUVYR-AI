@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/cron/restart.js
+// ZUVYR — cli/commands/cron/restart.js
 //
 // Named to match the requested command, but honestly there's nothing
 // running in-process to "restart" — see status.js's header comment.
@@ -14,7 +14,7 @@ const { log, loadEnv } = require('../../lib/util');
 const { tryLoad } = require('../../lib/backendLoader');
 
 module.exports = async function restart() {
-  log.step('ROX AI — cron restart (manual trigger, not a process restart)');
+  log.step('ZUVYR — cron restart (manual trigger, not a process restart)');
   loadEnv();
   log.info('Running the three scheduled jobs now, the same functions /internal/* calls.');
 

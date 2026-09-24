@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/ai/providers.js
+// ZUVYR — cli/commands/ai/providers.js
 //
 // Lists every provider adapter registered in
 // backend/src/modules/ai/providers/index.js (the 'ai.providers' registry
@@ -12,7 +12,7 @@ const { log, loadEnv } = require('../../lib/util');
 const { loadProviders, loadAiRouter, PROVIDER_ENV_VAR, PROVIDER_BASE_URL_VAR, DEFAULT_LOCAL_BASE_URL } = require('../../lib/aiBackend');
 
 module.exports = async function providers() {
-  log.step('ROX AI — providers');
+  log.step('ZUVYR — providers');
   loadEnv();
 
   const providersResult = loadProviders();

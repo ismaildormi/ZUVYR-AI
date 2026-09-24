@@ -9,7 +9,7 @@ New-Item -ItemType Directory -Path $temp -Force | Out-Null
 
 try {
   $system = New-Object System.Collections.Generic.List[string]
-  $system.Add("ROX AI support report - $(Get-Date -Format o)")
+  $system.Add("ZUVYR support report - $(Get-Date -Format o)")
   $system.Add("Version: $(Get-RoxVersion)")
   $system.Add("Active profile: $(Get-RoxActiveProfile)")
   $system.Add("OS: $([Environment]::OSVersion.VersionString)")

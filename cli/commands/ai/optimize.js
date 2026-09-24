@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/ai/optimize.js
+// ZUVYR — cli/commands/ai/optimize.js
 //
 // Thin CLI view/control for backend/src/modules/optimizer (Auto
 // Optimizer) — same functions the admin API routes call, so nothing is
@@ -30,7 +30,7 @@ function actorId() {
 }
 
 module.exports = async function optimize(args = []) {
-  log.step('ROX AI — optimizer');
+  log.step('ZUVYR — optimizer');
   loadEnv();
 
   const optimizerResult = tryLoad('src/modules/optimizer');

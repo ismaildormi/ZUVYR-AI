@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/logs.js
+// ZUVYR — cli/commands/logs.js
 const { pm2 } = require('../lib/util');
 
 module.exports = function logs(args) {

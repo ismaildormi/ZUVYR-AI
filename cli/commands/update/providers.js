@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/update/providers.js
+// ZUVYR — cli/commands/update/providers.js
 //
 // "Refresh AI providers configuration." Reloads backend/.env (so a
 // credential change doesn't need a full `rox restart` to be checked),
@@ -37,7 +37,7 @@ async function probe(key, headers) {
 }
 
 module.exports = async function updateProviders() {
-  log.step('ROX AI — update providers');
+  log.step('ZUVYR — update providers');
   loadEnv();
 
   await checkProviders();

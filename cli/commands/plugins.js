@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/plugins.js
+// ZUVYR — cli/commands/plugins.js
 //
 // `rox plugins` — lists every plugin command cli/lib/pluginLoader.js
 // discovered (local cli/plugins/<name>/ folders and npm packages named
@@ -15,7 +15,7 @@ module.exports = async function plugins(args = []) {
   const found = discoverPlugins((msg) => warnings.push(msg));
   const names = Object.keys(found);
 
-  log.step('ROX AI — plugins');
+  log.step('ZUVYR — plugins');
   console.log(`  Local plugin folder: ${PLUGINS_DIR}`);
   console.log(`  npm plugin naming:   ${PLUGIN_NPM_PREFIX}*  (as a dependency in the root package.json)`);
   console.log('');

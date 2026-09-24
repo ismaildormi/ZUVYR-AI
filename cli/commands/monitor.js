@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/monitor.js
+// ZUVYR — cli/commands/monitor.js
 //
 // Requires backend/src/modules/diskMonitor directly (same host, same
 // repo — no HTTP round trip, no admin token needed) rather than
@@ -142,7 +142,7 @@ module.exports = async function monitor(args) {
   const intervalSec = intervalArg ? Number(intervalArg.split('=')[1]) : 30;
 
   async function tick() {
-    log.step(`ROX AI — monitor (${new Date().toLocaleString()})`);
+    log.step(`ZUVYR — monitor (${new Date().toLocaleString()})`);
     try {
       const report = await diskMonitor.getFullReport();
       printReport(report);

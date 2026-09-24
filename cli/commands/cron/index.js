@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/cron/index.js
+// ZUVYR — cli/commands/cron/index.js
 const { makeGroup } = require('../../lib/group');
 
 module.exports = makeGroup({

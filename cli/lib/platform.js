@@ -1,4 +1,4 @@
-// ROX AI — cli/lib/platform.js
+// ZUVYR — cli/lib/platform.js
 //
 // Single source of truth for "which OS am I on and how do I talk to
 // it correctly" — every other file (util.js, setup.js, backup.js...)

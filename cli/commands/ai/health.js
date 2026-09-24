@@ -1,4 +1,4 @@
-// ROX AI — cli/commands/ai/health.js
+// ZUVYR — cli/commands/ai/health.js
 //
 // Reads the SAME circuit breaker state aiRouter.js checks before every
 // request (lib/modelHealth.js -> circuit_check RPC, 07_model_health.sql)
@@ -11,7 +11,7 @@ const { log, loadEnv } = require('../../lib/util');
 const { loadAiRouter, loadModelHealth } = require('../../lib/aiBackend');
 
 module.exports = async function health() {
-  log.step('ROX AI — model circuit health');
+  log.step('ZUVYR — model circuit health');
   loadEnv();
 
   const routerResult = loadAiRouter();

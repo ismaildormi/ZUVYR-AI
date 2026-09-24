@@ -26,7 +26,7 @@ function Initialize-RoxDirectories {
 function Write-RoxHeader([string]$Title) {
   Write-Host ''
   Write-Host ('=' * 68) -ForegroundColor DarkGray
-  Write-Host (' ROX AI - ' + $Title) -ForegroundColor Cyan
+  Write-Host (' ZUVYR - ' + $Title) -ForegroundColor Cyan
   Write-Host ('=' * 68) -ForegroundColor DarkGray
 }
 

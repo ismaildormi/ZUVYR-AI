@@ -79,7 +79,7 @@ try {
     $releaseRoot = $extractDir
   } elseif ($candidates.Count -gt 0) {
     $releaseRoot = $candidates[0].FullName
-  } else { throw 'The ZIP does not contain a recognizable ROX AI project root.' }
+  } else { throw 'The ZIP does not contain a recognizable ZUVYR project root.' }
 
   Write-RoxInfo "Release root: $releaseRoot"
   & (Join-Path $script:RoxRoot 'ROX-STOP.ps1')

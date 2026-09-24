@@ -65,7 +65,7 @@ if ($envMap.ContainsKey('SUPABASE_DB_URL') -and -not [string]::IsNullOrWhiteSpac
 }
 
 if (-not $SkipTests) { & (Join-Path $script:RoxRoot 'ROX-TEST.ps1') -Quick }
-if ($StartAfterSetup -or (Confirm-RoxAction 'Start ROX AI now?' -DefaultNo:$false)) {
+if ($StartAfterSetup -or (Confirm-RoxAction 'Start ZUVYR now?' -DefaultNo:$false)) {
   & (Join-Path $script:RoxRoot 'ROX-START.ps1')
 }
 Write-RoxOk 'Setup completed. Use ROX-MANAGER.cmd from now on.'
