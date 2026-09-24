@@ -1,10 +1,10 @@
 {
-  "schema_version": "1.2",
-  "updated_at": "2026-09-24T00:18:00Z",
+  "schema_version": "1.3",
+  "updated_at": "2026-09-24T00:28:00Z",
   "status": "CANONICAL_CURRENT_STATE_OVERRIDE",
   "purpose": "Fresh compact continuity override. When this file is newer than older state capsules, it wins subject to even fresher Git/production evidence and explicit user instruction.",
   "repository": "ismaildormi/rox-ai",
-  "source_main_before_this_reconciliation": "3f0ba3bfb159fa82f6ffee40cdea6c8961b3794c",
+  "source_main_before_this_reconciliation": "26b09a2e7bf149f5197aa7d3b0ec0a3d6a8d6db3",
   "execution_policy": {
     "continuous_improvement_override": "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md",
     "machine_policy": "docs/zuvyr/continuous-improvement-override.v1.json",
@@ -85,6 +85,12 @@
           "exposed_security_definer_count": 0
         }
       }
+    },
+    "infra_advisor_reconciliation_2026_09_24": {
+      "status": "RECONCILED_CURRENT_TRUTH",
+      "receipt": "zuvyr-pack-evidence/reconciliations/2026-09-24-infra-advisor-reconciliation/receipt.json",
+      "vercel_rate_limit_classification": "HISTORICAL_NOT_CURRENT_GATE",
+      "zuvyr_supabase_actionable_database_findings": 0
     }
   },
   "infrastructure": {
@@ -99,12 +105,32 @@
     "railway_maintenance_deployment": "23694064-119a-4baf-96e0-142ae51baab5",
     "railway_worker_runtime": "brain-kernel=true; pack088-execution=true; pack088-scheduler=true; observed scheduler failures=0",
     "railway_maintenance_runtime_monitoring": "3 consecutive natural cron runs observed SUCCESS after global-hardening deployment; latest at 2026-09-24T00:02:22Z; fresh DB hygiene RPC remains ok=true.",
+    "railway_current_docs_only_main_changes": "SKIPPED_AS_EXPECTED_NO_RUNTIME_DELTA",
     "vercel_project": "prj_P6VddfynJKniiK29clC6Epr9byPk",
     "vercel_team": "team_3PYlTi0Euf7SDg7T2NRzGx3q",
     "vercel_current_production_url": "https://rox-ai-sepia.vercel.app/",
     "vercel_current_production_reachable": true,
-    "vercel_new_merge_deployment": "BLOCKED_EXTERNAL_BUILD_RATE_LIMIT_RETRY_IN_24_HOURS",
-    "vercel_runtime_interpretation": "Existing production frontend remains reachable; the global-hardening merge did not change frontend source, but the Git integration could not create a new deployment because the account hit its daily build-rate limit."
+    "vercel_historical_global_hardening_commit_status": "03c8415f92d55591626c0fe50ad80488d8882979 retained immutable failure status from build-rate-limit",
+    "vercel_historical_rate_limit_is_current_gate": false,
+    "vercel_pr106_frontend_file_count": 0,
+    "vercel_later_preview_ready": "dpl_7CAHbi5MtZj8mBMUxHHuP9BYGu93 READY",
+    "vercel_current_main_deployment": "dpl_93u9NcKG8Bvh3A5UoxpPFe6gqcq5 CANCELED_BY_IGNORED_BUILD_STEP",
+    "vercel_runtime_interpretation": "No current Vercel outage or quota blocker is claimed. The old rate-limit status remains historical evidence only; PR106 had no frontend changes, later preview build succeeded, and current docs-only main was intentionally ignored by the configured build-step rule."
+  },
+  "advisor_reconciliation": {
+    "observed_at": "2026-09-24T00:27:14Z",
+    "zuvyr_security_actionable_database_findings": 0,
+    "zuvyr_unindexed_foreign_keys": 0,
+    "zuvyr_rls_enabled_no_policy": 0,
+    "supabase_auth_leaked_password_protection": "EXTERNAL_WARN_REMAINS",
+    "nova8_security_and_performance_findings": "OUT_OF_ZUVYR_SCOPE_NO_MUTATION",
+    "backup_schema_no_primary_key_findings": "INFORMATIONAL_NON_RUNTIME_BACKUP_METADATA",
+    "unused_index_findings": {
+      "count": 261,
+      "classification": "INFORMATIONAL_REQUIRES_REPRESENTATIVE_USAGE_WINDOW",
+      "immediate_action": "DO_NOT_DROP_BLINDLY",
+      "rationale": "Many indexes were created minutes earlier by verified FK hardening and have no representative usage history. Immediate deletion would risk recreating confirmed FK performance debt. Review only after sufficient production traffic with query/index-usage evidence."
+    }
   },
   "known_unresolved_gates": [
     "PACK089 real Google OAuth production acceptance",
@@ -119,8 +145,7 @@
     "PACK094 authenticated owner Data Rights UI acceptance (production frontend sub-gate already resolved)",
     "PACK095 authenticated owner/admin Model Lab UI acceptance (production frontend sub-gate already resolved)",
     "Supabase leaked-password protection remains disabled; historical PACK009 attempt recorded plan HTTP 402 and current connected tooling cannot mutate Auth password-security configuration",
-    "GitHub main branch protection/ruleset remains absent; repository-admin mutation is not available through the connected GitHub tool surface",
-    "Vercel new-deployment cooldown/build-rate-limit on merge 03c8415f92d55591626c0fe50ad80488d8882979; existing production remains reachable"
+    "GitHub main branch protection/ruleset remains absent; repository-admin mutation is not available through the connected GitHub tool surface"
   ],
   "do_not_claim": [
     "Entire ZUVYR project globally CLEAN while any known external or authenticated/live acceptance gate remains",
@@ -128,7 +153,7 @@
     "PACK090 started",
     "ZUVYR proprietary production model complete before M21",
     "paid-provider acceptance without a real authorized billed call",
-    "Vercel new merge deployed while build-rate-limit remains",
-    "historical evidence rewritten instead of superseded by a dated reconciliation"
+    "historical evidence rewritten instead of superseded by a dated reconciliation",
+    "Supabase unused-index INFO findings are removable without a representative production usage window"
   ]
 }
