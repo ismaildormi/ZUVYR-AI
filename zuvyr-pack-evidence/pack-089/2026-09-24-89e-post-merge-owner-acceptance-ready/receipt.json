@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "pack": "089",
+  "phase": "89E_PRODUCTION_ACCEPTANCE",
+  "status": "OWNER_AUTH_ACCEPTANCE_PENDING",
+  "observed_at": "2026-09-24T22:52:21.059Z",
+  "source_main": "f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea",
+  "evidence": {
+    "repository": "ismaildormi/ZUVYR-AI",
+    "merged_owner_acceptance_controls": true,
+    "owner_acceptance_controls": {
+      "browse_files": "DEPLOYED",
+      "permission_center_challenge_and_grant": "DEPLOYED",
+      "expected_denied_write_guard": "DEPLOYED",
+      "disconnect_revoke": "DEPLOYED",
+      "post_revoke_denial_check": "DEPLOYED"
+    },
+    "google_oauth_owner_consent_completed": true,
+    "oauth_callback_completed": true,
+    "google_drive_connection": {
+      "status": "active",
+      "connected": true,
+      "scopes": [
+        "drive.export",
+        "drive.file.read"
+      ],
+      "explicit_consent": true,
+      "read_enabled": true,
+      "write_enabled": false,
+      "credential_storage": "VAULT_BACKED"
+    },
+    "owner_drive_permission_audit_events_after_deploy": 0,
+    "interpretation_of_zero_permission_events": "The real owner has not yet executed the newly deployed Browse files acceptance flow; this must not be fabricated.",
+    "vercel": {
+      "production_status": "READY",
+      "production_target": "production",
+      "production_deployment_id": "dpl_DEhSnxP5pC5JUeZmaKhgHRN9nbeU",
+      "production_github_commit_sha": "f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea",
+      "production_runtime_reachable": true,
+      "latest_pr_number": 127,
+      "latest_pr_head_sha": "b7f3baa70cd2705e5defcf70f486fd4d6e055b31",
+      "latest_pr_vercel_status": "FAILURE_BUILD_RATE_LIMIT",
+      "latest_pr_vercel_target_url": "https://vercel.com/rox-ai?upgradeToPro=build-rate-limit",
+      "interpretation": "Production is healthy on exact merged main, but fresh deployment evidence is externally blocked again for PR127. Do not classify the quota/cooldown issue as permanently closed."
+    },
+    "railway": {
+      "environment": "production",
+      "backend": {
+        "deployment_id": "22e6f76e-8d39-41c4-899e-49c38d94cad4",
+        "status": "SUCCESS"
+      },
+      "worker": {
+        "deployment_id": "579f52ff-bb4e-41bb-9e5a-cf13c2b4561e",
+        "status": "SUCCESS"
+      },
+      "maintenance": {
+        "deployment_id": "7b711dfc-e6bf-4856-90e6-e521c35c7c9e",
+        "status": "SUCCESS"
+      }
+    },
+    "visual_qa": {
+      "workflow_run_id": 36067370611,
+      "artifact_id": 10836762121,
+      "artifact_name": "zuvyr-visual-qa-f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea",
+      "status": "PASS",
+      "fixture_views": 24,
+      "native_screens": 26,
+      "horizontal_overflow": 0,
+      "missing_views": 0,
+      "duplicate_ids": 0,
+      "console_errors": 0,
+      "accessibility_critical": 0,
+      "accessibility_serious": 0,
+      "accessibility_moderate": 0,
+      "public_production_http": 200
+    },
+    "release_quality_run_id": 36067370563,
+    "continuity_run_id": 36067370688,
+    "rw_016_visual_qa": "CLOSED_WITH_POST_MERGE_EVIDENCE",
+    "rw_018_vercel_build_rate_limit": "BLOCKED_EXTERNAL_MONITOR_RECURRED_ON_PR127"
+  },
+  "interpretation": {
+    "pack089_complete": false,
+    "pack090_started": false,
+    "internally_actionable_owner_acceptance_controls_deployed": true,
+    "only_remaining_pack089_gate": "REAL_OWNER_AUTHENTICATED_ACCEPTANCE_AND_POST_ACCEPTANCE_DB_VAULT_VERIFICATION",
+    "vercel_production_runtime_gate": "PASS",
+    "vercel_new_deployment_evidence_gate": "BLOCKED_EXTERNAL_BUILD_RATE_LIMIT"
+  },
+  "next": {
+    "pack090_allowed": false,
+    "required_sequence": "owner Browse files -> exact permission approval -> granted read/list -> denied write -> disconnect/revoke -> post-revoke denial -> audit persistence -> Vault/plaintext-secret cleanliness"
+  }
+}

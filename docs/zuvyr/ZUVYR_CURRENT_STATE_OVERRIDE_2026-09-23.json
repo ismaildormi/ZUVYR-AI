@@ -1,10 +1,10 @@
 {
-  "schema_version": "1.8",
-  "updated_at": "2026-09-24T19:34:33.539655Z",
+  "schema_version": "1.9",
+  "updated_at": "2026-09-24T22:52:21.059Z",
   "status": "CANONICAL_CURRENT_STATE_OVERRIDE",
   "purpose": "Fresh compact continuity override. When this file is newer than older state capsules, it wins subject to even fresher Git/production evidence and explicit user instruction.",
   "repository": "ismaildormi/ZUVYR-AI",
-  "source_main_before_this_reconciliation": "87e3451cb05b4c197d6d89d49c90cd7bed13685f",
+  "source_main_before_this_reconciliation": "f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea",
   "execution_policy": {
     "continuous_improvement_override": "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md",
     "machine_policy": "docs/zuvyr/continuous-improvement-override.v1.json",
@@ -18,7 +18,7 @@
     "pack": "PACK089",
     "pack_status": "IN_PROGRESS",
     "phase": "89E_PRODUCTION_ACCEPTANCE",
-    "phase_status": "OAUTH_CONNECTED_FINAL_ACCEPTANCE_PENDING",
+    "phase_status": "OWNER_AUTH_ACCEPTANCE_PENDING",
     "pack090_allowed": false,
     "completed_subphases": {
       "89A": "LOCKED_VERIFIED",
@@ -27,7 +27,7 @@
       "89D": "LOCKED_VERIFIED",
       "89E_non_external_acceptance": "PASS"
     },
-    "latest_receipt": "zuvyr-pack-evidence/pack-089/2026-09-24-89e-connected-current-reconciliation/receipt.json",
+    "latest_receipt": "zuvyr-pack-evidence/pack-089/2026-09-24-89e-post-merge-owner-acceptance-ready/receipt.json",
     "google_oauth_variable_names_present": [
       "GOOGLE_OAUTH_CLIENT_ID",
       "GOOGLE_OAUTH_CLIENT_SECRET",
@@ -36,7 +36,7 @@
     "google_oauth_values_redacted": true,
     "google_oauth_values_or_google_side_validity": "PRODUCTION_OWNER_CONSENT_AND_CALLBACK_CONFIRMED",
     "interactive_owner_consent_completed": true,
-    "next_legal_step": "Verify a granted-scope Google Drive read/export tool call, prove denied write/scope behavior, disconnect/revoke, prove post-revoke denial, then verify audit persistence and Vault/plaintext-secret cleanliness. Do not start PACK090 first.",
+    "next_legal_step": "Use the real owner-authenticated Plugins & Connections surface: Browse files -> approve the exact read permission -> verify the granted Drive list/read result and denied write proof -> Disconnect -> verify post-revoke denial -> verify audit persistence and Vault/plaintext-secret cleanliness. Do not start PACK090 first.",
     "oauth_start_production": {
       "status": "PASS",
       "http_status": 201,
@@ -72,10 +72,11 @@
       "explicit_consent": true,
       "read_enabled": true,
       "write_enabled": false,
-      "consumed_oauth_sessions": 1,
-      "active_unconsumed_oauth_sessions": 0,
+      "refresh_token_present": true,
+      "revoked_at": null,
       "credential_storage": "VAULT_BACKED",
-      "observed_from": "fresh Supabase production evidence 2026-09-24"
+      "owner_permission_audit_after_acceptance_controls_deploy": 0,
+      "observed_from": "fresh Supabase production evidence after main f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea"
     },
     "pack089_pkce_cleanup": {
       "status": "PRODUCTION_VERIFIED",
@@ -86,6 +87,16 @@
       "cleanup_audit_event_observed": true,
       "maintenance_runs_observed_success": true,
       "interpretation": "Session rows and secret UUID references are intentionally preserved for audit; corresponding Vault secret rows are deleted."
+    },
+    "owner_acceptance_controls": {
+      "status": "DEPLOYED_ON_PRODUCTION_MAIN",
+      "source_main": "f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea",
+      "browse_files": true,
+      "permission_center_challenge_and_grant": true,
+      "denied_write_guard": true,
+      "disconnect_revoke": true,
+      "post_revoke_denial_check": true,
+      "real_owner_execution": "PENDING"
     }
   },
   "final_v1_activation_order": {
@@ -160,6 +171,16 @@
       "receipt": "zuvyr-pack-evidence/reconciliations/2026-09-24-infra-advisor-reconciliation/receipt.json",
       "vercel_rate_limit_classification": "HISTORICAL_NOT_CURRENT_GATE",
       "zuvyr_supabase_actionable_database_findings": 0
+    },
+    "level3_postmerge_2026_09_24": {
+      "status": "LOCKED_VERIFIED_POST_MERGE",
+      "source_main": "f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea",
+      "visual_qa_run_id": 36067370611,
+      "visual_qa_artifact_id": 10836762121,
+      "public_production_http": 200,
+      "actionable_visual_findings": 0,
+      "rw_016": "CLOSED",
+      "rw_018": "BLOCKED_EXTERNAL_MONITOR_RECURRED_ON_PR127"
     }
   },
   "infrastructure": {
@@ -167,11 +188,11 @@
     "supabase_status": "ACTIVE_HEALTHY_EU_WEST_1_PROVIDER_LIFECYCLE_INCIDENT_MONITORED",
     "railway_project": "ba460cdb-cc55-4203-bdd0-711846b7564c",
     "railway_environment": "production",
-    "railway_services_latest_status": "SUCCESS_ON_MAIN_87E3451",
+    "railway_services_latest_status": "SUCCESS_ON_MAIN_F1886D5CD9A9A3A6D56C0CC8A83DAF80FB6A47EA",
     "railway_pending_work": 0,
-    "railway_backend_deployment": "85d60d3f-b6e4-4081-ad89-b61d0425126b",
-    "railway_worker_deployment": "4e896bbb-fadf-4e90-bcef-3e14e1f9c05e",
-    "railway_maintenance_deployment": "0d7a3e28-7d3e-4262-97a7-1c5ea67f7f3d",
+    "railway_backend_deployment": "22e6f76e-8d39-41c4-899e-49c38d94cad4",
+    "railway_worker_deployment": "579f52ff-bb4e-41bb-9e5a-cf13c2b4561e",
+    "railway_maintenance_deployment": "7b711dfc-e6bf-4856-90e6-e521c35c7c9e",
     "railway_worker_runtime": "brain-kernel=true; pack088-execution=true; pack088-scheduler=true; observed scheduler failures=0",
     "railway_maintenance_runtime_monitoring": "3 consecutive natural cron runs observed SUCCESS after global-hardening deployment; latest at 2026-09-24T00:02:22Z; fresh DB hygiene RPC remains ok=true.",
     "railway_latest_evaluated_docs_only_main_change": "1d960656d0897beeacd26a09f40a5af7332543ff SKIPPED_AS_EXPECTED_NO_RUNTIME_DELTA",
@@ -185,7 +206,19 @@
     "vercel_later_preview_ready": "dpl_7CAHbi5MtZj8mBMUxHHuP9BYGu93 READY",
     "vercel_latest_evaluated_docs_only_production_deployment": "dpl_93u9NcKG8Bvh3A5UoxpPFe6gqcq5 for source main 26b09a2e7bf149f5197aa7d3b0ec0a3d6a8d6db3 CANCELED_BY_IGNORED_BUILD_STEP",
     "vercel_post_reconciliation_main_behavior": "Main 87e3451cb05b4c197d6d89d49c90cd7bed13685f has fresh Vercel SUCCESS after build-rate-limit cooldown recovery.",
-    "vercel_runtime_interpretation": "Build-rate-limit was observed as an external deployment-evidence blocker and later recovered; current main Vercel status is success. Do not treat the provider incident as a ZUVYR code fix."
+    "vercel_runtime_interpretation": "Build-rate-limit was observed as an external deployment-evidence blocker and later recovered; current main Vercel status is success. Do not treat the provider incident as a ZUVYR code fix.",
+    "vercel_current_production_deployment": "dpl_DEhSnxP5pC5JUeZmaKhgHRN9nbeU",
+    "vercel_current_production_source_sha": "f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea",
+    "vercel_current_production_status": "READY",
+    "vercel_build_rate_limit_current_gate": true,
+    "vercel_build_rate_limit_resolution": "RECURRED_ON_PR127_HEAD_AFTER_PRODUCTION_RECOVERY",
+    "vercel_latest_pr": {
+      "pr": 127,
+      "head_sha": "b7f3baa70cd2705e5defcf70f486fd4d6e055b31",
+      "status": "FAILURE_BUILD_RATE_LIMIT",
+      "production_impact": "NONE_OBSERVED",
+      "classification": "BLOCKED_EXTERNAL_DEPLOYMENT_EVIDENCE"
+    }
   },
   "advisor_reconciliation": {
     "observed_at": "2026-09-24T00:27:14Z",
@@ -203,7 +236,7 @@
     }
   },
   "known_unresolved_gates": [
-    "PACK089 final Google Drive production acceptance: granted read/export call, denied write/scope proof, disconnect/revoke, post-revoke denial, audit persistence and Vault/plaintext-secret cleanliness",
+    "PACK089 final Google Drive production acceptance: real owner Browse files permission/read, denied write proof, disconnect/revoke, post-revoke denial, audit persistence and Vault/plaintext-secret cleanliness",
     "PACK019/PACK020 Stripe live business verification + real-money acceptance is deliberately deferred to the final external activation action inside PACK150; it blocks V1_READY but does not block intermediate Packs whose own gates pass",
     "deferred paid media/audio provider E2E gates",
     "PACK073 authenticated physical microphone acceptance",
@@ -215,7 +248,8 @@
     "PACK094 authenticated owner Data Rights UI acceptance (production frontend sub-gate already resolved)",
     "PACK095 authenticated owner/admin Model Lab UI acceptance (production frontend sub-gate already resolved)",
     "Supabase leaked-password protection remains disabled; historical PACK009 attempt recorded plan HTTP 402 and current connected tooling cannot mutate Auth password-security configuration",
-    "GitHub main branch protection/ruleset remains absent; repository-admin mutation is not available through the connected GitHub tool surface"
+    "GitHub main branch protection/ruleset remains absent; repository-admin mutation is not available through the connected GitHub tool surface",
+    "Vercel Git build-rate-limit recurred on PR #127 head while exact production main remains READY; wait for quota/cooldown recovery and require a fresh green deployment check before closing RW-018 permanently."
   ],
   "do_not_claim": [
     "Entire ZUVYR project globally CLEAN while any known external or authenticated/live acceptance gate remains",

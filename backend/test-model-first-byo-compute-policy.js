@@ -163,7 +163,9 @@ assert(roadmapMd.includes('MODEL-FIRST PRIORITY OVERRIDE — 2026-09-19'));
 assert(roadmapMd.includes('PACK094 → PACK095 → PACK096 before PACK084–PACK093'));
 assert(roadmapMd.includes('ZUVYR-owned model usage fee: $0'));
 assert(continueHere.includes('HISTORICAL OVERRIDE — MODEL-FIRST + BYO COMPUTE — 2026-09-19'));
-assert(continueHere.includes('CURRENT CANONICAL EXECUTION CAPSULE — 2026-09-22'));
+// The continuity capsule date is intentionally allowed to move forward as fresh reconciliation occurs.
+assert(continueHere.includes('CURRENT CANONICAL EXECUTION CAPSULE'));
+assert.match(continueHere, /CURRENT CANONICAL EXECUTION CAPSULE — 20\d{2}-\d{2}-\d{2}/);
 assert(continueHere.includes('Active Pack:** `PACK089'));
 assert(continueHere.includes('PACK087 — IP Actions / STOP / Undo'));
 assert(continueHere.includes('### PACK086 ENGINEERING FINALIZED — 2026-09-20'));
