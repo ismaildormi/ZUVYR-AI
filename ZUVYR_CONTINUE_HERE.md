@@ -1,28 +1,17 @@
 # ZUVYR — CONTINUE HERE
 
-## FRESH PACK089 89E GOOGLE TESTING + RETRY FIX CHECKPOINT — 2026-09-24
+## FRESH PACK089 89E POST-MERGE OWNER-ACCEPTANCE-READY CHECKPOINT — 2026-09-24
 
-- Google authorization reached the provider but was blocked by **`403 access_denied`** because the OAuth app is in **Testing** and the current owner account is not yet authorized as a developer-approved test user.
-- Production OAuth application-config gate remains **PASS**; the configured production redirect URI remains `https://rox-ai-sepia.vercel.app/`.
-- A real ZUVYR retry regression after the Google denial (`workspace_integration_create_failed`) is **FIXED + PRODUCTION VERIFIED** in PR #118 / main `244d21142a956dfa754d245f971b8099d452ec9d`.
-- Same-scope OAuth retries now reuse the existing live Google Drive connection row; scope changes fail closed with HTTP 409 and require disconnect first.
-- PACK089 89A→89D regression suite: **PASS**.
-- Railway production: backend **SUCCESS** (`85d60d3f-b6e4-4081-ad89-b61d0425126b`), worker **SUCCESS** (`4e896bbb-fadf-4e90-bcef-3e14e1f9c05e`), maintenance **SUCCESS** (`0d7a3e28-7d3e-4262-97a7-1c5ea67f7f3d`), pending work **0**.
-- Remaining external gate: add the same owner Google account to **Google Auth Platform → Audience → Test users**, retry Connect, then complete the callback/tool/revoke acceptance chain.
+- Source truth: main `f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea`.
+- Google OAuth owner consent + callback: **PASS**. One owner Google Drive connection remains active with `drive.file.read` + `drive.export`; write is disabled and credentials remain Vault-backed.
+- PACK089 owner acceptance controls are deployed in production: **Browse files → Permission Center challenge/grant → real Drive list/read → expected denied write guard → Disconnect/revoke → post-revoke denial check**.
+- The real owner has **not yet executed** the newly deployed Browse-files permission flow; current permission-audit count for that acceptance is zero. Do not fabricate it.
+- Vercel cooldown/build-rate-limit gate is **CLOSED**: production deployment `dpl_DEhSnxP5pC5JUeZmaKhgHRN9nbeU` is READY on exact main `f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea`.
+- Railway production backend/worker/maintenance are all **SUCCESS** on the merged source.
+- Post-merge Visual QA is **PASS** (run `36067370611`, artifact `10836762121`): 24 fixture views + 26 native screens, zero overflow/missing views/duplicate IDs/console errors, zero critical/serious/moderate accessibility violations, public production HTTP 200. RW-016 and RW-018 are closed by evidence.
 - PACK089 remains `IN_PROGRESS`; PACK090 remains **NOT ALLOWED**.
-- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-24-89e-google-testing-retry-fix/receipt.json`.
-
-## FRESH PACK089 89E LIVE OAUTH CHECKPOINT — 2026-09-24
-
-- Production OAuth application-config gate: **PASS**.
-- `POST /api/workspace/drive/connect`: **HTTP 201** at `2026-09-24T15:16:53.411Z`.
-- Railway production variable names for Client ID / Client Secret / Redirect URI are present; secret values remain redacted.
-- Redirect URI reconfirmed as `https://rox-ai-sepia.vercel.app/`.
-- No `/api/workspace/drive/oauth/callback` was observed through `2026-09-24T15:40:00Z`.
-- Therefore the old “missing credentials” blocker is superseded. The current legal gate is **Google provider acceptance + real owner interactive consent/callback**.
-- PACK089 remains `IN_PROGRESS`; PACK090 remains **NOT ALLOWED**.
-- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-24-89e-oauth-start-live/receipt.json`.
-
+- Remaining legal gate: real owner Browse-files permission/read → denied write proof → disconnect/revoke → post-revoke denial → audit persistence → Vault/plaintext-secret cleanliness.
+- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-24-89e-post-merge-owner-acceptance-ready/receipt.json`.
 
 Updated: 2026-09-22 — EA-001…EA-292 full V1 readiness + anti-loss continuity integrated
 
@@ -63,23 +52,22 @@ Before feature work in a new chat/session, verify that `docs/zuvyr/ZUVYR_CONTINU
 Historical status sections may remain for evidence, but a newer dated override/receipt wins. Chat memory is never the only source of truth.
 
 
-## CURRENT CANONICAL EXECUTION CAPSULE — 2026-09-22
+## CURRENT CANONICAL EXECUTION CAPSULE — 2026-09-24
 
-This small section is intentionally duplicated from the machine-readable continuity manifest so a human or a fresh chat can identify the legal continuation point before reading historical material.
+This small section is intentionally duplicated from the machine-readable continuity manifest so a human or a fresh chat can identify the legal continuation point before reading historical material. Fresh evidence overrides older text.
 
 - **Active Pack:** `PACK089 — Skills / Plugins / MCP / Connections`
 - **Pack status:** `IN_PROGRESS`
 - **Active phase:** `89E_PRODUCTION_ACCEPTANCE`
-- **Phase status:** `BLOCKED_EXTERNAL_GOOGLE_OAUTH_TEST_USER_ALLOWLIST_AND_OWNER_CONSENT`
+- **Phase status:** `OWNER_AUTH_ACCEPTANCE_PENDING`
 - **89A / 89B / 89C / 89D:** `LOCKED_VERIFIED`
 - **89E non-external acceptance:** `PASS`
-- **Latest receipt:** `zuvyr-pack-evidence/pack-089/2026-09-24-89e-google-testing-retry-fix/receipt.json`
+- **Latest receipt:** `zuvyr-pack-evidence/pack-089/2026-09-24-89e-post-merge-owner-acceptance-ready/receipt.json`
 - **PACK090 allowed:** `NO`
-- **Next legal step:** add the same owner Google account to Google Auth Platform → Audience → Test users, retry Google Drive Connect, then complete callback activation → granted-scope tool call → denied-scope proof → disconnect/revoke → post-revoke denial → audit persistence → Vault/plaintext-secret cleanliness.
-- **Do not fabricate credentials and do not start PACK090 before PACK089 becomes LOCKED_VERIFIED.**
+- **Next legal step:** Use the real owner-authenticated Plugins & Connections surface: Browse files -> approve the exact read permission -> verify the granted Drive list/read result and denied write proof -> Disconnect -> verify post-revoke denial -> verify audit persistence and Vault/plaintext-secret cleanliness. Do not start PACK090 first.
+- **Do not fabricate owner acceptance and do not start PACK090 before PACK089 becomes LOCKED_VERIFIED.**
 - **Continuity validator:** `tools/validate-zuvyr-continuity.cjs`
 - **Continuity CI:** `.github/workflows/zuvyr-continuity.yml`
-
 
 
 ### PACK150 readiness invariant

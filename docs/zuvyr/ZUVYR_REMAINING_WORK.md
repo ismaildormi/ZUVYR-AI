@@ -39,24 +39,25 @@ A task may be removed only when its history has been superseded by a canonical r
 ## Current V1 remaining work
 
 ### RW-001 — PACK089 Google OAuth production acceptance
-Status: `ACTIVE`
+Status: `AUTH_ACCEPTANCE_PENDING`
 
-Live evidence now confirmed:
-- real owner-scoped OAuth reached Google and callback activation succeeded;
-- the single live Google Drive connection is active with `drive.file.read` + `drive.export`;
-- `write_enabled=false`;
-- credentials are stored server-side through the existing Vault-backed path.
+Completed and production-verified:
+- owner-scoped Google OAuth consent and callback succeeded;
+- one live Google Drive connection is active with `drive.file.read` + `drive.export`; `write_enabled=false`;
+- duplicate-connect/callback idempotency and expired PKCE Vault cleanup are production verified;
+- owner acceptance controls are deployed on main `f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea`: Browse files, exact Permission Center grant, denied-write guard, disconnect/revoke and post-revoke denial check;
+- credentials remain server-side through the Vault-backed path.
 
 Still required before PACK090:
-- close the duplicate-connect/callback cleanliness defects discovered from Supabase production logs and verify a clean post-fix window;
-- one granted-scope Drive tool call;
-- denied-scope/action proof;
-- disconnect/revoke;
-- post-revoke denial;
-- audit persistence;
-- Vault/plaintext-secret cleanliness proof.
+- the real owner executes **Browse files** and approves the exact read permission;
+- granted Drive list/read result is observed;
+- denied write/scope proof is observed;
+- real disconnect/revoke is executed;
+- post-revoke denial is observed;
+- audit persistence is verified;
+- Vault/plaintext-secret cleanliness is verified after revoke.
 
-Do not mark PACK089 complete before this evidence exists.
+Current production permission-audit evidence shows the new owner acceptance has not yet been executed. Do not mark PACK089 complete or start PACK090 before this sequence exists.
 
 ---
 
@@ -214,24 +215,20 @@ Do not mark this CLOSED until the private plugin is connected and a real authent
 ---
 
 ### RW-016 — ChatGPT-visible ZUVYR visual and product-experience QA
-Status: `ACTIVE`
+Status: `CLOSED`
+Closed: 2026-09-24
 Subsystem: `Visual QA / UX / accessibility / responsive product acceptance`
 
-Owner intent: ChatGPT must be able to evaluate how ZUVYR is actually presented and experienced — layout, colors, copy, typography, responsive behavior, loading/error/success states and important interactions — so V1 quality is not judged from source code alone.
+Closure evidence:
+- merged production source: `f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea`;
+- post-merge Visual QA workflow run: `36067370611` = **PASS**;
+- immutable artifact: `10836762121` / `zuvyr-visual-qa-f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea`;
+- 24 deterministic fixture views + 26 native screens inspected;
+- horizontal overflow=0, missing views=0, duplicate IDs=0, console errors=0, render failures=0;
+- accessibility critical=0, serious=0, moderate=0;
+- canonical public-production probe HTTP 200.
 
-Implementation and acceptance requirements:
-- use the real `frontend/zuvyr-suite-v1.js` and `frontend/zuvyr-suite-v1.css`, not a disconnected mock design;
-- automatically capture representative desktop and mobile screenshots for ZUVYR product surfaces;
-- retain machine-readable evidence for visible text, computed colors, typography, control geometry and viewport overflow;
-- run accessibility checks and fail on current serious/critical actionable violations;
-- detect missing views, duplicate IDs, unnamed interactive controls, browser/page errors and horizontal overflow;
-- include deterministic authenticated fixtures for safe empty/loading/error/success states where real customer/provider data must not be used;
-- retain a canonical public-production screenshot/probe as a second evidence source;
-- upload visual evidence as CI artifacts and make the latest workflow status visible through the ZUVYR Ops MCP;
-- before any UI CLEAN claim, inspect the actual screenshots/report, fix actionable findings, rerun, and require current evidence;
-- add further fixture states whenever a later UI task exposes a state that the visual harness cannot currently represent.
-
-Do not mark this CLOSED until the first full Visual QA workflow completes, its screenshots/report are inspected, all actionable findings from that run are fixed or explicitly evidenced as non-defects, and a rerun passes.
+The required visual harness, screenshot/report inspection, actionable-finding repair and passing rerun are now evidenced. Reopen this item only if a later UI change creates a new actionable regression.
 
 ---
 
@@ -252,23 +249,19 @@ This external incident does not justify leaving internally actionable Supabase e
 ---
 
 ### RW-018 — Vercel Git build-rate-limit blocks all-green deployment evidence
-Status: `BLOCKED_EXTERNAL / ACTIVE MONITOR`
+Status: `CLOSED`
+Closed: 2026-09-24
 Subsystem: `Vercel Git integration / Level 3 production deployment evidence`
 
-Fresh 2026-09-24 evidence:
-- GitHub `main` at `791378ff34a17048327f9cd3a6b687e290bf20b0` reports Vercel failure with `upgradeToPro=build-rate-limit` while Railway backend, worker and maintenance contexts are SUCCESS;
-- PR #122 head `b16b3613e1f2f8f12fa2d5415bc768971d48591f` has Continuity, Release Quality and Visual QA SUCCESS, but its latest GitHub Vercel status is also blocked by the build-rate limit;
-- the PR #122 frontend code itself has a READY Vercel Preview at commit `8c7fe022368a7a55759bcee12f508aab53bf9723`, and the later PR commits do not change frontend files;
-- current production Vercel remains READY on the last successful production deployment; the rate limit is a deployment-evidence/quota gate, not evidence of a ZUVYR frontend runtime outage.
+Closure evidence:
+- cooldown/build quota recovered without disabling the Vercel Git safety path;
+- exact production deployment `dpl_DEhSnxP5pC5JUeZmaKhgHRN9nbeU` is **READY**;
+- deployment source SHA is exact merged main `f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea`;
+- GitHub Vercel status on current main is **SUCCESS**;
+- post-merge Visual QA run `36067370611` is **PASS** and its production probe returned HTTP 200.
 
-Required before closure:
-- Vercel build quota/cooldown permits a fresh deployment again, or a replacement frontend-only deployment path is implemented and proven end-to-end without weakening deployment safety;
-- re-run the relevant PR/main deployment so GitHub Vercel status is green;
-- verify the exact production deployment SHA/identity is READY;
-- run the canonical production probe and Visual QA against that deployed frontend;
-- only then close RW-016 / merge Level 3 work if all other gates remain green.
+The historical rate-limit failures remain evidence, but they are no longer a current ZUVYR gate.
 
-Do not disable Vercel Git deployments merely to hide the red status unless an equivalent explicit frontend deployment workflow has first been implemented, validated, and shown to preserve production deployment guarantees.
 
 ## Rules for future additions
 
