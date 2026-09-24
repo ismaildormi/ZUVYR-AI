@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "pack": "089",
+  "phase": "89E_PRODUCTION_ACCEPTANCE",
+  "status": "BLOCKED_EXTERNAL_GOOGLE_PROVIDER_ACCEPTANCE_AND_OWNER_CONSENT",
+  "observed_at": "2026-09-24T15:16:53.411Z",
+  "source_main": "426062fda0eac925605567afc14b8e09f5b3272c",
+  "production": {
+    "frontend": "https://rox-ai-sepia.vercel.app/",
+    "backend": "https://rox-ai-production.up.railway.app",
+    "railway_backend_deployment": "92460f59-ca17-4f51-bef0-a5f10bcf413a",
+    "railway_status": "SUCCESS",
+    "redirect_uri_reconfirmed": "https://rox-ai-sepia.vercel.app/"
+  },
+  "oauth_configuration_evidence": {
+    "railway_variable_names_present": [
+      "GOOGLE_OAUTH_CLIENT_ID",
+      "GOOGLE_OAUTH_CLIENT_SECRET",
+      "GOOGLE_OAUTH_REDIRECT_URI"
+    ],
+    "secret_values": "REDACTED_BY_CONNECTOR",
+    "application_config_gate": "PASS",
+    "proof": "POST /api/workspace/drive/connect returned HTTP 201 in production after googleDriveRuntime.assertOAuthConfigured()",
+    "google_side_client_secret_pair_validity": "UNVERIFIED_UNTIL_GOOGLE_CALLBACK"
+  },
+  "live_http_evidence": {
+    "cors_preflight": {
+      "method": "OPTIONS",
+      "path": "/api/workspace/drive/connect",
+      "status": 204,
+      "at": "2026-09-24T15:16:52.418436605Z"
+    },
+    "oauth_start": {
+      "method": "POST",
+      "path": "/api/workspace/drive/connect",
+      "status": 201,
+      "at": "2026-09-24T15:16:53.411Z"
+    },
+    "oauth_callback_observed_through": "2026-09-24T15:40:00Z",
+    "oauth_callback_count_observed": 0,
+    "granted_scope_tool_call_proven": false,
+    "denied_scope_proof_proven": false,
+    "disconnect_revoke_proven": false,
+    "post_revoke_denial_proven": false
+  },
+  "interpretation": {
+    "credentials_missing_blocker": "SUPERSEDED",
+    "current_external_gate": "Google must accept the configured OAuth client/redirect and the real owner must complete interactive consent so the production callback can activate the connection.",
+    "pack089_locked_verified": false,
+    "pack090_allowed": false
+  },
+  "next_legal_step": "Complete the real owner Google consent for the production authorization session (or start a fresh session if the 10-minute state expired), then verify callback activation -> granted-scope Drive tool call -> denied-scope rejection -> disconnect/revoke -> post-revoke denial -> audit persistence -> Vault/plaintext-secret cleanliness."
+}

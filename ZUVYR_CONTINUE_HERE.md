@@ -1,5 +1,17 @@
 # ZUVYR — CONTINUE HERE
 
+## FRESH PACK089 89E LIVE OAUTH CHECKPOINT — 2026-09-24
+
+- Production OAuth application-config gate: **PASS**.
+- `POST /api/workspace/drive/connect`: **HTTP 201** at `2026-09-24T15:16:53.411Z`.
+- Railway production variable names for Client ID / Client Secret / Redirect URI are present; secret values remain redacted.
+- Redirect URI reconfirmed as `https://rox-ai-sepia.vercel.app/`.
+- No `/api/workspace/drive/oauth/callback` was observed through `2026-09-24T15:40:00Z`.
+- Therefore the old “missing credentials” blocker is superseded. The current legal gate is **Google provider acceptance + real owner interactive consent/callback**.
+- PACK089 remains `IN_PROGRESS`; PACK090 remains **NOT ALLOWED**.
+- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-24-89e-oauth-start-live/receipt.json`.
+
+
 Updated: 2026-09-22 — EA-001…EA-292 full V1 readiness + anti-loss continuity integrated
 
 ## PURPOSE
