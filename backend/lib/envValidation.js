@@ -1,5 +1,18 @@
 'use strict';
 
+const {
+  missingSubscriptionPriceKeys
+} = require('./billingCatalog');
+const {
+  canonicalStripeCatalogActive,
+  requiredPriceBindings
+} = require('./stripeCanonicalCatalog');
+const {
+  stripeModeStatus,
+  billingV1IsActive,
+  liveBillingAllowed
+} = require('./stripeClient');
+
 function isNonEmpty(value) {
   return typeof value === 'string' && value.trim().length > 0;
 }
@@ -19,26 +32,70 @@ function collectMissing(env, keys) {
   return keys.filter(key => !isNonEmpty(env[key]));
 }
 
-function validateBillingConfiguration(env, warnings) {
+function validateBillingConfiguration(env, warnings, errors, production) {
+  const subscriptionPriceKeys = missingSubscriptionPriceKeys({}).length >= 0
+    ? requiredSubscriptionPriceKeys()
+    : [];
   const stripeKeys = [
     'STRIPE_SECRET_KEY',
     'STRIPE_WEBHOOK_SECRET',
-    'STRIPE_PRO_PRICE_ID',
-    'APP_URL',
+    'STRIPE_BILLING_MODE',
+    ...subscriptionPriceKeys,
+    'APP_URL'
   ];
 
   const configured = stripeKeys.filter(key => isNonEmpty(env[key]));
+  const billingActive = billingV1IsActive(env);
+  const stripePresent = configured.length > 0;
 
-  if (configured.length > 0 && configured.length < stripeKeys.length) {
+  if (stripePresent) {
     const missing = collectMissing(env, stripeKeys);
+    if (missing.length > 0) {
+      const message =
+        `Stripe is partially configured. Missing: ${missing.join(', ')}. Billing routes will fail closed.`;
+      if (billingActive && production) errors.push(message);
+      else warnings.push(message);
+    }
+
+    const mode = stripeModeStatus(env);
+    if (!mode.valid) {
+      const message =
+        `Stripe mode contract is invalid: ${mode.blockers.join(', ')}. Billing routes will fail closed.`;
+      if (billingActive && production) errors.push(message);
+      else warnings.push(message);
+    }
+  }
+
+  if (canonicalStripeCatalogActive(env)) {
+    const missingBindings = collectMissing(env, requiredPriceBindings());
+    if (missingBindings.length > 0) {
+      const message =
+        `Canonical Stripe catalog is active but price bindings are missing: ${missingBindings.join(', ')}.`;
+      if (billingActive && production) errors.push(message);
+      else warnings.push(message);
+    }
+  }
+
+  if (
+    production &&
+    billingActive &&
+    stripeModeStatus(env).configuredMode === 'live' &&
+    !liveBillingAllowed(env)
+  ) {
     warnings.push(
-      `Stripe is partially configured. Missing: ${missing.join(', ')}. Billing routes will return 503.`
+      'ZUVYR billing is active in Stripe live mode but LIVE_BILLING_ALLOWED is not true. New live checkout creation remains fail-closed.'
     );
   }
 
   if (isNonEmpty(env.APP_URL) && !isValidHttpUrl(env.APP_URL)) {
     warnings.push('APP_URL must be an absolute http(s) URL.');
   }
+}
+
+function requiredSubscriptionPriceKeys() {
+  const sentinel = {};
+  const missing = missingSubscriptionPriceKeys(sentinel);
+  return Object.freeze([...missing]);
 }
 
 function validateProviderConfiguration(env, warnings) {
@@ -62,7 +119,7 @@ function validateServerEnvironment(env = process.env) {
 
   const coreKeys = [
     'SUPABASE_URL',
-    'SUPABASE_SERVICE_ROLE_KEY',
+    'SUPABASE_SERVICE_ROLE_KEY'
   ];
 
   if (production) {
@@ -117,7 +174,7 @@ function validateServerEnvironment(env = process.env) {
     warnings.push('CRON_SECRET is not set. Internal scheduled routes remain disabled.');
   }
 
-  validateBillingConfiguration(env, warnings);
+  validateBillingConfiguration(env, warnings, errors, production);
   validateProviderConfiguration(env, warnings);
 
   return { errors, warnings };
@@ -130,7 +187,7 @@ function validateWorkerEnvironment(env = process.env) {
   const missingCore = collectMissing(env, [
     'SUPABASE_URL',
     'SUPABASE_SERVICE_ROLE_KEY',
-    'REDIS_URL',
+    'REDIS_URL'
   ]);
 
   if (missingCore.length > 0) {
@@ -175,7 +232,8 @@ function reportEnvironmentValidation(result, options = {}) {
 module.exports = {
   isNonEmpty,
   isValidHttpUrl,
+  requiredSubscriptionPriceKeys,
   validateServerEnvironment,
   validateWorkerEnvironment,
-  reportEnvironmentValidation,
+  reportEnvironmentValidation
 };
