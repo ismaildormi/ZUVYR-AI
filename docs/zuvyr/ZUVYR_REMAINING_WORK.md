@@ -235,8 +235,6 @@ Do not mark this CLOSED until the first full Visual QA workflow completes, its s
 
 ---
 
----
-
 ### RW-017 — Supabase eu-west-1 provider incident + ZUVYR resilience verification
 Status: `BLOCKED_EXTERNAL / MONITOR`
 Subsystem: `Supabase provider availability / production resilience`
@@ -250,6 +248,27 @@ Required before closure:
 - attach dated evidence and close this item.
 
 This external incident does not justify leaving internally actionable Supabase errors unresolved.
+
+---
+
+### RW-018 — Vercel Git build-rate-limit blocks all-green deployment evidence
+Status: `BLOCKED_EXTERNAL / ACTIVE MONITOR`
+Subsystem: `Vercel Git integration / Level 3 production deployment evidence`
+
+Fresh 2026-09-24 evidence:
+- GitHub `main` at `791378ff34a17048327f9cd3a6b687e290bf20b0` reports Vercel failure with `upgradeToPro=build-rate-limit` while Railway backend, worker and maintenance contexts are SUCCESS;
+- PR #122 head `b16b3613e1f2f8f12fa2d5415bc768971d48591f` has Continuity, Release Quality and Visual QA SUCCESS, but its latest GitHub Vercel status is also blocked by the build-rate limit;
+- the PR #122 frontend code itself has a READY Vercel Preview at commit `8c7fe022368a7a55759bcee12f508aab53bf9723`, and the later PR commits do not change frontend files;
+- current production Vercel remains READY on the last successful production deployment; the rate limit is a deployment-evidence/quota gate, not evidence of a ZUVYR frontend runtime outage.
+
+Required before closure:
+- Vercel build quota/cooldown permits a fresh deployment again, or a replacement frontend-only deployment path is implemented and proven end-to-end without weakening deployment safety;
+- re-run the relevant PR/main deployment so GitHub Vercel status is green;
+- verify the exact production deployment SHA/identity is READY;
+- run the canonical production probe and Visual QA against that deployed frontend;
+- only then close RW-016 / merge Level 3 work if all other gates remain green.
+
+Do not disable Vercel Git deployments merely to hide the red status unless an equivalent explicit frontend deployment workflow has first been implemented, validated, and shown to preserve production deployment guarantees.
 
 ## Rules for future additions
 
