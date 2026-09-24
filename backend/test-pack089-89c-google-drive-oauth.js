@@ -403,20 +403,17 @@ function bytesResponse(buffer, mimeType = 'text/plain', status = 200) {
   assert(driveConnectStart >= 0 && driveCallbackStart > driveConnectStart);
   assert(
     driveConnectRoute.indexOf("googleDriveRuntime.assertOAuthConfigured();") <
-    driveConnectRoute.indexOf("connectionStore.createIntegration({"),
-    'Drive OAuth config must fail closed before creating a draft connection'
+    driveConnectRoute.indexOf("connectionStore.createOrReuseIntegration({"),
+    'Drive OAuth config must fail closed before atomic provider-row creation/reuse'
   );
 
-  assert(repo.includes('findLiveIntegration'));
-  assert(repo.includes('workspace_integration_lookup_failed'));
-  assert(driveConnectRoute.includes('connectionStore.findLiveIntegration('));
+  assert(repo.includes('createOrReuseIntegration'));
+  assert(repo.includes('create_or_reuse_workspace_integration_pack089'));
+  assert(repo.includes('workspace_integration_create_or_reuse_failed'));
+  assert(driveConnectRoute.includes('connectionStore.createOrReuseIntegration({'));
+  assert(!driveConnectRoute.includes('connectionStore.findLiveIntegration('));
+  assert(!driveConnectRoute.includes("error?.code !== 'workspace_integration_create_failed'"));
   assert(driveConnectRoute.includes('workspace_google_drive_scope_change_requires_disconnect'));
-  assert(driveConnectRoute.includes("error?.code !== 'workspace_integration_create_failed'"));
-  assert(
-    driveConnectRoute.indexOf('connectionStore.findLiveIntegration(') <
-    driveConnectRoute.indexOf('connectionStore.createIntegration({'),
-    'OAuth retry must reuse an existing live provider row before attempting a new insert'
-  );
 
   for (const marker of [
     'createOAuthSession',
@@ -431,8 +428,8 @@ function bytesResponse(buffer, mimeType = 'text/plain', status = 200) {
   assert(toolSource.includes('driveToolDefinitions'));
 
   console.log('PASS: Pack089 89C OAuth uses one-time hashed state + PKCE and Vault-only token handoff');
-  console.log('PASS: missing Google OAuth credentials fail closed before network');
-  console.log('PASS: Google Drive OAuth retries reuse the live provider row and fail closed on scope changes');
+  console.log('PASS: missing Google OAuth credentials fail closed before network and before atomic provider-row creation/reuse');
+  console.log('PASS: Google Drive OAuth retries use one atomic provider row and fail closed on scope changes');
   console.log('PASS: Google Drive tools register through canonical ai.tools and bill zero credits');
   console.log('PASS: exact tool-key and write fingerprint permission checks happen before Drive network');
   console.log('PASS: local disconnect blocks the connection before best-effort Google token revoke');
