@@ -29,8 +29,8 @@ jobs:
           html=index_path.read_text()
           old='<h3 data-i18n="nav.chat">AI Chat</h3>'
           count=html.count(old)
-          if count < 2:
-              raise SystemExit(f'expected >=2 remaining static AI Chat headings, got {count}')
+          if count < 1:
+              raise SystemExit(f'expected one remaining static AI Chat heading, got {count}')
           html=html.replace(old,'<h3 aria-level="2" data-i18n="nav.chat">AI Chat</h3>')
           index_path.write_text(html)
 
