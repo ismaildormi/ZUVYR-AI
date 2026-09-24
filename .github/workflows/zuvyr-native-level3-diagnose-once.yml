@@ -38,28 +38,19 @@ jobs:
           qa=qa_path.read_text()
 
           old_route="if(url.origin===new URL(baseUrl).origin)return route.continue();"
-          new_route="""if(url.origin===new URL(baseUrl).origin){
-      const rel=url.pathname.replace(/^\\/+/, '');
-      if(!rel.startsWith('frontend/')&&!rel.startsWith('tools/')&&/\\.(?:js|css|png|svg|webp|jpg|jpeg|ico)$/i.test(rel)){
-        return route.continue({url:`${baseUrl}/frontend/${rel}${url.search}`});
-      }
-      return route.continue();
-    }"""
+          new_route="if(url.origin===new URL(baseUrl).origin){\n      const rel=url.pathname.replace(/^\\/+/, '');\n      if(!rel.startsWith('frontend/')&&!rel.startsWith('tools/')&&/\\.(?:js|css|png|svg|webp|jpg|jpeg|ico)$/i.test(rel)){\n        return route.continue({url:`${baseUrl}/frontend/${rel}${url.search}`});\n      }\n      return route.continue();\n    }"
           if qa.count(old_route)!=1:
               raise SystemExit(f'expected one same-origin route clause, got {qa.count(old_route)}')
           qa=qa.replace(old_route,new_route,1)
 
-          old_root="""const rootRect=el.getBoundingClientRect();
-    const duplicateIds="""
-          new_root="""const rootRect=el.getBoundingClientRect();
-    const overflowElements=visible.map(node=>{const r=node.getBoundingClientRect();return {tag:node.tagName,id:node.id||null,className:String(node.className||'').slice(0,180),left:Math.round(r.left),right:Math.round(r.right),width:Math.round(r.width),scrollWidth:node.scrollWidth,clientWidth:node.clientWidth,text:(node.textContent||'').trim().replace(/\\s+/g,' ').slice(0,120),outsideLeft:r.left<rootRect.left-3,outsideRight:r.right>rootRect.right+3};}).filter(x=>x.outsideLeft||x.outsideRight).sort((a,b)=>Math.max(Math.abs(b.left-rootRect.left),Math.abs(b.right-rootRect.right))-Math.max(Math.abs(a.left-rootRect.left),Math.abs(a.right-rootRect.right))).slice(0,40);
-    const duplicateIds="""
+          old_root="const rootRect=el.getBoundingClientRect();\n    const duplicateIds="
+          new_root="const rootRect=el.getBoundingClientRect();\n    const overflowElements=visible.map(node=>{const r=node.getBoundingClientRect();return {tag:node.tagName,id:node.id||null,className:String(node.className||'').slice(0,180),left:Math.round(r.left),right:Math.round(r.right),width:Math.round(r.width),scrollWidth:node.scrollWidth,clientWidth:node.clientWidth,text:(node.textContent||'').trim().replace(/\\s+/g,' ').slice(0,120),outsideLeft:r.left<rootRect.left-3,outsideRight:r.right>rootRect.right+3};}).filter(x=>x.outsideLeft||x.outsideRight).slice(0,40);\n    const duplicateIds="
           if qa.count(old_root)!=1:
               raise SystemExit(f'expected one rootRect block, got {qa.count(old_root)}')
           qa=qa.replace(old_root,new_root,1)
 
-          old_return="""scrollWidth:el.scrollWidth,clientWidth:Math.round(rootRect.width),duplicateIds,colorInventory:"""
-          new_return="""scrollWidth:el.scrollWidth,clientWidth:Math.round(rootRect.width),overflowElements,duplicateIds,colorInventory:"""
+          old_return="scrollWidth:el.scrollWidth,clientWidth:Math.round(rootRect.width),duplicateIds,colorInventory:"
+          new_return="scrollWidth:el.scrollWidth,clientWidth:Math.round(rootRect.width),overflowElements,duplicateIds,colorInventory:"
           if qa.count(old_return)!=1:
               raise SystemExit(f'expected one evidence return segment, got {qa.count(old_return)}')
           qa=qa.replace(old_return,new_return,1)
