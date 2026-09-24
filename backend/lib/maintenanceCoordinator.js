@@ -30,6 +30,16 @@ function hygieneSummary(value) {
   };
 }
 
+function oauthPkceCleanupSummary(value) {
+  const source = value && typeof value === 'object' ? value : {};
+  return {
+    success: source.success === true,
+    ownersCleaned: Number(source.ownersCleaned ?? 0),
+    secretsDeleted: Number(source.secretsDeleted ?? 0),
+    secretValuesExposed: source.secretValuesExposed === true,
+  };
+}
+
 async function writeReceipt(redis, receipt) {
   const serialized = JSON.stringify(receipt);
   await redis.set(
@@ -114,6 +124,7 @@ async function runMaintenanceOnce({
     newAlertsRaised: null,
     accountsReset: null,
     hygiene: null,
+    oauthPkceCleanup: null,
     codeSandboxes: null,
     codeRuntime: null,
     cloudBrowser: null,
@@ -172,6 +183,35 @@ async function runMaintenanceOnce({
           message,
         });
         logger.error('[maintenance] ZUVYR runtime hygiene drift:', message);
+      }
+    }
+
+    const pkceCleanup = await supabaseAdmin.rpc(
+      'cleanup_expired_workspace_oauth_pkce_pack089'
+    );
+    if (pkceCleanup.error) {
+      receipt.errors.push({
+        step: 'cleanup_expired_workspace_oauth_pkce_pack089',
+        message: safeError(pkceCleanup.error),
+      });
+      logger.error(
+        '[maintenance] PACK089 expired PKCE cleanup failed:',
+        safeError(pkceCleanup.error)
+      );
+    } else {
+      receipt.oauthPkceCleanup = oauthPkceCleanupSummary(pkceCleanup.data);
+      if (
+        !receipt.oauthPkceCleanup.success ||
+        receipt.oauthPkceCleanup.secretValuesExposed
+      ) {
+        const message =
+          'PACK089 expired PKCE cleanup returned an unsafe result: ' +
+          JSON.stringify(receipt.oauthPkceCleanup);
+        receipt.errors.push({
+          step: 'cleanup_expired_workspace_oauth_pkce_pack089',
+          message,
+        });
+        logger.error('[maintenance] PACK089 expired PKCE cleanup unsafe:', message);
       }
     }
 
@@ -280,6 +320,7 @@ async function runMaintenanceOnce({
         newAlertsRaised: receipt.newAlertsRaised,
         accountsReset: receipt.accountsReset,
         hygiene: receipt.hygiene,
+        oauthPkceCleanup: receipt.oauthPkceCleanup,
         codeSandboxes: receipt.codeSandboxes,
         codeRuntime: receipt.codeRuntime,
         cloudBrowser: receipt.cloudBrowser,
@@ -291,6 +332,7 @@ async function runMaintenanceOnce({
       receipt.newAlertsRaised !== null,
       receipt.accountsReset !== null,
       receipt.hygiene !== null,
+      receipt.oauthPkceCleanup !== null,
       codeSandboxCleanup === null || receipt.codeSandboxes !== null,
       codeRuntimeReconcile === null || receipt.codeRuntime !== null,
       cloudBrowserCleanup === null || receipt.cloudBrowser !== null,
@@ -330,6 +372,7 @@ module.exports = {
   LOCK_KEY,
   maintenanceWindowKey,
   hygieneSummary,
+  oauthPkceCleanupSummary,
   runMaintenanceOnce,
   requireMaintenanceStrategy,
 };
