@@ -1,1 +1,0 @@
-PACK089 post-merge continuity reconciliation is ready for PR review. Canonical status remains `OWNER_AUTH_ACCEPTANCE_PENDING`; PACK090 remains blocked. No real owner Browse-files acceptance is claimed here.
