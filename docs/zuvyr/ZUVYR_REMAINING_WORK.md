@@ -173,6 +173,30 @@ Required later:
 
 ---
 
+### RW-015 — Private ChatGPT ↔ ZUVYR Ops connector
+Status: `ACTIVE`
+Subsystem: `Operational tooling / owner-scoped MCP`
+
+Owner intent: connect ChatGPT directly to ZUVYR so future chats can inspect the live project state and run safe acceptance checks without relying on screenshots or manual cross-tool reconciliation every time.
+
+Required implementation and acceptance:
+- expose a dedicated inbound ZUVYR MCP / agent-ops surface; current ZUVYR plugin/MCP implementation is outbound-facing and does not provide an inbound ChatGPT control endpoint;
+- authenticate through a real owner-scoped OAuth flow; do not embed API keys, bearer tokens, client secrets, or other credentials in plugin package headers or files;
+- prefer Supabase OAuth 2.1 / OIDC as the identity layer if the live project can support it safely, with PKCE, per-user identity, token verification, scope restriction, and revocation;
+- default tools must be read-only and limited to non-secret operational state: health/readiness, current release identity, canonical PACK/current-state summary, remaining-work ledger, safe provider/config readiness summaries, and non-mutating acceptance probes;
+- redact secrets, tokens, customer data, raw environment values, and sensitive database payloads from all responses and logs;
+- any production-changing tool must remain separate, least-privilege, auditable, and explicitly gated by user approval; payment, deletion, IAM, secret, billing, provider-spend, and destructive actions must never become implicit;
+- add rate limits, audit logging, owner scoping, fail-closed authorization, and regression tests;
+- create a PRIVATE personal ChatGPT plugin for the owner only, pointing to the authenticated ZUVYR MCP endpoint;
+- connect the plugin through the real authorization flow and prove that ChatGPT can read ZUVYR live state;
+- prove denied unauthorized access and revoked-token denial;
+- prove at least one safe live acceptance probe through the plugin;
+- document the final connector contract and how future chats should use it before manual screenshots/log handoffs.
+
+Do not mark this CLOSED until the private plugin is installed/connected and a real authenticated ChatGPT → ZUVYR read + safe test succeeds in production.
+
+---
+
 ## Rules for future additions
 
 Every newly discovered unresolved item must include:
