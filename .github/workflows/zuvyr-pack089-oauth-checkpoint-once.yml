@@ -1,0 +1,147 @@
+name: ZUVYR PACK089 OAuth Checkpoint Once
+
+on:
+  push:
+    branches:
+      - docs/pack089-89e-oauth-start-live-20260924
+
+permissions:
+  contents: write
+
+jobs:
+  persist:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout checkpoint branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: docs/pack089-89e-oauth-start-live-20260924
+          fetch-depth: 1
+
+      - name: Persist fresh PACK089 89E live evidence
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          observed_at = '2026-09-24T15:16:53.411Z'
+          checked_through = '2026-09-24T15:40:00Z'
+          receipt_path = Path('zuvyr-pack-evidence/pack-089/2026-09-24-89e-oauth-start-live/receipt.json')
+          receipt_path.parent.mkdir(parents=True, exist_ok=True)
+          receipt = {
+            'schema_version': '1.0',
+            'pack': 'PACK089',
+            'phase': '89E_PRODUCTION_ACCEPTANCE',
+            'status': 'BLOCKED_EXTERNAL_GOOGLE_PROVIDER_ACCEPTANCE_AND_OWNER_CONSENT',
+            'observed_at': observed_at,
+            'source_main': '426062fda0eac925605567afc14b8e09f5b3272c',
+            'production': {
+              'frontend': 'https://rox-ai-sepia.vercel.app/',
+              'backend': 'https://rox-ai-production.up.railway.app',
+              'railway_backend_deployment': '92460f59-ca17-4f51-bef0-a5f10bcf413a',
+              'railway_status': 'SUCCESS',
+              'redirect_uri_reconfirmed': 'https://rox-ai-sepia.vercel.app/'
+            },
+            'oauth_configuration_evidence': {
+              'railway_variable_names_present': [
+                'GOOGLE_OAUTH_CLIENT_ID',
+                'GOOGLE_OAUTH_CLIENT_SECRET',
+                'GOOGLE_OAUTH_REDIRECT_URI'
+              ],
+              'secret_values': 'REDACTED_BY_CONNECTOR',
+              'application_config_gate': 'PASS',
+              'proof': 'POST /api/workspace/drive/connect returned HTTP 201 in production after googleDriveRuntime.assertOAuthConfigured()',
+              'google_side_client_secret_pair_validity': 'UNVERIFIED_UNTIL_GOOGLE_CALLBACK'
+            },
+            'live_http_evidence': {
+              'cors_preflight': {'method': 'OPTIONS', 'path': '/api/workspace/drive/connect', 'status': 204, 'at': '2026-09-24T15:16:52.418436605Z'},
+              'oauth_start': {'method': 'POST', 'path': '/api/workspace/drive/connect', 'status': 201, 'at': observed_at},
+              'oauth_callback_observed_through': checked_through,
+              'oauth_callback_count_observed': 0,
+              'granted_scope_tool_call_proven': False,
+              'denied_scope_proof_proven': False,
+              'disconnect_revoke_proven': False,
+              'post_revoke_denial_proven': False
+            },
+            'interpretation': {
+              'credentials_missing_blocker': 'SUPERSEDED',
+              'current_external_gate': 'Google must accept the configured OAuth client/redirect and the real owner must complete interactive consent so the production callback can activate the connection.',
+              'pack089_locked_verified': False,
+              'pack090_allowed': False
+            },
+            'next_legal_step': 'Complete the real owner Google consent for the production authorization session (or start a fresh session if the 10-minute state expired), then verify callback activation -> granted-scope Drive tool call -> denied-scope rejection -> disconnect/revoke -> post-revoke denial -> audit persistence -> Vault/plaintext-secret cleanliness.'
+          }
+          receipt_path.write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + '\n')
+
+          override_path = Path('docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json')
+          override = json.loads(override_path.read_text())
+          override['updated_at'] = '2026-09-24T15:40:00Z'
+          aw = override['active_work']
+          aw['phase_status'] = 'BLOCKED_EXTERNAL_GOOGLE_PROVIDER_ACCEPTANCE_AND_OWNER_CONSENT'
+          aw['latest_receipt'] = str(receipt_path).replace('\\', '/')
+          aw['google_oauth_values_or_google_side_validity'] = 'APPLICATION_CONFIG_GATE_PASS_GOOGLE_SIDE_UNVERIFIED'
+          aw['interactive_owner_consent_completed'] = False
+          aw['oauth_start_production'] = {
+            'status': 'PASS',
+            'http_status': 201,
+            'observed_at': observed_at,
+            'route': '/api/workspace/drive/connect'
+          }
+          aw['oauth_callback_production'] = {
+            'status': 'NOT_OBSERVED',
+            'checked_through': checked_through
+          }
+          aw['next_legal_step'] = receipt['next_legal_step']
+          override_path.write_text(json.dumps(override, indent=2, ensure_ascii=False) + '\n')
+
+          manifest_path = Path('docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json')
+          manifest = json.loads(manifest_path.read_text())
+          manifest['updated_at'] = '2026-09-24T15:40:00Z'
+          maw = manifest['active_work']
+          maw['phase_status'] = 'BLOCKED_EXTERNAL_GOOGLE_PROVIDER_ACCEPTANCE_AND_OWNER_CONSENT'
+          maw['latest_receipt'] = str(receipt_path).replace('\\', '/')
+          maw['credential_values_nonempty_or_valid'] = 'APPLICATION_CONFIG_GATE_PASS_GOOGLE_SIDE_UNVERIFIED'
+          maw['google_cloud_configuration_valid'] = 'UNVERIFIED_UNTIL_GOOGLE_ACCEPTS_AUTHORIZATION_REQUEST'
+          maw['interactive_google_consent_completed'] = False
+          maw['oauth_start_production'] = {
+            'status': 'PASS',
+            'http_status': 201,
+            'observed_at': observed_at,
+            'route': '/api/workspace/drive/connect'
+          }
+          maw['oauth_callback_production'] = {
+            'status': 'NOT_OBSERVED',
+            'checked_through': checked_through
+          }
+          maw['next_legal_step'] = receipt['next_legal_step']
+          manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n')
+
+          continue_path = Path('ZUVYR_CONTINUE_HERE.md')
+          text = continue_path.read_text()
+          marker = '## FRESH PACK089 89E LIVE OAUTH CHECKPOINT — 2026-09-24\n'
+          if marker not in text:
+            block = f'''\n{marker}\n- Production OAuth application-config gate: **PASS**.\n- `POST /api/workspace/drive/connect`: **HTTP 201** at `{observed_at}`.\n- Railway production variable names for Client ID / Client Secret / Redirect URI are present; secret values remain redacted.\n- Redirect URI reconfirmed as `https://rox-ai-sepia.vercel.app/`.\n- No `/api/workspace/drive/oauth/callback` was observed through `{checked_through}`.\n- Therefore the old “missing credentials” blocker is superseded. The current legal gate is **Google provider acceptance + real owner interactive consent/callback**.\n- PACK089 remains `IN_PROGRESS`; PACK090 remains **NOT ALLOWED**.\n- Receipt: `{receipt_path.as_posix()}`.\n\n'''
+            anchor = '# ZUVYR — CONTINUE HERE\n'
+            if anchor not in text:
+              raise SystemExit('CONTINUE_HERE title anchor missing')
+            text = text.replace(anchor, anchor + block, 1)
+            continue_path.write_text(text)
+          PY
+
+          python3 -m json.tool docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json >/dev/null
+          python3 -m json.tool docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json >/dev/null
+          python3 -m json.tool zuvyr-pack-evidence/pack-089/2026-09-24-89e-oauth-start-live/receipt.json >/dev/null
+          node tools/validate-zuvyr-continuity.cjs
+          git diff --check
+
+      - name: Commit checkpoint and remove one-shot workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/zuvyr-pack089-oauth-checkpoint-once.yml
+          git add ZUVYR_CONTINUE_HERE.md docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json zuvyr-pack-evidence/pack-089/2026-09-24-89e-oauth-start-live/receipt.json
+          git diff --cached --check
+          git commit -m 'docs: persist live PACK089 OAuth start evidence'
+          git push origin HEAD:docs/pack089-89e-oauth-start-live-20260924
