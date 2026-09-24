@@ -80,3 +80,9 @@ Changed paths:
 - `tools/rox-ai-telemetry.html`
 
 Compatibility note: legacy `rox` command/file/function identifiers remain aliases until a dedicated alias-safe migration proves they can be renamed without breaking automation.
+
+## Final branch acceptance checkpoint
+
+On 2026-09-24 the branch-level atomic acceptance updated the root package identity to `zuvyr-ai`, retained `rox` as a compatibility CLI alias while adding `zuvyr`, created the additive PACK089 OAuth-connected reconciliation receipt, synchronized the current-state/continuity pointers, and updated RW-001 without rewriting historical receipts.
+
+Before this owner-authored final-head trigger, the one-shot acceptance completed successfully with `npm run test:cli`, `npm run test:deploy`, and `npm run validate:release`. Full PR Release/Backend/Continuity/Visual QA must still pass on the final owner-authored head before merge.
