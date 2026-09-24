@@ -67,12 +67,20 @@ const healthyHygiene = Object.freeze({
   exposed_security_definer_count: 0,
 });
 
+const cleanPkce = Object.freeze({
+  success: true,
+  ownersCleaned: 0,
+  secretsDeleted: 0,
+  secretValuesExposed: false,
+});
+
 async function testSuccessAndDuplicate() {
   const redis = new FakeRedis();
   const db = fakeSupabase({
     check_credit_audit_mismatches: 2,
     reset_monthly_credits: 3,
     zuvyr_runtime_hygiene_audit: healthyHygiene,
+    cleanup_expired_workspace_oauth_pkce_pack089: cleanPkce,
   });
   const now = Date.UTC(2026, 8, 11, 22, 30, 0);
 
@@ -91,10 +99,13 @@ async function testSuccessAndDuplicate() {
   assert.strictEqual(first.receipt.hygiene.rlsNoPolicyCount, 0);
   assert.strictEqual(first.receipt.hygiene.unindexedFkCount, 0);
   assert.strictEqual(first.receipt.hygiene.exposedSecurityDefinerCount, 0);
+  assert.strictEqual(first.receipt.oauthPkceCleanup.success, true);
+  assert.strictEqual(first.receipt.oauthPkceCleanup.secretValuesExposed, false);
   assert.deepStrictEqual(db.calls, [
     'check_credit_audit_mismatches',
     'reset_monthly_credits',
     'zuvyr_runtime_hygiene_audit',
+    'cleanup_expired_workspace_oauth_pkce_pack089',
   ]);
 
   const second = await runMaintenanceOnce({
@@ -106,7 +117,7 @@ async function testSuccessAndDuplicate() {
 
   assert.strictEqual(second.status, 'duplicate_suppressed');
   assert.strictEqual(second.duplicate, true);
-  assert.strictEqual(db.calls.length, 3, 'duplicate must make no additional RPC calls');
+  assert.strictEqual(db.calls.length, 4, 'duplicate must make no additional RPC calls');
 }
 
 async function testConcurrentLockSuppression() {
@@ -131,6 +142,7 @@ async function testFailureAllowsRetry() {
     check_credit_audit_mismatches: 1,
     reset_monthly_credits: new Error('reset unavailable'),
     zuvyr_runtime_hygiene_audit: healthyHygiene,
+    cleanup_expired_workspace_oauth_pkce_pack089: cleanPkce,
   });
   const now = Date.UTC(2026, 8, 12, 0, 0, 0);
 
@@ -152,6 +164,7 @@ async function testFailureAllowsRetry() {
     check_credit_audit_mismatches: 0,
     reset_monthly_credits: 0,
     zuvyr_runtime_hygiene_audit: healthyHygiene,
+    cleanup_expired_workspace_oauth_pkce_pack089: cleanPkce,
   });
   const retry = await runMaintenanceOnce({
     redis,
@@ -161,7 +174,7 @@ async function testFailureAllowsRetry() {
   });
 
   assert.strictEqual(retry.status, 'success');
-  assert.strictEqual(retryDb.calls.length, 3);
+  assert.strictEqual(retryDb.calls.length, 4);
 }
 
 async function testHygieneDriftBlocksSuccessMarker() {
@@ -177,6 +190,7 @@ async function testHygieneDriftBlocksSuccessMarker() {
       unindexed_fk_count: 2,
       exposed_security_definer_count: 0,
     },
+    cleanup_expired_workspace_oauth_pkce_pack089: cleanPkce,
   });
 
   const result = await runMaintenanceOnce({
@@ -198,6 +212,37 @@ async function testHygieneDriftBlocksSuccessMarker() {
     await redis.get(maintenanceWindowKey(now)),
     null,
     'hygiene drift must never create a success marker'
+  );
+}
+
+async function testPkceCleanupFailureBlocksSuccessMarker() {
+  const redis = new FakeRedis();
+  const now = Date.UTC(2026, 8, 12, 1, 0, 0);
+  const db = fakeSupabase({
+    check_credit_audit_mismatches: 0,
+    reset_monthly_credits: 0,
+    zuvyr_runtime_hygiene_audit: healthyHygiene,
+    cleanup_expired_workspace_oauth_pkce_pack089: new Error('cleanup unavailable'),
+  });
+
+  const result = await runMaintenanceOnce({
+    redis,
+    supabaseAdmin: db,
+    nowMs: now,
+    logger: quietLogger,
+  });
+
+  assert.strictEqual(result.status, 'partial');
+  assert(
+    result.receipt.errors.some(
+      item => item.step === 'cleanup_expired_workspace_oauth_pkce_pack089'
+    ),
+    'PKCE cleanup failure must be recorded in the maintenance receipt'
+  );
+  assert.strictEqual(
+    await redis.get(maintenanceWindowKey(now)),
+    null,
+    'PKCE cleanup failure must never create a success marker'
   );
 }
 
@@ -262,6 +307,10 @@ function testSourceContracts() {
     coordinator.includes("supabaseAdmin.rpc('zuvyr_runtime_hygiene_audit')"),
     'maintenance must continuously enforce the ZUVYR runtime hygiene invariant'
   );
+  assert(
+    coordinator.includes("'cleanup_expired_workspace_oauth_pkce_pack089'"),
+    'maintenance must continuously clean expired PACK089 PKCE Vault secrets'
+  );
 }
 
 (async () => {
@@ -271,6 +320,7 @@ function testSourceContracts() {
   await testConcurrentLockSuppression();
   await testFailureAllowsRetry();
   await testHygieneDriftBlocksSuccessMarker();
+  await testPkceCleanupFailureBlocksSuccessMarker();
   console.log('PASS: Pack 005 maintenance strategy tests passed.');
 })().catch(error => {
   console.error(error);
