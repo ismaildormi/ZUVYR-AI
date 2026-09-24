@@ -1,7 +1,7 @@
 'use strict';
 
 const {
-  missingSubscriptionPriceKeys
+  SUBSCRIPTION_PRICE_ENV_KEYS
 } = require('./billingCatalog');
 const {
   canonicalStripeCatalogActive,
@@ -32,15 +32,16 @@ function collectMissing(env, keys) {
   return keys.filter(key => !isNonEmpty(env[key]));
 }
 
+function requiredSubscriptionPriceKeys() {
+  return Object.freeze(Object.values(SUBSCRIPTION_PRICE_ENV_KEYS));
+}
+
 function validateBillingConfiguration(env, warnings, errors, production) {
-  const subscriptionPriceKeys = missingSubscriptionPriceKeys({}).length >= 0
-    ? requiredSubscriptionPriceKeys()
-    : [];
   const stripeKeys = [
     'STRIPE_SECRET_KEY',
     'STRIPE_WEBHOOK_SECRET',
     'STRIPE_BILLING_MODE',
-    ...subscriptionPriceKeys,
+    ...requiredSubscriptionPriceKeys(),
     'APP_URL'
   ];
 
@@ -90,12 +91,6 @@ function validateBillingConfiguration(env, warnings, errors, production) {
   if (isNonEmpty(env.APP_URL) && !isValidHttpUrl(env.APP_URL)) {
     warnings.push('APP_URL must be an absolute http(s) URL.');
   }
-}
-
-function requiredSubscriptionPriceKeys() {
-  const sentinel = {};
-  const missing = missingSubscriptionPriceKeys(sentinel);
-  return Object.freeze([...missing]);
 }
 
 function validateProviderConfiguration(env, warnings) {
