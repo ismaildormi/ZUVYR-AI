@@ -16,4 +16,26 @@
   body.zuvyr-ui #feature-chat .chat-input-row .voice-input-btn,
   body.zuvyr-ui #feature-chat .chat-input-row>button[data-send="chat"]{flex:0 0 40px!important;width:40px!important;min-width:40px!important;max-width:40px!important;height:40px!important}
   body.zuvyr-ui #feature-chat .zuvyr-chat-main:has(#msgs-chat.zuvyr-chat-empty)>.chat-input-row{bottom:calc(50% - 158px)!important}
+
+  /* Source-level containment: decorative pseudo layers must never expand the mobile scroll area. */
+  body.zuvyr-ui :is(#feature-images,#feature-videos,#feature-roxip,#feature-chat,#feature-code,#feature-automations,#feature-history,#feature-settings)::before,
+  body.zuvyr-ui :is(#feature-images,#feature-videos,#feature-roxip,#feature-chat,#feature-code,#feature-automations,#feature-history,#feature-settings)::after{
+    display:none!important;
+    content:none!important;
+    width:0!important;
+    height:0!important;
+  }
+
+  /* Mobile settings tabs wrap inside the viewport instead of creating a hidden horizontal rail. */
+  body.zuvyr-ui #feature-settings .rox-settings-nav{
+    flex-wrap:wrap!important;
+    overflow:visible!important;
+    gap:6px!important;
+  }
+  body.zuvyr-ui #feature-settings .rox-settings-nav>button{
+    flex:1 1 108px!important;
+    min-width:0!important;
+    max-width:100%!important;
+    white-space:normal!important;
+  }
 }
