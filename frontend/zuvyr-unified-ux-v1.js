@@ -1133,9 +1133,9 @@
       '<details class="zuvyr-pack095-section" open>' +
         '<summary>BYOC Compute Connectors</summary>' +
         '<form class="zuvyr-pack095-form is-grid" data-zuvyr-pack095-connector-form>' +
-          '<select name="ownershipKind"><option value="user">User-owned</option><option value="organization">Organization-owned</option></select>' +
+          '<select name="ownershipKind" aria-label="Compute ownership"><option value="user">User-owned</option><option value="organization">Organization-owned</option></select>' +
           '<input name="ownershipSubject" maxlength="240" required placeholder="Owner / organization label">' +
-          '<select name="connectorKind"><option value="openai_compatible_https">OpenAI-compatible HTTPS</option><option value="custom_https">Custom HTTPS</option><option value="zuvyr_compute_relay">ZUVYR Compute Relay (PACK096)</option></select>' +
+          '<select name="connectorKind" aria-label="Connector type"><option value="openai_compatible_https">OpenAI-compatible HTTPS</option><option value="custom_https">Custom HTTPS</option><option value="zuvyr_compute_relay">ZUVYR Compute Relay (PACK096)</option></select>' +
           '<input name="endpointUrl" placeholder="https://gpu.example.com">' +
           '<input name="healthPath" placeholder="/v1/models or /health">' +
           '<button class="zuvyr-pack095-primary" type="submit">Register connector</button>' +

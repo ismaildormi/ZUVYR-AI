@@ -1,6 +1,9 @@
 /* ZUVYR native responsive fixes — Level 3 QA */
 @media (max-width:760px){
-  body.zuvyr-ui :is(#feature-images,#feature-videos,#feature-roxip,#feature-chat,#feature-code,#feature-automations,#feature-history,#feature-settings)>.feature-screen{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow-x:hidden!important}
+  body.zuvyr-ui :is(#feature-images,#feature-videos,#feature-roxip,#feature-chat,#feature-code,#feature-automations,#feature-history,#feature-settings){width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow-x:hidden!important}
+
+  body.zuvyr-ui :is(#feature-images,#feature-videos,#feature-roxip,#feature-code,#feature-automations,#feature-history,#feature-settings) :is(.feature-topbar,.modal-topbar,.meta,.s){min-width:0!important;max-width:100%!important}
+  body.zuvyr-ui :is(#feature-images,#feature-videos,#feature-roxip,#feature-code,#feature-automations,#feature-history,#feature-settings) .s{overflow-wrap:anywhere!important;word-break:break-word!important}
   body.zuvyr-ui #feature-settings .rox-settings-nav{display:flex!important;width:100%!important;max-width:100%!important;min-width:0!important;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;overscroll-behavior-inline:contain;scrollbar-width:none}
   body.zuvyr-ui #feature-settings .rox-settings-nav::-webkit-scrollbar{display:none}
   body.zuvyr-ui #feature-settings .rox-settings-nav>button{flex:0 0 auto!important}
