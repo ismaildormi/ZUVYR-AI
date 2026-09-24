@@ -23,6 +23,11 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Install backend dependencies from lockfile
+        working-directory: backend
+        shell: bash
+        run: npm ci --ignore-scripts
+
       - name: Apply deterministic retry fix and regression guards
         shell: bash
         run: |
