@@ -20,7 +20,7 @@ const {
 const read = file => fs.readFileSync(path.join(__dirname, file), 'utf8');
 
 assert.deepEqual(
-  requiredSubscriptionPriceKeys().sort(),
+  [...requiredSubscriptionPriceKeys()].sort(),
   [
     'STRIPE_PLUS_PRICE_ID',
     'STRIPE_PRO_PRICE_ID',
