@@ -11,9 +11,9 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "node test/pack085-device-agent.test.js && node test/pack086-pairing.test.js && node test/pack087-actions.test.js",
+    "test": "node test/pack085-device-agent.test.js && node test/pack086-pairing.test.js && node test/pack087-actions.test.js && node test/pack087-full-control-undo.test.js",
     "self-test": "node bin/zuvyr-device-agent.js self-test",
     "test:pairing": "node test/pack086-pairing.test.js",
-    "test:actions": "node test/pack087-actions.test.js"
+    "test:actions": "node test/pack087-actions.test.js && node test/pack087-full-control-undo.test.js"
   }
 }
