@@ -42,6 +42,7 @@
     "device-agent/test/pack087-stop-channel-hardening.test.js",
     "device-agent/test/pack087-stop-termination-hardening.test.js",
     "device-agent/test/pack087-stop-process-tree-hardening.test.js",
+    "device-agent/test/v1-action-worker-coverage.test.js",
     "cli/tests/test-plugin-trust-boundary.js"
   ]
 }
