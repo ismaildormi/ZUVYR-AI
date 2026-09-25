@@ -1,0 +1,233 @@
+name: QH002 STOP termination one-shot
+
+on:
+  push:
+    branches:
+      - audit/v1-quality-hardening-20260925
+    paths:
+      - .github/workflows/qh002-stop-apply.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: audit/v1-quality-hardening-20260925
+          fetch-depth: 0
+
+      - name: Apply exact STOP hardening patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          target = Path('device-agent/src/actionExecutor.js')
+          source = target.read_text(encoding='utf-8')
+          old = '''function collectChild(child, { input = null, signal, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
+            return new Promise((resolve, reject) => {
+              const stdout = [];
+              const stderr = [];
+              let stdoutBytes = 0;
+              let stderrBytes = 0;
+              let done = false;
+              let timer = null;
+              const finish = (error, result) => {
+                if (done) return;
+                done = true;
+                if (timer) clearTimeout(timer);
+                if (signal) signal.removeEventListener('abort', onAbort);
+                if (error) reject(error);
+                else resolve(result);
+              };
+              const kill = code => {
+                try { child.kill('SIGTERM'); } catch (_) {}
+                setTimeout(() => {
+                  try { if (!child.killed) child.kill('SIGKILL'); } catch (_) {}
+                }, 500).unref?.();
+                finish(actionError(code));
+              };
+              const onAbort = () => kill('pack087_action_stopped');
+              if (signal) {
+                if (signal.aborted) return onAbort();
+                signal.addEventListener('abort', onAbort, { once: true });
+              }
+              timer = setTimeout(() => kill('pack087_action_timeout'), timeoutMs);
+              timer.unref?.();
+
+              child.stdout?.on('data', chunk => {
+                if (stdoutBytes >= MAX_STDIO_BYTES) return;
+                const piece = Buffer.from(chunk).subarray(0, MAX_STDIO_BYTES - stdoutBytes);
+                stdout.push(piece);
+                stdoutBytes += piece.length;
+              });
+              child.stderr?.on('data', chunk => {
+                if (stderrBytes >= MAX_STDIO_BYTES) return;
+                const piece = Buffer.from(chunk).subarray(0, MAX_STDIO_BYTES - stderrBytes);
+                stderr.push(piece);
+                stderrBytes += piece.length;
+              });
+              child.once('error', error => finish(error));
+              child.once('exit', (code, sig) => finish(null, {
+                code: Number.isInteger(code) ? code : null,
+                signal: sig || null,
+                stdout: Buffer.concat(stdout).toString('utf8'),
+                stderr: Buffer.concat(stderr).toString('utf8'),
+                stdoutTruncated: stdoutBytes >= MAX_STDIO_BYTES,
+                stderrTruncated: stderrBytes >= MAX_STDIO_BYTES
+              }));
+              if (child.stdin) {
+                if (input !== null && input !== undefined) child.stdin.write(String(input));
+                child.stdin.end();
+              }
+            });
+          }'''
+          new = '''function collectChild(child, { input = null, signal, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
+            return new Promise((resolve, reject) => {
+              const stdout = [];
+              const stderr = [];
+              let stdoutBytes = 0;
+              let stderrBytes = 0;
+              let done = false;
+              let exitObserved = false;
+              let terminationCode = null;
+              let timer = null;
+              let escalationTimer = null;
+              let terminationConfirmTimer = null;
+
+              const finish = (error, result) => {
+                if (done) return;
+                done = true;
+                if (timer) clearTimeout(timer);
+                if (escalationTimer) clearTimeout(escalationTimer);
+                if (terminationConfirmTimer) clearTimeout(terminationConfirmTimer);
+                if (signal) signal.removeEventListener('abort', onAbort);
+                if (error) reject(error);
+                else resolve(result);
+              };
+
+              const requestTermination = code => {
+                if (done || terminationCode) return;
+                terminationCode = code;
+                if (timer) {
+                  clearTimeout(timer);
+                  timer = null;
+                }
+                if (exitObserved) {
+                  finish(actionError(code));
+                  return;
+                }
+
+                try { child.kill('SIGTERM'); } catch (_) {}
+                escalationTimer = setTimeout(() => {
+                  if (done || exitObserved) return;
+                  try { child.kill('SIGKILL'); } catch (_) {}
+                }, 500);
+                escalationTimer.unref?.();
+
+                terminationConfirmTimer = setTimeout(() => {
+                  if (done || exitObserved) return;
+                  finish(actionError('pack087_action_termination_unconfirmed', { requestedCode: code }));
+                }, 2500);
+                terminationConfirmTimer.unref?.();
+              };
+
+              const onAbort = () => requestTermination('pack087_action_stopped');
+
+              child.stdout?.on('data', chunk => {
+                if (stdoutBytes >= MAX_STDIO_BYTES) return;
+                const piece = Buffer.from(chunk).subarray(0, MAX_STDIO_BYTES - stdoutBytes);
+                stdout.push(piece);
+                stdoutBytes += piece.length;
+              });
+              child.stderr?.on('data', chunk => {
+                if (stderrBytes >= MAX_STDIO_BYTES) return;
+                const piece = Buffer.from(chunk).subarray(0, MAX_STDIO_BYTES - stderrBytes);
+                stderr.push(piece);
+                stderrBytes += piece.length;
+              });
+              child.once('error', error => {
+                if (terminationCode) {
+                  finish(actionError('pack087_action_termination_unconfirmed', {
+                    requestedCode: terminationCode,
+                    cause: String(error && error.message || error)
+                  }));
+                  return;
+                }
+                finish(error);
+              });
+              child.once('exit', (code, sig) => {
+                exitObserved = true;
+                if (terminationCode) {
+                  finish(actionError(terminationCode));
+                  return;
+                }
+                finish(null, {
+                  code: Number.isInteger(code) ? code : null,
+                  signal: sig || null,
+                  stdout: Buffer.concat(stdout).toString('utf8'),
+                  stderr: Buffer.concat(stderr).toString('utf8'),
+                  stdoutTruncated: stdoutBytes >= MAX_STDIO_BYTES,
+                  stderrTruncated: stderrBytes >= MAX_STDIO_BYTES
+                });
+              });
+
+              if (signal) {
+                signal.addEventListener('abort', onAbort, { once: true });
+                if (signal.aborted) onAbort();
+              }
+              if (!terminationCode) {
+                timer = setTimeout(() => requestTermination('pack087_action_timeout'), timeoutMs);
+                timer.unref?.();
+              }
+
+              if (child.stdin) {
+                if (!terminationCode && input !== null && input !== undefined) child.stdin.write(String(input));
+                child.stdin.end();
+              }
+            });
+          }'''
+          if source.count(old) != 1:
+              raise SystemExit(f'expected exactly one collectChild target, found {source.count(old)}')
+          target.write_text(source.replace(old, new), encoding='utf-8')
+
+          ci = Path('.github/workflows/ci-release-gate.yml')
+          ci_source = ci.read_text(encoding='utf-8')
+          ci_old = '''      - name: Verify full-control undo boundary
+                  run: node ../device-agent/test/pack087-full-control-undo-hardening.test.js
+
+                - name: Run maintenance strategy tests'''
+          ci_new = '''      - name: Verify full-control undo boundary
+                  run: node ../device-agent/test/pack087-full-control-undo-hardening.test.js
+
+                - name: Verify STOP direct-child termination boundary
+                  run: node ../device-agent/test/pack087-stop-termination-hardening.test.js
+
+                - name: Run maintenance strategy tests'''
+          if ci_source.count(ci_old) != 1:
+              raise SystemExit(f'expected exactly one CI insertion target, found {ci_source.count(ci_old)}')
+          ci.write_text(ci_source.replace(ci_old, ci_new), encoding='utf-8')
+          PY
+
+      - name: Verify patched source and regressions
+        run: |
+          node --check device-agent/src/actionExecutor.js
+          node device-agent/test/pack087-full-control-undo-hardening.test.js
+          node device-agent/test/pack087-stop-termination-hardening.test.js
+
+      - name: Commit scoped patch and remove one-shot workflow
+        shell: bash
+        run: |
+          rm .github/workflows/qh002-stop-apply.yml
+          git config user.name "ismaildormi"
+          git config user.email "dormiismail02@gmail.com"
+          git add device-agent/src/actionExecutor.js .github/workflows/ci-release-gate.yml
+          git add -u .github/workflows/qh002-stop-apply.yml
+          git diff --cached --check
+          git commit -m "fix(device-agent): confirm STOP termination before reporting"
+          git push origin HEAD:audit/v1-quality-hardening-20260925
