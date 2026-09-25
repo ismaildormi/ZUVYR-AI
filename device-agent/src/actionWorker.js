@@ -14,6 +14,9 @@ const { agentError } = require('./security');
 const TOKEN_ROTATE_BEFORE_MS = 2 * 60 * 1000;
 const IDLE_POLL_MS = 750;
 const STOP_POLL_MS = 350;
+const STOP_FAILURE_GRACE_MS = 1500;
+const STOP_FAILURE_MIN_ATTEMPTS = 3;
+const FAIL_CLOSED_RISKS = new Set(['high', 'critical']);
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -23,6 +26,10 @@ function workerError(code, cause) {
   const error = agentError(code, cause);
   error.code = code;
   return error;
+}
+
+function requiresStopFailClosed(action) {
+  return FAIL_CLOSED_RISKS.has(String(action?.risk || '').trim().toLowerCase());
 }
 
 async function rotateIfNeeded(stateDir, { post = signedPost } = {}) {
@@ -64,6 +71,8 @@ async function drainImmediateStop(stateDir, { post = signedPost } = {}) {
 async function runActionWithStop(stateDir, action, {
   env = process.env,
   stopPollMs = STOP_POLL_MS,
+  stopFailureGraceMs = STOP_FAILURE_GRACE_MS,
+  stopFailureMinAttempts = STOP_FAILURE_MIN_ATTEMPTS,
   post = signedPost,
   execute = executeAction
 } = {}) {
@@ -71,11 +80,17 @@ async function runActionWithStop(stateDir, action, {
   let active = true;
   let stop = null;
   let pollFailure = null;
+  let pollFailureStartedAt = null;
+  let consecutivePollFailures = 0;
+  let stopChannelLost = false;
 
   const watcher = (async () => {
     while (active) {
       try {
         const candidate = await pullStop(stateDir, { post });
+        pollFailure = null;
+        pollFailureStartedAt = null;
+        consecutivePollFailures = 0;
         if (candidate) {
           stop = candidate;
           controller.abort();
@@ -84,6 +99,18 @@ async function runActionWithStop(stateDir, action, {
         }
       } catch (error) {
         pollFailure = error;
+        consecutivePollFailures += 1;
+        if (pollFailureStartedAt === null) pollFailureStartedAt = Date.now();
+        const failedForMs = Date.now() - pollFailureStartedAt;
+        if (
+          requiresStopFailClosed(action) &&
+          consecutivePollFailures >= Math.max(1, Number(stopFailureMinAttempts) || STOP_FAILURE_MIN_ATTEMPTS) &&
+          failedForMs >= Math.max(0, Number(stopFailureGraceMs) || 0)
+        ) {
+          stopChannelLost = true;
+          controller.abort();
+          return;
+        }
       }
       if (active) await sleep(stopPollMs);
     }
@@ -97,6 +124,23 @@ async function runActionWithStop(stateDir, action, {
 
   active = false;
   await watcher.catch(() => null);
+
+  if (stopChannelLost) {
+    return Object.freeze({
+      success: false,
+      result: {
+        stopChannelUnavailable: true,
+        risk: String(action?.risk || 'unknown').toLowerCase(),
+        consecutivePollFailures,
+        lastPollError: String(pollFailure?.code || pollFailure?.message || 'pack087_stop_poll_failed').slice(0, 160)
+      },
+      errorCode: 'pack087_stop_channel_unavailable',
+      deviceActionExecuted: execution.deviceActionExecuted === true,
+      backupRef: execution.backupRef || null,
+      backupSha256: execution.backupSha256 || null,
+      secretRedacted: execution.secretRedacted === true
+    });
+  }
 
   if (stop && execution.success !== false) {
     return {
@@ -115,7 +159,8 @@ async function runActionWithStop(stateDir, action, {
       ...execution,
       result: {
         ...(execution.result || {}),
-        stopPollWarning: String(pollFailure.code || pollFailure.message || 'pack087_stop_poll_failed')
+        stopPollWarning: String(pollFailure.code || pollFailure.message || 'pack087_stop_poll_failed').slice(0, 160),
+        stopPollFailureCount: consecutivePollFailures
       }
     });
   }
@@ -208,6 +253,10 @@ module.exports = {
   TOKEN_ROTATE_BEFORE_MS,
   IDLE_POLL_MS,
   STOP_POLL_MS,
+  STOP_FAILURE_GRACE_MS,
+  STOP_FAILURE_MIN_ATTEMPTS,
+  FAIL_CLOSED_RISKS,
+  requiresStopFailClosed,
   rotateIfNeeded,
   pullStop,
   acknowledgeStop,
