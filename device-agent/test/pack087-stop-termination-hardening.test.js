@@ -47,8 +47,8 @@ function isAlive(pid) {
       "const fs=require('node:fs');",
       "const pidFile=process.argv[1];",
       "const termFile=process.argv[2];",
-      "fs.writeFileSync(pidFile,String(process.pid));",
       "process.on('SIGTERM',()=>{fs.writeFileSync(termFile,'SIGTERM observed\\n');});",
+      "fs.writeFileSync(pidFile,String(process.pid));",
       "setInterval(()=>{},1000);"
     ].join('');
 
