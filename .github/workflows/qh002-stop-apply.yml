@@ -21,7 +21,7 @@ jobs:
           ref: audit/v1-quality-hardening-20260925
           fetch-depth: 0
 
-      - name: Apply exact STOP hardening patch
+      - name: Apply bounded STOP process-tree hardening
         shell: bash
         run: |
           python - <<'PY'
@@ -29,86 +29,83 @@ jobs:
 
           target = Path('device-agent/src/actionExecutor.js')
           source = target.read_text(encoding='utf-8')
-          old = '''function collectChild(child, { input = null, signal, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
-            return new Promise((resolve, reject) => {
-              const stdout = [];
-              const stderr = [];
-              let stdoutBytes = 0;
-              let stderrBytes = 0;
-              let done = false;
-              let timer = null;
-              const finish = (error, result) => {
-                if (done) return;
-                done = true;
-                if (timer) clearTimeout(timer);
-                if (signal) signal.removeEventListener('abort', onAbort);
-                if (error) reject(error);
-                else resolve(result);
-              };
-              const kill = code => {
-                try { child.kill('SIGTERM'); } catch (_) {}
-                setTimeout(() => {
-                  try { if (!child.killed) child.kill('SIGKILL'); } catch (_) {}
-                }, 500).unref?.();
-                finish(actionError(code));
-              };
-              const onAbort = () => kill('pack087_action_stopped');
-              if (signal) {
-                if (signal.aborted) return onAbort();
-                signal.addEventListener('abort', onAbort, { once: true });
-              }
-              timer = setTimeout(() => kill('pack087_action_timeout'), timeoutMs);
-              timer.unref?.();
+          start = source.index('function collectChild(')
+          end = source.index('function backupsDir(', start)
+          replacement = r'''function posixProcessGroupAlive(pid) {
+            if (process.platform === 'win32' || !Number.isInteger(pid) || pid <= 0) return false;
+            try {
+              process.kill(-pid, 0);
+              return true;
+            } catch (error) {
+              return error && error.code === 'EPERM';
+            }
+          }
 
-              child.stdout?.on('data', chunk => {
-                if (stdoutBytes >= MAX_STDIO_BYTES) return;
-                const piece = Buffer.from(chunk).subarray(0, MAX_STDIO_BYTES - stdoutBytes);
-                stdout.push(piece);
-                stdoutBytes += piece.length;
-              });
-              child.stderr?.on('data', chunk => {
-                if (stderrBytes >= MAX_STDIO_BYTES) return;
-                const piece = Buffer.from(chunk).subarray(0, MAX_STDIO_BYTES - stderrBytes);
-                stderr.push(piece);
-                stderrBytes += piece.length;
-              });
-              child.once('error', error => finish(error));
-              child.once('exit', (code, sig) => finish(null, {
-                code: Number.isInteger(code) ? code : null,
-                signal: sig || null,
-                stdout: Buffer.concat(stdout).toString('utf8'),
-                stderr: Buffer.concat(stderr).toString('utf8'),
-                stdoutTruncated: stdoutBytes >= MAX_STDIO_BYTES,
-                stderrTruncated: stderrBytes >= MAX_STDIO_BYTES
-              }));
-              if (child.stdin) {
-                if (input !== null && input !== undefined) child.stdin.write(String(input));
-                child.stdin.end();
+          function signalOwnedProcessTree(child, signal) {
+            if (!child || !Number.isInteger(child.pid) || child.pid <= 0) return false;
+            if (process.platform === 'win32') {
+              if (signal === 'SIGKILL') {
+                const result = spawnSync('taskkill.exe', ['/PID', String(child.pid), '/T', '/F'], {
+                  windowsHide: true,
+                  stdio: 'ignore',
+                  timeout: 2500
+                });
+                return result.status === 0 || result.status === 128;
               }
-            });
-          }'''
-          new = '''function collectChild(child, { input = null, signal, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
+              try { return child.kill('SIGTERM'); } catch (_) { return false; }
+            }
+            try {
+              process.kill(-child.pid, signal);
+              return true;
+            } catch (_) {
+              try { return child.kill(signal); } catch (_) { return false; }
+            }
+          }
+
+          function collectChild(child, { input = null, signal, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
             return new Promise((resolve, reject) => {
               const stdout = [];
               const stderr = [];
               let stdoutBytes = 0;
               let stderrBytes = 0;
               let done = false;
-              let exitObserved = false;
+              let directExited = false;
               let terminationCode = null;
+              let terminationCause = null;
               let timer = null;
               let escalationTimer = null;
-              let terminationConfirmTimer = null;
+              let confirmTimer = null;
+              let confirmPoll = null;
+
+              const ownedTreeAlive = () => {
+                if (process.platform === 'win32') return !directExited;
+                return posixProcessGroupAlive(child.pid);
+              };
 
               const finish = (error, result) => {
                 if (done) return;
                 done = true;
                 if (timer) clearTimeout(timer);
                 if (escalationTimer) clearTimeout(escalationTimer);
-                if (terminationConfirmTimer) clearTimeout(terminationConfirmTimer);
+                if (confirmTimer) clearTimeout(confirmTimer);
+                if (confirmPoll) clearInterval(confirmPoll);
                 if (signal) signal.removeEventListener('abort', onAbort);
                 if (error) reject(error);
                 else resolve(result);
+              };
+
+              const finishTerminationIfConfirmed = () => {
+                if (!terminationCode || done || ownedTreeAlive()) return;
+                finish(actionError(terminationCode, {
+                  treeTerminated: true,
+                  cause: terminationCause ? String(terminationCause.message || terminationCause) : null
+                }));
+              };
+
+              const forceTree = () => {
+                if (done) return;
+                signalOwnedProcessTree(child, 'SIGKILL');
+                finishTerminationIfConfirmed();
               };
 
               const requestTermination = code => {
@@ -118,23 +115,36 @@ jobs:
                   clearTimeout(timer);
                   timer = null;
                 }
-                if (exitObserved) {
-                  finish(actionError(code));
-                  return;
+
+                if (process.platform === 'win32') {
+                  // Windows has no portable Node process-group kill. taskkill /T /F is the
+                  // native tree primitive and must run while the parent PID still owns children.
+                  forceTree();
+                } else {
+                  // spawnCaptured creates a dedicated process group on POSIX. Give the entire
+                  // group a short graceful window, then force-kill any stubborn descendant.
+                  signalOwnedProcessTree(child, 'SIGTERM');
+                  escalationTimer = setTimeout(forceTree, 500);
+                  escalationTimer.unref?.();
                 }
 
-                try { child.kill('SIGTERM'); } catch (_) {}
-                escalationTimer = setTimeout(() => {
-                  if (done || exitObserved) return;
-                  try { child.kill('SIGKILL'); } catch (_) {}
-                }, 500);
-                escalationTimer.unref?.();
-
-                terminationConfirmTimer = setTimeout(() => {
-                  if (done || exitObserved) return;
-                  finish(actionError('pack087_action_termination_unconfirmed', { requestedCode: code }));
-                }, 2500);
-                terminationConfirmTimer.unref?.();
+                confirmPoll = setInterval(finishTerminationIfConfirmed, 25);
+                confirmPoll.unref?.();
+                confirmTimer = setTimeout(() => {
+                  if (done) return;
+                  forceTree();
+                  if (!ownedTreeAlive()) {
+                    finishTerminationIfConfirmed();
+                    return;
+                  }
+                  finish(actionError('pack087_action_termination_unconfirmed', {
+                    requestedCode: code,
+                    pid: child.pid,
+                    platform: process.platform
+                  }));
+                }, 3000);
+                confirmTimer.unref?.();
+                finishTerminationIfConfirmed();
               };
 
               const onAbort = () => requestTermination('pack087_action_stopped');
@@ -153,18 +163,16 @@ jobs:
               });
               child.once('error', error => {
                 if (terminationCode) {
-                  finish(actionError('pack087_action_termination_unconfirmed', {
-                    requestedCode: terminationCode,
-                    cause: String(error && error.message || error)
-                  }));
+                  terminationCause = error;
+                  finishTerminationIfConfirmed();
                   return;
                 }
                 finish(error);
               });
               child.once('exit', (code, sig) => {
-                exitObserved = true;
+                directExited = true;
                 if (terminationCode) {
-                  finish(actionError(terminationCode));
+                  finishTerminationIfConfirmed();
                   return;
                 }
                 finish(null, {
@@ -185,40 +193,37 @@ jobs:
                 timer = setTimeout(() => requestTermination('pack087_action_timeout'), timeoutMs);
                 timer.unref?.();
               }
-
               if (child.stdin) {
                 if (!terminationCode && input !== null && input !== undefined) child.stdin.write(String(input));
                 child.stdin.end();
               }
             });
-          }'''
-          if source.count(old) != 1:
-              raise SystemExit(f'expected exactly one collectChild target, found {source.count(old)}')
-          target.write_text(source.replace(old, new), encoding='utf-8')
+          }
 
-          ci = Path('.github/workflows/ci-release-gate.yml')
-          ci_source = ci.read_text(encoding='utf-8')
-          ci_old = '''      - name: Verify full-control undo boundary
-                  run: node ../device-agent/test/pack087-full-control-undo-hardening.test.js
+          async function spawnCaptured(command, args, options = {}) {
+            if (!command || !Array.isArray(args)) throw actionError('pack087_spawn_invalid');
+            const child = spawn(command, args, {
+              cwd: options.cwd || undefined,
+              env: options.env || process.env,
+              shell: false,
+              windowsHide: true,
+              detached: process.platform !== 'win32',
+              stdio: ['pipe', 'pipe', 'pipe']
+            });
+            return collectChild(child, options);
+          }
 
-                - name: Run maintenance strategy tests'''
-          ci_new = '''      - name: Verify full-control undo boundary
-                  run: node ../device-agent/test/pack087-full-control-undo-hardening.test.js
-
-                - name: Verify STOP direct-child termination boundary
-                  run: node ../device-agent/test/pack087-stop-termination-hardening.test.js
-
-                - name: Run maintenance strategy tests'''
-          if ci_source.count(ci_old) != 1:
-              raise SystemExit(f'expected exactly one CI insertion target, found {ci_source.count(ci_old)}')
-          ci.write_text(ci_source.replace(ci_old, ci_new), encoding='utf-8')
+          '''
+          target.write_text(source[:start] + replacement + source[end:], encoding='utf-8')
           PY
 
       - name: Verify patched source and regressions
         run: |
           node --check device-agent/src/actionExecutor.js
           node device-agent/test/pack087-full-control-undo-hardening.test.js
+          node device-agent/test/pack087-stop-channel-hardening.test.js
           node device-agent/test/pack087-stop-termination-hardening.test.js
+          node device-agent/test/pack087-stop-process-tree-hardening.test.js
 
       - name: Commit scoped patch and remove one-shot workflow
         shell: bash
@@ -226,8 +231,8 @@ jobs:
           rm .github/workflows/qh002-stop-apply.yml
           git config user.name "ismaildormi"
           git config user.email "dormiismail02@gmail.com"
-          git add device-agent/src/actionExecutor.js .github/workflows/ci-release-gate.yml
+          git add device-agent/src/actionExecutor.js device-agent/test/pack087-stop-process-tree-hardening.test.js
           git add -u .github/workflows/qh002-stop-apply.yml
           git diff --cached --check
-          git commit -m "fix(device-agent): confirm STOP termination before reporting"
+          git commit -m "fix(device-agent): terminate owned process tree before STOP receipt"
           git push origin HEAD:audit/v1-quality-hardening-20260925
