@@ -38,6 +38,9 @@ jobs:
       - name: Verify immutable GitHub Action pins
         run: node tools/test-github-action-pins.cjs
 
+      - name: Verify canonical live-source boundary
+        run: node tools/test-live-source-boundary.cjs
+
       - name: Verify public builder resources
         run: |
           node --check examples/patterns/idempotent-task.js
