@@ -350,7 +350,7 @@ function backupsDir(stateDir) {
   return dir;
 }
 
-function createFileBackup(stateDir, target) {
+function createFileBackup(stateDir, target, authority = null) {
   const id = crypto.randomUUID();
   const ref = 'backup:' + id;
   const dir = backupsDir(stateDir);
@@ -366,6 +366,7 @@ function createFileBackup(stateDir, target) {
     mode = stat.mode & 0o777;
     fs.writeFileSync(dataPath, bytes, { mode: 0o600 });
   }
+  const fullControl = isMissionBoundFullControl(authority);
   const metadata = {
     version: 'pack087.file-backup.v1',
     ref,
@@ -373,6 +374,17 @@ function createFileBackup(stateDir, target) {
     existed,
     mode,
     sha256: sha256(bytes),
+    authority: fullControl ? {
+      grantMode: 'full_control',
+      missionBound: true,
+      fullControl: true,
+      missionDigest: String(authority.missionDigest).toLowerCase()
+    } : {
+      grantMode: 'scoped',
+      missionBound: false,
+      fullControl: false,
+      missionDigest: null
+    },
     createdAt: new Date().toISOString()
   };
   fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2) + '\n', { mode: 0o600 });
@@ -391,7 +403,10 @@ function restoreFileBackup(stateDir, ref, expectedTarget, roots) {
   if (metadata.version !== 'pack087.file-backup.v1' || metadata.ref !== 'backup:' + match[1].toLowerCase()) {
     throw actionError('pack087_backup_invalid');
   }
-  const target = resolveWriteTarget(expectedTarget, roots);
+  const restoreRoots = isMissionBoundFullControl(metadata.authority)
+    ? fullControlRootsForTarget(expectedTarget)
+    : roots;
+  const target = resolveWriteTarget(expectedTarget, restoreRoots);
   if (path.resolve(metadata.target) !== path.resolve(target)) throw actionError('pack087_backup_target_mismatch');
   if (metadata.existed) {
     const dataPath = path.join(dir, match[1].toLowerCase() + '.bin');
@@ -719,7 +734,7 @@ async function executeAction(action, {
         const target = resolveWriteTarget(action.target, roots);
         const bytes = Buffer.from(String(action.input || ''), 'utf8');
         if (bytes.length > MAX_WRITE_BYTES) throw actionError('pack087_file_write_too_large');
-        backup = createFileBackup(stateDir, target);
+        backup = createFileBackup(stateDir, target, action);
         const temp = target + '.zuvyr-write-' + crypto.randomBytes(6).toString('hex');
         fs.writeFileSync(temp, bytes, { mode: 0o600 });
         fs.renameSync(temp, target);
