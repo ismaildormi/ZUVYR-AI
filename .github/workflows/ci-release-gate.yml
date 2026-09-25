@@ -62,6 +62,47 @@ jobs:
       - name: Verify CI gate contract
         run: node tools/test-ci-release-gate.js
 
+  critical-coverage:
+    name: V1 Critical Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ZUVYR_COVERAGE_BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || '' }}
+    steps:
+      - name: Checkout exact commit with base history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+
+      - name: Install exact dependencies
+        run: |
+          npm ci
+          npm --prefix backend ci
+
+      - name: Measure configured critical production modules
+        run: node tools/run-v1-critical-coverage.cjs coverage/v1-critical.lcov
+
+      - name: Upload exact-head LCOV evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: zuvyr-v1-critical-coverage-${{ github.sha }}
+          path: coverage/v1-critical.lcov
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Enforce file, aggregate and changed-executable-line thresholds
+        run: node tools/check-v1-critical-coverage.cjs coverage/v1-critical.lcov "$ZUVYR_COVERAGE_BASE_REF"
+
   backend-quality:
     name: Backend Quality
     runs-on: ubuntu-latest
