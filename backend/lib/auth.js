@@ -1,40 +1,50 @@
-// ROX AI — lib/auth.js
-// Real gap in the original server.js: every route pulled userId straight
-// from req.body.userId or the x-user-id header. Anyone could send any
-// userId and spend someone else's credits, or read/act on their behalf —
-// there was no check that the caller actually IS that user.
-//
-// Fix: require a Supabase session access token (the one the frontend
-// already gets from supabase.auth.getSession()), verify it server-side,
-// and take userId from the verified token — never from the request body.
-//
-// v3.3 addition: every failed verification now also feeds lib/ipGuard.js,
-// so an IP burning through stolen/guessed tokens gets temporarily
-// blocked instead of being able to retry indefinitely.
+'use strict';
 
 const { supabaseAdmin } = require('./supabaseAdmin');
 const { recordAuthFailure, clearAuthFailures } = require('./ipGuard');
 
+function authDependencyUnavailable(res) {
+  res.setHeader('Retry-After', '5');
+  return res.status(503).json({
+    status: 'error',
+    code: 'auth_dependency_unavailable',
+    message: 'Authentication is temporarily unavailable. Please retry shortly.'
+  });
+}
+
 async function requireAuth(req, res, next) {
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  try {
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
-  if (!token) {
-    await recordAuthFailure(req);
-    return res.status(401).json({ status: 'error', message: 'Missing Authorization bearer token.' });
+    if (!token) {
+      await recordAuthFailure(req);
+      return res.status(401).json({
+        status: 'error',
+        code: 'authorization_missing',
+        message: 'Missing Authorization bearer token.'
+      });
+    }
+
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+
+    if (error || !data?.user) {
+      await recordAuthFailure(req);
+      return res.status(401).json({
+        status: 'error',
+        code: 'authorization_invalid',
+        message: 'Invalid or expired session.'
+      });
+    }
+
+    await clearAuthFailures(req);
+    req.userId = data.user.id;
+    req.userEmail = data.user.email;
+    return next();
+  } catch (error) {
+    console.error('[auth] dependency unavailable', String(error?.code || error?.name || 'unknown'));
+    return authDependencyUnavailable(res);
   }
-
-  const { data, error } = await supabaseAdmin.auth.getUser(token);
-
-  if (error || !data?.user) {
-    await recordAuthFailure(req);
-    return res.status(401).json({ status: 'error', message: 'Invalid or expired session.' });
-  }
-
-  await clearAuthFailures(req);
-  req.userId = data.user.id; // trustworthy from here on — routes should stop reading userId from req.body
-  req.userEmail = data.user.email;
-  next();
 }
 
 module.exports = { requireAuth };
