@@ -15,12 +15,21 @@ function envTrue(value) {
   return String(value || '').trim().toLowerCase() === 'true';
 }
 
+function isProductionEnvironment(env = process.env) {
+  return String(env.RAILWAY_ENVIRONMENT_NAME || env.NODE_ENV || '')
+    .trim()
+    .toLowerCase() === 'production';
+}
+
 function availability(env = process.env) {
   const blockers = [];
   if (!envTrue(env.LIVE_BILLING_ALLOWED)) blockers.push('pack081_live_billing_disabled');
   if (config.gates.canCreateLiveSession !== true) blockers.push('pack081_source_live_gate_closed');
   if (!envTrue(env.ZUVYR_M17_VERIFIED)) blockers.push('pack081_m17_unverified');
   if (!envTrue(env.ZUVYR_BROWSER_PRICING_VERIFIED)) blockers.push('pack081_pricing_operator_gate_closed');
+  if (isProductionEnvironment(env) && !envTrue(env.ZUVYR_BROWSER_PRIVATE_EGRESS_VERIFIED)) {
+    blockers.push('pack081_private_egress_unverified');
+  }
   for (const key of config.provider.requiredEnvironment) {
     if (!String(env[key] || '').trim()) blockers.push('pack081_missing_' + key.toLowerCase());
   }
@@ -29,6 +38,7 @@ function availability(env = process.env) {
     provider: config.provider.id,
     externalGate: config.provider.externalGate,
     pricingVerificationStatus: config.pricing.verificationStatus,
+    privateEgressVerified: !isProductionEnvironment(env) || envTrue(env.ZUVYR_BROWSER_PRIVATE_EGRESS_VERIFIED),
     blockers: Object.freeze(blockers)
   });
 }
@@ -199,7 +209,8 @@ function sessionPolicies({allowedHosts}={}) {
       blockPrivateIpLiterals:config.network.blockPrivateIpLiterals,
       blockLocalhost:config.network.blockLocalhost,
       blockLinkLocal:config.network.blockLinkLocal,
-      blockCloudMetadata:config.network.blockCloudMetadata
+      blockCloudMetadata:config.network.blockCloudMetadata,
+      requireVerifiedProductionPrivateEgress:true
     }),
     secrets:Object.freeze({
       injectBackendEnvironment:false,
@@ -251,6 +262,8 @@ function sanitizeProviderError(error) {
 module.exports={
   config,
   browserError,
+  envTrue,
+  isProductionEnvironment,
   availability,
   assertLiveAvailable,
   credentialAvailability,
