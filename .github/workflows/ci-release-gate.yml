@@ -89,6 +89,9 @@ jobs:
       - name: Verify full-control undo boundary
         run: node ../device-agent/test/pack087-full-control-undo-hardening.test.js
 
+      - name: Verify STOP-channel risk fail-closed behavior
+        run: node ../device-agent/test/pack087-stop-channel-hardening.test.js
+
       - name: Run maintenance strategy tests
         run: npm run test:maintenance
 
