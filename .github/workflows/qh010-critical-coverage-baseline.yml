@@ -1,0 +1,77 @@
+name: QH010 Critical Coverage Baseline
+
+on:
+  push:
+    branches:
+      - audit/v1-quality-hardening-20260925
+    paths:
+      - .github/workflows/qh010-critical-coverage-baseline.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install locked backend dependencies
+        run: npm ci --prefix backend
+
+      - name: Install exact measurement-only coverage tool
+        run: npm install --prefix backend --no-save --ignore-scripts --package-lock=false c8@12.0.0
+
+      - name: Measure critical V1 modules
+        shell: bash
+        run: |
+          cat > /tmp/zuvyr-critical-coverage-runner.cjs <<'NODE'
+          'use strict';
+          const { spawnSync } = require('node:child_process');
+          const path = require('node:path');
+          const root = process.cwd();
+          const tests = [
+            'backend/test-gatekeeper-unit.js',
+            'backend/test-pack012-financial-rpc-invariants.js',
+            'backend/test-pack087-ip-actions-stop-undo.js',
+            'device-agent/test/pack087-actions.test.js',
+            'device-agent/test/pack087-full-control-undo-hardening.test.js',
+            'device-agent/test/pack087-stop-channel-hardening.test.js',
+            'device-agent/test/pack087-stop-termination-hardening.test.js',
+            'device-agent/test/pack087-stop-process-tree-hardening.test.js'
+          ];
+          for (const relative of tests) {
+            const result = spawnSync(process.execPath, [path.join(root, relative)], {
+              cwd: root,
+              env: process.env,
+              stdio: 'inherit'
+            });
+            if (result.error) throw result.error;
+            if (result.status !== 0) process.exit(result.status || 1);
+          }
+          NODE
+
+          backend/node_modules/.bin/c8 \
+            --all \
+            --clean \
+            --include=backend/gatekeeper.js \
+            --include=backend/lib/ipActionService.js \
+            --include=device-agent/src/actionExecutor.js \
+            --include=device-agent/src/actionWorker.js \
+            --reporter=text \
+            --reporter=json-summary \
+            --report-dir=.coverage-critical \
+            node /tmp/zuvyr-critical-coverage-runner.cjs
+
+      - name: Print machine-readable baseline
+        run: cat .coverage-critical/coverage-summary.json
