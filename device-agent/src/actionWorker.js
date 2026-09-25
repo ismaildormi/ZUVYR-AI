@@ -5,10 +5,8 @@ const {
   replaceSessionToken
 } = require('./pairingSession');
 const { signedPost } = require('./deviceApiClient');
-const {
-  executeAction,
-  executeUndo
-} = require('./actionExecutor');
+const { executeAction } = require('./actionExecutor');
+const { executeAuthorizedUndo } = require('./authorizedUndoExecutor');
 const { agentError } = require('./security');
 
 const TOKEN_ROTATE_BEFORE_MS = 2 * 60 * 1000;
@@ -185,7 +183,7 @@ async function reportAction(stateDir, action, result, { post = signedPost } = {}
 async function runUndo(stateDir, undo, {
   env = process.env,
   post = signedPost,
-  undoExecute = executeUndo
+  undoExecute = executeAuthorizedUndo
 } = {}) {
   const result = await undoExecute(undo, { stateDir, env });
   await post(stateDir, '/api/device-agent/undo/report', {
@@ -204,7 +202,7 @@ async function runOneCycle(stateDir, {
   env = process.env,
   post = signedPost,
   execute = executeAction,
-  undoExecute = executeUndo
+  undoExecute = executeAuthorizedUndo
 } = {}) {
   await rotateIfNeeded(stateDir, { post });
 
