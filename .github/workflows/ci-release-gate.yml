@@ -86,6 +86,9 @@ jobs:
       - name: Run backend unit and safety tests
         run: npm run test:unit
 
+      - name: Verify full-control undo boundary
+        run: node ../device-agent/test/pack087-full-control-undo-hardening.test.js
+
       - name: Run maintenance strategy tests
         run: npm run test:maintenance
 
