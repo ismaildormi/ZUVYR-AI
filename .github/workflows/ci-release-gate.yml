@@ -50,6 +50,9 @@ jobs:
       - name: Verify validator scope
         run: node tools/test-release-validator-scope.js
 
+      - name: Verify CLI plugin trust boundary
+        run: node cli/tests/test-plugin-trust-boundary.js
+
       - name: Validate release contracts
         run: npm run validate:release
 
