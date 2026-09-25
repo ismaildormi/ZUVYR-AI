@@ -30,6 +30,28 @@ for (const rel of config.tests) {
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 try { fs.rmSync(outputPath, { force: true }); } catch (_) {}
 
+// Some historical regression scripts intentionally read sibling fixtures by
+// relative path. The normal suites execute those scripts from their own
+// package directory. Preserve that contract without changing the parent
+// coverage cwd: each Node test worker gets a tiny wrapper that chdirs to the
+// original test directory before requiring the exact test file.
+const wrapperDir = fs.mkdtempSync(path.join(os.tmpdir(), 'zuvyr-v1-coverage-tests-'));
+const wrappers = config.tests.map((rel, index) => {
+  const target = path.join(root, rel);
+  const wrapper = path.join(wrapperDir, `${String(index).padStart(2, '0')}.cjs`);
+  fs.writeFileSync(
+    wrapper,
+    [
+      "'use strict';",
+      `process.chdir(${JSON.stringify(path.dirname(target))});`,
+      `require(${JSON.stringify(target)});`,
+      ''
+    ].join('\n'),
+    { mode: 0o600 }
+  );
+  return wrapper;
+});
+
 const args = [
   '--test',
   '--experimental-test-coverage',
@@ -39,18 +61,23 @@ const args = [
   '--test-reporter=lcov',
   `--test-reporter-destination=${outputPath}`,
   ...config.files.map(entry => `--test-coverage-include=${entry.path}`),
-  ...config.tests
+  ...wrappers
 ];
 
-const result = spawnSync(process.execPath, args, {
-  cwd: root,
-  stdio: 'inherit',
-  env: { ...process.env, NODE_ENV: 'test' },
-  windowsHide: true
-});
+let result;
+try {
+  result = spawnSync(process.execPath, args, {
+    cwd: root,
+    stdio: 'inherit',
+    env: { ...process.env, NODE_ENV: 'test' },
+    windowsHide: true
+  });
+} finally {
+  fs.rmSync(wrapperDir, { recursive: true, force: true });
+}
 
-if (result.error) throw result.error;
-if (result.status !== 0) process.exit(result.status || 1);
+if (result?.error) throw result.error;
+if (result?.status !== 0) process.exit(result?.status || 1);
 if (!fs.existsSync(outputPath) || fs.statSync(outputPath).size < 20) {
   throw new Error('v1_critical_coverage_lcov_missing');
 }
