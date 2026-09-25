@@ -2,9 +2,10 @@
 //
 // First-party CLI plugins under cli/plugins/ are repository-reviewed code.
 // Executable npm plugins are a separate legacy developer extension surface:
-// they are disabled by default and require BOTH an explicit enable flag and
-// an exact package allowlist. Product Plugins/MCP/Skills remain declarative
-// and are not executed through this loader.
+// they are disabled by default and require explicit enablement plus an exact
+// package@version allowlist whose installed package must match package-lock
+// integrity and resolve inside this repository's node_modules tree.
+// Product Plugins/MCP/Skills remain declarative and are not executed here.
 
 'use strict';
 
@@ -15,9 +16,20 @@ const ROOT_DIR = path.join(__dirname, '..', '..');
 const PLUGINS_DIR = path.join(ROOT_DIR, 'cli', 'plugins');
 const PLUGIN_NPM_PREFIX = 'rox-cli-plugin-';
 const PLUGIN_NAME_RE = /^[a-z0-9][a-z0-9:_-]{0,63}$/i;
+const NPM_PLUGIN_ALLOW_RE = /^(rox-cli-plugin-[a-z0-9][a-z0-9._-]{0,100})@([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?)$/i;
+const SRI_RE = /^sha(?:256|384|512)-[A-Za-z0-9+/=]+$/;
 
 function envTrue(value) {
   return String(value || '').trim().toLowerCase() === 'true';
+}
+
+function isWithin(base, target) {
+  const relative = path.relative(path.resolve(base), path.resolve(target));
+  return relative === '' || (
+    relative !== '..' &&
+    !relative.startsWith('..' + path.sep) &&
+    !path.isAbsolute(relative)
+  );
 }
 
 function normalizePluginName(value) {
@@ -26,15 +38,16 @@ function normalizePluginName(value) {
 }
 
 function parseNpmAllowlist(value) {
-  const names = String(value || '')
+  const entries = String(value || '')
     .split(',')
     .map(item => item.trim())
     .filter(Boolean);
   const unique = [];
-  for (const name of names) {
-    if (!name.startsWith(PLUGIN_NPM_PREFIX)) continue;
-    if (!/^rox-cli-plugin-[a-z0-9][a-z0-9._-]{0,100}$/i.test(name)) continue;
-    if (!unique.includes(name)) unique.push(name);
+  for (const entry of entries) {
+    const match = NPM_PLUGIN_ALLOW_RE.exec(entry);
+    if (!match) continue;
+    const normalized = `${match[1]}@${match[2]}`;
+    if (!unique.includes(normalized)) unique.push(normalized);
   }
   return Object.freeze(unique.sort());
 }
@@ -46,6 +59,12 @@ function npmPluginExecutionPolicy(env = process.env) {
   });
 }
 
+function expectedNpmPluginVersion(policy, depName) {
+  const prefix = `${depName}@`;
+  const entry = policy.allowlist.find(item => item.startsWith(prefix));
+  return entry ? entry.slice(prefix.length) : null;
+}
+
 function safeLocalEntryPath(dir, value) {
   const relative = String(value || 'index.js').trim();
   if (!relative || path.isAbsolute(relative) || relative.includes('\0')) return null;
@@ -54,6 +73,59 @@ function safeLocalEntryPath(dir, value) {
   if (!rel || rel === '.') return null;
   if (rel.startsWith('..' + path.sep) || rel === '..' || path.isAbsolute(rel)) return null;
   return candidate;
+}
+
+function verifyNpmPluginProvenance(depName, expectedVersion, { rootDir = ROOT_DIR } = {}) {
+  if (!depName.startsWith(PLUGIN_NPM_PREFIX) || !expectedVersion) {
+    throw new Error('npm_plugin_provenance_invalid_request');
+  }
+
+  const packageJsonPath = path.join(rootDir, 'package.json');
+  const lockPath = path.join(rootDir, 'package-lock.json');
+  const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+  const lock = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
+  const deps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+  if (!Object.prototype.hasOwnProperty.call(deps, depName)) {
+    throw new Error('npm_plugin_not_direct_dependency');
+  }
+
+  const lockEntry = lock?.packages?.[`node_modules/${depName}`];
+  if (!lockEntry || lockEntry.version !== expectedVersion || !SRI_RE.test(String(lockEntry.integrity || ''))) {
+    throw new Error('npm_plugin_lock_provenance_mismatch');
+  }
+
+  const nodeModulesDeclared = path.join(rootDir, 'node_modules');
+  const pluginDeclared = path.join(nodeModulesDeclared, depName);
+  const nodeModulesRoot = fs.realpathSync(nodeModulesDeclared);
+  const pluginRoot = fs.realpathSync(pluginDeclared);
+  if (!isWithin(nodeModulesRoot, pluginRoot) || pluginRoot === nodeModulesRoot) {
+    throw new Error('npm_plugin_realpath_outside_node_modules');
+  }
+
+  const installedManifestPath = path.join(pluginRoot, 'package.json');
+  const manifestStat = fs.lstatSync(installedManifestPath);
+  if (!manifestStat.isFile() || manifestStat.isSymbolicLink()) {
+    throw new Error('npm_plugin_manifest_invalid');
+  }
+  const installed = JSON.parse(fs.readFileSync(installedManifestPath, 'utf8'));
+  if (installed.name !== depName || installed.version !== expectedVersion) {
+    throw new Error('npm_plugin_installed_version_mismatch');
+  }
+
+  const entryPath = fs.realpathSync(require.resolve(depName, { paths: [rootDir] }));
+  if (!isWithin(pluginRoot, entryPath) || entryPath === pluginRoot) {
+    throw new Error('npm_plugin_entry_outside_package');
+  }
+  const entryStat = fs.lstatSync(entryPath);
+  if (!entryStat.isFile()) throw new Error('npm_plugin_entry_invalid');
+
+  return Object.freeze({
+    name: depName,
+    version: expectedVersion,
+    integrity: lockEntry.integrity,
+    packageRoot: pluginRoot,
+    entryPath
+  });
 }
 
 /** A valid plugin export is a function, or an object with a function `.handler`. */
@@ -83,17 +155,24 @@ function loadLocalPlugins(warn) {
     return found;
   }
 
+  const realPluginsRoot = fs.realpathSync(PLUGINS_DIR);
   for (const dirName of dirNames) {
     const dir = path.join(PLUGINS_DIR, dirName);
     let stat;
-    try { stat = fs.statSync(dir); }
+    try { stat = fs.lstatSync(dir); }
     catch (err) {
       warn(`Could not stat cli/plugins/${dirName}/ — skipping: ${err.message}`);
       continue;
     }
-    if (!stat.isDirectory()) continue;
+    if (!stat.isDirectory() || stat.isSymbolicLink()) continue;
 
-    const manifestPath = path.join(dir, 'plugin.json');
+    const realDir = fs.realpathSync(dir);
+    if (!isWithin(realPluginsRoot, realDir) || realDir === realPluginsRoot) {
+      warn(`cli/plugins/${dirName}/ resolves outside the reviewed plugin root — skipping.`);
+      continue;
+    }
+
+    const manifestPath = path.join(realDir, 'plugin.json');
     if (!fs.existsSync(manifestPath)) {
       warn(`cli/plugins/${dirName}/ has no plugin.json — skipping (not a plugin folder).`);
       continue;
@@ -113,26 +192,29 @@ function loadLocalPlugins(warn) {
       continue;
     }
 
-    const entryPath = safeLocalEntryPath(dir, manifest.main || 'index.js');
+    const entryPath = safeLocalEntryPath(realDir, manifest.main || 'index.js');
     if (!entryPath) {
       warn(`Plugin "${name}" has an unsafe main path — skipping.`);
       continue;
     }
 
     let entryStat;
-    try { entryStat = fs.statSync(entryPath); }
-    catch (err) {
+    let realEntry;
+    try {
+      entryStat = fs.lstatSync(entryPath);
+      realEntry = fs.realpathSync(entryPath);
+    } catch (err) {
       warn(`Plugin "${name}" entry is unavailable — skipping: ${err.message}`);
       continue;
     }
-    if (!entryStat.isFile()) {
-      warn(`Plugin "${name}" entry is not a regular file — skipping.`);
+    if (!entryStat.isFile() || entryStat.isSymbolicLink() || !isWithin(realDir, realEntry)) {
+      warn(`Plugin "${name}" entry is not a reviewed regular file — skipping.`);
       continue;
     }
 
     let mod;
     try {
-      mod = require(entryPath);
+      mod = require(realEntry);
     } catch (err) {
       warn(`Plugin "${name}" (cli/plugins/${dirName}) failed to load — skipping: ${err.message}`);
       continue;
@@ -167,21 +249,30 @@ function loadNpmPlugins(warn, env = process.env) {
 
   const policy = npmPluginExecutionPolicy(env);
   if (!policy.enabled) {
-    warn('Executable npm CLI plugins are disabled by default. Set ZUVYR_CLI_ALLOW_EXECUTABLE_NPM_PLUGINS=true and an exact ZUVYR_CLI_NPM_PLUGIN_ALLOWLIST only for explicitly trusted local CLI extensions.');
+    warn('Executable npm CLI plugins are disabled by default. To enable a reviewed legacy extension, set ZUVYR_CLI_ALLOW_EXECUTABLE_NPM_PLUGINS=true and allowlist exact package@version entries in ZUVYR_CLI_NPM_PLUGIN_ALLOWLIST.');
     return found;
   }
 
   for (const depName of pluginDeps) {
-    if (!policy.allowlist.includes(depName)) {
-      warn(`npm plugin "${depName}" is not in ZUVYR_CLI_NPM_PLUGIN_ALLOWLIST — skipping.`);
+    const expectedVersion = expectedNpmPluginVersion(policy, depName);
+    if (!expectedVersion) {
+      warn(`npm plugin "${depName}" lacks an exact package@version entry in ZUVYR_CLI_NPM_PLUGIN_ALLOWLIST — skipping.`);
+      continue;
+    }
+
+    let provenance;
+    try {
+      provenance = verifyNpmPluginProvenance(depName, expectedVersion);
+    } catch (err) {
+      warn(`npm plugin "${depName}" failed locked provenance verification — skipping: ${err.message}`);
       continue;
     }
 
     let mod;
     try {
-      mod = require(depName);
+      mod = require(provenance.entryPath);
     } catch (err) {
-      warn(`npm plugin "${depName}" is allowlisted but failed to load — run npm install? (${err.message})`);
+      warn(`npm plugin "${depName}" passed provenance checks but failed to load (${err.message})`);
       continue;
     }
 
@@ -195,7 +286,10 @@ function loadNpmPlugins(warn, env = process.env) {
       warn(`npm plugin "${depName}" exposes an invalid command name — skipping.`);
       continue;
     }
-    found[name] = toEntry(mod, { source: `npm:${depName}` });
+    found[name] = toEntry(mod, {
+      source: `npm:${depName}`,
+      version: provenance.version
+    });
   }
   return found;
 }
@@ -210,10 +304,13 @@ function discoverPlugins(warn = () => {}, { env = process.env } = {}) {
 
 module.exports = {
   discoverPlugins,
+  ROOT_DIR,
   PLUGINS_DIR,
   PLUGIN_NPM_PREFIX,
   normalizePluginName,
   parseNpmAllowlist,
   npmPluginExecutionPolicy,
-  safeLocalEntryPath
+  expectedNpmPluginVersion,
+  safeLocalEntryPath,
+  verifyNpmPluginProvenance
 };
