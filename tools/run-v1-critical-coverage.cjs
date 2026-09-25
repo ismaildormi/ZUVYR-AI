@@ -34,6 +34,8 @@ const args = [
   '--test',
   '--experimental-test-coverage',
   '--test-concurrency=1',
+  '--test-reporter=spec',
+  '--test-reporter-destination=stdout',
   '--test-reporter=lcov',
   `--test-reporter-destination=${outputPath}`,
   ...config.files.map(entry => `--test-coverage-include=${entry.path}`),
