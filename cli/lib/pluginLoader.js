@@ -1,39 +1,12 @@
 // ZUVYR — cli/lib/pluginLoader.js
 //
-// Plugin discovery for the CLI. This is what makes "future commands
-// addable without modifying the existing architecture" literally
-// true, not just an aspiration in a comment: dispatch in cli/rox.js
-// merges this module's output into the same `commands` map the
-// built-ins live in, so a plugin command runs through the exact same
-// global-flag parsing, --json/--silent handling, logging, and
-// --timeout wrapper as `rox start` or `rox health` — nothing about
-// dispatch needs a special case for "this one came from a plugin."
-//
-// Two discovery sources, same shape out of both:
-//
-//   1. Local folder plugins — cli/plugins/<name>/plugin.json
-//      Drop a folder in, it's available next run. No install step,
-//      no build step, nothing to publish. This is the fast path for
-//      an in-house or site-specific command.
-//
-//   2. npm package plugins — any package named `rox-cli-plugin-*`
-//      listed as a dependency in the project root package.json (the
-//      same "install it, it's just there" convention eslint/babel/
-//      webpack plugins use). `npm install rox-cli-plugin-foo` is the
-//      whole install step.
-//
-// A plugin module (whichever source) exports either:
-//   - a plain async function (args) => {...}                (a leaf command)
-//   - { handler, description?, commandName?, version? }      (leaf, with metadata)
-//   - the return value of cli/lib/group.js's makeGroup()      (a command GROUP,
-//     e.g. a plugin that wants `rox foo bar`/`rox foo baz` subcommands —
-//     makeGroup() already produces something with a callable shape plus
-//     .helpText(), which is exactly what this loader checks for)
-//
-// A broken or malformed plugin is warned about and skipped — never
-// fatal to the rest of the CLI. A plugin can never override a
-// built-in command name (checked where this is merged, in rox.js);
-// it can only add new ones.
+// First-party CLI plugins under cli/plugins/ are repository-reviewed code.
+// Executable npm plugins are a separate legacy developer extension surface:
+// they are disabled by default and require BOTH an explicit enable flag and
+// an exact package allowlist. Product Plugins/MCP/Skills remain declarative
+// and are not executed through this loader.
+
+'use strict';
 
 const fs = require('fs');
 const path = require('path');
@@ -41,6 +14,47 @@ const path = require('path');
 const ROOT_DIR = path.join(__dirname, '..', '..');
 const PLUGINS_DIR = path.join(ROOT_DIR, 'cli', 'plugins');
 const PLUGIN_NPM_PREFIX = 'rox-cli-plugin-';
+const PLUGIN_NAME_RE = /^[a-z0-9][a-z0-9:_-]{0,63}$/i;
+
+function envTrue(value) {
+  return String(value || '').trim().toLowerCase() === 'true';
+}
+
+function normalizePluginName(value) {
+  const name = String(value || '').trim();
+  return PLUGIN_NAME_RE.test(name) ? name : null;
+}
+
+function parseNpmAllowlist(value) {
+  const names = String(value || '')
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean);
+  const unique = [];
+  for (const name of names) {
+    if (!name.startsWith(PLUGIN_NPM_PREFIX)) continue;
+    if (!/^rox-cli-plugin-[a-z0-9][a-z0-9._-]{0,100}$/i.test(name)) continue;
+    if (!unique.includes(name)) unique.push(name);
+  }
+  return Object.freeze(unique.sort());
+}
+
+function npmPluginExecutionPolicy(env = process.env) {
+  return Object.freeze({
+    enabled: envTrue(env.ZUVYR_CLI_ALLOW_EXECUTABLE_NPM_PLUGINS),
+    allowlist: parseNpmAllowlist(env.ZUVYR_CLI_NPM_PLUGIN_ALLOWLIST)
+  });
+}
+
+function safeLocalEntryPath(dir, value) {
+  const relative = String(value || 'index.js').trim();
+  if (!relative || path.isAbsolute(relative) || relative.includes('\0')) return null;
+  const candidate = path.resolve(dir, relative);
+  const rel = path.relative(path.resolve(dir), candidate);
+  if (!rel || rel === '.') return null;
+  if (rel.startsWith('..' + path.sep) || rel === '..' || path.isAbsolute(rel)) return null;
+  return candidate;
+}
 
 /** A valid plugin export is a function, or an object with a function `.handler`. */
 function isValidPlugin(mod) {
@@ -71,7 +85,13 @@ function loadLocalPlugins(warn) {
 
   for (const dirName of dirNames) {
     const dir = path.join(PLUGINS_DIR, dirName);
-    if (!fs.statSync(dir).isDirectory()) continue;
+    let stat;
+    try { stat = fs.statSync(dir); }
+    catch (err) {
+      warn(`Could not stat cli/plugins/${dirName}/ — skipping: ${err.message}`);
+      continue;
+    }
+    if (!stat.isDirectory()) continue;
 
     const manifestPath = path.join(dir, 'plugin.json');
     if (!fs.existsSync(manifestPath)) {
@@ -87,8 +107,29 @@ function loadLocalPlugins(warn) {
       continue;
     }
 
-    const name = manifest.name || dirName;
-    const entryPath = path.join(dir, manifest.main || 'index.js');
+    const name = normalizePluginName(manifest.name || dirName);
+    if (!name) {
+      warn(`cli/plugins/${dirName}/ has an invalid command name — skipping.`);
+      continue;
+    }
+
+    const entryPath = safeLocalEntryPath(dir, manifest.main || 'index.js');
+    if (!entryPath) {
+      warn(`Plugin "${name}" has an unsafe main path — skipping.`);
+      continue;
+    }
+
+    let entryStat;
+    try { entryStat = fs.statSync(entryPath); }
+    catch (err) {
+      warn(`Plugin "${name}" entry is unavailable — skipping: ${err.message}`);
+      continue;
+    }
+    if (!entryStat.isFile()) {
+      warn(`Plugin "${name}" entry is not a regular file — skipping.`);
+      continue;
+    }
+
     let mod;
     try {
       mod = require(entryPath);
@@ -111,24 +152,36 @@ function loadLocalPlugins(warn) {
   return found;
 }
 
-function loadNpmPlugins(warn) {
+function loadNpmPlugins(warn, env = process.env) {
   const found = {};
   let pkg;
   try {
     pkg = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'package.json'), 'utf8'));
   } catch {
-    return found; // no root package.json readable — nothing to scan
+    return found;
   }
 
   const deps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
   const pluginDeps = Object.keys(deps).filter((d) => d.startsWith(PLUGIN_NPM_PREFIX));
+  if (!pluginDeps.length) return found;
+
+  const policy = npmPluginExecutionPolicy(env);
+  if (!policy.enabled) {
+    warn('Executable npm CLI plugins are disabled by default. Set ZUVYR_CLI_ALLOW_EXECUTABLE_NPM_PLUGINS=true and an exact ZUVYR_CLI_NPM_PLUGIN_ALLOWLIST only for explicitly trusted local CLI extensions.');
+    return found;
+  }
 
   for (const depName of pluginDeps) {
+    if (!policy.allowlist.includes(depName)) {
+      warn(`npm plugin "${depName}" is not in ZUVYR_CLI_NPM_PLUGIN_ALLOWLIST — skipping.`);
+      continue;
+    }
+
     let mod;
     try {
       mod = require(depName);
     } catch (err) {
-      warn(`npm plugin "${depName}" is listed as a dependency but failed to load — run npm install? (${err.message})`);
+      warn(`npm plugin "${depName}" is allowlisted but failed to load — run npm install? (${err.message})`);
       continue;
     }
 
@@ -137,22 +190,30 @@ function loadNpmPlugins(warn) {
       continue;
     }
 
-    const name = mod.commandName || depName.slice(PLUGIN_NPM_PREFIX.length);
+    const name = normalizePluginName(mod.commandName || depName.slice(PLUGIN_NPM_PREFIX.length));
+    if (!name) {
+      warn(`npm plugin "${depName}" exposes an invalid command name — skipping.`);
+      continue;
+    }
     found[name] = toEntry(mod, { source: `npm:${depName}` });
   }
   return found;
 }
 
 /**
- * Discovers every plugin command from both sources. Returns a map shaped
- * like { [commandName]: { handler, helpText?, summary, source, version } }
- * — the same shape cli/rox.js's built-in `commands` entries provide
- * (a callable, optionally with .helpText()), so the two merge with no
- * adapter layer. Never throws: a bad plugin produces a warning via the
- * `warn` callback, not a crash of the whole CLI.
+ * Discovers first-party local CLI plugins plus explicitly trusted legacy npm
+ * executable plugins. Product Plugins/MCP/Skills never execute through here.
  */
-function discoverPlugins(warn = () => {}) {
-  return { ...loadNpmPlugins(warn), ...loadLocalPlugins(warn) };
+function discoverPlugins(warn = () => {}, { env = process.env } = {}) {
+  return { ...loadNpmPlugins(warn, env), ...loadLocalPlugins(warn) };
 }
 
-module.exports = { discoverPlugins, PLUGINS_DIR, PLUGIN_NPM_PREFIX };
+module.exports = {
+  discoverPlugins,
+  PLUGINS_DIR,
+  PLUGIN_NPM_PREFIX,
+  normalizePluginName,
+  parseNpmAllowlist,
+  npmPluginExecutionPolicy,
+  safeLocalEntryPath
+};
