@@ -1,0 +1,47 @@
+{
+  "version": "zuvyr-v1-critical-coverage.v1",
+  "aggregateMinimum": {
+    "lines": 70,
+    "functions": 70,
+    "branches": 60,
+    "changedExecutableLines": 90
+  },
+  "files": [
+    {
+      "path": "backend/gatekeeper.js",
+      "minimum": { "lines": 70, "functions": 70, "branches": 55 }
+    },
+    {
+      "path": "backend/lib/ipActionService.js",
+      "minimum": { "lines": 70, "functions": 70, "branches": 55 }
+    },
+    {
+      "path": "backend/lib/workspaceConnectionContract.js",
+      "minimum": { "lines": 75, "functions": 75, "branches": 60 }
+    },
+    {
+      "path": "device-agent/src/actionExecutor.js",
+      "minimum": { "lines": 70, "functions": 70, "branches": 60 }
+    },
+    {
+      "path": "device-agent/src/actionWorker.js",
+      "minimum": { "lines": 75, "functions": 75, "branches": 60 }
+    },
+    {
+      "path": "cli/lib/pluginLoader.js",
+      "minimum": { "lines": 75, "functions": 75, "branches": 65 }
+    }
+  ],
+  "tests": [
+    "backend/test-gatekeeper-unit.js",
+    "backend/test-pack087-ip-actions-stop-undo.js",
+    "backend/test-pack089-89a-connections-foundation.js",
+    "backend/test-pack089-89c-google-drive-oauth.js",
+    "device-agent/test/pack087-actions.test.js",
+    "device-agent/test/pack087-full-control-undo-hardening.test.js",
+    "device-agent/test/pack087-stop-channel-hardening.test.js",
+    "device-agent/test/pack087-stop-termination-hardening.test.js",
+    "device-agent/test/pack087-stop-process-tree-hardening.test.js",
+    "cli/tests/test-plugin-trust-boundary.js"
+  ]
+}
