@@ -56,6 +56,9 @@ jobs:
       - name: Verify CLI plugin trust boundary
         run: node cli/tests/test-plugin-trust-boundary.js
 
+      - name: Verify CLI plugin discovery failure modes
+        run: node cli/tests/v1-plugin-loader-coverage.test.js
+
       - name: Validate release contracts
         run: npm run validate:release
 
@@ -130,8 +133,17 @@ jobs:
       - name: Run backend unit and safety tests
         run: npm run test:unit
 
-      - name: Verify full-control undo boundary
+      - name: Verify full-control undo backup boundary
         run: node ../device-agent/test/pack087-full-control-undo-hardening.test.js
+
+      - name: Verify server-authoritative undo boundary
+        run: node ../device-agent/test/v1-authorized-undo-authority.test.js
+
+      - name: Verify historical undo authority SQL contract
+        run: node test-v1-pack087-undo-authority.js
+
+      - name: Verify hardened action executor branches
+        run: node ../device-agent/test/v1-action-executor-coverage.test.js
 
       - name: Verify STOP-channel risk fail-closed behavior
         run: node ../device-agent/test/pack087-stop-channel-hardening.test.js
