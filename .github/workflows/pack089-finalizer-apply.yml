@@ -1,0 +1,119 @@
+name: PACK089 Owner Acceptance Finalizer Apply
+
+on:
+  push:
+    branches:
+      - finalize/pack089-owner-acceptance-20260926
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pack089-owner-acceptance-finalizer
+  cancel-in-progress: false
+
+jobs:
+  apply-finalizer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: finalize/pack089-owner-acceptance-20260926
+          fetch-depth: 0
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+
+      - name: Syntax-check finalizer
+        run: node --check tools/pack089-finalizer-apply.cjs
+
+      - name: Apply PACK089 finalizer
+        run: node tools/pack089-finalizer-apply.cjs
+
+      - name: Refresh compact current-state snapshot hash
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const crypto=require('crypto');
+          const manifestPath='docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json';
+          const currentPath='docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json';
+          const blobSha=(text)=>{
+            const bytes=Buffer.from(text,'utf8');
+            return crypto.createHash('sha1').update(Buffer.concat([
+              Buffer.from(`blob ${bytes.length}\0`,'utf8'),bytes
+            ])).digest('hex');
+          };
+          const manifest=JSON.parse(fs.readFileSync(manifestPath,'utf8'));
+          manifest.canonical_files_snapshot=manifest.canonical_files_snapshot||{};
+          manifest.canonical_files_snapshot[currentPath]=blobSha(fs.readFileSync(currentPath,'utf8'));
+          fs.writeFileSync(manifestPath,JSON.stringify(manifest,null,2)+'\n','utf8');
+          console.log('PACK089_CURRENT_OVERRIDE_SNAPSHOT_REFRESHED',manifest.canonical_files_snapshot[currentPath]);
+          NODE
+
+      - name: Validate continuity after finalizer
+        id: continuity
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p artifacts/pack089-finalizer
+          node tools/validate-zuvyr-continuity.cjs 2>&1 | tee artifacts/pack089-finalizer/continuity-validator.log
+
+      - name: Upload finalizer validator diagnostic
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pack089-finalizer-diagnostic-${{ github.sha }}
+          path: artifacts/pack089-finalizer/continuity-validator.log
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Fail if continuity validator failed
+        if: steps.continuity.outcome == 'failure'
+        run: exit 1
+
+      - name: Verify clean patch formatting
+        id: diffcheck
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p artifacts/pack089-finalizer
+          git diff --check 2>&1 | tee artifacts/pack089-finalizer/diff-check.log
+
+      - name: Upload finalizer diff-check diagnostic
+        if: steps.diffcheck.outcome == 'failure'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pack089-finalizer-diff-check-${{ github.sha }}
+          path: artifacts/pack089-finalizer/diff-check.log
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Fail if clean patch formatting failed
+        if: steps.diffcheck.outcome == 'failure'
+        run: exit 1
+
+      - name: Commit finalizer result and remove one-shot machinery
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/pack089-finalizer-apply.yml tools/pack089-finalizer-apply.cjs
+          git add \
+            ZUVYR_CONTINUE_HERE.md \
+            ZUVYR_MASTER_STATE.json \
+            ZUVYR_MASTER_MATRIX.md \
+            docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json \
+            docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json \
+            docs/zuvyr/ZUVYR_REMAINING_WORK.md \
+            docs/zuvyr/V1_QUALITY_HARDENING_MATRIX_2026-09-25.md \
+            tools/validate-zuvyr-continuity.cjs \
+            zuvyr-pack-evidence/pack-089/2026-09-26-89e-owner-acceptance-locked/receipt.json
+          git diff --cached --stat
+          git commit -m "finalize(pack089): lock owner acceptance and allow PACK090"
+          git push origin HEAD:finalize/pack089-owner-acceptance-20260926
