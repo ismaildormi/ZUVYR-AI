@@ -4,6 +4,10 @@
   var profile = String(config.PROFILE || 'unknown').toLowerCase();
   var flags = Object.assign({ projects: false, history: false, automations: false, roxip: false }, config.FEATURES || {});
   var labels = { projects: 'Projects', history: 'History', automations: 'Automations', roxip: 'Rox IP' };
+  var DRIVE_DISCONNECT_PROMPT = 'Disconnect this integration? Future access will be blocked immediately.';
+  var DRIVE_DISCONNECT_CONFIRM_MS = 8000;
+  var armedDriveDisconnectButton = null;
+  var driveDisconnectTimer = null;
 
   document.documentElement.dataset.roxProfile = profile;
 
@@ -36,7 +40,82 @@
     setTimeout(function () { if (notice.isConnected) notice.remove(); }, 2600);
   }
 
+  function resetDriveDisconnectConfirmation(button) {
+    if (driveDisconnectTimer) {
+      clearTimeout(driveDisconnectTimer);
+      driveDisconnectTimer = null;
+    }
+    var target = button || armedDriveDisconnectButton;
+    if (target) {
+      if (target.dataset.roxDriveDisconnectLabel) {
+        target.textContent = target.dataset.roxDriveDisconnectLabel;
+        delete target.dataset.roxDriveDisconnectLabel;
+      }
+      delete target.dataset.roxDriveDisconnectConfirm;
+      target.removeAttribute('aria-pressed');
+    }
+    if (!button || target === armedDriveDisconnectButton) armedDriveDisconnectButton = null;
+  }
+
+  function handleDriveDisconnectConfirmation(event, button) {
+    if (
+      armedDriveDisconnectButton === button &&
+      button.dataset.roxDriveDisconnectConfirm === 'armed'
+    ) {
+      if (driveDisconnectTimer) {
+        clearTimeout(driveDisconnectTimer);
+        driveDisconnectTimer = null;
+      }
+      armedDriveDisconnectButton = null;
+      button.textContent = button.dataset.roxDriveDisconnectLabel || 'Disconnect';
+      delete button.dataset.roxDriveDisconnectLabel;
+      delete button.dataset.roxDriveDisconnectConfirm;
+      button.removeAttribute('aria-pressed');
+
+      var previousConfirm = window.confirm;
+      var restored = false;
+      function restoreConfirm() {
+        if (restored) return;
+        restored = true;
+        if (window.confirm === oneShotConfirm) window.confirm = previousConfirm;
+      }
+      function oneShotConfirm(message) {
+        if (String(message) === DRIVE_DISCONNECT_PROMPT) {
+          restoreConfirm();
+          return true;
+        }
+        return typeof previousConfirm === 'function'
+          ? previousConfirm.call(window, message)
+          : false;
+      }
+      window.confirm = oneShotConfirm;
+      setTimeout(restoreConfirm, 0);
+      return false;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    resetDriveDisconnectConfirmation();
+    armedDriveDisconnectButton = button;
+    button.dataset.roxDriveDisconnectLabel = button.textContent || 'Disconnect';
+    button.dataset.roxDriveDisconnectConfirm = 'armed';
+    button.textContent = 'Confirm disconnect';
+    button.setAttribute('aria-pressed', 'true');
+    driveDisconnectTimer = setTimeout(function () {
+      resetDriveDisconnectConfirmation(button);
+    }, DRIVE_DISCONNECT_CONFIRM_MS);
+    return true;
+  }
+
   document.addEventListener('click', function (event) {
+    var driveDisconnect = event.target && event.target.closest
+      ? event.target.closest('[data-zs-drive-disconnect]')
+      : null;
+    if (driveDisconnect && document.documentElement.contains(driveDisconnect)) {
+      if (handleDriveDisconnectConfirmation(event, driveDisconnect)) return;
+    }
+
     var trigger = event.target && event.target.closest ? event.target.closest('[data-open],[data-tab]') : null;
     var feature = featureFromElement(trigger);
     if (feature && flags[feature] === false) {
@@ -44,6 +123,12 @@
       event.stopPropagation();
       event.stopImmediatePropagation();
       showNotice(feature);
+    }
+  }, true);
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && armedDriveDisconnectButton) {
+      resetDriveDisconnectConfirmation(armedDriveDisconnectButton);
     }
   }, true);
 
