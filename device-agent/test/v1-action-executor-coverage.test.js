@@ -171,6 +171,26 @@ const {
     assert.equal(commandFail.errorCode, 'pack087_command_nonzero_exit');
     assert.equal(commandFail.deviceActionExecuted, true);
 
+    const timedOut = await executeAction({
+      type: 'run_command',
+      target: process.execPath,
+      input: JSON.stringify(['-e', 'setInterval(() => {}, 1000)'])
+    }, { stateDir, env, timeoutMs: 40 });
+    assert.equal(timedOut.success, false);
+    assert.equal(timedOut.errorCode, 'pack087_action_timeout');
+    assert.equal(timedOut.deviceActionExecuted, false);
+
+    const alreadyAborted = new AbortController();
+    alreadyAborted.abort();
+    const stoppedBeforeRun = await executeAction({
+      type: 'run_command',
+      target: process.execPath,
+      input: JSON.stringify(['-e', 'setInterval(() => {}, 1000)'])
+    }, { stateDir, env, timeoutMs: 5000, signal: alreadyAborted.signal });
+    assert.equal(stoppedBeforeRun.success, false);
+    assert.equal(stoppedBeforeRun.errorCode, 'pack087_action_stopped');
+    assert.equal(stoppedBeforeRun.deviceActionExecuted, false);
+
     const invalidArgs = await executeAction({
       type: 'run_command',
       target: process.execPath,
@@ -184,6 +204,7 @@ const {
     assert.equal(unsupported.errorCode, 'pack087_action_type_unsupported');
 
     console.log('PASS: hardened action executor success, failure, backup, command and capability branches are covered.');
+    console.log('PASS: command timeout and pre-aborted execution terminate fail-closed.');
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
