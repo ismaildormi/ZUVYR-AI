@@ -42,6 +42,7 @@ for (const required of [
   'run: npm run validate:release',
   'run: node tools/test-ci-release-gate.js',
   'run: npm run test:unit',
+  'run: node test-v1-financial-balance-invariants.js',
   'run: node ../device-agent/test/pack087-stop-channel-hardening.test.js',
   'run: node ../device-agent/test/pack087-stop-termination-hardening.test.js',
   'run: node ../device-agent/test/pack087-stop-process-tree-hardening.test.js',
