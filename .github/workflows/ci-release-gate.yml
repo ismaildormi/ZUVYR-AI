@@ -38,6 +38,9 @@ jobs:
       - name: Verify immutable GitHub Action pins
         run: node tools/test-github-action-pins.cjs
 
+      - name: Verify canonical live-source boundary
+        run: node tools/test-live-source-boundary.cjs
+
       - name: Verify public builder resources
         run: |
           node --check examples/patterns/idempotent-task.js
@@ -50,11 +53,58 @@ jobs:
       - name: Verify validator scope
         run: node tools/test-release-validator-scope.js
 
+      - name: Verify CLI plugin trust boundary
+        run: node cli/tests/test-plugin-trust-boundary.js
+
+      - name: Verify CLI plugin discovery failure modes
+        run: node cli/tests/v1-plugin-loader-coverage.test.js
+
       - name: Validate release contracts
         run: npm run validate:release
 
       - name: Verify CI gate contract
         run: node tools/test-ci-release-gate.js
+
+  critical-coverage:
+    name: V1 Critical Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ZUVYR_COVERAGE_BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || '' }}
+    steps:
+      - name: Checkout exact commit with base history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+
+      - name: Install exact dependencies
+        run: |
+          npm ci
+          npm --prefix backend ci
+
+      - name: Measure configured critical production modules
+        run: node tools/run-v1-critical-coverage.cjs coverage/v1-critical.lcov
+
+      - name: Upload exact-head LCOV evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: zuvyr-v1-critical-coverage-${{ github.sha }}
+          path: coverage/v1-critical.lcov
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Enforce file, aggregate and changed-executable-line thresholds
+        run: node tools/check-v1-critical-coverage.cjs coverage/v1-critical.lcov "$ZUVYR_COVERAGE_BASE_REF"
 
   backend-quality:
     name: Backend Quality
@@ -83,6 +133,27 @@ jobs:
       - name: Run backend unit and safety tests
         run: npm run test:unit
 
+      - name: Verify full-control undo backup boundary
+        run: node ../device-agent/test/pack087-full-control-undo-hardening.test.js
+
+      - name: Verify server-authoritative undo boundary
+        run: node ../device-agent/test/v1-authorized-undo-authority.test.js
+
+      - name: Verify historical undo authority SQL contract
+        run: node test-v1-pack087-undo-authority.js
+
+      - name: Verify hardened action executor branches
+        run: node ../device-agent/test/v1-action-executor-coverage.test.js
+
+      - name: Verify STOP-channel risk fail-closed behavior
+        run: node ../device-agent/test/pack087-stop-channel-hardening.test.js
+
+      - name: Verify STOP direct-child termination boundary
+        run: node ../device-agent/test/pack087-stop-termination-hardening.test.js
+
+      - name: Verify STOP descendant-tree termination boundary
+        run: node ../device-agent/test/pack087-stop-process-tree-hardening.test.js
+
       - name: Run maintenance strategy tests
         run: npm run test:maintenance
 
@@ -91,3 +162,29 @@ jobs:
 
       - name: Verify liveness and shutdown source
         run: node test-readiness-lifecycle.js
+
+  device-agent-stop-cross-platform:
+    name: Device STOP (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+
+      - name: Verify direct-child STOP escalation
+        run: node device-agent/test/pack087-stop-termination-hardening.test.js
+
+      - name: Verify descendant-tree STOP ownership
+        run: node device-agent/test/pack087-stop-process-tree-hardening.test.js

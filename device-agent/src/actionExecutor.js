@@ -273,6 +273,37 @@ function assertAllowlisted(value, allowed, code) {
   return target;
 }
 
+function posixProcessGroupAlive(pid) {
+  if (process.platform === 'win32' || !Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(-pid, 0);
+    return true;
+  } catch (error) {
+    return error && error.code === 'EPERM';
+  }
+}
+
+function signalOwnedProcessTree(child, signal) {
+  if (!child || !Number.isInteger(child.pid) || child.pid <= 0) return false;
+  if (process.platform === 'win32') {
+    if (signal === 'SIGKILL') {
+      const result = spawnSync('taskkill.exe', ['/PID', String(child.pid), '/T', '/F'], {
+        windowsHide: true,
+        stdio: 'ignore',
+        timeout: 2500
+      });
+      return result.status === 0 || result.status === 128;
+    }
+    try { return child.kill('SIGTERM'); } catch (_) { return false; }
+  }
+  try {
+    process.kill(-child.pid, signal);
+    return true;
+  } catch (_) {
+    try { return child.kill(signal); } catch (_) { return false; }
+  }
+}
+
 function collectChild(child, { input = null, signal, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
   return new Promise((resolve, reject) => {
     const stdout = [];
@@ -280,29 +311,85 @@ function collectChild(child, { input = null, signal, timeoutMs = DEFAULT_TIMEOUT
     let stdoutBytes = 0;
     let stderrBytes = 0;
     let done = false;
+    let directExited = false;
+    let terminationCode = null;
+    let terminationCause = null;
     let timer = null;
+    let escalationTimer = null;
+    let confirmTimer = null;
+    let confirmPoll = null;
+
+    const ownedTreeAlive = () => {
+      if (process.platform === 'win32') return !directExited;
+      return posixProcessGroupAlive(child.pid);
+    };
+
     const finish = (error, result) => {
       if (done) return;
       done = true;
       if (timer) clearTimeout(timer);
+      if (escalationTimer) clearTimeout(escalationTimer);
+      if (confirmTimer) clearTimeout(confirmTimer);
+      if (confirmPoll) clearInterval(confirmPoll);
       if (signal) signal.removeEventListener('abort', onAbort);
       if (error) reject(error);
       else resolve(result);
     };
-    const kill = code => {
-      try { child.kill('SIGTERM'); } catch (_) {}
-      setTimeout(() => {
-        try { if (!child.killed) child.kill('SIGKILL'); } catch (_) {}
-      }, 500).unref?.();
-      finish(actionError(code));
+
+    const finishTerminationIfConfirmed = () => {
+      if (!terminationCode || done || ownedTreeAlive()) return;
+      finish(actionError(terminationCode, {
+        treeTerminated: true,
+        cause: terminationCause ? String(terminationCause.message || terminationCause) : null
+      }));
     };
-    const onAbort = () => kill('pack087_action_stopped');
-    if (signal) {
-      if (signal.aborted) return onAbort();
-      signal.addEventListener('abort', onAbort, { once: true });
-    }
-    timer = setTimeout(() => kill('pack087_action_timeout'), timeoutMs);
-    timer.unref?.();
+
+    const forceTree = () => {
+      if (done) return;
+      signalOwnedProcessTree(child, 'SIGKILL');
+      finishTerminationIfConfirmed();
+    };
+
+    const requestTermination = code => {
+      if (done || terminationCode) return;
+      terminationCode = code;
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+
+      if (process.platform === 'win32') {
+        // Windows has no portable Node process-group kill. taskkill /T /F is the
+        // native tree primitive and must run while the parent PID still owns children.
+        forceTree();
+      } else {
+        // spawnCaptured creates a dedicated process group on POSIX. Give the entire
+        // group a short graceful window, then force-kill any stubborn descendant.
+        signalOwnedProcessTree(child, 'SIGTERM');
+        escalationTimer = setTimeout(forceTree, 500);
+        escalationTimer.unref?.();
+      }
+
+      confirmPoll = setInterval(finishTerminationIfConfirmed, 25);
+      confirmPoll.unref?.();
+      confirmTimer = setTimeout(() => {
+        if (done) return;
+        forceTree();
+        if (!ownedTreeAlive()) {
+          finishTerminationIfConfirmed();
+          return;
+        }
+        finish(actionError('pack087_action_termination_unconfirmed', {
+          requestedCode: code,
+          pid: child.pid,
+          platform: process.platform
+        }));
+      }, 3000);
+      confirmTimer.unref?.();
+      finishTerminationIfConfirmed();
+    };
+
+    const onAbort = () => requestTermination('pack087_action_stopped');
 
     child.stdout?.on('data', chunk => {
       if (stdoutBytes >= MAX_STDIO_BYTES) return;
@@ -316,17 +403,40 @@ function collectChild(child, { input = null, signal, timeoutMs = DEFAULT_TIMEOUT
       stderr.push(piece);
       stderrBytes += piece.length;
     });
-    child.once('error', error => finish(error));
-    child.once('exit', (code, sig) => finish(null, {
-      code: Number.isInteger(code) ? code : null,
-      signal: sig || null,
-      stdout: Buffer.concat(stdout).toString('utf8'),
-      stderr: Buffer.concat(stderr).toString('utf8'),
-      stdoutTruncated: stdoutBytes >= MAX_STDIO_BYTES,
-      stderrTruncated: stderrBytes >= MAX_STDIO_BYTES
-    }));
+    child.once('error', error => {
+      if (terminationCode) {
+        terminationCause = error;
+        finishTerminationIfConfirmed();
+        return;
+      }
+      finish(error);
+    });
+    child.once('exit', (code, sig) => {
+      directExited = true;
+      if (terminationCode) {
+        finishTerminationIfConfirmed();
+        return;
+      }
+      finish(null, {
+        code: Number.isInteger(code) ? code : null,
+        signal: sig || null,
+        stdout: Buffer.concat(stdout).toString('utf8'),
+        stderr: Buffer.concat(stderr).toString('utf8'),
+        stdoutTruncated: stdoutBytes >= MAX_STDIO_BYTES,
+        stderrTruncated: stderrBytes >= MAX_STDIO_BYTES
+      });
+    });
+
+    if (signal) {
+      signal.addEventListener('abort', onAbort, { once: true });
+      if (signal.aborted) onAbort();
+    }
+    if (!terminationCode) {
+      timer = setTimeout(() => requestTermination('pack087_action_timeout'), timeoutMs);
+      timer.unref?.();
+    }
     if (child.stdin) {
-      if (input !== null && input !== undefined) child.stdin.write(String(input));
+      if (!terminationCode && input !== null && input !== undefined) child.stdin.write(String(input));
       child.stdin.end();
     }
   });
@@ -339,6 +449,7 @@ async function spawnCaptured(command, args, options = {}) {
     env: options.env || process.env,
     shell: false,
     windowsHide: true,
+    detached: process.platform !== 'win32',
     stdio: ['pipe', 'pipe', 'pipe']
   });
   return collectChild(child, options);
@@ -350,7 +461,7 @@ function backupsDir(stateDir) {
   return dir;
 }
 
-function createFileBackup(stateDir, target) {
+function createFileBackup(stateDir, target, authority = null) {
   const id = crypto.randomUUID();
   const ref = 'backup:' + id;
   const dir = backupsDir(stateDir);
@@ -366,6 +477,7 @@ function createFileBackup(stateDir, target) {
     mode = stat.mode & 0o777;
     fs.writeFileSync(dataPath, bytes, { mode: 0o600 });
   }
+  const fullControl = isMissionBoundFullControl(authority);
   const metadata = {
     version: 'pack087.file-backup.v1',
     ref,
@@ -373,6 +485,17 @@ function createFileBackup(stateDir, target) {
     existed,
     mode,
     sha256: sha256(bytes),
+    authority: fullControl ? {
+      grantMode: 'full_control',
+      missionBound: true,
+      fullControl: true,
+      missionDigest: String(authority.missionDigest).toLowerCase()
+    } : {
+      grantMode: 'scoped',
+      missionBound: false,
+      fullControl: false,
+      missionDigest: null
+    },
     createdAt: new Date().toISOString()
   };
   fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2) + '\n', { mode: 0o600 });
@@ -391,7 +514,10 @@ function restoreFileBackup(stateDir, ref, expectedTarget, roots) {
   if (metadata.version !== 'pack087.file-backup.v1' || metadata.ref !== 'backup:' + match[1].toLowerCase()) {
     throw actionError('pack087_backup_invalid');
   }
-  const target = resolveWriteTarget(expectedTarget, roots);
+  const restoreRoots = isMissionBoundFullControl(metadata.authority)
+    ? fullControlRootsForTarget(expectedTarget)
+    : roots;
+  const target = resolveWriteTarget(expectedTarget, restoreRoots);
   if (path.resolve(metadata.target) !== path.resolve(target)) throw actionError('pack087_backup_target_mismatch');
   if (metadata.existed) {
     const dataPath = path.join(dir, match[1].toLowerCase() + '.bin');
@@ -719,7 +845,7 @@ async function executeAction(action, {
         const target = resolveWriteTarget(action.target, roots);
         const bytes = Buffer.from(String(action.input || ''), 'utf8');
         if (bytes.length > MAX_WRITE_BYTES) throw actionError('pack087_file_write_too_large');
-        backup = createFileBackup(stateDir, target);
+        backup = createFileBackup(stateDir, target, action);
         const temp = target + '.zuvyr-write-' + crypto.randomBytes(6).toString('hex');
         fs.writeFileSync(temp, bytes, { mode: 0o600 });
         fs.renameSync(temp, target);

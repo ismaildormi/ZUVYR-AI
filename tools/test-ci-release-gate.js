@@ -28,6 +28,10 @@ for (const required of [
   'cancel-in-progress: true',
   'release-quality:',
   'backend-quality:',
+  'device-agent-stop-cross-platform:',
+  'ubuntu-latest',
+  'macos-latest',
+  'windows-latest',
   "node-version: '22'",
   'cache-dependency-path: package-lock.json',
   'cache-dependency-path: backend/package-lock.json',
@@ -38,6 +42,11 @@ for (const required of [
   'run: npm run validate:release',
   'run: node tools/test-ci-release-gate.js',
   'run: npm run test:unit',
+  'run: node ../device-agent/test/pack087-stop-channel-hardening.test.js',
+  'run: node ../device-agent/test/pack087-stop-termination-hardening.test.js',
+  'run: node ../device-agent/test/pack087-stop-process-tree-hardening.test.js',
+  'run: node device-agent/test/pack087-stop-termination-hardening.test.js',
+  'run: node device-agent/test/pack087-stop-process-tree-hardening.test.js',
   'run: npm run test:maintenance',
   'run: node test-readiness-gates.js',
   'run: node test-readiness-lifecycle.js',
@@ -47,18 +56,24 @@ for (const required of [
   has(required);
 }
 
-const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const checkoutUses = workflow.match(/actions\/checkout@[^\s#]+/g) || [];
+const setupNodeUses = workflow.match(/actions\/setup-node@[^\s#]+/g) || [];
 
-assert.strictEqual(
-  (workflow.match(new RegExp(escapeRegex(CHECKOUT_SHA), 'g')) || []).length,
-  2,
-  'both jobs must use the pinned checkout action'
+assert.ok(
+  checkoutUses.length >= 3,
+  'release gate must checkout source in the release, backend, and cross-platform STOP jobs'
 );
-
-assert.strictEqual(
-  (workflow.match(new RegExp(escapeRegex(SETUP_NODE_SHA), 'g')) || []).length,
-  2,
-  'both jobs must use the pinned setup-node action'
+assert.ok(
+  setupNodeUses.length >= 3,
+  'release gate must initialize Node in the release, backend, and cross-platform STOP jobs'
+);
+assert.ok(
+  checkoutUses.every(use => use === CHECKOUT_SHA),
+  'every checkout use must use the approved immutable SHA'
+);
+assert.ok(
+  setupNodeUses.every(use => use === SETUP_NODE_SHA),
+  'every setup-node use must use the approved immutable SHA'
 );
 
 assert.ok(
