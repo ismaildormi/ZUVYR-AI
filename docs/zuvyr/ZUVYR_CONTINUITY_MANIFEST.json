@@ -1,12 +1,12 @@
 {
   "schema_version": "2.9",
-  "updated_at": "2026-09-24T22:52:21.059Z",
+  "updated_at": "2026-09-26T21:33:12.295Z",
   "purpose": "Single anti-loss reconstruction capsule for any new ChatGPT/Work/Codex session. Fresh production evidence and explicit current user instruction outrank stale historical state.",
   "repository": "ismaildormi/ZUVYR-AI",
-  "created_from_git_head": "f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea",
+  "created_from_git_head": "9a1527df295de260777e3a2f73972c1b064858ae",
   "current_state_override": {
     "path": "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json",
-    "blob_sha": "60f4eabc82cd0b8cc1dc078732e7bf4db9155914",
+    "blob_sha": "0404d0132ce5eb6ad870e7997625908e0dc18b91",
     "authority": "Fresh compact current-state authority below even fresher Git/production evidence and explicit user instruction; older long-form state files remain historical ledgers when they disagree."
   },
   "source_of_truth_order": [
@@ -52,18 +52,19 @@
   },
   "active_work": {
     "pack": "PACK089",
-    "pack_status": "IN_PROGRESS",
+    "pack_status": "LOCKED_VERIFIED",
     "phase": "89E_PRODUCTION_ACCEPTANCE",
-    "phase_status": "OWNER_AUTH_ACCEPTANCE_PENDING",
-    "pack090_allowed": false,
+    "phase_status": "LOCKED_VERIFIED",
+    "pack090_allowed": true,
     "completed_subphases": {
       "89A": "LOCKED_VERIFIED",
       "89B": "LOCKED_VERIFIED",
       "89C": "LOCKED_VERIFIED",
       "89D": "LOCKED_VERIFIED",
-      "89E_non_external_acceptance": "PASS"
+      "89E_non_external_acceptance": "PASS",
+      "89E": "LOCKED_VERIFIED"
     },
-    "latest_receipt": "zuvyr-pack-evidence/pack-089/2026-09-24-89e-post-merge-owner-acceptance-ready/receipt.json",
+    "latest_receipt": "zuvyr-pack-evidence/pack-089/2026-09-26-89e-owner-acceptance-locked/receipt.json",
     "google_oauth_variable_names_present": [
       "GOOGLE_OAUTH_CLIENT_ID",
       "GOOGLE_OAUTH_CLIENT_SECRET",
@@ -72,7 +73,7 @@
     "google_oauth_values_redacted": true,
     "google_oauth_values_or_google_side_validity": "PRODUCTION_OWNER_CONSENT_AND_CALLBACK_CONFIRMED",
     "interactive_owner_consent_completed": true,
-    "next_legal_step": "Use the real owner-authenticated Plugins & Connections surface: Browse files -> approve the exact read permission -> verify the granted Drive list/read result and denied write proof -> Disconnect -> verify post-revoke denial -> verify audit persistence and Vault/plaintext-secret cleanliness. Do not start PACK090 first.",
+    "next_legal_step": "Begin PACK090 with a fresh universal-browser gap audit; reconcile the live Browser/Automation/Connection authority surfaces before any new implementation.",
     "oauth_start_production": {
       "status": "PASS",
       "http_status": 201,
@@ -99,20 +100,22 @@
       "scope_change_requires_disconnect": true
     },
     "google_drive_connection_current": {
-      "status": "active",
-      "connected": true,
-      "scopes": [
+      "status": "revoked",
+      "connected": false,
+      "scopes_before_revoke": [
         "drive.export",
         "drive.file.read"
       ],
       "explicit_consent": true,
-      "read_enabled": true,
+      "read_enabled": false,
       "write_enabled": false,
-      "refresh_token_present": true,
-      "revoked_at": null,
-      "credential_storage": "VAULT_BACKED",
-      "owner_permission_audit_after_acceptance_controls_deploy": 0,
-      "observed_from": "fresh Supabase production evidence after main f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea"
+      "refresh_token_present": false,
+      "revoked_at": "2026-09-26T21:12:48.983055Z",
+      "credential_storage": "VAULT_CLEARED_AFTER_REVOKE",
+      "active_connection_grants": 0,
+      "latest_audit_event": "integration_revoked",
+      "external_write_executed": false,
+      "observed_from": "fresh owner-authenticated production acceptance + Supabase/Railway evidence after main 9a1527df295de260777e3a2f73972c1b064858ae"
     },
     "pack089_pkce_cleanup": {
       "status": "PRODUCTION_VERIFIED",
@@ -125,14 +128,17 @@
       "interpretation": "Session rows and secret UUID references are intentionally preserved for audit; corresponding Vault secret rows are deleted."
     },
     "owner_acceptance_controls": {
-      "status": "DEPLOYED_ON_PRODUCTION_MAIN",
-      "source_main": "f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea",
+      "status": "PRODUCTION_VERIFIED_OWNER_ACCEPTANCE_COMPLETE",
+      "source_main": "9a1527df295de260777e3a2f73972c1b064858ae",
       "browse_files": true,
       "permission_center_challenge_and_grant": true,
-      "denied_write_guard": true,
-      "disconnect_revoke": true,
-      "post_revoke_denial_check": true,
-      "real_owner_execution": "PENDING"
+      "granted_read_list_result": "PASS_19_FILES",
+      "denied_write_guard": "PASS",
+      "disconnect_revoke": "PASS",
+      "post_revoke_denial_check": "PASS_HTTP_400",
+      "audit_persistence": "PASS",
+      "vault_plaintext_cleanliness": "PASS",
+      "real_owner_execution": "VERIFIED"
     }
   },
   "recent_reconciled_hardening": {
@@ -247,9 +253,9 @@
     "universal_intent_hardening_range": "PACK101..PACK150"
   },
   "canonical_files_snapshot": {
-    "ZUVYR_CONTINUE_HERE.md": "47ce3726b9bee09d18207ab02f19ef974a977201",
-    "ZUVYR_MASTER_STATE.json": "b392f43281bdcf3113441b921cc44b15cb5f8e45",
-    "ZUVYR_MASTER_MATRIX.md": "af01891a0fd043a5252d2a214d589c7479e40590",
+    "ZUVYR_CONTINUE_HERE.md": "67732d2114e03067e24336dc379783a3c198ff40",
+    "ZUVYR_MASTER_STATE.json": "38ff6923d7e037004e1a47bbe0586fc3c3dea45b",
+    "ZUVYR_MASTER_MATRIX.md": "77fed39b024e7695f8952d54763fbf9e243d4574",
     "docs/zuvyr/ZUVYR_V1_COMPLETE_MASTER_PLAN.md": "1c11b7c171e13808eb16326646d7e38aecc5e6e5",
     "docs/zuvyr/ROADMAP_150.md": "c22a1914f10933879b560fbc84786471301e3c54",
     "docs/zuvyr/ROADMAP_150_MODEL_FACTORY_EVALS_AMENDMENT.md": "e168ba15d8446419b7f271852c9869d708477b2e",
@@ -265,7 +271,7 @@
     "docs/zuvyr/ROADMAP_150_UNIVERSAL_INTENT_DELEGATION_MESSAGING_AUTOMATION_AMENDMENT_2026-09-23.md": "d0f08ca0007e2111aa625ccf07ff5133be06f8de",
     "docs/zuvyr/universal-intent-delegation-messaging-automation-overlay.v1.json": "86a5a41ce661cde391259a415b00ecf29c98259d",
     "docs/zuvyr/STRIPE_FINAL_V1_ACTIVATION_GATE_2026-09-24.md": "2fde8bdbc5b5bfc9012a9ff4afb61f7e5196cb9a",
-    "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json": "60f4eabc82cd0b8cc1dc078732e7bf4db9155914",
+    "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json": "0404d0132ce5eb6ad870e7997625908e0dc18b91",
     "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md": "1a1b2cb619c51a8a122d93780a06a4fe893d6acf",
     "docs/zuvyr/continuous-improvement-override.v1.json": "7b465282196f4d9bc5ef1342a40cae627a5e3faa",
     "zuvyr-pack-evidence/reconciliations/2026-09-24-post-hardening-maintenance/receipt.json": "01737f12bb5ef7f7710f1a8c5ee6a2309da4aba0",
@@ -333,9 +339,9 @@
     ]
   },
   "no_loss_rule": "If continuity sources disagree, use the source-of-truth order, repair the disagreement before feature advancement, preserve all historical evidence, and never guess success. A completed Pack may be improved when fresh evidence justifies it, but the active legal Pack gate still controls roadmap advancement. Never claim CLEAN/final while a known actionable internal finding remains; only explicit evidenced external blockers may remain. Stripe business verification and live real-money acceptance is intentionally the final external activation inside PACK150, but all fixable internal Stripe findings remain immediately actionable.",
-  "last_reconciled_git_head_before_manifest_update": "87e3451cb05b4c197d6d89d49c90cd7bed13685f",
+  "last_reconciled_git_head_before_manifest_update": "9a1527df295de260777e3a2f73972c1b064858ae",
   "integrity_guard_files": {
-    "tools/validate-zuvyr-continuity.cjs": "ef6a2535c920aafcff2fa0aa51987ce4569cced2",
+    "tools/validate-zuvyr-continuity.cjs": "e868730c8823e2ffca898327265d016b45e65f08",
     ".github/workflows/zuvyr-continuity.yml": "a9f8aef5a40431f6f9933668a2efb8a0a0820c90",
     "tools/verify-zuvyr-continuity.js": "e1ba86c5c8c19d3c4c1eeb2b780d48d316858b46",
     "package.json": "542e81792f74aa7248253b6057bf467994145ab5"
@@ -404,9 +410,16 @@
   "infrastructure": {
     "supabase_project": "tqoqsgaymygmqrzddvtu",
     "supabase_status": "ACTIVE_HEALTHY_EU_WEST_1_PROVIDER_LIFECYCLE_INCIDENT_MONITORED",
-    "railway_services_latest_status": "SUCCESS_ON_MAIN_87E3451",
+    "railway_services_latest_status": "SUCCESS_ON_MAIN_9A1527DF295DE260777E3A2F73972C1B064858AE",
     "vercel_post_reconciliation_main_behavior": "Main 87e3451cb05b4c197d6d89d49c90cd7bed13685f has fresh Vercel SUCCESS after build-rate-limit cooldown recovery.",
-    "vercel_runtime_interpretation": "Current main Vercel status is success. Previous build-rate-limit was an external provider quota/cooldown gate and is not relabeled as a ZUVYR code fix."
+    "vercel_runtime_interpretation": "Current main Vercel status is success. Previous build-rate-limit was an external provider quota/cooldown gate and is not relabeled as a ZUVYR code fix.",
+    "railway_pending_work": 0,
+    "railway_backend_deployment": "13b888ce-e6d9-4d31-a910-2462891f5340",
+    "vercel_current_production_deployment": "dpl_DSjPGX8jWXnJAx3k8dSiCFnWPjC4",
+    "vercel_current_production_source_sha": "9a1527df295de260777e3a2f73972c1b064858ae",
+    "vercel_current_production_status": "READY",
+    "vercel_build_rate_limit_current_gate": false,
+    "vercel_build_rate_limit_resolution": "CLOSED_BY_FRESH_EXACT_MAIN_READY_PRODUCTION_DEPLOYMENT_2026_09_26"
   },
   "known_unresolved_gates": [
     "PACK089 final Google Drive production acceptance: granted read/export call, denied write/scope proof, disconnect/revoke, post-revoke denial, audit persistence and Vault/plaintext-secret cleanliness",
@@ -422,5 +435,31 @@
     "PACK095 authenticated owner/admin Model Lab UI acceptance (production frontend sub-gate already resolved)",
     "Supabase leaked-password protection remains disabled; historical PACK009 attempt recorded plan HTTP 402 and current connected tooling cannot mutate Auth password-security configuration",
     "GitHub main branch protection/ruleset remains absent; repository-admin mutation is not available through the connected GitHub tool surface"
-  ]
+  ],
+  "pack089_final_acceptance": {
+    "status": "LOCKED_VERIFIED",
+    "source_main": "9a1527df295de260777e3a2f73972c1b064858ae",
+    "owner_account_verified": true,
+    "browse_permission": "PASS_OWNER_SESSION_BOUND",
+    "drive_list_read": "PASS_19_FILES",
+    "denied_write": "PASS_BLOCKED_AS_EXPECTED",
+    "disconnect_revoke": "PASS",
+    "post_revoke_denial": "PASS_HTTP_400",
+    "audit_persistence": "PASS_INTEGRATION_REVOKED",
+    "active_connection_grants_after_revoke": 0,
+    "credential_secret_ref_cleared": true,
+    "refresh_token_present_after_revoke": false,
+    "token_expiry_cleared": true,
+    "integration_vault_rows_after_revoke": 0,
+    "pkce_vault_rows_after_revoke": 0,
+    "plaintext_tokenlike_text_columns": 0,
+    "external_write_executed": false,
+    "owner_browse_run": "c23a8b83-8a0e-4e14-9d5b-1200c8267112",
+    "owner_revoke_run": "13bdbaf0-e903-44ec-b9e7-801bff884aee",
+    "vercel_production_deployment": "dpl_DSjPGX8jWXnJAx3k8dSiCFnWPjC4",
+    "railway_backend_deployment": "13b888ce-e6d9-4d31-a910-2462891f5340",
+    "disconnect_http": 200,
+    "post_revoke_challenge_http": 400,
+    "revoked_at": "2026-09-26T21:12:48.983055Z"
+  }
 }

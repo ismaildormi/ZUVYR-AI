@@ -39,25 +39,20 @@ A task may be removed only when its history has been superseded by a canonical r
 ## Current V1 remaining work
 
 ### RW-001 — PACK089 Google OAuth production acceptance
-Status: `AUTH_ACCEPTANCE_PENDING`
+Status: `CLOSED`
+Closed: 2026-09-26
 
-Completed and production-verified:
-- owner-scoped Google OAuth consent and callback succeeded;
-- one live Google Drive connection is active with `drive.file.read` + `drive.export`; `write_enabled=false`;
-- duplicate-connect/callback idempotency and expired PKCE Vault cleanup are production verified;
-- owner acceptance controls are deployed on main `f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea`: Browse files, exact Permission Center grant, denied-write guard, disconnect/revoke and post-revoke denial check;
-- credentials remain server-side through the Vault-backed path.
+Closure evidence:
+- real owner session approved the exact Google Drive read permission and loaded 19 files;
+- `drive.file.write` remained unavailable and the live UI reported write scope blocked as expected;
+- deterministic two-step disconnect confirmation shipped in PR #133 / main `9a1527df295de260777e3a2f73972c1b064858ae`;
+- Vercel production `dpl_DSjPGX8jWXnJAx3k8dSiCFnWPjC4` is READY on exact main `9a1527df295de260777e3a2f73972c1b064858ae`;
+- real revoke returned HTTP 200; immediate post-revoke tool challenge returned HTTP 400;
+- Supabase authoritative state is revoked/connected=false/read=false/write=false; active connection grants=0; latest audit event=`integration_revoked`; external_write_executed=false;
+- credential reference, refresh-token flag and token expiry are cleared; integration Vault rows=0; PACK089 PKCE Vault rows=0; plaintext token-like public columns=0;
+- final receipt: `zuvyr-pack-evidence/pack-089/2026-09-26-89e-owner-acceptance-locked/receipt.json`.
 
-Still required before PACK090:
-- the real owner executes **Browse files** and approves the exact read permission;
-- granted Drive list/read result is observed;
-- denied write/scope proof is observed;
-- real disconnect/revoke is executed;
-- post-revoke denial is observed;
-- audit persistence is verified;
-- Vault/plaintext-secret cleanliness is verified after revoke.
-
-Current production permission-audit evidence shows the new owner acceptance has not yet been executed. Do not mark PACK089 complete or start PACK090 before this sequence exists.
+PACK089 may be marked `LOCKED_VERIFIED`; PACK090 may begin only through its canonical fresh universal-browser gap audit.
 
 ---
 
@@ -249,23 +244,18 @@ This external incident does not justify leaving internally actionable Supabase e
 ---
 
 ### RW-018 — Vercel Git build-rate-limit blocks all-green deployment evidence
-Status: `BLOCKED_EXTERNAL / ACTIVE MONITOR`
-Subsystem: `Vercel Git integration / Level 3 production deployment evidence`
+Status: `CLOSED`
+Closed: 2026-09-26
+Subsystem: `Vercel Git integration / production deployment evidence`
 
-Current evidence:
-- exact production deployment `dpl_DEhSnxP5pC5JUeZmaKhgHRN9nbeU` is **READY** on merged main `f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea`; public production remains reachable;
-- the build-rate-limit temporarily recovered and allowed that production deployment;
-- fresh PR #127 head `b7f3baa70cd2705e5defcf70f486fd4d6e055b31` then received GitHub Vercel status **failure** with `upgradeToPro=build-rate-limit`;
-- therefore the provider quota/cooldown is not permanently resolved, even though current production is healthy;
-- RW-016 Visual QA remains CLOSED because it is backed by a successful post-merge production run and this docs/test PR does not change frontend runtime code.
+Closure evidence:
+- the prior provider rate-limit/cooldown monitor recovered;
+- exact-main production deployment `dpl_DSjPGX8jWXnJAx3k8dSiCFnWPjC4` reached **READY** on `9a1527df295de260777e3a2f73972c1b064858ae`;
+- production runtime was owner-accessed successfully and the PACK089 disconnect UI executed on that deployment;
+- post-merge Visual QA, Release Quality, Secret History and CodeQL are green on the same main;
+- no integration safety control was disabled to obtain a green status.
 
-Required before permanent closure:
-- wait for Vercel quota/cooldown to permit a fresh deployment again;
-- obtain a green Vercel status on the then-current relevant head/main;
-- verify exact deployment SHA/identity is READY and production probe remains healthy;
-- keep Git deployment safety intact; do not disable the integration merely to hide a red status.
-
-This is an external deployment-evidence blocker, not evidence of a current ZUVYR frontend outage.
+Reopen only if a later relevant production deployment again becomes externally blocked or exact-source identity cannot be proven. QH-015 still independently requires final PACK149/150 launch-source reconciliation on the final release SHA.
 
 
 ## Rules for future additions
