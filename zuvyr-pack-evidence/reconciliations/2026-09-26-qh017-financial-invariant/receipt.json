@@ -1,0 +1,58 @@
+{
+  "receipt_type": "zuvyr_v1_quality_hardening",
+  "finding_id": "QH-017",
+  "verified_at_utc": "2026-09-26T15:41:00Z",
+  "source_main_sha": "d2e3e644ade3f6d30b39325c507c91eac1e5b32d",
+  "supabase": {
+    "project_ref": "tqoqsgaymygmqrzddvtu",
+    "status": "ACTIVE_HEALTHY",
+    "postgres_engine": "17",
+    "migration": {
+      "version": "20260925231135",
+      "name": "v1_quality_financial_balance_invariants",
+      "present_in_migration_history": true
+    },
+    "profiles_preflight": {
+      "total_profiles": 4,
+      "invalid_rows": 0
+    },
+    "columns": {
+      "credits_total": {
+        "not_null": true,
+        "data_type": "integer",
+        "default": 800
+      },
+      "credits_used": {
+        "not_null": true,
+        "data_type": "integer",
+        "default": 0
+      }
+    },
+    "constraint": {
+      "name": "profiles_zuvyr_credit_balance_valid",
+      "validated": true,
+      "rule": "credits_total >= 0 AND credits_used >= 0 AND credits_used <= credits_total"
+    },
+    "advisors": {
+      "security": {
+        "qh017_related_findings": 0,
+        "known_external_warning": "auth_leaked_password_protection"
+      },
+      "performance": {
+        "qh017_related_findings": 0,
+        "archival_tables_without_primary_key_info": 8,
+        "unused_index_info": 264,
+        "action": "monitor_and_classify_only"
+      }
+    }
+  },
+  "ci_hardening": {
+    "mandatory_backend_step": "node test-v1-financial-balance-invariants.js",
+    "release_gate_contract_requires_step": true,
+    "status": "PENDING_PR_CI"
+  },
+  "billing_safety": {
+    "paid_gates_remain_off_during_development": true
+  },
+  "closure": "PENDING_EXACT_HEAD_CI_AND_MAIN_MERGE"
+}
