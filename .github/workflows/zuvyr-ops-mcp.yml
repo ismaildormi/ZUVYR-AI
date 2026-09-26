@@ -6,12 +6,14 @@ on:
     paths:
       - 'supabase/functions/zuvyr-ops-mcp/**'
       - 'tools/test-zuvyr-ops-mcp-contract.cjs'
+      - 'docs/zuvyr/OPS_MCP_CORS_AUTHORITY_DECISION_2026-09-25.md'
       - '.github/workflows/zuvyr-ops-mcp.yml'
   push:
     branches: [main]
     paths:
       - 'supabase/functions/zuvyr-ops-mcp/**'
       - 'tools/test-zuvyr-ops-mcp-contract.cjs'
+      - 'docs/zuvyr/OPS_MCP_CORS_AUTHORITY_DECISION_2026-09-25.md'
       - '.github/workflows/zuvyr-ops-mcp.yml'
   workflow_dispatch:
 
