@@ -63,12 +63,21 @@ jobs:
           mkdir -p artifacts/pack089-finalizer
           node tools/validate-zuvyr-continuity.cjs 2>&1 | tee artifacts/pack089-finalizer/continuity-validator.log
 
-      - name: Upload finalizer validator diagnostic
+      - name: Verify clean patch formatting
+        id: diffcheck
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p artifacts/pack089-finalizer
+          git diff --check 2>&1 | tee artifacts/pack089-finalizer/diff-check.log
+
+      - name: Upload finalizer diagnostics
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: pack089-finalizer-diagnostic-${{ github.sha }}
-          path: artifacts/pack089-finalizer/continuity-validator.log
+          path: artifacts/pack089-finalizer
           if-no-files-found: error
           retention-days: 7
 
@@ -76,8 +85,9 @@ jobs:
         if: steps.continuity.outcome == 'failure'
         run: exit 1
 
-      - name: Verify clean patch formatting
-        run: git diff --check
+      - name: Fail if patch formatting failed
+        if: steps.diffcheck.outcome == 'failure'
+        run: exit 1
 
       - name: Commit finalizer result and remove one-shot machinery
         run: |
