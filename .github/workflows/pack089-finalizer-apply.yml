@@ -35,7 +35,29 @@ jobs:
         run: node tools/pack089-finalizer-apply.cjs
 
       - name: Validate continuity after finalizer
-        run: node tools/validate-zuvyr-continuity.cjs
+        id: continuity
+        shell: bash
+        run: |
+          set +e
+          mkdir -p artifacts/pack089-finalizer
+          node tools/validate-zuvyr-continuity.cjs > artifacts/pack089-finalizer/continuity-validator.log 2>&1
+          code=$?
+          cat artifacts/pack089-finalizer/continuity-validator.log
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload finalizer validator diagnostic
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pack089-finalizer-diagnostic-${{ github.sha }}
+          path: artifacts/pack089-finalizer/continuity-validator.log
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Fail if continuity validator failed
+        if: steps.continuity.outputs.exit_code != '0'
+        run: exit 1
 
       - name: Verify clean patch formatting
         run: git diff --check
