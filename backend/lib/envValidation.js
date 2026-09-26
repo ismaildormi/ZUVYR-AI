@@ -132,7 +132,7 @@ function validateServerEnvironment(env = process.env) {
 
   if (production && !isNonEmpty(env.ALLOWED_ORIGINS)) {
     warnings.push(
-      'ALLOWED_ORIGINS is empty. Only the built-in localhost and rox-ai-sepia.vercel.app origins will be allowed.'
+      'ALLOWED_ORIGINS is empty. Only built-in localhost and exact ZUVYR Vercel aliases (rox-ai-sepia.vercel.app, rox-ai-rox-ai.vercel.app, rox-ai-git-main-rox-ai.vercel.app) will be allowed.'
     );
   }
 
