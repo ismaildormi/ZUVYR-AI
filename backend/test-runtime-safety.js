@@ -247,7 +247,7 @@ function runHeaderGuard({ envName, headerName, expected, provided }) {
   });
   assert.strictEqual(correct.res.statusCode, null);
   assert.strictEqual(correct.nextCalled, true);
-  assert.strictEqual(result.headers.get('cache-control'), 'no-store');
+  assert.strictEqual(correct.headers.get('cache-control'), 'no-store');
 }
 
 const backendDir = __dirname;
