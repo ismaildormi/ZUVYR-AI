@@ -34,6 +34,21 @@ jobs:
       - name: Apply PACK089 finalizer
         run: node tools/pack089-finalizer-apply.cjs
 
+      - name: Normalize QH PACK090 summary whitespace
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const p='docs/zuvyr/V1_QUALITY_HARDENING_MATRIX_2026-09-25.md';
+          let text=fs.readFileSync(p,'utf8');
+          const needle='PACK090: **ALLOWED after PACK089 LOCKED_VERIFIED finalizer; start with the canonical fresh universal-browser gap audit**  \n';
+          const replacement='PACK090: **ALLOWED after PACK089 LOCKED_VERIFIED finalizer; start with the canonical fresh universal-browser gap audit**\n';
+          const count=text.split(needle).length-1;
+          if(count!==1) throw new Error(`expected one PACK090 summary with trailing spaces, got ${count}`);
+          text=text.replace(needle,replacement);
+          fs.writeFileSync(p,text,'utf8');
+          console.log('PACK089_QH_WHITESPACE_NORMALIZED');
+          NODE
+
       - name: Refresh compact current-state snapshot hash
         run: |
           node - <<'NODE'
