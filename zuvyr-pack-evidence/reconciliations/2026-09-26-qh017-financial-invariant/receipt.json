@@ -3,6 +3,7 @@
   "finding_id": "QH-017",
   "verified_at_utc": "2026-09-26T15:41:00Z",
   "source_main_sha": "d2e3e644ade3f6d30b39325c507c91eac1e5b32d",
+  "closure_main_sha": "76a47efd6b36d3a7a571c78ff3411ed4790fe5ea",
   "supabase": {
     "project_ref": "tqoqsgaymygmqrzddvtu",
     "status": "ACTIVE_HEALTHY",
@@ -49,10 +50,23 @@
   "ci_hardening": {
     "mandatory_backend_step": "node test-v1-financial-balance-invariants.js",
     "release_gate_contract_requires_step": true,
-    "status": "PENDING_PR_CI"
+    "pr_number": 129,
+    "pr_head_sha": "26d81fb657881d9a839c55b6dfba4129ea0efb15",
+    "pr_ci_status": "PASS",
+    "main_sha": "76a47efd6b36d3a7a571c78ff3411ed4790fe5ea",
+    "main_financial_invariant_step": "PASS",
+    "main_backend_quality": "PASS",
+    "main_release_quality": "PASS",
+    "main_critical_coverage": "PASS",
+    "main_secret_history": "PASS",
+    "main_continuity": "PASS",
+    "main_codeql_high_critical_policy": "PASS",
+    "status": "MAIN_CI_PASS"
   },
   "billing_safety": {
-    "paid_gates_remain_off_during_development": true
+    "paid_gates_remain_off_during_development": true,
+    "pack146_live_billing_qualification_is_separate": true
   },
-  "closure": "PENDING_EXACT_HEAD_CI_AND_MAIN_MERGE"
+  "closure": "CLOSED",
+  "closure_scope": "QH-017 storage-level credit balance invariant is closed. Final PACK146 billing qualification remains a separate V1 release gate."
 }
