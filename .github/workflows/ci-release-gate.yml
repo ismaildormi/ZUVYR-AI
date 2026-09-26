@@ -136,6 +136,9 @@ jobs:
       - name: Verify financial balance storage invariant
         run: node test-v1-financial-balance-invariants.js
 
+      - name: Verify historical backup schema isolation contract
+        run: node test-v1-backup-schema-isolation.js
+
       - name: Verify full-control undo backup boundary
         run: node ../device-agent/test/pack087-full-control-undo-hardening.test.js
 
