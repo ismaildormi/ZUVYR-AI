@@ -4,6 +4,8 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'http://localhost:5500',
   'http://127.0.0.1:5500',
   'https://rox-ai-sepia.vercel.app',
+  'https://rox-ai-rox-ai.vercel.app',
+  'https://rox-ai-git-main-rox-ai.vercel.app',
 ];
 
 const DEFAULT_ALLOWED_HEADERS = [
