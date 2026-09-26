@@ -1,17 +1,18 @@
 # ZUVYR — CONTINUE HERE
 
-## FRESH PACK089 89E POST-MERGE OWNER-ACCEPTANCE-READY CHECKPOINT — 2026-09-24
+## PACK089 OWNER-ACCEPTANCE FINALIZED — PACK090 ALLOWED — 2026-09-26
 
-- Source truth: main `f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea`.
-- Google OAuth owner consent + callback: **PASS**. One owner Google Drive connection remains active with `drive.file.read` + `drive.export`; write is disabled and credentials remain Vault-backed.
-- PACK089 owner acceptance controls are deployed in production: **Browse files → Permission Center challenge/grant → real Drive list/read → expected denied write guard → Disconnect/revoke → post-revoke denial check**.
-- The real owner has **not yet executed** the newly deployed Browse-files permission flow; current permission-audit count for that acceptance is zero. Do not fabricate it.
-- Vercel production remains **READY** on deployment `dpl_DEhSnxP5pC5JUeZmaKhgHRN9nbeU` at exact main `f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea`. Fresh PR #127 deployment evidence is **BLOCKED_EXTERNAL / MONITOR** because the Vercel build-rate-limit recurred on head `b7f3baa70cd2705e5defcf70f486fd4d6e055b31`; production impact is none observed.
-- Railway production backend/worker/maintenance are all **SUCCESS** on the merged source.
-- Post-merge Visual QA is **PASS** (run `36067370611`, artifact `10836762121`): 24 fixture views + 26 native screens, zero overflow/missing views/duplicate IDs/console errors, zero critical/serious/moderate accessibility violations, public production HTTP 200. RW-016 is CLOSED; RW-018 remains an external deployment-evidence monitor because the Vercel rate limit recurred on PR #127.
-- PACK089 remains `IN_PROGRESS`; PACK090 remains **NOT ALLOWED**.
-- Remaining legal gate: real owner Browse-files permission/read → denied write proof → disconnect/revoke → post-revoke denial → audit persistence → Vault/plaintext-secret cleanliness.
-- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-24-89e-post-merge-owner-acceptance-ready/receipt.json`.
+- Source truth before finalizer: main `9a1527df295de260777e3a2f73972c1b064858ae`.
+- PACK089 89A–89E: **LOCKED_VERIFIED**.
+- Real owner Google Drive acceptance: **PASS** — session-bound read permission approved, 19 files listed/read, write scope blocked as expected.
+- Real disconnect/revoke: **PASS** — deterministic two-step confirmation, production revoke HTTP 200, post-revoke tool challenge HTTP 400.
+- Supabase post-revoke: status=revoked, connected=false, read/write=false, active connection grants=0, latest audit=integration_revoked, external_write_executed=false.
+- Vault/plaintext cleanliness: integration credential rows=0, PACK089 PKCE Vault rows=0, plaintext token-like public columns=0.
+- Vercel: production `dpl_DSjPGX8jWXnJAx3k8dSiCFnWPjC4` is **READY** on exact main `9a1527df295de260777e3a2f73972c1b064858ae`; RW-018 is CLOSED.
+- Railway: backend `13b888ce-e6d9-4d31-a910-2462891f5340` is **SUCCESS**; runtime HTTP proof includes disconnect 200 then post-revoke challenge 400.
+- PACK089: **LOCKED_VERIFIED**.
+- PACK090: **ALLOWED, NOT YET STARTED BY THIS FINALIZER**.
+- Receipt: `zuvyr-pack-evidence/pack-089/2026-09-26-89e-owner-acceptance-locked/receipt.json`.
 
 Updated: 2026-09-22 — EA-001…EA-292 full V1 readiness + anti-loss continuity integrated
 
@@ -52,23 +53,21 @@ Before feature work in a new chat/session, verify that `docs/zuvyr/ZUVYR_CONTINU
 Historical status sections may remain for evidence, but a newer dated override/receipt wins. Chat memory is never the only source of truth.
 
 
-## CURRENT CANONICAL EXECUTION CAPSULE — 2026-09-24
+## CURRENT CANONICAL EXECUTION CAPSULE — 2026-09-26
 
 This small section is intentionally duplicated from the machine-readable continuity manifest so a human or a fresh chat can identify the legal continuation point before reading historical material. Fresh evidence overrides older text.
 
 - **Active Pack:** `PACK089 — Skills / Plugins / MCP / Connections`
-- **Pack status:** `IN_PROGRESS`
+- **Pack status:** `LOCKED_VERIFIED`
 - **Active phase:** `89E_PRODUCTION_ACCEPTANCE`
-- **Phase status:** `OWNER_AUTH_ACCEPTANCE_PENDING`
-- **89A / 89B / 89C / 89D:** `LOCKED_VERIFIED`
-- **89E non-external acceptance:** `PASS`
-- **Latest receipt:** `zuvyr-pack-evidence/pack-089/2026-09-24-89e-post-merge-owner-acceptance-ready/receipt.json`
-- **PACK090 allowed:** `NO`
-- **Next legal step:** Use the real owner-authenticated Plugins & Connections surface: Browse files -> approve the exact read permission -> verify the granted Drive list/read result and denied write proof -> Disconnect -> verify post-revoke denial -> verify audit persistence and Vault/plaintext-secret cleanliness. Do not start PACK090 first.
-- **Do not fabricate owner acceptance and do not start PACK090 before PACK089 becomes LOCKED_VERIFIED.**
+- **Phase status:** `LOCKED_VERIFIED`
+- **89A / 89B / 89C / 89D / 89E:** `LOCKED_VERIFIED`
+- **Latest receipt:** `zuvyr-pack-evidence/pack-089/2026-09-26-89e-owner-acceptance-locked/receipt.json`
+- **PACK090 allowed:** `YES`
+- **Next legal step:** Begin PACK090 with a fresh universal-browser gap audit; reconcile current Browser/Automation/Connection authority before new implementation.
+- **Do not skip PACK090's fresh audit and do not infer its gaps from chat memory.**
 - **Continuity validator:** `tools/validate-zuvyr-continuity.cjs`
 - **Continuity CI:** `.github/workflows/zuvyr-continuity.yml`
-
 
 ### PACK150 readiness invariant
 

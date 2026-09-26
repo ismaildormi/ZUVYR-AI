@@ -1,4 +1,4 @@
-# ZUVYR MASTER MATRIX — LATEST CANONICAL CONTINUITY OVERRIDE — 2026-09-24
+# ZUVYR MASTER MATRIX — LATEST CANONICAL CONTINUITY OVERRIDE — 2026-09-26
 
 This dated override is the **current-state entry point**. Older Pack headers/status blocks below are preserved as historical evidence and must not be interpreted as current merely because they appear earlier in the file.
 
@@ -11,20 +11,22 @@ This dated override is the **current-state entry point**. Older Pack headers/sta
 | V1 readiness range | `EA-001…EA-292` |
 | Active main Pack | `PACK089 — Skills / Plugins / MCP / Connections` |
 | Active phase | `89E_PRODUCTION_ACCEPTANCE` |
-| Current status | `OWNER_AUTH_ACCEPTANCE_PENDING` |
-| 89A / 89B / 89C / 89D | `LOCKED_VERIFIED` |
-| 89E non-external acceptance | `PASS` |
-| Latest receipt | `zuvyr-pack-evidence/pack-089/2026-09-24-89e-post-merge-owner-acceptance-ready/receipt.json` |
-| PACK090 allowed | **NO** |
-| OAuth owner consent/callback | **PASS** |
-| Owner acceptance controls | **DEPLOYED on main `f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea`** |
-| Vercel production | **READY on exact main `f1886d5cd9a9a3a6d56c0cc8a83daf80fb6a47ea`** |
-| Vercel fresh deploy evidence / RW-018 | **BLOCKED_EXTERNAL / MONITOR — rate limit recurred on PR #127** |
-| Visual QA / RW-016 | **CLOSED — post-merge workflow PASS** |
-| Remaining PACK089 gate | Real owner Browse files permission/read → denied write → disconnect/revoke → post-revoke denial → audit/Vault cleanliness |
-| Final release gate | `PACK150` only; `V1_READY=true` requires all applicable `EA-001…EA-292` PASS |
+| Current status | `LOCKED_VERIFIED` |
+| 89A / 89B / 89C / 89D / 89E | `LOCKED_VERIFIED` |
+| Latest receipt | `zuvyr-pack-evidence/pack-089/2026-09-26-89e-owner-acceptance-locked/receipt.json` |
+| PACK090 allowed | **YES** |
+| Owner read/list acceptance | **PASS — 19 files** |
+| Write-scope proof | **PASS — blocked as expected** |
+| Disconnect/revoke | **PASS — DB/Vault/runtime verified** |
+| Post-revoke denial | **PASS — tool challenge HTTP 400** |
+| Vercel production | **READY on exact main `9a1527df295de260777e3a2f73972c1b064858ae` / `dpl_DSjPGX8jWXnJAx3k8dSiCFnWPjC4`** |
+| Railway production | **SUCCESS on `13b888ce-e6d9-4d31-a910-2462891f5340`** |
+| RW-001 | **CLOSED** |
+| RW-018 | **CLOSED — fresh exact-main production deployment READY** |
+| Remaining PACK089 gate | **NONE** |
+| Final release gate | `PACK150` only; `V1_READY=true` still requires every applicable final gate |
 
-**Next legal step:** Use the real owner-authenticated Plugins & Connections surface: Browse files -> approve the exact read permission -> verify the granted Drive list/read result and denied write proof -> Disconnect -> verify post-revoke denial -> verify audit persistence and Vault/plaintext-secret cleanliness. Do not start PACK090 first.
+**Next legal step:** Begin PACK090 with the fresh universal-browser gap audit defined by the canonical V1 plan. Do not skip the audit or infer gaps from chat memory; reconcile current Browser/Automation/Connection authority first.
 
 **Conflict rule:** fresh production/source/receipt evidence beats this override; this override beats older historical matrix sections. If a new session sees disagreement between continuity sources, or the continuity validator/CI fails, it must repair/reconcile continuity before feature work rather than guessing.
 

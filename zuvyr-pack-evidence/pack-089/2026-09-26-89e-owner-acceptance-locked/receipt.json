@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.0",
+  "pack": "089",
+  "phase": "89E_PRODUCTION_ACCEPTANCE",
+  "status": "LOCKED_VERIFIED",
+  "title": "Skills / Plugins / MCP / Connections — real owner Google Drive production acceptance",
+  "observed_at": "2026-09-26T21:33:12.295Z",
+  "source_main": "9a1527df295de260777e3a2f73972c1b064858ae",
+  "canonical_pack_status": "LOCKED_VERIFIED",
+  "active_pack_after_finalizer": "PACK090",
+  "evidence": {
+    "repository": "ismaildormi/ZUVYR-AI",
+    "owner_authentication": "VERIFIED",
+    "google_oauth_owner_consent_completed": true,
+    "oauth_callback_completed": true,
+    "granted_scopes_before_revoke": [
+      "drive.export",
+      "drive.file.read"
+    ],
+    "drive_file_write_granted": false,
+    "owner_read_acceptance": {
+      "permission": "Google Drive read permission",
+      "permission_mode": "session",
+      "owner_scoped": true,
+      "loaded_files": 19,
+      "result": "Google Drive read verified",
+      "write_scope_verification": "blocked as expected",
+      "browser_run": "c23a8b83-8a0e-4e14-9d5b-1200c8267112"
+    },
+    "disconnect_acceptance": {
+      "deterministic_two_step_confirmation_pr": 133,
+      "deterministic_two_step_confirmation_main": "9a1527df295de260777e3a2f73972c1b064858ae",
+      "first_button": "Disconnect",
+      "second_button": "Confirm disconnect",
+      "result": "Google Drive disconnected",
+      "browser_run": "13bdbaf0-e903-44ec-b9e7-801bff884aee"
+    },
+    "supabase_post_revoke": {
+      "status": "revoked",
+      "connected": false,
+      "read_enabled": false,
+      "write_enabled": false,
+      "credential_secret_ref_cleared": true,
+      "refresh_token_present": false,
+      "token_expiry_cleared": true,
+      "active_connection_grants": 0,
+      "latest_integration_event": "integration_revoked",
+      "external_write_executed": false,
+      "revoked_at": "2026-09-26T21:12:48.983055Z"
+    },
+    "vault_plaintext_cleanliness": {
+      "integration_vault_rows": 0,
+      "pkce_vault_rows": 0,
+      "plaintext_tokenlike_text_columns": 0
+    },
+    "railway_runtime": {
+      "deployment_id": "13b888ce-e6d9-4d31-a910-2462891f5340",
+      "status": "SUCCESS",
+      "disconnect_route_http": 200,
+      "post_revoke_tool_challenge_http": 400,
+      "pending_work": 0
+    },
+    "vercel": {
+      "deployment_id": "dpl_DSjPGX8jWXnJAx3k8dSiCFnWPjC4",
+      "status": "READY",
+      "target": "production",
+      "source_sha": "9a1527df295de260777e3a2f73972c1b064858ae",
+      "live_alias_verified": true
+    },
+    "github_post_merge": {
+      "release_quality": "SUCCESS",
+      "codeql": "SUCCESS",
+      "secret_history": "SUCCESS",
+      "visual_qa": "SUCCESS"
+    },
+    "prior_fix_chain": {
+      "cors_alias_pr": 132,
+      "disconnect_confirmation_pr": 133
+    },
+    "live_billing_allowed": false
+  },
+  "interpretation": {
+    "pack089_complete": true,
+    "pack089_locked_verified": true,
+    "pack090_started": false,
+    "zero_known_actionable_pack089_findings": true,
+    "external_write_executed": false
+  },
+  "USER_VALUE": "The owner can connect Google Drive for scoped read/export use, verify denied write authority, and revoke the connection with immediate local/tool/Vault shutdown.",
+  "EXECUTABLE_USER_ACTIONS": "Connect, approve exact read permission, browse owner files, disconnect/revoke; write remains unavailable without an explicit write scope.",
+  "MONEY_OPPORTUNITY_RELEVANCE": "INDIRECT",
+  "MONEY_OPPORTUNITY_NOTES": "Safe scoped connections enable future agent workflows without silently granting external write authority.",
+  "NEXT_BEST_ACTION": "Begin PACK090 with the fresh universal-browser gap audit before implementing any new Browser Broker/provider work.",
+  "PROVENANCE_BEHAVIOR": "VERIFIED from owner-authenticated production UI, Supabase authority state, Vault cleanliness, Railway HTTP logs, GitHub CI, Visual QA and exact-source Vercel production deployment.",
+  "HARD_STOP_IMPACT": "Revoke removes the credential reference, disables read/write, revokes connection grants and makes post-revoke tool challenge fail closed.",
+  "UNRESOLVED_P0_P1": [],
+  "next": {
+    "pack090_allowed": true,
+    "active_pack_after_finalizer": "PACK090",
+    "required_sequence": "PACK090 fresh universal-browser gap audit -> canonical Browser Broker/provider abstraction only where gaps are evidenced -> connector-first routing -> cross-surface live proof -> progress/STOP/owner scoping."
+  }
+}

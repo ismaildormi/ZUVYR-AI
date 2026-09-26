@@ -107,14 +107,23 @@ for (const key of ['pack','pack_status','phase','phase_status','latest_receipt']
   expect(manifestActive[key] === active[key], `manifest/current-state ${key} mismatch: ${manifestActive[key]} vs ${active[key]}`);
 }
 expect(/^PACK\d{3}$/.test(active.pack), `malformed active Pack: ${active.pack}`);
-expect(active.pack090_allowed === false && manifestActive.pack090_allowed === false, 'PACK090 must remain blocked');
+expect(typeof active.pack090_allowed === 'boolean', 'current-state pack090_allowed must be boolean');
+expect(manifestActive.pack090_allowed === active.pack090_allowed, 'manifest/current-state pack090_allowed mismatch');
+const activePackNumber = Number(active.pack.slice(4));
+if (active.pack === 'PACK089') {
+  const pack089Locked = active.pack_status === 'LOCKED_VERIFIED' && active.phase_status === 'LOCKED_VERIFIED';
+  expect(active.pack090_allowed === pack089Locked, 'PACK090 allowance must exactly match PACK089 LOCKED_VERIFIED state');
+}
+if (Number.isFinite(activePackNumber) && activePackNumber >= 90) {
+  expect(active.pack090_allowed === true, 'PACK090 must remain allowed once active Pack is PACK090 or later');
+}
 
 const receipt = readJson(active.latest_receipt);
 if (receipt) {
   expect(`PACK${receipt.pack}` === active.pack, `receipt pack mismatch: PACK${receipt.pack} vs ${active.pack}`);
   expect(receipt.phase === active.phase, `receipt phase mismatch: ${receipt.phase} vs ${active.phase}`);
   expect(receipt.status === active.phase_status, `receipt status mismatch: ${receipt.status} vs ${active.phase_status}`);
-  if (typeof receipt?.next?.pack090_allowed === 'boolean') expect(receipt.next.pack090_allowed === false, 'latest receipt unexpectedly allows PACK090');
+  if (typeof receipt?.next?.pack090_allowed === 'boolean') expect(receipt.next.pack090_allowed === active.pack090_allowed, 'latest receipt/current-state PACK090 allowance mismatch');
 }
 
 // Long-lived ledgers preserve history and can lag the compact current-state override.
@@ -125,7 +134,7 @@ if (masterState) {
   expect(c.manifest === manifestPath, `MASTER_STATE manifest mismatch: ${c.manifest}`);
   expect(c.readiness_matrix === readinessPath, `MASTER_STATE readiness matrix mismatch: ${c.readiness_matrix}`);
   expect(c.readiness_range === 'EA-001..EA-292', `MASTER_STATE readiness range mismatch: ${c.readiness_range}`);
-  expect(c.pack090_allowed === false, 'MASTER_STATE unexpectedly allows PACK090');
+  expect(c.pack090_allowed === active.pack090_allowed, 'MASTER_STATE/current-state pack090_allowed mismatch');
   expect(containsCI(c.conflict_rule || '', 'fresh'), 'MASTER_STATE must defer stale fields to fresh evidence');
 }
 
@@ -147,8 +156,8 @@ for (const needle of [
   manifestPath,
   'V1_READINESS_REQUIREMENTS_001_292.json',
   'EA-001…EA-292',
-  'PACK089',
-  '89E_PRODUCTION_ACCEPTANCE',
+  active.pack,
+  active.phase,
   'fresh production/source/receipt evidence beats this override'
 ]) expect(containsCI(matrixHead, needle), `MASTER_MATRIX canonical header missing: ${needle}`);
 
