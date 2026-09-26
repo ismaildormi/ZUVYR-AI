@@ -1,5 +1,5 @@
 {
-  "version": "zuvyr-v1-critical-coverage.v1",
+  "version": "zuvyr-v1-critical-coverage.v2",
   "aggregateMinimum": {
     "lines": 70,
     "functions": 70,
@@ -28,6 +28,10 @@
       "minimum": { "lines": 75, "functions": 75, "branches": 60 }
     },
     {
+      "path": "device-agent/src/authorizedUndoExecutor.js",
+      "minimum": { "lines": 90, "functions": 90, "branches": 80 }
+    },
+    {
       "path": "cli/lib/pluginLoader.js",
       "minimum": { "lines": 75, "functions": 75, "branches": 65 }
     }
@@ -43,6 +47,9 @@
     "device-agent/test/pack087-stop-termination-hardening.test.js",
     "device-agent/test/pack087-stop-process-tree-hardening.test.js",
     "device-agent/test/v1-action-worker-coverage.test.js",
-    "cli/tests/test-plugin-trust-boundary.js"
+    "device-agent/test/v1-authorized-undo-authority.test.js",
+    "device-agent/test/v1-action-executor-coverage.test.js",
+    "cli/tests/test-plugin-trust-boundary.js",
+    "cli/tests/v1-plugin-loader-coverage.test.js"
   ]
 }
