@@ -5,10 +5,12 @@ const assert = require('assert');
 
 const ui = fs.readFileSync('../frontend/zuvyr-suite-v1.js', 'utf8');
 const css = fs.readFileSync('../frontend/zuvyr-suite-v1.css', 'utf8');
+const releaseGuard = fs.readFileSync('../frontend/rox-release-guard.js', 'utf8');
 const routes = fs.readFileSync('lib/workspaceRoutes.js', 'utf8');
 const drive = fs.readFileSync('lib/workspaceGoogleDrive.js', 'utf8');
 
 assert.doesNotThrow(() => new Function(ui), 'frontend suite must remain syntactically valid');
+assert.doesNotThrow(() => new Function(releaseGuard), 'frontend release guard must remain syntactically valid');
 
 assert(ui.includes("['plugins','⌘','Plugins','ready']"));
 assert(ui.includes("if(id==='plugins')return pluginsView()"));
@@ -41,6 +43,25 @@ for (const marker of [
   'data-zs-skill-toggle',
   'zuvyrPack089GoogleOAuth'
 ]) assert(ui.includes(marker), 'missing 89D marker: ' + marker);
+
+const disconnectPrompt = 'Disconnect this integration? Future access will be blocked immediately.';
+assert(ui.includes(disconnectPrompt), 'Drive disconnect suite prompt changed unexpectedly');
+assert(releaseGuard.includes(disconnectPrompt), 'release guard must match the suite disconnect prompt exactly');
+for (const marker of [
+  "closest('[data-zs-drive-disconnect]')",
+  "button.dataset.roxDriveDisconnectConfirm = 'armed'",
+  "button.textContent = 'Confirm disconnect'",
+  "button.setAttribute('aria-pressed', 'true')",
+  'DRIVE_DISCONNECT_CONFIRM_MS = 8000',
+  'window.confirm = oneShotConfirm',
+  'if (window.confirm === oneShotConfirm) window.confirm = previousConfirm',
+  'setTimeout(restoreConfirm, 0)'
+]) assert(releaseGuard.includes(marker), 'missing deterministic Drive disconnect confirmation marker: ' + marker);
+assert(
+  releaseGuard.indexOf("closest('[data-zs-drive-disconnect]')") <
+  releaseGuard.indexOf("closest('[data-open],[data-tab]')"),
+  'Drive disconnect confirmation must run before the general release feature guard'
+);
 
 const pluginsStart = ui.indexOf('function pluginsView()');
 const pluginsEnd = ui.indexOf('var scheduledState=', pluginsStart);
@@ -91,4 +112,5 @@ for (const marker of [
 console.log('PASS: Pack089 89D activates real Connections / Plugins / Skills UI');
 console.log('PASS: Google OAuth config fails before atomic create/reuse and callback completion is single-flight');
 console.log('PASS: plugin install uses Permission Center challenge/grant before activation with compensation');
+console.log('PASS: Drive disconnect uses deterministic two-step confirmation before the existing revoke path');
 console.log('PASS: loading/error/retry, keyboard Escape, RTL and responsive wiring are present');
