@@ -36,15 +36,12 @@ jobs:
 
       - name: Validate continuity after finalizer
         id: continuity
+        continue-on-error: true
         shell: bash
         run: |
-          set +e
+          set -o pipefail
           mkdir -p artifacts/pack089-finalizer
-          node tools/validate-zuvyr-continuity.cjs > artifacts/pack089-finalizer/continuity-validator.log 2>&1
-          code=$?
-          cat artifacts/pack089-finalizer/continuity-validator.log
-          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
-          exit 0
+          node tools/validate-zuvyr-continuity.cjs 2>&1 | tee artifacts/pack089-finalizer/continuity-validator.log
 
       - name: Upload finalizer validator diagnostic
         if: always()
@@ -56,7 +53,7 @@ jobs:
           retention-days: 7
 
       - name: Fail if continuity validator failed
-        if: steps.continuity.outputs.exit_code != '0'
+        if: steps.continuity.outcome == 'failure'
         run: exit 1
 
       - name: Verify clean patch formatting
