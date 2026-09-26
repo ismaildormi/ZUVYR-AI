@@ -1,0 +1,62 @@
+name: PACK089 Owner Acceptance Finalizer Apply
+
+on:
+  push:
+    branches:
+      - finalize/pack089-owner-acceptance-20260926
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pack089-owner-acceptance-finalizer
+  cancel-in-progress: false
+
+jobs:
+  apply-finalizer:
+    if: ${{ !contains(github.event.head_commit.message, 'finalize(pack089): lock owner acceptance and allow PACK090') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: finalize/pack089-owner-acceptance-20260926
+          fetch-depth: 0
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+
+      - name: Syntax-check finalizer
+        run: node --check tools/pack089-finalizer-apply.cjs
+
+      - name: Apply PACK089 finalizer
+        run: node tools/pack089-finalizer-apply.cjs
+
+      - name: Validate continuity after finalizer
+        run: node tools/validate-zuvyr-continuity.cjs
+
+      - name: Verify clean patch formatting
+        run: git diff --check
+
+      - name: Commit finalizer result and remove one-shot machinery
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/pack089-finalizer-apply.yml tools/pack089-finalizer-apply.cjs
+          git add \
+            ZUVYR_CONTINUE_HERE.md \
+            ZUVYR_MASTER_STATE.json \
+            ZUVYR_MASTER_MATRIX.md \
+            docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json \
+            docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json \
+            docs/zuvyr/ZUVYR_REMAINING_WORK.md \
+            docs/zuvyr/V1_QUALITY_HARDENING_MATRIX_2026-09-25.md \
+            tools/validate-zuvyr-continuity.cjs \
+            zuvyr-pack-evidence/pack-089/2026-09-26-89e-owner-acceptance-locked/receipt.json
+          git diff --cached --stat
+          git commit -m "finalize(pack089): lock owner acceptance and allow PACK090"
+          git push origin HEAD:finalize/pack089-owner-acceptance-20260926
