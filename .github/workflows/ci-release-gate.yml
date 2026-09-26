@@ -133,6 +133,9 @@ jobs:
       - name: Run backend unit and safety tests
         run: npm run test:unit
 
+      - name: Verify financial balance storage invariant
+        run: node test-v1-financial-balance-invariants.js
+
       - name: Verify full-control undo backup boundary
         run: node ../device-agent/test/pack087-full-control-undo-hardening.test.js
 
