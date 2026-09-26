@@ -77,17 +77,21 @@ function runCors(req) {
   );
 }
 
-{
+for (const origin of [
+  'https://rox-ai-sepia.vercel.app',
+  'https://rox-ai-rox-ai.vercel.app',
+  'https://rox-ai-git-main-rox-ai.vercel.app',
+]) {
   const { res, nextCalled } = runCors({
     method: 'OPTIONS',
-    headers: { origin: 'https://rox-ai-sepia.vercel.app' },
+    headers: { origin },
   });
 
   assert.strictEqual(nextCalled, false);
   assert.strictEqual(res.statusCode, 204);
   assert.strictEqual(
     res.getHeader('access-control-allow-origin'),
-    'https://rox-ai-sepia.vercel.app'
+    origin
   );
 }
 
@@ -243,7 +247,7 @@ function runHeaderGuard({ envName, headerName, expected, provided }) {
   });
   assert.strictEqual(correct.res.statusCode, null);
   assert.strictEqual(correct.nextCalled, true);
-  assert.strictEqual(correct.headers.get('cache-control'), 'no-store');
+  assert.strictEqual(result.headers.get('cache-control'), 'no-store');
 }
 
 const backendDir = __dirname;
