@@ -26,26 +26,17 @@ Closure rule: `CLOSED` requires the code/config change when applicable, determin
 
 ## Current verified state
 
-Merged hardening PR: `#128`  
-Merged QH-017 reconciliation PR: `#129`  
-Merged QH-011 CORS authority PR: `#130`  
-Verified merged main SHA before QH-014 PR: `bda9d3f4fc8a83fcd186efccc067e2167dba7346`  
-Current QH-014 PR: `#131` / branch `audit/qh014-archive-isolation-20260926`  
-PACK090: **ALLOWED after PACK089 LOCKED_VERIFIED finalizer; start with the canonical fresh universal-browser gap audit**
-Paid billing: **explicitly kept OFF during development**
+- Merged hardening baseline: PRs `#128` through `#131`.
+- Merged PACK089 production fixes: CORS alias PR `#132`; deterministic Drive disconnect PR `#133`.
+- Verified owner-acceptance source main: `9a1527df295de260777e3a2f73972c1b064858ae`.
+- Vercel production: `dpl_DSjPGX8jWXnJAx3k8dSiCFnWPjC4` = **READY** on exact source main.
+- Railway backend: `13b888ce-e6d9-4d31-a910-2462891f5340` = **SUCCESS**.
+- PACK089 owner acceptance: **LOCKED_VERIFIED** — 19 Drive files read under owner-scoped session permission; write scope blocked; deterministic disconnect/revoke succeeded; post-revoke challenge HTTP 400; audit persisted; active grants=0; Vault/PKCE rows=0; no plaintext token-like public columns; no external write executed.
+- PACK089 receipt: `zuvyr-pack-evidence/pack-089/2026-09-26-89e-owner-acceptance-locked/receipt.json`.
+- QH-016: **CLOSED**.
+- PACK090: **ALLOWED after finalizer merge, but not started by the PACK089 finalizer; canonical first action is the fresh universal-browser gap audit.**
+- Paid billing: **explicitly kept OFF during development**.
 
-Verified through PR #130 merge and QH-014 production classification:
-- PR #128 established the merged security/quality hardening baseline: CodeQL, Secret History, live-source hygiene, plugin trust, Device Agent undo/STOP hardening and critical coverage;
-- PR #129 made the financial balance invariant regression a mandatory Backend Quality step and sealed QH-017 production evidence;
-- PR #130 strengthened QH-011 by binding the CORS authority decision to mandatory Ops MCP CI and enforcing exact preflight/method/no-cookie/read-only authority invariants without changing runtime CORS behavior;
-- merged main `bda9d3f4fc8a83fcd186efccc067e2167dba7346` passed Ops MCP, Release Quality, Backend Quality, V1 Critical Coverage, Secret History, Continuity, cross-platform STOP and CodeQL High/Critical policy;
-- Railway remained healthy with no unnecessary runtime redeploy for CI/docs-only changes; Vercel exact-main production-target attempts for non-frontend changes were canceled by the configured `ignored-build-step`, not by build failure;
-- the three development paid gates remain explicitly false in Railway production: `ZUVYR_BILLING_V1_ACTIVE`, `LIVE_BILLING_ALLOWED`, `ZUVYR_STRIPE_TEST_SETTLEMENT_ALLOWED`;
-- QH-014 production audit classified all 3 historical backup schemas as administrator-only archives: 9 tables total, 8 no-PK INFO tables, 0 API grants, 0 API schema usage and 0 live dependencies;
-- QH-014 migrations `20260926161619` and `20260926162208` are present; the latter is the corrected effective schema-ACL contract after PostgreSQL documentation confirmed per-schema default privileges cannot subtract globally granted defaults;
-- QH-014 index evidence covers roughly 32 days since PostgreSQL start: 604 public indexes, 408 zero-scan, 264 zero-scan nonconstraint candidates, of which 243 support FK prefixes; the remaining 21 total only ~278 KB and are retained until PACK142 representative load evidence;
-- Supabase Security Advisor still reports only the known leaked-password-protection warning tracked under QH-013; Performance Advisor still reports the expected 8 archive no-PK INFO findings and 264 unused-index INFO findings, with no blind remediation;
-- QH-014 evidence receipt is stored at `zuvyr-pack-evidence/reconciliations/2026-09-26-qh014-backup-index-classification/receipt.json`;
-- QH-017 remains CLOSED; QH-011 remains N/A_WITH_EVIDENCE/CONTRACT_ENFORCED pending mapped final rehearsal; QH-016 is CLOSED; QH-012/013/015 remain external/final gates as stated above.
+Remaining mapped release gates are unchanged: QH-001/002/003/004 retain their later final rehearsal mappings; QH-012 remains the external branch-protection admin gate; QH-013 remains the Supabase capability gate; QH-014 remains mapped to PACK141/PACK142 evidence; QH-015 remains the PACK149/150 final exact-release deployment gate.
 
 Nothing is marked `CLOSED` unless its finding-specific closure evidence is fully satisfied. Future mapped PACK rehearsal/release gates remain separately binding where stated.
