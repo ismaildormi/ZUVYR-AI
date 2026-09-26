@@ -5,7 +5,12 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { executeAction } = require('../src/actionExecutor');
-const { executeAuthorizedUndo } = require('../src/authorizedUndoExecutor');
+const {
+  isMissionBoundFullControl,
+  loadBackupMetadata,
+  assertUndoAuthority,
+  executeAuthorizedUndo
+} = require('../src/authorizedUndoExecutor');
 
 (async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'zuvyr-authorized-undo-'));
@@ -31,6 +36,64 @@ const { executeAuthorizedUndo } = require('../src/authorizedUndoExecutor');
   });
 
   try {
+    assert.equal(isMissionBoundFullControl(null), false);
+    assert.equal(isMissionBoundFullControl({ fullControl: false }), false);
+    assert.equal(isMissionBoundFullControl({ ...fullControl, grantMode: 'scoped' }), false);
+    assert.equal(isMissionBoundFullControl({ ...fullControl, missionBound: false }), false);
+    assert.equal(isMissionBoundFullControl({ ...fullControl, permissionGrantId: 'not-a-uuid' }), false);
+    assert.equal(isMissionBoundFullControl({ ...fullControl, missionDigest: 'bad-digest' }), false);
+    assert.equal(isMissionBoundFullControl(fullControl), true);
+
+    assert.throws(
+      () => assertUndoAuthority({ backupRef: 'backup:11111111-1111-4111-8111-111111111111' }),
+      /pack087_state_dir_required/
+    );
+    assert.throws(
+      () => loadBackupMetadata(stateDir, 'bad-ref'),
+      /pack087_backup_ref_invalid/
+    );
+    assert.throws(
+      () => loadBackupMetadata(stateDir, 'backup:22222222-2222-4222-8222-222222222222'),
+      /pack087_backup_not_found/
+    );
+
+    const backupsDir = path.join(stateDir, 'backups');
+    fs.mkdirSync(backupsDir, { recursive: true });
+    const malformedId = '33333333-3333-4333-8333-333333333333';
+    const malformedPath = path.join(backupsDir, `${malformedId}.json`);
+    fs.writeFileSync(malformedPath, JSON.stringify({
+      version: 'wrong-version',
+      ref: `backup:${malformedId}`
+    }), 'utf8');
+    assert.throws(
+      () => loadBackupMetadata(stateDir, `backup:${malformedId}`),
+      /pack087_backup_invalid/
+    );
+    fs.writeFileSync(malformedPath, JSON.stringify({
+      version: 'pack087.file-backup.v1',
+      ref: 'backup:44444444-4444-4444-8444-444444444444'
+    }), 'utf8');
+    assert.throws(
+      () => loadBackupMetadata(stateDir, `backup:${malformedId}`),
+      /pack087_backup_invalid/
+    );
+    fs.rmSync(malformedPath, { force: true });
+
+    const invalidRefResult = await executeAuthorizedUndo({
+      backupRef: 'bad-ref',
+      target: path.join(scopedRoot, 'unused.txt')
+    }, { stateDir, env });
+    assert.equal(invalidRefResult.success, false);
+    assert.equal(invalidRefResult.errorCode, 'pack087_backup_ref_invalid');
+    assert.equal(invalidRefResult.deviceActionExecuted, false);
+
+    const missingBackupResult = await executeAuthorizedUndo({
+      backupRef: 'backup:55555555-5555-4555-8555-555555555555',
+      target: path.join(scopedRoot, 'unused.txt')
+    }, { stateDir, env });
+    assert.equal(missingBackupResult.success, false);
+    assert.equal(missingBackupResult.errorCode, 'pack087_backup_not_found');
+
     const outsideTarget = path.join(root, 'outside.txt');
     fs.writeFileSync(outsideTarget, 'before\n', 'utf8');
     const write = await executeAction({
@@ -69,6 +132,16 @@ const { executeAuthorizedUndo } = require('../src/authorizedUndoExecutor');
     assert.equal(malformedGrant.success, false);
     assert.equal(malformedGrant.errorCode, 'pack087_backup_authority_mismatch');
 
+    const exactAuthority = assertUndoAuthority({
+      ...fullControl,
+      backupRef: write.backupRef,
+      target: outsideTarget
+    }, { stateDir });
+    assert.equal(exactAuthority.fullControl, true);
+    assert.equal(exactAuthority.grantMode, 'full_control');
+    assert.equal(exactAuthority.permissionGrantId, permissionGrantId);
+    assert.equal(exactAuthority.missionDigest, missionDigest);
+
     const exact = await executeAuthorizedUndo({
       ...fullControl,
       backupRef: write.backupRef,
@@ -96,6 +169,15 @@ const { executeAuthorizedUndo } = require('../src/authorizedUndoExecutor');
     assert.equal(forgedElevation.errorCode, 'pack087_backup_authority_mismatch');
     assert.equal(fs.readFileSync(scopedTarget, 'utf8'), 'scoped-after\n');
 
+    const scopedAuthority = assertUndoAuthority({
+      backupRef: scopedWrite.backupRef,
+      target: scopedTarget
+    }, { stateDir });
+    assert.equal(scopedAuthority.fullControl, false);
+    assert.equal(scopedAuthority.grantMode, 'scoped');
+    assert.equal(scopedAuthority.permissionGrantId, null);
+    assert.equal(scopedAuthority.missionDigest, null);
+
     const scopedUndo = await executeAuthorizedUndo({
       backupRef: scopedWrite.backupRef,
       target: scopedTarget
@@ -103,6 +185,8 @@ const { executeAuthorizedUndo } = require('../src/authorizedUndoExecutor');
     assert.equal(scopedUndo.success, true);
     assert.equal(fs.readFileSync(scopedTarget, 'utf8'), 'scoped-before\n');
 
+    console.log('PASS: malformed backup references and metadata fail closed.');
+    console.log('PASS: every server Full Control authority field is required and validated.');
     console.log('PASS: out-of-scope undo requires matching server Full Control authority.');
     console.log('PASS: missing/mismatched authority and forged scoped elevation fail closed.');
     console.log('PASS: ordinary scoped undo remains functional without authority widening.');
