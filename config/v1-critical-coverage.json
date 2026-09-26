@@ -1,5 +1,5 @@
 {
-  "version": "zuvyr-v1-critical-coverage.v2",
+  "version": "zuvyr-v1-critical-coverage.v1",
   "aggregateMinimum": {
     "lines": 70,
     "functions": 70,
