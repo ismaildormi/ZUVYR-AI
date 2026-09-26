@@ -1,0 +1,72 @@
+{
+  "receipt_type": "zuvyr_v1_quality_hardening",
+  "finding_id": "QH-014",
+  "observed_at_utc": "2026-09-26T16:22:48.969Z",
+  "reviewed_pr": 131,
+  "reviewed_head_sha": "9d153d3a73bf6725eafd02934d9f41c90e389a58",
+  "supabase": {
+    "project_ref": "tqoqsgaymygmqrzddvtu",
+    "status": "ACTIVE_HEALTHY",
+    "postgres_major": 17,
+    "migrations": [
+      {
+        "version": "20260926161619",
+        "name": "v1_quality_backup_schema_isolation",
+        "note": "Applied the reviewed current-object/schema revokes. Its per-schema default-privilege REVOKE statements were harmless no-ops under PostgreSQL semantics and created no pg_default_acl entries."
+      },
+      {
+        "version": "20260926162208",
+        "name": "v1_quality_backup_schema_isolation_effective_contract",
+        "note": "Canonical effective contract: schema USAGE/CREATE revocation plus explicit current-object privilege revocation only; no global default-privilege mutation."
+      }
+    ],
+    "backup_schema_classification": {
+      "schema_count": 3,
+      "table_count": 9,
+      "no_primary_key_table_count": 8,
+      "api_table_grant_count": 0,
+      "api_schema_usage_count": 0,
+      "live_dependency_count": 0,
+      "backup_default_acl_count": 0,
+      "classification": "ARCHIVE_ONLY_ADMINISTRATOR_EVIDENCE",
+      "data_api_exposure": false,
+      "primary_authority_boundary": "No USAGE/CREATE on backup schemas for PUBLIC, anon, authenticated, or service_role; existing object privileges are also explicitly revoked."
+    },
+    "index_evidence": {
+      "postgres_started_at_utc": "2026-08-25T06:35:14.585804Z",
+      "observed_at_utc": "2026-09-26T16:15:52.733439Z",
+      "window_days_approx": 32,
+      "public_index_count": 604,
+      "used_index_count": 196,
+      "zero_scan_index_count": 408,
+      "zero_scan_nonconstraint_candidates": 264,
+      "zero_scan_nonconstraint_bytes": 2670592,
+      "fk_support_candidates": 243,
+      "fk_support_bytes": 2392064,
+      "non_fk_candidates": 21,
+      "non_fk_candidate_bytes": 278528,
+      "decision": "NO_INDEX_DELETION_BEFORE_PACK142_REPRESENTATIVE_LOAD_EVIDENCE",
+      "reason": "243 advisor candidates support FK prefixes; the remaining 21 are tiny and include search, queue, lease, cancellation, feedback, learning, monitoring, release and usage paths that are not representative under development traffic."
+    },
+    "advisors": {
+      "security": {
+        "qh014_related_findings": 0,
+        "known_external_warning": "auth_leaked_password_protection",
+        "tracked_as": "QH-013"
+      },
+      "performance": {
+        "no_primary_key_info": 8,
+        "unused_index_info": 264,
+        "blind_remediation_performed": false
+      }
+    }
+  },
+  "closure": "PARTIAL_EVIDENCE_COMPLETE",
+  "status": "CLASSIFIED_AND_ISOLATION_CODIFIED",
+  "remaining_gates": [
+    "PACK141 backup/restore drill proving archive/recovery behavior and RTO/RPO evidence",
+    "PACK142 representative workload/load qualification followed by a fresh index-usage comparison before any candidate removal"
+  ],
+  "pack090_unlocked": false,
+  "live_billing_changed": false
+}
