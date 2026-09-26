@@ -20,7 +20,9 @@ const fixtureNames = [
   '__qh_missing_entry',
   '__qh_invalid_export',
   '__qh_throwing_entry',
-  '__qh_valid_object'
+  '__qh_valid_object',
+  '__qh_lstat_failure',
+  '__qh_realpath_escape'
 ];
 const packagePath = path.join(ROOT_DIR, 'package.json');
 const originalPackageText = fs.readFileSync(packagePath, 'utf8');
@@ -112,6 +114,69 @@ try {
   assert(localWarnings.some(value => value.includes('does not export a function or {handler}')));
   assert(localWarnings.some(value => value.includes('failed to load')));
 
+  // Cover fail-closed filesystem branches added by the V1 plugin hardening.
+  // These are deterministic fault injections against the reviewed local plugin root;
+  // no executable plugin is allowed to load through a filesystem error or path escape.
+  const originalReaddirSync = fs.readdirSync;
+  try {
+    fs.readdirSync = function qhReaddirSync(target, ...args) {
+      if (path.resolve(String(target)) === path.resolve(PLUGINS_DIR)) {
+        throw new Error('qh-readdir-failure');
+      }
+      return originalReaddirSync(target, ...args);
+    };
+    const warnings = [];
+    const discovered = discoverPlugins(message => warnings.push(String(message)), { env: {} });
+    assert.equal(discovered['qh-valid-object'], undefined);
+    assert(warnings.some(value => value.includes('Could not read cli/plugins/')));
+  } finally {
+    fs.readdirSync = originalReaddirSync;
+  }
+
+  const lstatFailureDir = makePlugin(
+    '__qh_lstat_failure',
+    { name: 'qh-lstat-failure', main: 'index.js' },
+    'module.exports = () => ({ unsafe: true });\n'
+  );
+  const originalLstatSync = fs.lstatSync;
+  try {
+    fs.lstatSync = function qhLstatSync(target, ...args) {
+      if (path.resolve(String(target)) === path.resolve(lstatFailureDir)) {
+        throw new Error('qh-lstat-failure');
+      }
+      return originalLstatSync(target, ...args);
+    };
+    const warnings = [];
+    const discovered = discoverPlugins(message => warnings.push(String(message)), { env: {} });
+    assert.equal(discovered['qh-lstat-failure'], undefined);
+    assert(warnings.some(value => value.includes('Could not stat cli/plugins/__qh_lstat_failure/')));
+  } finally {
+    fs.lstatSync = originalLstatSync;
+  }
+
+  const realpathEscapeDir = makePlugin(
+    '__qh_realpath_escape',
+    { name: 'qh-realpath-escape', main: 'index.js' },
+    'module.exports = () => ({ unsafe: true });\n'
+  );
+  const outsideReviewedRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'zuvyr-local-plugin-outside-'));
+  const originalRealpathSync = fs.realpathSync;
+  try {
+    fs.realpathSync = function qhRealpathSync(target, ...args) {
+      if (path.resolve(String(target)) === path.resolve(realpathEscapeDir)) {
+        return outsideReviewedRoot;
+      }
+      return originalRealpathSync(target, ...args);
+    };
+    const warnings = [];
+    const discovered = discoverPlugins(message => warnings.push(String(message)), { env: {} });
+    assert.equal(discovered['qh-realpath-escape'], undefined);
+    assert(warnings.some(value => value.includes('resolves outside the reviewed plugin root')));
+  } finally {
+    fs.realpathSync = originalRealpathSync;
+    fs.rmSync(outsideReviewedRoot, { recursive: true, force: true });
+  }
+
   const pkg = JSON.parse(originalPackageText);
   pkg.dependencies = {
     ...(pkg.dependencies || {}),
@@ -185,6 +250,7 @@ try {
   }
 
   console.log('PASS: local plugin discovery rejects malformed/unreviewed entries and accepts reviewed handlers.');
+  console.log('PASS: local plugin filesystem failures and realpath escapes fail closed.');
   console.log('PASS: executable npm discovery stays disabled, exact-allowlisted and provenance-gated.');
   console.log('PASS: exact npm provenance validates lock integrity, installed identity, entry realpath and node_modules containment.');
 } finally {
