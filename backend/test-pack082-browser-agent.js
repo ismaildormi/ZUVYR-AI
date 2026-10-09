@@ -17,6 +17,7 @@ const read = file =>
 const config = require('./config/browser-agent.v1.json');
 const {
   normalizeText,
+  assertVisibleTextEvidence,
   classifyAction,
   assertObservationBoundary,
   permissionRequestForAction,
@@ -27,7 +28,9 @@ const {
 } = require('./lib/browserAgentPlanner');
 const {
   parseDecisionText,
-  actionFromDecision
+  actionFromDecision,
+  hasVerifiedTerminalOutcome,
+  terminalOutcomeCheck
 } = require('./lib/browserAgentController');
 const {
   createStepExecutor
@@ -44,6 +47,16 @@ const server = read('server.js');
 const aiRouter = read('aiRouter.js');
 const decisionLog = read('lib/routerDecisionLog.js');
 const pricingAuthority = read('lib/modelPricingAuthority.js');
+
+assert.match(controller, /Before done=true, the most recent action must be a successful verify action/);
+assert.match(controller, /browser_agent_terminal_outcome_unverified/);
+assert.match(controller, /verification: assertVisibleTextEvidence\(classified\.target, observation\)/);
+const doneGuardStart = controller.indexOf('if (decision.done === true)');
+const doneGuardEnd = controller.indexOf('const proposed = actionFromDecision(decision, observation);', doneGuardStart);
+assert(doneGuardStart >= 0 && doneGuardEnd > doneGuardStart);
+const doneGuardBlock = controller.slice(doneGuardStart, doneGuardEnd);
+assert(doneGuardBlock.indexOf('terminalOutcomeCheck') >= 0);
+assert(doneGuardBlock.indexOf('terminalOutcomeCheck') < doneGuardBlock.indexOf("status: 'succeeded'"));
 const providerRegistry = read('src/modules/ai/providers/index.js');
 const graph = require('./config/capability-graph.v1.json');
 const routerHardFilters = require('./config/router-hard-filters.v1.json');
@@ -464,6 +477,89 @@ const doneDecision = parseDecisionText(
 assert.equal(doneDecision.done, true);
 assert.equal(doneDecision.expectedOutcome, 'Complete');
 
+const verifyObservation = {
+  page: { host: 'example.com', path: '/items' },
+  robots: 'allowed',
+  captchaDetected: false,
+  authChallengeDetected: false,
+  items: [{
+    handle: 'za_12345678',
+    tag: 'span',
+    role: 'status',
+    type: '',
+    text: 'Open',
+    sensitive: false,
+    submitLike: false
+  }]
+};
+const verifyDecision = parseDecisionText(
+  '{"done":false,"action":{"type":"verify","handle":"za_12345678","expectedText":"Open"},"expectedOutcome":"The item status is Open"}'
+);
+const verifiedAction = actionFromDecision(verifyDecision, verifyObservation);
+const verifiedClassified = classifyAction(verifiedAction, { allowedHosts: ['example.com'] });
+const expectedVisibleHash = crypto.createHash('sha256').update('open', 'utf8').digest('hex');
+assert.equal(verifiedClassified.type, 'verify');
+assert.equal(verifiedClassified.permissionAction, null);
+assert.equal(verifiedClassified.persistedTarget.expectedTextSha256, expectedVisibleHash);
+assert.equal(verifiedClassified.persistedTarget.expectedTextLength, 4);
+assert.equal(Object.prototype.hasOwnProperty.call(verifiedClassified.persistedTarget, 'expectedText'), false);
+assert.deepEqual(
+  assertVisibleTextEvidence(verifiedClassified.target, verifyObservation),
+  { matched: true, handle: 'za_12345678', textSha256: expectedVisibleHash, textLength: 4 }
+);
+assert.throws(
+  () => assertVisibleTextEvidence(verifiedClassified.target, {
+    ...verifyObservation,
+    items: [{ ...verifyObservation.items[0], text: 'Closed' }]
+  }),
+  error => error.code === 'browser_agent_verification_failed'
+);
+assert.throws(
+  () => actionFromDecision(
+    parseDecisionText('{"done":false,"action":{"type":"verify","handle":"za_12345678","expectedText":"Closed"},"expectedOutcome":"The item is closed"}'),
+    verifyObservation
+  ),
+  error => error.code === 'browser_agent_verification_evidence_not_observed'
+);
+assert.throws(
+  () => classifyAction({ type: 'verify', target: { handle: 'za_12345678', text: 'Open' } }, { allowedHosts: ['example.com'] }),
+  error => error.code === 'browser_agent_verification_evidence_required'
+);
+
+const successfulVerify = {
+  actionType: 'verify',
+  status: 'succeeded',
+  target: { handle: 'za_12345678' },
+  outcome: { verification: {
+    matched: true,
+    handle: 'za_12345678',
+    textSha256: expectedVisibleHash,
+    textLength: 4
+  } }
+};
+assert.equal(hasVerifiedTerminalOutcome([successfulVerify]), true);
+assert.equal(hasVerifiedTerminalOutcome([]), false);
+assert.equal(hasVerifiedTerminalOutcome([{
+  ...successfulVerify,
+  outcome: { verification: { ...successfulVerify.outcome.verification, matched: false } }
+}]), false);
+assert.equal(hasVerifiedTerminalOutcome([
+  successfulVerify,
+  { actionType: 'click', status: 'succeeded', target: { handle: 'za_12345678' }, outcome: {} }
+]), false);
+assert.equal(terminalOutcomeCheck({
+  decision: { done: true, expectedOutcome: 'The item status is Open' },
+  actions: [successfulVerify]
+}).verified, true);
+assert.deepEqual(terminalOutcomeCheck({
+  decision: { done: true, expectedOutcome: '' },
+  actions: [successfulVerify]
+}), { verified: false, reason: 'expected_outcome_missing' });
+assert.deepEqual(terminalOutcomeCheck({
+  decision: { done: true, expectedOutcome: 'The item status is Open' },
+  actions: []
+}), { verified: false, reason: 'verified_action_required' });
+
 const clickDecision = parseDecisionText(
   '{"done":false,"action":{"type":"click","handle":"za_12345678"},"expectedOutcome":"Open item"}'
 );
@@ -868,6 +964,7 @@ assert(
   console.log('PASS: PACK082 browser actions enforce scoped approvals, secret boundaries and no-blind-retry semantics');
   console.log('PASS: PACK082 Browser Agent routes are mounted on canonical auth/storage/router/ledger infrastructure');
   console.log('PASS: PACK082 durable approval deferral uses the existing task executor without a second queue');
+  console.log('PASS: PACK082 terminal success requires a fresh exact visible-state verification');
   console.log('LIVE BROWSERBASE / PAYMENT / PROVIDER NETWORK CALLS: NONE');
 })().catch(error => {
   console.error(error);

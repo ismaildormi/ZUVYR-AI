@@ -25,6 +25,8 @@ const {
 const {
   classifyAction,
   normalizeText,
+  normalizeVisibleText,
+  assertVisibleTextEvidence,
   assertObservationBoundary,
   permissionRequestForAction,
   assertConsumedGrantMatches,
@@ -143,7 +145,9 @@ function reasoningMessages({ run, observation, actions }) {
         'Never solve or bypass CAPTCHAs, authentication challenges, robots restrictions, or site safety controls.',
         'Do not invent elements or hosts.',
         'Use the smallest next action toward the goal.',
-        'If the task is visibly complete, set done=true.'
+        'Before done=true, the most recent action must be a successful verify action after the last state-changing action.',
+        'For verify, provide a visible handle and expectedText exactly equal to that element’s complete visible text; the server re-checks it on a fresh snapshot.',
+        'Never claim completion when no concrete visible postcondition can be verified.'
       ].join(' ')
     },
     {
@@ -181,6 +185,27 @@ function actionFromDecision(decision, observation) {
     };
   }
 
+  if (type === 'verify') {
+    const handle = String(action.handle || action.target?.handle || '').trim();
+    const item = observation.items.find(candidate => candidate.handle === handle);
+    if (!item) throw controllerError('browser_agent_decision_target_not_observed');
+    if (item.sensitive === true) throw controllerError('browser_agent_sensitive_input_blocked');
+    const expectedText = normalizeVisibleText(action.expectedText || action.target?.expectedText);
+    const observedText = normalizeVisibleText(item.text);
+    if (!expectedText || !observedText || expectedText !== observedText) {
+      throw controllerError('browser_agent_verification_evidence_not_observed');
+    }
+    action.target = {
+      ...item,
+      host: observation.page?.host || null,
+      path: observation.page?.path || null,
+      expectedTextSha256: crypto.createHash('sha256').update(expectedText, 'utf8').digest('hex'),
+      expectedTextLength: expectedText.length,
+      captcha: observation.captchaDetected === true,
+      authChallenge: observation.authChallengeDetected === true
+    };
+  }
+
   if (type === 'navigate') {
     action.url = String(action.url || '').trim();
   }
@@ -196,7 +221,35 @@ function actionFromDecision(decision, observation) {
   return action;
 }
 
-function verifiedTransientInput(internal, inputText, { required = false } = {}) {
+function hasVerifiedTerminalOutcome(actions) {
+  if (!Array.isArray(actions) || actions.length === 0) return false;
+  const last = actions[actions.length - 1];
+  const verification = last?.outcome?.verification;
+  return Boolean(
+    last?.actionType === 'verify' &&
+    last?.status === 'succeeded' &&
+    verification?.matched === true &&
+    verification.handle &&
+    verification.handle === last.target?.handle &&
+    /^[0-9a-f]{64}$/.test(String(verification.textSha256 || '')) &&
+    Number.isInteger(Number(verification.textLength)) &&
+    Number(verification.textLength) > 0 &&
+    Number(verification.textLength) <= 300
+  );
+}
+
+function terminalOutcomeCheck({ decision, actions } = {}) {
+  const expectedOutcome = String(decision?.expectedOutcome || '').trim();
+  if (!expectedOutcome) {
+    return Object.freeze({ verified: false, reason: 'expected_outcome_missing' });
+  }
+  if (!hasVerifiedTerminalOutcome(actions)) {
+    return Object.freeze({ verified: false, reason: 'verified_action_required' });
+  }
+  return Object.freeze({ verified: true, reason: null, expectedOutcome });
+}
+
+function verifiedTransientInput(internal, inputText, { required = false } = {})
   if (internal.action_type !== 'type') return null;
 
   if (inputText == null) {
@@ -643,11 +696,19 @@ function createBrowserAgentController({
     try {
       switch (internal.action_type) {
         case 'observe':
-        case 'verify':
           outcome = {
             page: observation.page,
             robots: observation.robots,
             visibleElements: observation.items.length
+          };
+          break;
+
+        case 'verify':
+          outcome = {
+            page: observation.page,
+            robots: observation.robots,
+            visibleElements: observation.items.length,
+            verification: assertVisibleTextEvidence(classified.target, observation)
           };
           break;
 
@@ -964,6 +1025,18 @@ function createBrowserAgentController({
           });
         }
         run = await agent.getRun({ ownerId, runId });
+        if (existingReasoning.decision_summary?.verificationRequired === true) {
+          return Object.freeze({
+            state: run.status,
+            run,
+            replayed: true,
+            verificationRequired: true,
+            reason: 'browser_agent_terminal_outcome_unverified',
+            verificationReason: existingReasoning.decision_summary.reason || 'verified_action_required',
+            expectedOutcome: existingReasoning.decision_summary.expectedOutcome || null,
+            continueAvailable: true
+          });
+        }
         return Object.freeze({ state: run.status, run, replayed: true });
       }
 
@@ -1049,6 +1122,37 @@ function createBrowserAgentController({
 
       const decision = reasoned.decision;
       if (decision.done === true) {
+        const terminalCheck = terminalOutcomeCheck({ decision, actions });
+        if (!terminalCheck.verified) {
+          await agent.completeReasoning({
+            ownerId,
+            requestId,
+            actionId: null,
+            decisionSummary: {
+              done: false,
+              modelRequestedDone: true,
+              verificationRequired: true,
+              terminalOutcomeVerified: false,
+              reason: terminalCheck.reason,
+              expectedOutcome: decision.expectedOutcome || null
+            },
+            model: reasoned.model,
+            pricingVersion: reasoned.pricingVersion,
+            costEntryId: reasoned.costEntryId,
+            providerCostMicroUsd: reasoned.providerCostMicroUsd,
+            creditsCharged: reasoned.creditsCharged
+          });
+          run = await agent.getRun({ ownerId, runId });
+          return Object.freeze({
+            state: run.status,
+            run,
+            verificationRequired: true,
+            reason: 'browser_agent_terminal_outcome_unverified',
+            verificationReason: terminalCheck.reason,
+            expectedOutcome: decision.expectedOutcome || null,
+            continueAvailable: true
+          });
+        }
         await agent.completeReasoning({
           ownerId,
           requestId,
@@ -1384,5 +1488,7 @@ module.exports = {
   parseDecisionText,
   reasoningMessages,
   actionFromDecision,
+  hasVerifiedTerminalOutcome,
+  terminalOutcomeCheck,
   createBrowserAgentController
 };

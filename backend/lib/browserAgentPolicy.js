@@ -63,6 +63,21 @@ function targetSummary(target = {}) {
     throw agentError('browser_agent_target_invalid');
   }
   const handle = target.handle == null ? null : normalizeHandle(target.handle);
+  const expectedTextSha256 = target.expectedTextSha256 == null
+    ? null
+    : String(target.expectedTextSha256).toLowerCase();
+  if (expectedTextSha256 !== null && !/^[0-9a-f]{64}$/.test(expectedTextSha256)) {
+    throw agentError('browser_agent_verification_fingerprint_invalid');
+  }
+  const expectedTextLength = target.expectedTextLength == null
+    ? null
+    : Number(target.expectedTextLength);
+  if (
+    expectedTextLength !== null &&
+    (!Number.isInteger(expectedTextLength) || expectedTextLength < 1 || expectedTextLength > 300)
+  ) {
+    throw agentError('browser_agent_verification_length_invalid');
+  }
   return Object.freeze({
     handle,
     tag: String(target.tag || '').toLowerCase().slice(0, 30),
@@ -74,7 +89,9 @@ function targetSummary(target = {}) {
     sensitive: target.sensitive === true,
     submitLike: target.submitLike === true,
     captcha: target.captcha === true,
-    authChallenge: target.authChallenge === true
+    authChallenge: target.authChallenge === true,
+    expectedTextSha256,
+    expectedTextLength
   });
 }
 
@@ -85,6 +102,10 @@ function classifyAction(action, { allowedHosts = [] } = {}) {
 
   const { type, definition } = actionDefinition(action.type);
   const target = targetSummary(action.target || {});
+
+  if (type === 'verify' && (!target.handle || target.sensitive || !target.expectedTextSha256 || !target.expectedTextLength)) {
+    throw agentError('browser_agent_verification_evidence_required');
+  }
 
   if (target.captcha) throw agentError('browser_agent_captcha_user_required');
   if (target.authChallenge && ['type','submit'].includes(type)) {
@@ -166,6 +187,8 @@ function classifyAction(action, { allowedHosts = [] } = {}) {
       role: target.role,
       type: target.type,
       text: target.text,
+      expectedTextSha256: target.expectedTextSha256,
+      expectedTextLength: target.expectedTextLength,
       protocol: targetUrl ? new URL(targetUrl.url).protocol : null,
       host: targetUrl ? targetUrl.host : target.host,
       path: targetUrl ? new URL(targetUrl.url).pathname : target.path,
@@ -177,6 +200,45 @@ function classifyAction(action, { allowedHosts = [] } = {}) {
     inputSha256: canonical.inputSha256,
     inputLength: canonical.inputLength
   });
+}
+
+function normalizeVisibleText(value) {
+  return String(value == null ? '' : value)
+    .replace(/\\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function assertVisibleTextEvidence(target, observation) {
+  if (!target || typeof target !== 'object' || !observation || !Array.isArray(observation.items)) {
+    throw agentError('browser_agent_verification_observation_invalid');
+  }
+  const handle = normalizeHandle(target.handle);
+  const item = observation.items.find(candidate => candidate && candidate.handle === handle);
+  if (!item) throw agentError('browser_agent_verification_target_not_observed');
+  if (item.sensitive === true) throw agentError('browser_agent_sensitive_input_blocked');
+
+  const text = normalizeVisibleText(item.text);
+  const expectedTextSha256 = String(target.expectedTextSha256 || '').toLowerCase();
+  const expectedTextLength = Number(target.expectedTextLength);
+  if (
+    !text ||
+    !/^[0-9a-f]{64}$/.test(expectedTextSha256) ||
+    !Number.isInteger(expectedTextLength) ||
+    expectedTextLength < 1 ||
+    expectedTextLength > 300
+  ) {
+    throw agentError('browser_agent_verification_evidence_required');
+  }
+
+  const textSha256 = crypto.createHash('sha256').update(text, 'utf8').digest('hex');
+  if (text.length !== expectedTextLength || textSha256 !== expectedTextSha256) {
+    throw agentError('browser_agent_verification_failed', {
+      observedTextSha256: textSha256,
+      observedTextLength: text.length
+    });
+  }
+  return Object.freeze({ matched: true, handle, textSha256, textLength: text.length });
 }
 
 function assertObservationBoundary(observation = {}) {
@@ -254,6 +316,8 @@ module.exports = {
   fingerprint,
   normalizeHandle,
   normalizeText,
+  normalizeVisibleText,
+  assertVisibleTextEvidence,
   classifyAction,
   assertObservationBoundary,
   permissionRequestForAction,
