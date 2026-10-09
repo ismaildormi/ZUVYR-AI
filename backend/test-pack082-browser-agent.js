@@ -17,6 +17,7 @@ const read = file =>
 const config = require('./config/browser-agent.v1.json');
 const {
   normalizeText,
+  normalizeVisibleText,
   assertVisibleTextEvidence,
   classifyAction,
   assertObservationBoundary,
@@ -498,6 +499,7 @@ const verifyDecision = parseDecisionText(
 const verifiedAction = actionFromDecision(verifyDecision, verifyObservation);
 const verifiedClassified = classifyAction(verifiedAction, { allowedHosts: ['example.com'] });
 const expectedVisibleHash = crypto.createHash('sha256').update('open', 'utf8').digest('hex');
+assert.equal(normalizeVisibleText('  In  Progress\n '), 'in progress');
 assert.equal(verifiedClassified.type, 'verify');
 assert.equal(verifiedClassified.permissionAction, null);
 assert.equal(verifiedClassified.persistedTarget.expectedTextSha256, expectedVisibleHash);

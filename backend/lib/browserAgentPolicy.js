@@ -204,7 +204,7 @@ function classifyAction(action, { allowedHosts = [] } = {}) {
 
 function normalizeVisibleText(value) {
   return String(value == null ? '' : value)
-    .replace(/\\s+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase();
 }
