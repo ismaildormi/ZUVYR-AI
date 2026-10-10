@@ -46,6 +46,15 @@ Use `docs/zuvyr/V1_QUALITY_HARDENING_MATRIX_2026-09-25.md` and `docs/zuvyr/ZUVYR
 
 These statements are a starting reconciliation based on repository documents and search results, not a fresh independent pass of every live deployment/database setting. Fresh runtime evidence supersedes this summary.
 
+## 3A. Fresh CI findings from this reconciliation PR (2026-10-10)
+
+The first GitHub Actions run on PR #135 exposed two actionable issues:
+
+- **Continuity snapshot drift introduced by this PR:** the mandatory Release Quality test failed because the two modified canonical files (`ZUVYR_CONTINUE_HERE.md` and `docs/zuvyr/PACK_EXECUTION_APPENDIX.md`) no longer matched the SHA-1 blob hashes recorded in the continuity manifest. This is a genuine integrity-gate failure. The manifest was then updated on the branch to bind those exact file hashes and include this audit in the canonical boot order. Re-run the continuity/release checks on the new head; do not treat the repair as verified until the checks complete.
+- **Dependency/security gate failure:** Backend Quality reported 14 npm audit findings (4 moderate, 9 high, 1 critical) in the dependency tree, including a critical `proxy-addr` IPv4-mapped IPv6 trust-subnet issue and high-severity `sharp`/transitive dependency findings. This is not caused by the documentation edit, and blind `npm audit fix --force` is unsafe because the log warns of breaking downgrades/range changes. Route it through a dedicated dependency hardening FIX under PACK139/149/150: identify direct vs transitive ownership, inspect lockfile and supported version ranges, upgrade the smallest safe dependency set, run backend/release/plugin/security regression suites, rerun full-history secret scanning and npm audit, and preserve a rollback-ready lockfile diff. Keep the critical/high findings open until the exact fixed tree passes.
+
+Check run evidence: Backend Quality `https://github.com/ismaildormi/ZUVYR-AI/actions/runs/38021892459/job/114124477133`; Release Quality `https://github.com/ismaildormi/ZUVYR-AI/actions/runs/38021892459/job/114124477209`. The first run is evidence of failures on the prior PR head, not proof of current status after the manifest repair.
+
 ## 4. Mandatory execution protocol for each finding
 
 Every finding must have a stable ID, severity, affected Pack(s), exact source path/line or production evidence, exploit/failure scenario, chosen fix, focused regression, adjacent regression, negative/abuse test, rollback/recovery test where applicable, CI result on exact PR head and merged main, production evidence where applicable, receipt, and an explicit owner/external dependency if not closable by code.
