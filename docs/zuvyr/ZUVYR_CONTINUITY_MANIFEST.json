@@ -277,7 +277,7 @@
     "docs/zuvyr/continuous-improvement-override.v1.json": "7b465282196f4d9bc5ef1342a40cae627a5e3faa",
     "zuvyr-pack-evidence/reconciliations/2026-09-24-post-hardening-maintenance/receipt.json": "01737f12bb5ef7f7710f1a8c5ee6a2309da4aba0",
     "zuvyr-pack-evidence/reconciliations/2026-09-24-infra-advisor-reconciliation/receipt.json": "692fbd6fd71e9d20a2dd2e5ecac4bf082b37a7bb",
-    "docs/zuvyr/DEEPSEEK_INDEPENDENT_TECHNICAL_GAP_RECONCILIATION_2026-10-10.md": "a1bc885156613a6af65a1ae07543014301023ba5"
+    "docs/zuvyr/DEEPSEEK_INDEPENDENT_TECHNICAL_GAP_RECONCILIATION_2026-10-10.md": "f9bef455296b4495f8ca2f81e398e79ce7f01741"
   },
   "snapshot_policy": "Blob SHAs are known-good snapshots, not freezes. When a canonical file changes through a reviewed improvement, update the snapshot atomically with the change; never roll back a valid newer change only to satisfy an old hash.",
   "integrity_expectations": {
