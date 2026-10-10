@@ -196,3 +196,14 @@ Where relevant to the pack, verify all of the following before LOCK:
 
 Canonical full contract: `docs/zuvyr/USER_OUTCOME_ENGINE.md`
 Machine-readable overlay: `docs/zuvyr/user-outcome-pack-overlay.v1.json`
+
+
+## Mandatory DeepSeek + Independent Technical Gap Reconciliation (2026-10-10)
+
+Before any Pack/FIX/hardening work, read `docs/zuvyr/DEEPSEEK_INDEPENDENT_TECHNICAL_GAP_RECONCILIATION_2026-10-10.md` alongside the canonical continuity manifest, current state override, active Pack receipt, `V1_QUALITY_HARDENING_MATRIX_2026-09-25.md`, `ZUVYR_REMAINING_WORK.md`, and EA-001…EA-292 readiness matrix.
+
+- Reconcile each applicable finding to its existing QH/RW/EA ID and original Pack. Do not create duplicate IDs or silently drop a finding.
+- The audit found a conflict between PACK090-next wording in the PACK089 continuity capsule and the model-first `PACK094 → PACK095 → PACK096` priority override. Repair and validate the canonical continuity state before feature implementation; never choose an order from a stale section or memory.
+- The canonical repository scope is PACK001–PACK150 and EA-001…EA-292; PACK100 is an intermediate checkpoint and PACK150 is the V1 readiness gate. Older 100-Pack PDFs are historical input, not the current executable roadmap.
+- A document, migration file, test file, CI workflow, or merged commit alone does not close a finding. Record exact-head test results, negative/security cases, recovery/rollback proof, production evidence when required, and a receipt. Preserve external/admin/plan blockers as explicit blockers.
+- A new gap discovered during work must be added to the existing register and mapped to the correct Pack before that Pack is declared complete. No known actionable internal finding may be left unresolved while claiming CLEAN/LOCKED_VERIFIED.
