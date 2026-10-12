@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0.0",
+  "last_reconciled_at": null,
+  "repository": {
+    "full_name": "ismaildormi/ZUVYR-AI",
+    "default_branch": "main",
+    "observed_baseline_commit": "9029a07e9da8d3abb4974cda5b7bd6bf71085b66"
+  },
+  "systems": [
+    {
+      "id": "SYS-ZUVYR",
+      "name": "ZUVYR AI",
+      "repository": "ismaildormi/ZUVYR-AI",
+      "source_paths": ["README.md", "docs/zuvyr/ROADMAP_150.md"],
+      "status": "UNVERIFIED",
+      "status_note": "Product scope exists in canonical documents; item-level production status must be populated from evidence."
+    },
+    {
+      "id": "SYS-SYSTEM-X",
+      "name": "SYSTEM X",
+      "repository": null,
+      "source_paths": [],
+      "status": "UNVERIFIED",
+      "status_note": "Related system named in owner context; exact source repository and item-level evidence must be reconciled."
+    },
+    {
+      "id": "SYS-ZEBRA-V2",
+      "name": "ZEBRA V2",
+      "repository": null,
+      "source_paths": [],
+      "status": "UNVERIFIED",
+      "status_note": "Related system named in owner context; exact source repository and item-level evidence must be reconciled."
+    },
+    {
+      "id": "SYS-NOVA8",
+      "name": "NOVA8",
+      "repository": null,
+      "source_paths": [],
+      "status": "UNVERIFIED",
+      "status_note": "Separate Unity/mobile game project described in historical handoff; exact current repository and latest receipt required."
+    }
+  ],
+  "inventory": [],
+  "packs": {
+    "canonical_roadmap": "docs/zuvyr/ROADMAP_150.md",
+    "planned_ids": "PACK001-PACK150",
+    "acceptance_ids": "EA-001-EA-292",
+    "historical_100_pack_plan_is_separate": true,
+    "known_execution_order_conflict": {
+      "sources": [
+        "docs/zuvyr/ROADMAP_150.md model-first override PACK094->PACK095->PACK096 before PACK084-PACK093",
+        "historical continuity capsule indicating PACK089 active / PACK090 next"
+      ],
+      "status": "UNVERIFIED",
+      "resolution_receipt": null
+    }
+  },
+  "status_legend": [
+    "VERIFIED",
+    "PARTIAL",
+    "NOT BUILT",
+    "BLOCKED",
+    "UNVERIFIED",
+    "MOCK ONLY",
+    "DEFERRED",
+    "N/A_WITH_EVIDENCE"
+  ],
+  "blockers": [],
+  "conflicts": [],
+  "source_manifest": [],
+  "validation_runs": [],
+  "continuation_receipt": {
+    "commit": null,
+    "changed_paths": [],
+    "commands": [],
+    "tests": [],
+    "production_checks": [],
+    "remaining_work": []
+  }
+}
