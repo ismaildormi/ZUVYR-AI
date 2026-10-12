@@ -1,0 +1,1 @@
+system,agent_or_tool_name,canonical_id,category,purpose,input_contract,output_contract,implementation_path,api_or_provider,permissions_and_scopes,secret_names_only,cost_and_limits,tests,pack_ids,ea_ids,status,evidence_ref,checked_commit,environment,last_checked_utc,dependencies,known_gaps,next_action,notes
