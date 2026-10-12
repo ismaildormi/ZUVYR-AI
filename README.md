@@ -11,6 +11,10 @@ ZUVYR brings multimodal chat, research, image and video creation, voice, Code St
 [Quickstart](docs/QUICKSTART.md) · [Repository Map](docs/REPOSITORY_MAP.md) · [Product](docs/PRODUCT.md) · [Build with ZUVYR](docs/BUILD_WITH_ZUVYR.md) · [Starter Kits](starter-kits/README.md) · [Architecture](docs/ARCHITECTURE_OVERVIEW.md) · [Security](SECURITY.md) · [Public Use](docs/PUBLIC_USE_POLICY.md) · [Contributing](CONTRIBUTING.md) · [V1 Roadmap](docs/zuvyr/ROADMAP_150.md) · [V1 Readiness Audit](docs/zuvyr/V1_READINESS_COMPLETENESS_AUDIT_2026-09-22.md)
 
 
+## System-of-systems master context
+
+The cross-project handoff for ZUVYR, ZEBRA V2, SYSTEM X, and other inventoried workstreams is maintained in [`docs/system-of-systems/MASTER_CONTEXT_INDEX.md`](docs/system-of-systems/MASTER_CONTEXT_INDEX.md). Current execution limits and next actions are in [`MASTER_EXECUTION_STATE.md`](docs/system-of-systems/MASTER_EXECUTION_STATE.md); system identities and source conflicts are tracked in the same directory. These are evidence-based working registers, not a claim that all external systems or production states have already been verified.
+
 ## Build with ZUVYR
 
 Builders can reuse the sanitized resources in `examples/` and `starter-kits/` under **Apache License 2.0**. They are intentionally independent of ZUVYR production credentials and private infrastructure. The rest of the repository remains proprietary unless a file says otherwise. See [LICENSE](LICENSE) and [Public Use Policy](docs/PUBLIC_USE_POLICY.md).
