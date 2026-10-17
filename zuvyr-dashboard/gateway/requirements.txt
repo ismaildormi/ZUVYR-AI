@@ -1,0 +1,7 @@
+flask
+requests
+numpy
+moviepy>=2
+pillow
+beautifulsoup4
+fake-useragent

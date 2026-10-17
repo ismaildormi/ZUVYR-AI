@@ -19,3 +19,6 @@ frontend/rox-config.local.js
 
 .vercel
 .env*
+
+# ZUVYR dashboard gateway bytecode
+zuvyr-dashboard/gateway/__pycache__/

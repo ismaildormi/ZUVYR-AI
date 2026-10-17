@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>ZUVYR · True Automation Core</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">Z</div>
+      <div>
+        <h1>ZUVYR True Automation Core</h1>
+        <p class="subtitle">Multi-Agent Control Dashboard · 2026</p>
+      </div>
+    </div>
+    <div class="status">
+      <span id="conn" class="pill wait"><i></i><span>جارٍ الاتصال…</span></span>
+      <span id="updated" class="note"></span>
+      <button id="refresh" class="btn" type="button">تحديث</button>
+    </div>
+  </header>
+
+  <nav id="modnav" class="modnav" aria-label="وحدات النظام"></nav>
+  <section id="kpis" class="kpis" aria-label="ملخص النظام"></section>
+  <main id="grid" class="grid"></main>
+
+  <dialog id="lightbox">
+    <button class="close" type="button" aria-label="إغلاق">✕</button>
+    <img alt="" />
+    <p id="lbcap" class="note"></p>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
