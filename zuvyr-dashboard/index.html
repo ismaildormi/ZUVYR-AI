@@ -1,38 +1,115 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="ZUVYR True Automation Core · لوحة قيادة المحركات متعددة الوكلاء" />
+  <meta name="theme-color" content="#0b0f1a" />
   <title>ZUVYR · True Automation Core</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/modules.css" />
 </head>
 <body>
+  <a class="skip-link" href="#grid" data-i18n="a11y.skip">تخطَّ إلى المحتوى</a>
+
   <header class="topbar">
     <div class="brand">
-      <div class="logo" aria-hidden="true">Z</div>
-      <div>
-        <h1>ZUVYR True Automation Core</h1>
-        <p class="subtitle">Multi-Agent Control Dashboard · 2026</p>
-      </div>
+      <img class="brand-logo" src="assets/logo.svg" alt="" width="40" height="40" />
+      <div class="brand-name">ZUVYR <span data-i18n="app.product">True Automation Core</span></div>
     </div>
-    <div class="status">
-      <span id="conn" class="pill wait"><i></i><span>جارٍ الاتصال…</span></span>
-      <span id="updated" class="note"></span>
-      <button id="refresh" class="btn" type="button">تحديث</button>
+
+    <div class="topbar-actions">
+      <span class="updated" id="updated" aria-live="polite"></span>
+
+      <span class="tag" id="conn" role="status">
+        <i class="dot pulse"></i>
+        <span data-i18n="topbar.connecting">جارٍ الاتصال</span>
+      </span>
+
+      <div class="seg" role="group" data-i18n-aria="topbar.language" id="lang-switch">
+        <button type="button" data-lang="ar">AR</button>
+        <button type="button" data-lang="en">EN</button>
+      </div>
+
+      <button class="btn btn-ghost btn-icon" type="button" id="theme-toggle" data-i18n-title="topbar.theme" data-i18n-aria="topbar.theme"></button>
+      <button class="btn" type="button" id="refresh" data-i18n-title="topbar.refresh">
+        <span data-i18n="topbar.refresh">تحديث</span>
+      </button>
+      <button class="btn btn-ghost btn-icon" type="button" id="settings-open" data-i18n-title="topbar.settings" data-i18n-aria="topbar.settings"></button>
     </div>
   </header>
 
-  <nav id="modnav" class="modnav" aria-label="وحدات النظام"></nav>
-  <section id="kpis" class="kpis" aria-label="ملخص النظام"></section>
-  <main id="grid" class="grid"></main>
+  <section class="hero" aria-labelledby="hero-title">
+    <div>
+      <span class="eyebrow"><i class="dot"></i><span data-i18n="hero.eyebrow">Multi-Agent Control · 2026</span></span>
+      <h1 class="hero-title" id="hero-title">
+        <span data-i18n="hero.title">مركز قيادة الأتمتة</span>
+        <span class="grad" data-i18n="hero.titleAccent">ZUVYR</span>
+      </h1>
+      <p class="hero-lead" data-i18n="hero.lead">ستة محركات مستقلة تعمل كفريق واحد.</p>
+    </div>
+    <div class="hero-meta" id="hero-meta"></div>
+  </section>
 
-  <dialog id="lightbox">
-    <button class="close" type="button" aria-label="إغلاق">✕</button>
-    <img alt="" />
-    <p id="lbcap" class="note"></p>
+  <section class="kpis" id="kpis" aria-label="ملخص"></section>
+
+  <div class="modnav-wrap">
+    <nav class="modnav" id="modnav" data-i18n-aria="nav.label" aria-label="وحدات النظام"></nav>
+  </div>
+
+  <main class="grid" id="grid"></main>
+
+  <footer class="footer">
+    <span data-i18n="footer.text">ZUVYR · لوحة التحكم</span>
+    <span class="mono" id="footer-version"></span>
+  </footer>
+
+  <!-- إعدادات -->
+  <dialog id="settings" data-i18n-aria="settings.title" aria-labelledby="settings-title">
+    <div class="panel">
+      <div class="panel-head">
+        <h2 id="settings-title" data-i18n="settings.title">الإعدادات</h2>
+        <button class="btn btn-ghost btn-icon" type="button" id="settings-close" data-i18n-title="settings.close" data-i18n-aria="settings.close"></button>
+      </div>
+
+      <div class="field">
+        <span class="field-label" data-i18n="settings.refresh">فترة التحديث التلقائي</span>
+        <div class="seg" id="refresh-options" role="group" data-i18n-aria="settings.refresh"></div>
+      </div>
+
+      <div class="field">
+        <span class="field-label" data-i18n="settings.modules">الوحدات الظاهرة</span>
+        <div class="toggle-list" id="module-toggles"></div>
+      </div>
+
+      <div class="row space settings-foot">
+        <span class="hint" data-i18n="settings.saved">تُحفظ التفضيلات في هذا المتصفح.</span>
+        <button class="btn" type="button" id="settings-reset" data-i18n="settings.reset">استعادة الافتراضي</button>
+      </div>
+    </div>
   </dialog>
 
-  <script src="app.js"></script>
+  <!-- معرض الصور -->
+  <dialog id="lightbox" data-i18n-aria="brand.gallery" aria-labelledby="lb-caption">
+    <div class="lightbox">
+      <img id="lb-image" alt="" />
+      <div class="lightbox-bar">
+        <span class="fname" id="lb-caption"></span>
+        <span class="tag" id="lb-count"></span>
+        <button class="btn btn-ghost btn-icon" type="button" id="lb-close" data-i18n-title="brand.close" data-i18n-aria="brand.close"></button>
+      </div>
+      <button class="lightbox-nav prev" type="button" id="lb-prev" data-i18n-title="brand.prev" data-i18n-aria="brand.prev"></button>
+      <button class="lightbox-nav next" type="button" id="lb-next" data-i18n-title="brand.next" data-i18n-aria="brand.next"></button>
+    </div>
+  </dialog>
+
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

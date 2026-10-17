@@ -1,9 +1,9 @@
 'use strict';
 /*
  * ZUVYR Dashboard — خادم محلي خفيف بدون تبعيات:
- *  - يقدّم ملفات الواجهة (index.html / styles.css / app.js)
+ *  - يقدّم ملفات الواجهة (index.html و css/ و js/ و assets/)
  *  - يمرّر /api/* إلى الـ Gateway (افتراضياً http://127.0.0.1:5000) فلا حاجة لتفعيل CORS
- *  - يقدّم ملفات الوسائط من ZUVYR_MEDIA_ROOT عبر /media/<videos_pool|scripts_pool|3d_pool>/...
+ *  - يقدّم ملفات الوسائط من ZUVYR_MEDIA_ROOT عبر /media/<videos_pool|scripts_pool>/...
  *
  * التشغيل:  node zuvyr-dashboard/server.js
  */
@@ -16,8 +16,9 @@ const HOST = process.env.HOST || '0.0.0.0';
 const BACKEND = new URL(process.env.BACKEND_URL || 'http://127.0.0.1:5000');
 const MEDIA_ROOT = process.env.ZUVYR_MEDIA_ROOT ? path.resolve(process.env.ZUVYR_MEDIA_ROOT) : null;
 const PUBLIC_DIR = __dirname;
-const STATIC_FILES = new Set(['/index.html', '/styles.css', '/app.js']);
-const MEDIA_FOLDERS = new Set(['videos_pool', 'scripts_pool', '3d_pool']);
+// ما يُقدَّم من الواجهة: index.html فقط، وملفات من هذه المجلدات الثلاثة
+const STATIC_DIRS = new Set(['css', 'js', 'assets']);
+const MEDIA_FOLDERS = new Set(['videos_pool', 'scripts_pool']);
 const HOP_BY_HOP = new Set(['connection', 'keep-alive', 'transfer-encoding', 'proxy-connection', 'upgrade']);
 
 const MIME = {
@@ -36,6 +37,9 @@ const MIME = {
   '.txt': 'text/plain; charset=utf-8',
   '.md': 'text/markdown; charset=utf-8',
   '.obj': 'text/plain; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.woff2': 'font/woff2',
+  '.woff': 'font/woff',
 };
 
 // لا نضع X-Frame-Options أو frame-ancestors حتى تبقى الواجهة قابلة للعرض داخل المعاينة
@@ -171,20 +175,34 @@ function serveMedia(req, res, rawRel) {
 }
 
 function serveStatic(req, res, pathname) {
-  const name = pathname === '/' ? '/index.html' : pathname;
-  if (!STATIC_FILES.has(name)) {
-    sendJson(res, 404, { error: 'not_found' });
-    return;
+  let rel;
+  try { rel = decodeURIComponent(pathname); } catch { sendJson(res, 400, { error: 'bad_path' }); return; }
+
+  if (rel === '/' || rel === '/index.html') {
+    rel = '/index.html';
+  } else {
+    const [top] = rel.split('/').filter(Boolean);
+    if (!STATIC_DIRS.has(top)) { sendJson(res, 404, { error: 'not_found' }); return; }
   }
-  fs.readFile(path.join(PUBLIC_DIR, name), (err, data) => {
-    if (err) { sendJson(res, 404, { error: 'not_found' }); return; }
+
+  const filePath = path.resolve(PUBLIC_DIR, `.${rel}`);
+  if (!filePath.startsWith(PUBLIC_DIR + path.sep)) { sendJson(res, 403, { error: 'forbidden' }); return; }
+
+  const type = MIME[path.extname(filePath).toLowerCase()];
+  if (!type) { sendJson(res, 404, { error: 'not_found' }); return; }
+
+  fs.stat(filePath, (err, st) => {
+    if (err || !st.isFile()) { sendJson(res, 404, { error: 'not_found' }); return; }
     res.writeHead(200, {
       ...SECURITY_HEADERS,
-      'Content-Type': MIME[path.extname(name)],
-      'Content-Length': data.length,
+      'Content-Type': type,
+      'Content-Length': st.size,
       'Cache-Control': 'no-cache',
     });
-    res.end(req.method === 'HEAD' ? undefined : data);
+    if (req.method === 'HEAD') { res.end(); return; }
+    const stream = fs.createReadStream(filePath);
+    stream.on('error', () => res.destroy());
+    stream.pipe(res);
   });
 }
 

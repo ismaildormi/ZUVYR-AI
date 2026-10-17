@@ -1,0 +1,72 @@
+/* ZUVYR Dashboard · self-hosted fonts (SIL OFL 1.1)
+   Tajawal (Arabic + Latin) and IBM Plex Mono (Latin) via @fontsource. */
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(./files/tajawal-arabic-400-normal.woff2) format('woff2'), url(./files/tajawal-arabic-400-normal.woff) format('woff');
+}
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(./files/tajawal-latin-400-normal.woff2) format('woff2'), url(./files/tajawal-latin-400-normal.woff) format('woff');
+}
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(./files/tajawal-arabic-500-normal.woff2) format('woff2'), url(./files/tajawal-arabic-500-normal.woff) format('woff');
+}
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(./files/tajawal-latin-500-normal.woff2) format('woff2'), url(./files/tajawal-latin-500-normal.woff) format('woff');
+}
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(./files/tajawal-arabic-700-normal.woff2) format('woff2'), url(./files/tajawal-arabic-700-normal.woff) format('woff');
+}
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(./files/tajawal-latin-700-normal.woff2) format('woff2'), url(./files/tajawal-latin-700-normal.woff) format('woff');
+}
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 800;
+  src: url(./files/tajawal-arabic-800-normal.woff2) format('woff2'), url(./files/tajawal-arabic-800-normal.woff) format('woff');
+}
+@font-face {
+  font-family: 'Tajawal';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 800;
+  src: url(./files/tajawal-latin-800-normal.woff2) format('woff2'), url(./files/tajawal-latin-800-normal.woff) format('woff');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(./files/ibm-plex-mono-latin-400-normal.woff2) format('woff2'), url(./files/ibm-plex-mono-latin-400-normal.woff) format('woff');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(./files/ibm-plex-mono-latin-500-normal.woff2) format('woff2'), url(./files/ibm-plex-mono-latin-500-normal.woff) format('woff');
+}
