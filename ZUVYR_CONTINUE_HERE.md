@@ -1,3 +1,16 @@
+# CURRENT TECHNICAL GAP AUDIT OVERLAY — 2026-10-10
+
+Status: `AUDIT_IN_PROGRESS`; this overlay does not claim all technical gaps are fixed.
+
+- Live source repository: `ismaildormi/ZUVYR-AI`; current main observed at `9029a07e9da8d3abb4974cda5b7bd6bf71085b66`.
+- Canonical roadmap is PACK001–PACK150 with EA-001…EA-292; PACK100 is an intermediate hardening checkpoint and PACK150 is final V1 readiness. Do not use an old 100-Pack PDF as current executable truth.
+- Read first: `docs/zuvyr/DEEPSEEK_INDEPENDENT_TECHNICAL_GAP_RECONCILIATION_2026-10-10.md`, then the manifest/current-state override, latest Pack receipt, QH matrix and RW register.
+- IMPORTANT CONTINUITY CONFLICT: PACK089 capsule says PACK090 is next, while the roadmap's model-first override requires PACK094 → PACK095 → PACK096 before PACK084–PACK093 (which includes PACK090). Reconcile the capsule/current-state override/continue file/matrix/validator as one consistency fix before new feature work. Do not silently proceed on either stale sequence.
+- All QH/RW/EA findings must map to an existing Pack and remain open until the required source/CI/negative-test/recovery/production receipt proves closure. This document is not a code or production closure receipt.
+- A working branch was created for this reconciliation: `fix/technical-gap-closure-reconcile-pack094`. Its current changes are an audit register and mandatory per-Pack execution policy. They have not been merged to main and no production claim follows from them.
+
+---
+
 # ZUVYR — CONTINUE HERE
 
 ## PACK089 OWNER-ACCEPTANCE FINALIZED — PACK090 ALLOWED — 2026-09-26
