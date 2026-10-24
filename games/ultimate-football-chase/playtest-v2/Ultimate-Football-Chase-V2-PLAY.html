@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101b27"><title>Ultimate Football Chase · V2 Playtest</title>
+  <style>
+:root{--ink:#111e2b;--ink2:#1a2c38;--muted:#8da09f;--cream:#f5f2e9;--mint:#a3f1d2;--coral:#ffb38b;--line:rgba(198,231,216,.15);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;color:var(--cream);background:#0b151f}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse 70% 40% at 50% -15%,#305158 0%,transparent 100%),#0b151f;min-height:100vh}button{font:inherit;cursor:pointer}button:focus-visible{outline:3px solid #a3f1d2;outline-offset:3px}.page-shell{max-width:1540px;margin:auto;padding:20px 26px 0}.masthead{display:flex;justify-content:space-between;align-items:center;padding:13px 0 26px;gap:20px;border-bottom:1px solid var(--line)}.logo{display:flex;align-items:center;gap:14px;direction:ltr;text-align:left}.logo-mark{width:52px;height:52px;border:2px solid var(--mint);border-radius:13px;display:grid;place-items:center;font-size:31px;font-weight:950;color:var(--mint);transform:rotate(-8deg);line-height:1}.logo-mark span{position:absolute;font-size:10px;top:4px;right:4px}.logo strong{display:block;font:900 18px/.92 system-ui;letter-spacing:.075em}.logo small{display:block;color:var(--muted);font:700 9px/2 system-ui;letter-spacing:.12em}.build-tag{display:flex;align-items:center;gap:10px;color:#c9e4da;font-size:12px;white-space:nowrap}.build-tag b{background:var(--mint);color:#122a2d;padding:7px 11px;border-radius:6px;letter-spacing:.08em}.status-dot{width:8px;height:8px;border-radius:50%;background:#a6f8b8;box-shadow:0 0 14px #a6f8b8}.notice{background:#193a3e;border:1px solid #2b5f60;color:#d8e9e4;border-radius:9px;padding:12px 18px;margin:18px 0;font-size:12px;line-height:1.8}.notice span{font-size:17px;color:var(--mint);vertical-align:middle;margin-left:8px}.layout{display:grid;grid-template-columns:minmax(260px,1fr) minmax(340px,420px) minmax(280px,1fr);gap:16px;align-items:start;direction:rtl}.pane{background:#13232e;border:1px solid var(--line);border-radius:13px;padding:25px 22px 20px;min-height:775px}.intro{background:radial-gradient(circle at 10% 5%,rgba(119,185,154,.12),transparent 35%),#13232e}.eyebrow{color:var(--mint);font:800 11px system-ui;letter-spacing:.06em}.intro h1{font-size:clamp(36px,3vw,58px);line-height:1.2;margin:21px 0 14px;letter-spacing:-.04em}.intro h1 em,.loadout h2 em{font-style:normal;color:var(--mint)}.lead{font-size:14px;line-height:2;color:#b5c7c2;margin:0 0 21px}.stat-row{display:flex;gap:10px;margin:0 0 25px}.stat-row>div{flex:1;padding:14px;background:#1e353e;border-radius:8px;border:1px solid rgba(171,235,211,.13)}.stat-row strong{font:850 22px system-ui;display:block}.stat-row small{font-size:10px;color:#a8c3ba}.section-title{display:flex;justify-content:space-between;align-items:center;gap:6px;border-bottom:1px solid var(--line);padding:0 0 10px;margin:23px 0 12px;font-weight:800;font-size:15px}.section-title small{font-weight:500;color:var(--muted);font-size:10px;white-space:nowrap}.roster{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.hero-card{background:#20353e;border:1px solid transparent;color:#e4eee7;border-radius:8px;padding:8px 3px;text-align:center;transition:transform .15s,border-color .15s}.hero-card:hover,.swatch:hover,.board-card:hover{transform:translateY(-3px)}.hero-card.selected{border-color:var(--mint);background:#294348}.hero-card .hero-emblem{width:43px;height:43px;margin:1px auto 5px;display:grid;place-items:center;border-radius:50%;font:900 23px system-ui;background:color-mix(in srgb,var(--accent) 23%,#1a2e3c);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 60%,transparent)}.hero-card strong{font-size:10px;display:block}.hero-card small{font-size:9px;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.note-mini{font-size:10px;line-height:1.7;color:#95aaa6;margin-top:12px}.mission-box{background:linear-gradient(130deg,#31424a,#213842);border:1px solid #436760;border-radius:10px;padding:16px;margin-top:24px}.mission-box>div{font-size:12px;line-height:1.9;margin-top:9px;color:#dbe8df}.mission-box b{color:var(--mint)}.game-panel{border:1px solid rgba(181,233,208,.3);background:#1b303a;border-radius:14px;overflow:hidden;box-shadow:0 16px 55px #0006;direction:ltr}.game-top,.game-bottom{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;min-height:46px}.micro{font:900 13px system-ui;letter-spacing:.16em}.micro span{color:var(--mint)}.demo-chip{font:800 9px system-ui;letter-spacing:.09em;color:#b8d4c6;border:1px solid #547168;padding:5px 7px;border-radius:4px}.playfield{position:relative;aspect-ratio:420/720;overflow:hidden;touch-action:none;background:#2d5b65}.playfield canvas{width:100%;height:100%;display:block}.hud{position:absolute;inset:15px 13px auto;display:flex;justify-content:space-between;align-items:start;gap:7px;pointer-events:none}.hud>div{background:rgba(8,25,34,.72);border:1px solid rgba(193,244,216,.24);border-radius:7px;min-width:88px;padding:6px 9px;color:white;text-align:left;backdrop-filter:blur(5px)}.hud small{display:block;color:#b7d1c4;font:700 10px system-ui;direction:rtl}.hud b{display:block;font:900 20px system-ui}.hud sup{font-size:10px;color:var(--mint)}.hud b span{color:#fbd46c}.overlay{position:absolute;inset:0;background:linear-gradient(0deg,rgba(8,22,30,.93),rgba(10,26,36,.26) 66%,transparent);display:flex;align-items:flex-end;justify-content:center;padding:0 26px 110px;text-align:center;direction:rtl;transition:opacity .2s}.overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}.overlay-card{max-width:350px}.overlay h2{font-size:42px;line-height:1.25;margin:12px 0 8px}.overlay p{line-height:1.9;color:#d5e1d9;font-size:13px;margin:0 0 18px}.primary-action{border:0;background:var(--mint);color:#15312f;border-radius:8px;padding:15px 19px;width:100%;font-size:16px;font-weight:900;box-shadow:0 7px 24px #a3f1d24f}.primary-action:hover{background:#c7ffdb}.primary-action span{float:left}.touch-controls{position:absolute;bottom:15px;left:10px;right:10px;display:flex;gap:8px;justify-content:center;direction:ltr}.touch-controls button{background:#102c37bd;color:#e3f7e9;border:1px solid #a4e5ca8c;border-radius:10px;width:56px;height:54px;font-size:24px;font-weight:900;backdrop-filter:blur(5px);touch-action:manipulation}.touch-controls button:active{background:var(--mint);color:#15312f}.touch-controls small{display:block;font-size:8px;font-weight:700;line-height:1}.toast{position:absolute;top:90px;left:50%;transform:translateX(-50%);background:#16342fee;border:1px solid #99dfbc;color:#eaffdb;padding:7px 14px;border-radius:15px;font-size:12px;white-space:nowrap;opacity:0;transition:opacity .2s;pointer-events:none;direction:rtl}.toast.visible{opacity:1}.game-bottom{font-size:9px;color:#bdd1c3;gap:5px;flex-wrap:wrap;justify-content:center;direction:rtl;min-height:38px}.loadout h2{font-size:30px;margin:12px 0 16px}.wallet{display:flex;justify-content:space-between;align-items:center;background:#213b40;border:1px solid #4e7567;padding:12px;border-radius:9px}.wallet>div{display:flex;align-items:center;gap:10px}.wallet>div>span{font-size:29px;color:#ffcf69}.wallet strong{font:900 25px system-ui;display:block}.wallet small{font-size:9px;color:#afc8bb}.wallet>small{text-align:left;max-width:75px}.swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.swatch{border:1px solid #ffffff24;border-radius:7px;background:#203740;color:#dce8df;min-height:65px;padding:7px 3px;font-size:10px;transition:transform .15s}.swatch.selected,.board-card.selected{border-color:var(--mint);box-shadow:0 0 0 1px var(--mint)}.swatch i{display:block;width:26px;height:26px;margin:auto auto 5px;border-radius:50%;background:var(--swatch);box-shadow:inset 0 0 0 4px #ffffff22}.swatch.locked{opacity:.54}.swatch small{font-size:8px;display:block;color:#fcd4a0}.board-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.board-card{background:#203740;border:1px solid #ffffff24;color:#ecf0e6;border-radius:8px;padding:10px;text-align:right;font-size:11px;min-height:60px;transition:transform .15s}.board-card b{font-size:16px;color:var(--board);margin-left:8px}.board-card small{display:block;color:#8daea5;font-size:9px;margin-top:3px}.pack-list{display:grid;gap:8px}.pack{background:linear-gradient(110deg,#213b42,#202f3d);border:1px solid #ffffff22;border-radius:8px;padding:10px 12px}.pack-title{display:flex;justify-content:space-between;gap:6px;align-items:center}.pack-title strong{font-size:12px}.pack-title span{font:900 11px system-ui;color:var(--pack-tone)}.pack p{font-size:10px;line-height:1.55;margin:5px 0 9px;color:#adc6bb}.pack button{width:100%;border:1px solid var(--pack-tone);border-radius:5px;background:transparent;color:var(--pack-tone);padding:7px;font-weight:800;font-size:10px}.pack button:hover{background:#ffffff11}.pack button:disabled{opacity:.65;cursor:default}.reset-line{border-top:1px solid var(--line);margin-top:20px;padding-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px}.text-button{background:none;border:0;color:#faad9e;padding:2px;font-size:10px;text-decoration:underline}.reset-line span{font-size:9px;color:#87a49c}footer{text-align:center;padding:23px 10px;color:#69877e;font:700 10px system-ui;letter-spacing:.08em}footer span{color:var(--mint)}
+@media(max-width:1100px){.layout{grid-template-columns:minmax(240px,1fr) minmax(340px,420px)}.loadout{grid-column:1/-1;min-height:0}.loadout .swatches{grid-template-columns:repeat(7,1fr)}.loadout .pack-list{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.page-shell{padding:12px 11px 0}.masthead{padding-bottom:13px}.logo strong{font-size:13px}.logo small{font-size:7px}.logo-mark{width:40px;height:40px;font-size:26px}.build-tag{font-size:9px}.build-tag b{padding:5px}.notice{font-size:10px;margin:12px 0}.layout{grid-template-columns:1fr;gap:12px}.game-panel{grid-row:1;max-width:480px;width:100%;margin:auto}.pane{min-height:0}.intro{grid-row:2}.loadout{grid-row:3;grid-column:auto}.intro h1{font-size:38px}.intro .lead{font-size:12px}.loadout .swatches{grid-template-columns:repeat(4,1fr)}.loadout .pack-list{grid-template-columns:1fr}.game-top{min-height:40px;padding:10px}.game-bottom{min-height:30px}.roster{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:390px){.hud{inset:10px 6px auto;gap:3px}.hud>div{min-width:76px;padding:5px 6px}.hud b{font-size:16px}.hud small{font-size:8px}.touch-controls button{width:50px;height:48px}.overlay h2{font-size:36px}}
+
+</style>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="masthead">
+      <div class="logo"><span class="logo-mark">U<span>✦</span></span><div><strong>ULTIMATE<br>FOOTBALL CHASE</strong><small>THE ORIGINAL RUNNER · V2 PLAYTEST</small></div></div>
+      <div class="build-tag"><span class="status-dot"></span> نسخة تجريبية قابلة للعب <b>V2.0</b></div>
+    </header>
+    <div class="notice"><span>ⓘ</span> هذه <b>نسخة لعب مستقلة في المتصفح</b> لا تُعدّ بناء Unity. النتائج والمشتريات هنا تدريب محلي فقط؛ لا حسابات أو جوائز حقيقية ولا مزامنة مع مشروع Unity.</div>
+    <main class="layout">
+      <section class="intro pane">
+        <div class="eyebrow">01 / قصتك تبدأ هنا</div>
+        <h1>اركض خارج<br><em>الخطوط.</em></h1>
+        <p class="lead">بطاقة حمراء غير عادلة. مدينة لا تنام. ثمانية أبطال أصليين وطريق واحد لإثبات نفسك.</p>
+        <div class="stat-row"><div><strong id="bestValue">0</strong><small>أفضل نتيجة تجريبية</small></div><div><strong id="stageValue">0</strong><small>المراحل المكتملة</small></div></div>
+        <div class="section-title"><span>اختر بطلك</span><small>8 شخصيات أصلية</small></div>
+        <div id="roster" class="roster"></div>
+        <div class="note-mini">الشخصيات والألوان أصلية؛ لا أسماء أو شعارات لأندية ولاعبين حقيقيين.</div>
+        <div class="mission-box"><span class="eyebrow">سلسلة المهام · عرض محلي</span><div id="missionOverview"></div></div>
+      </section>
+      <section class="game-panel">
+        <div class="game-top"><span class="micro">THE CHASE <span>✦</span> V2</span><span class="demo-chip">OFFLINE PLAYTEST</span></div>
+        <div class="playfield" id="playfield">
+          <canvas id="game" width="420" height="720" aria-label="مشهد اللعبة"></canvas>
+          <div class="hud"><div><small>المسافة</small><b id="distance">0 <sup>m</sup></b></div><div><small>النتيجة المحلية</small><b id="score">0</b></div><div><small>عملات الجولة</small><b id="coins">0 <span>◉</span></b></div></div>
+          <div id="overlay" class="overlay">
+            <div class="overlay-card"><span class="eyebrow">V2 / READY TO RUN</span><h2 id="overlayTitle">كل مطاردة<br>لها بداية.</h2><p id="overlayDesc">اجمع العملات، تفادَ العوائق، واختر مسارك. نتيجتك هنا تجريبية فقط.</p><button id="primaryAction" class="primary-action">ابدأ الجري <span>←</span></button></div>
+          </div>
+          <div id="toast" class="toast" role="status"></div>
+          <div class="touch-controls"><button data-action="left" aria-label="يسار">◀</button><button data-action="jump" aria-label="قفز">↑<small>قفز</small></button><button data-action="slide" aria-label="انزلاق">↓<small>انزلاق</small></button><button data-action="right" aria-label="يمين">▶</button></div>
+        </div>
+        <div class="game-bottom"><span>← → تبديل المسار</span><span>↑ قفز</span><span>↓ انزلاق</span><span>اسحب على الشاشة</span></div>
+      </section>
+      <aside class="loadout pane">
+        <div class="eyebrow">02 / تجهيزات المطاردة</div>
+        <h2>شكّل <em>أسلوبك.</em></h2>
+        <div class="wallet"><div><span>◉</span><div><strong id="walletValue">360</strong><small>رصيد تدريب المتصفح فقط</small></div></div><small>لا يمكن إنفاقه في Unity</small></div>
+        <div class="section-title"><span>الملابس والسكينات</span><small>اختَر لونًا</small></div>
+        <div id="skins" class="swatches"></div>
+        <div class="section-title"><span>ألواح أصلية</span><small>تغيير الشكل</small></div>
+        <div id="boards" class="board-grid"></div>
+        <div class="section-title"><span>باقات V2</span><small>عملات تدريب فقط</small></div>
+        <div id="packs" class="pack-list"></div>
+        <div class="reset-line"><button id="resetButton" class="text-button">إعادة ضبط تجربة المتصفح</button><span>التقدم محفوظ محليًا في هذا المتصفح</span></div>
+      </aside>
+    </main>
+    <footer>UNBRANDED. UNVERIFIED. MADE TO PLAYTEST. <span>✦</span> UNITY BUILD REQUIRES EDITOR & DEVICE QA.</footer>
+  </div>
+  <script>
+// V2 browser playtest. Independent of Unity saves, Firebase and account currency.
+const characters = [
+  { id:'kivo', name:'كيفو', role:'المراوغ', emblem:'◆', accent:'#ffc75b', silhouette:'cap' },
+  { id:'mira', name:'ميرا', role:'الحارسة', emblem:'✦', accent:'#67c9f2', silhouette:'guard' },
+  { id:'selo', name:'سيلو', role:'السريع', emblem:'↗', accent:'#ff7388', silhouette:'scarf' },
+  { id:'nexa', name:'نيكسا', role:'راصدة النجوم', emblem:'✳', accent:'#bd9aff', silhouette:'visor' },
+  { id:'taro', name:'تارو', role:'المستكشف', emblem:'⌁', accent:'#ffa66a', silhouette:'crest' },
+  { id:'lumi', name:'لومي', role:'المخترعة', emblem:'◈', accent:'#88eab1', silhouette:'lens' },
+  { id:'vora', name:'فورا', role:'الدينامو', emblem:'⚡', accent:'#ee83c4', silhouette:'horns' },
+  { id:'ziri', name:'زيري', role:'الحالم', emblem:'☾', accent:'#70d9d7', silhouette:'halo' },
+];
+const skins = [
+  { id:'teal', name:'توركواز', color:'#35d5b7', stage:0 },
+  { id:'amber', name:'عنبر', color:'#f6b74f', stage:0 },
+  { id:'violet', name:'بنفسج', color:'#9e83ee', stage:0 },
+  { id:'storm', name:'عاصفة', color:'#647da9', stage:5 },
+  { id:'dawn', name:'شروق', color:'#ff9566', stage:10 },
+  { id:'ember', name:'جمر', color:'#f56360', stage:15 },
+  { id:'lagoon', name:'لاجون', color:'#34b9c8', stage:20 },
+  { id:'rose', name:'وردة', color:'#e88dae', stage:25 },
+  { id:'cobalt', name:'كوبالت', color:'#558bfc', price:75 },
+  { id:'coral', name:'مرجان', color:'#ff796e', price:100 },
+  { id:'mint', name:'نعناع', color:'#a0efd1', price:125 },
+  { id:'aurora', name:'شفق', color:'#85dce2', price:145 },
+  { id:'pearl', name:'لؤلؤ', color:'#e0cce8', price:165 },
+  { id:'nightfall', name:'ليل', color:'#56689b', price:180 },
+];
+const boards = [
+  { id:'classic', name:'لوح البداية', color:'#ffd362', price:0 },
+  { id:'comet_board', name:'لوح المذنّب', color:'#ffa34e', price:130 },
+  { id:'lantern_board', name:'لوح الفانوس', color:'#c096fb', price:155 },
+  { id:'ripple_board', name:'لوح الموج', color:'#66e2d2', price:185 },
+];
+const packs = [
+  { id:'pack_city_glow', name:'باقة أضواء المدينة', price:250, items:['cobalt','coral','comet_board'], tone:'#fdab67' },
+  { id:'pack_celestial', name:'باقة السماء', price:290, items:['mint','aurora','lantern_board'], tone:'#a79dfd' },
+  { id:'pack_moonrise', name:'باقة طلوع القمر', price:325, items:['pearl','nightfall','ripple_board'], tone:'#80e2d9' },
+];
+const item = id => skins.find(x=>x.id===id) || boards.find(x=>x.id===id);
+const initialSave = () => ({ version:2, credits:360, stage:0, best:0, character:'kivo', skin:'teal', board:'classic', owned:[], packs:[], mission:{group:0,jumps:0,dodges:0,coins:0} });
+function normalizeSave(raw) {
+  const s=initialSave();
+  if (!raw || raw.version!==2) return s;
+  s.credits=clampInt(raw.credits,0,100000);
+  s.stage=clampInt(raw.stage,0,1000);
+  s.best=clampInt(raw.best,0,1000000000);
+  s.owned=Array.isArray(raw.owned) ? [...new Set(raw.owned.filter(id=>typeof id==='string' && item(id)?.price>0))].slice(0,20):[];
+  s.packs=Array.isArray(raw.packs) ? [...new Set(raw.packs.filter(id=>packs.some(p=>p.id===id)))].slice(0,3):[];
+  if (characters.some(c=>c.id===raw.character)) s.character=raw.character;
+  if (skins.some(x=>x.id===raw.skin && (!x.price ? s.stage>=x.stage : s.owned.includes(x.id)))) s.skin=raw.skin;
+  if (boards.some(x=>x.id===raw.board && (!x.price || s.owned.includes(x.id)))) s.board=raw.board;
+  const m=raw.mission||{};
+  s.mission={group:clampInt(m.group,0,29),jumps:clampInt(m.jumps,0,15),dodges:clampInt(m.dodges,0,10),coins:clampInt(m.coins,0,100)};
+  if(s.mission.group===29) s.mission={group:29,jumps:0,dodges:0,coins:0};
+  return s;
+}
+function clampInt(n,min,max){ return Number.isFinite(n) ? Math.max(min,Math.min(max,Math.floor(n))) : min; }
+function unlock(save,id) {
+  const s=normalizeSave(save);
+  const p=packs.find(x=>x.id===id);
+  const x=item(id);
+  const price=p?.price ?? x?.price;
+  if (!price) return {ok:false,save:s,reason:'not_available'};
+  if (p ? s.packs.includes(id) : s.owned.includes(id)) return {ok:true,save:s,reason:'already_owned'};
+  if(s.credits<price) return {ok:false,save:s,reason:'insufficient_demo_credits'};
+  s.credits-=price;
+  if(p){ s.packs.push(id); for(const included of p.items) if(item(included)?.price>0 && !s.owned.includes(included)) s.owned.push(included); }
+  else s.owned.push(id);
+  return {ok:true,save:s,reason:'unlocked_demo_only'};
+}
+function equip(save,kind,id) {
+  const s=normalizeSave(save);
+  if(kind==='character' && characters.some(x=>x.id===id)) s.character=id;
+  if(kind==='skin' && skins.some(x=>x.id===id && (!x.price?s.stage>=x.stage:s.owned.includes(id)))) s.skin=id;
+  if(kind==='board' && boards.some(x=>x.id===id && (!x.price||s.owned.includes(id)))) s.board=id;
+  return s;
+}
+function tickMission(m,type){
+  const s={group:clampInt(m?.group,0,29), jumps:clampInt(m?.jumps,0,15),dodges:clampInt(m?.dodges,0,10),coins:clampInt(m?.coins,0,100)};
+  if(s.group===29) return {group:29,jumps:0,dodges:0,coins:0};
+  if(type==='jump') s.jumps=Math.min(15,s.jumps+1);
+  if(type==='dodge') s.dodges=Math.min(10,s.dodges+1);
+  if(type==='coin') s.coins=Math.min(100,s.coins+1);
+  if(s.jumps===15&&s.dodges===10&&s.coins===100) return {group:s.group+1,jumps:0,dodges:0,coins:0};
+  return s;
+}
+class GameSimulation {
+  constructor(save,random=Math.random){
+    this.save=normalizeSave(save); this.random=random; this.state='ready'; this.distance=0; this.speed=9; this.lane=1; this.xLane=1; this.jump=0;this.slide=0;
+    this.coins=0;this.stumbles=0;this.score=0;this.events=[];this.nextSpawn=18;
+    this.mission={...this.save.mission};this.time=0;this.lastEvent='';this.finishedSave=null;
+  }
+  start(){if(this.state==='ready') this.state='running';}
+  input(command){
+    if(this.state!=='running')return;
+    if(command==='left')this.lane=Math.max(0,this.lane-1);
+    if(command==='right')this.lane=Math.min(2,this.lane+1);
+    if(command==='jump'&&this.jump<=0&&this.slide<=0){this.jump=.76;this.mission=tickMission(this.mission,'jump');}
+    if(command==='slide'&&this.slide<=0&&this.jump<=0)this.slide=.76;
+  }
+  spawn(){
+    const danger=Math.floor(this.random()*3), safe=(danger+1+Math.floor(this.random()*2))%3;
+    const types=this.distance<250?['low','block']:this.distance<750?['low','block','tackle']:['low','beam','block','tackle'];
+    const type=types[Math.floor(this.random()*types.length)];
+    this.events.push({kind:'coin',lane:safe,at:this.nextSpawn-5,done:false});
+    this.events.push({kind:type,lane:danger,at:this.nextSpawn,done:false});
+    this.nextSpawn+=Math.max(10,20-this.distance/300);
+  }
+  step(seconds){
+    if(this.state!=='running')return;
+    let remaining=Math.min(.15,Math.max(0,seconds));
+    while(remaining>0){
+      const dt=Math.min(.02,remaining);remaining-=dt;
+      this.time+=dt;
+      this.speed=9*Math.pow(1.03,Math.min(20,Math.floor(this.distance/100)));
+      this.distance+=this.speed*dt;
+      this.xLane+=Math.max(-1,Math.min(1,this.lane-this.xLane))*Math.min(1,dt*13);
+      this.jump=Math.max(0,this.jump-dt);this.slide=Math.max(0,this.slide-dt);
+      while(this.nextSpawn<this.distance+95)this.spawn();
+      for(const e of this.events){
+        if(e.done || e.at>this.distance)continue;
+        e.done=true;
+        const dx=Math.abs(e.lane-this.xLane);
+        if(e.kind==='coin'){
+          if(dx<.42){this.coins++;this.mission=tickMission(this.mission,'coin');this.lastEvent='coin';}
+          continue;
+        }
+        if(e.kind==='tackle' && dx>.72){this.mission=tickMission(this.mission,'dodge');}
+        if(dx>=.72)continue;
+        const protectedMove=(e.kind==='low'||e.kind==='tackle')&&this.jump>.12 || e.kind==='beam'&&this.slide>.12;
+        if(protectedMove){if(e.kind==='tackle')this.mission=tickMission(this.mission,'dodge');continue;}
+        if(dx>.48 && this.stumbles===0){this.stumbles++;this.lastEvent='stumble';continue;}
+        this.state='ended';this.lastEvent='fall';break;
+      }
+      this.events=this.events.filter(e=>!e.done && e.at>this.distance-2);
+      this.score=Math.min(1000000000,Math.floor((Math.floor(this.distance)+this.coins*10)*(1+this.mission.group)));
+      if(this.state==='ended')break;
+    }
+  }
+  finish(){
+    if(this.state!=='ended')return null;
+    if(this.finishedSave)return normalizeSave(this.finishedSave);
+    const s=normalizeSave(this.save);
+    s.credits=Math.min(100000,s.credits+Math.min(200,this.coins));
+    s.best=Math.max(s.best,this.score);s.mission={...this.mission};
+    if(this.distance>=(s.stage+1)*250)s.stage++;
+    this.finishedSave=normalizeSave(s);
+    return s;
+  }
+}
+
+const $=id=>document.getElementById(id);
+const key='ufc.playtest.v2.local-only';
+let save;
+try{save=normalizeSave(JSON.parse(localStorage.getItem(key)||'null'));}catch{save=initialSave();}
+const persist=()=>{try{localStorage.setItem(key,JSON.stringify(save));}catch{ /* file:// browsers may block storage; play remains available */ }};
+let sim=new GameSimulation(save), endedHandled=false,toastUntil=0,seenEvent='',previewSkin=null;
+const canvas=$('game'),ctx=canvas.getContext('2d');
+const W=420,H=720;
+function resize(){const d=Math.min(2,window.devicePixelRatio||1);canvas.width=W*d;canvas.height=H*d;ctx.setTransform(d,0,0,d,0,0);}
+resize();window.addEventListener('resize',resize);
+function note(msg){$('toast').textContent=msg;$('toast').classList.add('visible');toastUntil=performance.now()+2200;}
+const itemName=id=>skins.find(x=>x.id===id)?.name||boards.find(x=>x.id===id)?.name||id;
+function renderUI(){
+  $('walletValue').textContent=save.credits.toLocaleString('ar-MA');
+  $('bestValue').textContent=save.best.toLocaleString('ar-MA');$('stageValue').textContent=save.stage;
+  $('missionOverview').innerHTML=`<b>x${1+save.mission.group}</b> · اقفز ${save.mission.jumps}/15 · تفادَ ${save.mission.dodges}/10 · اجمع ${save.mission.coins}/100<br><span>التقدم التجريبي لا يُرسل إلى التصنيف أو حساب Unity.</span>`;
+  $('roster').replaceChildren(...characters.map(c=>{
+    const b=document.createElement('button');b.type='button';b.className='hero-card'+(save.character===c.id?' selected':'');b.style.setProperty('--accent',c.accent);
+    b.innerHTML=`<span class="hero-emblem">${c.emblem}</span><strong>${c.name}</strong><small>${c.role}</small>`;
+    b.onclick=()=>{if(lockedInRun())return;save=equip(save,'character',c.id);persist();renderUI();note('تم اختيار '+c.name);};return b;
+  }));
+  $('skins').replaceChildren(...skins.map(s=>{
+    const owned=s.price?save.owned.includes(s.id):save.stage>=s.stage;
+    const b=document.createElement('button');b.type='button';b.className='swatch'+((previewSkin||save.skin)===s.id?' selected':'')+(!owned?' locked':'');
+    b.style.setProperty('--swatch',s.color);b.innerHTML=`<i></i>${s.name}<small>${owned?(save.skin===s.id?'مجهّز':'متاح'):(s.price?'◉ '+s.price:'مرحلة '+s.stage)}</small>`;
+    b.onclick=()=>{
+      if(lockedInRun())return;
+      if(!owned && !s.price){previewSkin=s.id;renderUI();note('معاينة مؤقتة · يُفتح عند المرحلة '+s.stage);return;}
+      if(!owned){const result=unlock(save,s.id);if(!result.ok){note('رصيد التدريب غير كافٍ');return;}save=result.save;}
+      previewSkin=null;save=equip(save,'skin',s.id);persist();renderUI();note('سكين '+s.name+' · تجريبي فقط');
+    };return b;
+  }));
+  $('boards').replaceChildren(...boards.map(s=>{
+    const owned=!s.price||save.owned.includes(s.id);
+    const b=document.createElement('button');b.type='button';b.className='board-card'+(save.board===s.id?' selected':'');b.style.setProperty('--board',s.color);
+    b.innerHTML=`<b>▰</b>${s.name}<small>${owned?(save.board===s.id?'مجهّز':'متاح'):'◉ '+s.price+' تدريب'}</small>`;
+    b.onclick=()=>{
+      if(lockedInRun())return;
+      if(!owned){const result=unlock(save,s.id);if(!result.ok){note('رصيد التدريب غير كافٍ');return;}save=result.save;}
+      save=equip(save,'board',s.id);persist();renderUI();note('لوح '+s.name+' · تجريبي فقط');
+    };return b;
+  }));
+  $('packs').replaceChildren(...packs.map(p=>{
+    const owned=save.packs.includes(p.id);const wrap=document.createElement('div');wrap.className='pack';wrap.style.setProperty('--pack-tone',p.tone);
+    wrap.innerHTML=`<div class="pack-title"><strong>✦ ${p.name}</strong><span>◉ ${p.price}</span></div><p>${p.items.map(itemName).join(' + ')}</p>`;
+    const button=document.createElement('button');button.textContent=owned?'تم فتح الباقة · تجريبية':'فتح باقة تدريبية';button.disabled=owned;
+    button.onclick=()=>{if(lockedInRun())return;const result=unlock(save,p.id);if(!result.ok){note('رصيد التدريب غير كافٍ');return;}save=result.save;persist();renderUI();note('تم فتح الباقة محليًا؛ لا مشتريات حقيقية');};
+    wrap.append(button);return wrap;
+  }));
+}
+renderUI();
+function lockedInRun(){if(sim.state==='running'){note('أنهِ الجولة قبل تغيير التجهيزات');return true;}return false;}
+$('resetButton').onclick=()=>{
+  if(lockedInRun())return;
+  if(!confirm('إعادة ضبط تقدم المتصفح التجريبي فقط؟ لن يتأثر مشروع Unity أو أي حساب.'))return;
+  save=initialSave();previewSkin=null;persist();sim=new GameSimulation(save);endedHandled=false;resetOverlay();renderUI();note('تمت إعادة ضبط تجربة المتصفح');
+};
+function resetOverlay(){
+  $('overlay').classList.remove('hidden');$('overlayTitle').innerHTML='كل مطاردة<br>لها بداية.';
+  $('overlayDesc').textContent='اجمع العملات، تفادَ العوائق، واختر مسارك. نتيجتك هنا تجريبية فقط.';
+  $('primaryAction').innerHTML='ابدأ الجري <span>←</span>';
+}
+$('primaryAction').onclick=()=>{
+  sim=new GameSimulation(save);sim.start();endedHandled=false;seenEvent='';$('overlay').classList.add('hidden');
+  $('playfield').focus();note('انطلق! ← → للمسارات، ↑ قفز، ↓ انزلاق');
+};
+const action=cmd=>sim.input(cmd);
+for(const btn of document.querySelectorAll('[data-action]')){
+  btn.addEventListener('pointerdown',e=>{e.preventDefault();action(btn.dataset.action);});
+}
+window.addEventListener('keydown',e=>{
+  const map={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',ArrowUp:'jump',KeyW:'jump',Space:'jump',ArrowDown:'slide',KeyS:'slide'};
+  if(!map[e.code])return;
+  if(sim.state==='running'){e.preventDefault();action(map[e.code]);}
+});
+let touch=null;
+canvas.addEventListener('pointerdown',e=>{touch={x:e.clientX,y:e.clientY,t:performance.now()};});
+canvas.addEventListener('pointerup',e=>{
+  if(!touch||sim.state!=='running')return;
+  const dx=e.clientX-touch.x,dy=e.clientY-touch.y;
+  if(Math.abs(dx)>35||Math.abs(dy)>35)action(Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy<0?'jump':'slide'));
+  touch=null;
+});
+function path(points,fill){ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.fillStyle=fill;ctx.fill();}
+function rr(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
+function glow(x,y,r,color){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,color);g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}
+function pos(lane,ahead){const t=Math.max(0,Math.min(1,ahead/95));const depth=(1-t)**1.48;return{x:210+(lane-1)*(20+depth*98),y:208+depth*440,scale:.18+depth*.86,depth};}
+function drawBackdrop(now){
+  const sky=ctx.createLinearGradient(0,0,0,480);sky.addColorStop(0,'#142e40');sky.addColorStop(.38,'#547985');sky.addColorStop(.71,'#e8a777');sky.addColorStop(1,'#637a72');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+  glow(310,165,165,'#ffdd9768');ctx.beginPath();ctx.arc(307,161,42,0,7);ctx.fillStyle='#ffdba0';ctx.fill();
+  path([[0,236],[27,199],[51,215],[78,176],[105,205],[145,185],[184,222],[212,202],[257,220],[285,192],[318,210],[365,177],[420,215],[420,330],[0,330]],'#294953');
+  const phase=sim.distance*.04;
+  for(let i=0;i<18;i++){
+    const x=(i*43+12)%450-12,h=24+(i*19)%78;
+    ctx.fillStyle=i%3===0?'#253f48':'#31505a';ctx.fillRect(x,245-h,22+(i*7)%26,h);
+    ctx.fillStyle='#e9c88b88';for(let wy=253-h;wy<240;wy+=12)for(let wx=x+5;wx<x+24;wx+=10)if((i+wy+wx)%3<1)ctx.fillRect(wx,wy,2,3);
+  }
+  // Original stadium arch and stand lights.
+  ctx.strokeStyle='#94d8ce99';ctx.lineWidth=4;ctx.beginPath();ctx.arc(210,304,169,Math.PI,Math.PI*2);ctx.stroke();
+  for(let i=0;i<11;i++){const angle=Math.PI+i*Math.PI/10,x=210+169*Math.cos(angle),y=304+169*Math.sin(angle);glow(x,y,10,'#b0f0bf8a');}
+  path([[0,225],[176,205],[26,720],[0,720]],'#33565b');path([[244,205],[420,225],[420,720],[394,720]],'#33565b');
+  // Road and three converging lanes.
+  path([[176,206],[244,206],[420,720],[0,720]],'#1a3640');
+  path([[179,206],[241,206],[400,720],[20,720]],'#273f47');
+  for(let edge of [-1,1]){const near=210+edge*188,far=210+edge*33;path([[far-2,206],[far+2,206],[near+5,720],[near-5,720]],edge===1?'#ffbb77':'#9df0d1');}
+  for(let sep of [-.5,.5]){
+    ctx.strokeStyle='#a4d9c47c';ctx.lineWidth=2;
+    for(let i=0;i<12;i++){
+      const v=(i*12+phase%12),z=Math.max(0,95-v),p=pos(1+sep,z),q=pos(1+sep,Math.max(0,z-4));
+      ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();
+    }
+  }
+  for(let i=0;i<9;i++){
+    const ahead=(i*14+sim.distance%14);if(ahead>95)continue;const p=pos(1,ahead);const width=29+165*p.depth;
+    ctx.strokeStyle=`rgba(166,214,189,${.06+.1*p.depth})`;ctx.lineWidth=1+p.depth*2;
+    ctx.beginPath();ctx.moveTo(210-width,p.y);ctx.lineTo(210+width,p.y);ctx.stroke();
+  }
+  for(let side of [-1,1]){
+    for(let i=0;i<8;i++){
+      const ahead=(i*16+sim.distance%16);if(ahead>95)continue;const p=pos(side===-1?-1:3,ahead),r=3+p.depth*10;
+      glow(p.x,p.y-35*p.scale,15+p.depth*30,side<0?'#91ffd387':'#ffc46b85');
+      rr(p.x-r*.26,p.y-r*5,r*.52,r*5,1,'#203b43');
+      path([[p.x-r,p.y-r*5],[p.x,p.y-r*6.5],[p.x+r,p.y-r*5]],side<0?'#9ef5c3':'#ffb372');
+    }
+  }
+  // Subtle vignette.
+  const vig=ctx.createRadialGradient(210,340,160,210,340,490);vig.addColorStop(0,'transparent');vig.addColorStop(1,'#081d2b86');ctx.fillStyle=vig;ctx.fillRect(0,0,W,H);
+}
+function drawCoin(p,now){const s=p.scale;glow(p.x,p.y-19*s,20*s,'#ffcc6b80');ctx.save();ctx.translate(p.x,p.y-22*s);ctx.scale(.55+.4*Math.abs(Math.cos(now*.004)),1);ctx.beginPath();ctx.arc(0,0,14*s,0,7);ctx.fillStyle='#ffd867';ctx.fill();ctx.lineWidth=3*s;ctx.strokeStyle='#fff2a4';ctx.stroke();ctx.fillStyle='#a46226';ctx.textAlign='center';ctx.font=`900 ${15*s}px system-ui`;ctx.fillText('✦',0,5*s);ctx.restore();}
+function drawHazard(e,p){const s=p.scale,x=p.x,y=p.y;
+  ctx.fillStyle='#10262d77';ctx.beginPath();ctx.ellipse(x,y,31*s,8*s,0,0,7);ctx.fill();
+  if(e.kind==='low'){glow(x,y-15*s,28*s,'#ffb5606b');rr(x-30*s,y-34*s,60*s,32*s,5*s,'#ff9f55');rr(x-29*s,y-29*s,58*s,6*s,2*s,'#ffe1a4');}
+  if(e.kind==='beam'){rr(x-25*s,y-68*s,6*s,67*s,2*s,'#c77fe1');rr(x+19*s,y-68*s,6*s,67*s,2*s,'#c77fe1');rr(x-28*s,y-73*s,56*s,14*s,4*s,'#e6b1ff');}
+  if(e.kind==='block'){rr(x-30*s,y-77*s,60*s,75*s,7*s,'#ef6c6c');rr(x-23*s,y-64*s,46*s,8*s,3*s,'#ffd1a1');ctx.fillStyle='#542a42';ctx.font=`900 ${27*s}px system-ui`;ctx.textAlign='center';ctx.fillText('×',x,y-19*s);}
+  if(e.kind==='tackle'){glow(x,y-15*s,31*s,'#7ba5ff71');rr(x-30*s,y-23*s,60*s,23*s,11*s,'#7f93eb');ctx.beginPath();ctx.arc(x+16*s,y-30*s,11*s,0,7);ctx.fillStyle='#ffd4a7';ctx.fill();}
+}
+function drawRunner(now){const c=characters.find(x=>x.id===save.character)||characters[0],kit=skins.find(x=>x.id===(previewSkin||save.skin))||skins[0],board=boards.find(x=>x.id===save.board)||boards[0];const bob=sim.state==='running'?Math.sin(now*.017)*3:Math.sin(now*.003)*2;
+  const x=210+(sim.xLane-1)*118,y=605-(sim.jump>0?Math.sin((.76-sim.jump)/.76*Math.PI)*86:0)+bob;
+  ctx.fillStyle='#091d2888';ctx.beginPath();ctx.ellipse(x,631,38,10,0,0,7);ctx.fill();glow(x,y-48,100,c.accent+'45');
+  if(save.board!=='classic'){ctx.save();ctx.translate(x,y+18);ctx.rotate(-.06);rr(-40,0,80,10,6,board.color);rr(-22,3,44,3,2,'#f5f4dc');ctx.restore();}
+  ctx.save();ctx.translate(x,y);if(sim.slide>0)ctx.scale(1.1,.62);
+  // Shoes, legs and gloves.
+  rr(-24,-5,17,27,5,'#101e32');rr(7,-5,17,27,5,'#101e32');rr(-28,13,23,8,4,'#e5f3e2');rr(6,13,23,8,4,'#e5f3e2');
+  rr(-34,-74,16,48,6,'#e2af8d');rr(18,-74,16,48,6,'#e2af8d');
+  path([[-25,-86],[25,-86],[29,-22],[-29,-22]],'#112e3b');
+  path([[-23,-85],[23,-85],[28,-36],[-28,-36]],kit.color);
+  rr(-3,-81,6,43,3,c.accent);rr(-21,-30,42,9,3,'#1c3040');
+  ctx.beginPath();ctx.arc(0,-106,25,0,7);ctx.fillStyle='#f0be9b';ctx.fill();
+  ctx.fillStyle='#172b35';ctx.beginPath();ctx.arc(-8,-111,2,0,7);ctx.arc(8,-111,2,0,7);ctx.fill();
+  // Eight original signature headpieces.
+  ctx.fillStyle=c.accent;
+  if(c.silhouette==='cap'){rr(-26,-132,53,13,5,c.accent);rr(11,-123,26,6,3,c.accent);}
+  else if(c.silhouette==='guard'){rr(-36,-88,18,16,6,c.accent);rr(18,-88,18,16,6,c.accent);}
+  else if(c.silhouette==='scarf'){rr(-19,-129,38,8,4,c.accent);path([[15,-71],[40,-72],[37,-57]],c.accent);}
+  else if(c.silhouette==='visor'){rr(-25,-114,50,10,5,c.accent);ctx.beginPath();ctx.arc(0,-135,8,0,7);ctx.fill();}
+  else if(c.silhouette==='crest'){rr(-27,-134,54,8,3,c.accent);path([[-4,-134],[0,-149],[8,-134]],c.accent);}
+  else if(c.silhouette==='lens'){ctx.strokeStyle=c.accent;ctx.lineWidth=5;ctx.beginPath();ctx.arc(-15,-107,11,0,7);ctx.arc(15,-107,11,0,7);ctx.stroke();}
+  else if(c.silhouette==='horns'){path([[-16,-128],[-23,-147],[-2,-131]],c.accent);path([[16,-128],[23,-147],[2,-131]],c.accent);}
+  else {ctx.strokeStyle=c.accent;ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(0,-145,28,7,0,0,7);ctx.stroke();}
+  ctx.restore();
+}
+let last=performance.now();
+function frame(now){
+  const dt=(now-last)/1000;last=now;
+  if(sim.state==='running')sim.step(dt);
+  if(sim.lastEvent && sim.lastEvent!==seenEvent){seenEvent=sim.lastEvent;if(sim.lastEvent==='coin')note('+1 عملة تدريب عند نهاية الجولة');if(sim.lastEvent==='stumble')note('اصطدام جانبي · تعثر!');}
+  if(sim.state==='ended'&&!endedHandled){
+    endedHandled=true;save=sim.finish();persist();renderUI();
+    $('overlayTitle').innerHTML='بطاقة حمراء.<br>لكن القصة مستمرة.';
+    $('overlayDesc').textContent=`قطعت ${Math.floor(sim.distance)} مترًا • ${sim.score.toLocaleString('ar-MA')} نقطة محلية • جمعت ${sim.coins} عملة تدريب. لا نتائج رسمية.`;
+    $('primaryAction').innerHTML='حاول مرة أخرى <span>↻</span>';$('overlay').classList.remove('hidden');
+  }
+  drawBackdrop(now);
+  const visible=sim.events.filter(e=>!e.done&&e.at>=sim.distance&&e.at<sim.distance+95).sort((a,b)=>b.at-a.at);
+  for(const e of visible){const p=pos(e.lane,e.at-sim.distance);if(e.kind==='coin')drawCoin(p,now);else drawHazard(e,p);}
+  drawRunner(now);
+  $('distance').innerHTML=`${Math.floor(sim.distance)} <sup>m</sup>`;
+  $('score').textContent=sim.score.toLocaleString('ar-MA');$('coins').innerHTML=`${sim.coins} <span>◉</span>`;
+  if(now>toastUntil)$('toast').classList.remove('visible');
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+</script>
+</body></html>

@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id);
 const key='ufc.playtest.v2.local-only';
 let save;
 try{save=normalizeSave(JSON.parse(localStorage.getItem(key)||'null'));}catch{save=initialSave();}
-const persist=()=>localStorage.setItem(key,JSON.stringify(save));
+const persist=()=>{try{localStorage.setItem(key,JSON.stringify(save));}catch{ /* file:// browsers may block storage; play remains available */ }};
 let sim=new GameSimulation(save), endedHandled=false,toastUntil=0,seenEvent='',previewSkin=null;
 const canvas=$('game'),ctx=canvas.getContext('2d');
 const W=420,H=720;

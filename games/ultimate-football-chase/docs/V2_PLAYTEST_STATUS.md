@@ -2,7 +2,7 @@
 
 ## Try the game now
 
-Open the **V2 football playtest** live preview, or run `node playtest-v2/server.mjs` from this Unity-project folder and visit `http://localhost:4173`. The responsive Arabic browser companion is playable on desktop or touch phones. It provides a three-lane endless route, original cartoon characters, obstacles, jumping/sliding, safe-lane coins, collision/Game Over, a preview score and training cosmetics. The browser save is **localStorage only** with 360 free starter training credits. There are **no** real-money transactions, advertising, score submission or account sync.
+For a durable no-server copy, download [the offline ZIP](../playtest-v2/Ultimate-Football-Chase-V2-Offline.zip), extract it and open `Ultimate-Football-Chase-V2-PLAY.html` locally. Arena sandbox preview links can expire. Alternatively open the **V2 football playtest** live preview while the sandbox is active, or run `node playtest-v2/server.mjs` from this Unity-project folder and visit `http://localhost:4173`. The responsive Arabic browser companion is playable on desktop or touch phones. It provides a three-lane endless route, original cartoon characters, obstacles, jumping/sliding, safe-lane coins, collision/Game Over, a preview score and training cosmetics. The browser save is **localStorage only** with 360 free starter training credits. There are **no** real-money transactions, advertising, score submission or account sync.
 
 **Important:** The preview is a separately written gameplay companion, **not Unity WebGL**, not a built mobile app, and not a verified visual/performance test of Unity. Its data and balance never transfer into the Unity project. Unity Editor, Unity Test Runner and Android/iOS device testing remain unavailable in this environment.
 

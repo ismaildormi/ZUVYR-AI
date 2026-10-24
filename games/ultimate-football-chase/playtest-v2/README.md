@@ -10,3 +10,9 @@ Run `node server.mjs`, then visit `http://localhost:4173`. No npm install, crede
 - `node --test engine.test.mjs` executes pure JavaScript simulation, save validation, mission, unlock and collision checks. Browser visual/device QA still requires a human.
 
 The Unity game under `Assets/_Game` remains the authoritative *source project*, not a compiled distribution. Build and test it in Unity 6.3 before claiming parity. Parameters in this companion are representative/provisional, not proof of identical Unity behavior.
+
+## Durable offline download (no live sandbox needed)
+
+Download `Ultimate-Football-Chase-V2-Offline.zip` from this folder, extract it, then double-click **`Ultimate-Football-Chase-V2-PLAY.html`** in Chrome/Edge/Firefox. It includes the CSS and engine inline: no server, npm, external assets, login or network is required. If your browser blocks localStorage for `file://` pages, gameplay still works but progress may reset after closing the tab. For a fresh browser build after source edits, run `python make-offline.py` and `node --test engine.test.mjs`.
+
+Arena's `*.e2b.app` live previews are tied to a temporary sandbox and can expire. Use this ZIP rather than bookmarking a temporary preview URL.
