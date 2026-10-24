@@ -1,0 +1,8 @@
+{
+  "name": "UltimateFootballChase.Tests",
+  "rootNamespace": "UltimateFootballChase.Tests",
+  "references": ["UltimateFootballChase.Runtime"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

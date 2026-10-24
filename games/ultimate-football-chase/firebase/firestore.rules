@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Non-authoritative, client-written Hub preview ONLY. Never query this collection
+    // for cash prizes, ranked scores, purchases, entitlement or wallet balances.
+    match /hubPreviews/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list, delete: if false;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['schema', 'payload'])
+        && request.resource.data.keys().hasAll(['schema', 'payload'])
+        && request.resource.data.schema == 1
+        && request.resource.data.payload is string
+        && request.resource.data.payload.size() <= 4096;
+    }
+    // Only an Admin SDK publisher may write these pseudonymous public standings.
+    // NEVER publish raw Firebase UIDs, emails, private profiles or prize eligibility.
+    match /leaderboardViews/{viewId} {
+      allow get: if viewId in ['weekly_current', 'monthly_current', 'hall_previous'];
+      allow list, create, update, delete: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

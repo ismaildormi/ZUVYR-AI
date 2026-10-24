@@ -1,0 +1,7 @@
+{
+  "name": "UltimateFootballChase.Editor",
+  "rootNamespace": "UltimateFootballChase",
+  "references": ["UltimateFootballChase.Runtime"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": true
+}

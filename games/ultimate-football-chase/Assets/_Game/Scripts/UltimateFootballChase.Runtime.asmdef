@@ -1,0 +1,6 @@
+{
+  "name": "UltimateFootballChase.Runtime",
+  "rootNamespace": "UltimateFootballChase",
+  "references": ["Unity.ugui"],
+  "autoReferenced": true
+}

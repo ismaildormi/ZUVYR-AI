@@ -1,0 +1,25 @@
+# Unity generated state (this Unity project is self-contained inside the ZUVYR checkout)
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+.vs/
+.idea/
+*.csproj
+*.sln
+*.user
+*.pidb
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.apk
+*.aab
+*.ipa
+*.unitypackage
+*.tmp
