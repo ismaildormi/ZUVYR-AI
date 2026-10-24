@@ -23,3 +23,24 @@
 *.ipa
 *.unitypackage
 *.tmp
+
+# Local Firebase/OAuth configuration and platform signing material.
+# Keep these on developer machines only; never commit production credentials.
+**/google-services.json
+**/google-services.json.meta
+**/GoogleService-Info.plist
+**/GoogleService-Info.plist.meta
+**/GoogleWebClientId.txt
+**/GoogleWebClientId.txt.meta
+**/*service-account*.json
+**/*service-account*.json.meta
+**/.env
+**/.env.*
+!**/.env.example
+*.pem
+*.key
+*.p8
+*.p12
+*.jks
+*.keystore
+*.mobileprovision
