@@ -1,5 +1,8 @@
 using System;
 using UnityEngine;
+using UltimateFootballChase.Settings;
+using UltimateFootballChase.Characters;
+using UltimateFootballChase.Missions;
 
 namespace UltimateFootballChase.Hub
 {
@@ -15,6 +18,12 @@ namespace UltimateFootballChase.Hub
         public Vector3 Position = new Vector3(0f, 0f, -3f);
         public string LastDoor = "Central Plaza";
         public string SelectedOutfit = "teal";
+        public HubOptions Options = new HubOptions();
+        public string SelectedCharacter = "kivo";
+        public int LastStoryChapterShown;
+        public long MissionUtcDayTicks;
+        public int MissionRuns, MissionCoins;
+        public float MissionDistanceMetres;
         public long LastSavedUtcTicks;
     }
 
@@ -68,6 +77,15 @@ namespace UltimateFootballChase.Hub
                 Mathf.Clamp(profile.Position.z, -16f, 48f));
             if (profile.SelectedOutfit != "teal" && profile.SelectedOutfit != "amber" &&
                 profile.SelectedOutfit != "violet") profile.SelectedOutfit = "teal";
+            if (!OriginalRoster.Contains(profile.SelectedCharacter)) profile.SelectedCharacter = "kivo";
+            profile.LastStoryChapterShown = Mathf.Clamp(profile.LastStoryChapterShown, 0, 4);
+            profile.MissionRuns = Mathf.Clamp(profile.MissionRuns, 0, 10000);
+            profile.MissionCoins = Mathf.Clamp(profile.MissionCoins, 0, 1000000);
+            profile.MissionDistanceMetres = FiniteDistance(profile.MissionDistanceMetres);
+            if (profile.MissionUtcDayTicks < 0 || profile.MissionUtcDayTicks > DateTime.UtcNow.AddDays(1).Ticks)
+                profile.MissionUtcDayTicks = 0;
+            if (profile.Options == null) profile.Options = new HubOptions();
+            profile.Options.Normalize();
             if (string.IsNullOrEmpty(profile.LastDoor) || profile.LastDoor.Length > 80)
                 profile.LastDoor = "Central Plaza";
             if (profile.LastSavedUtcTicks < 0 || profile.LastSavedUtcTicks > DateTime.UtcNow.AddDays(1).Ticks)
@@ -103,11 +121,12 @@ namespace UltimateFootballChase.Hub
             repository = replacement ?? throw new ArgumentNullException(nameof(replacement));
         public static HubProgress Load() => repository.Load();
         public static void Save(HubProgress progress) => repository.Save(progress);
-        public static bool RecordFinishedRun(float metres, out HubProgress result)
+        public static bool RecordFinishedRun(float metres, out HubProgress result, int coins = 0)
         {
             result = Load();
             if (float.IsNaN(metres) || float.IsInfinity(metres)) metres = 0f;
             metres = Mathf.Max(0f, metres);
+            DailyMissions.RecordRun(result, DateTime.UtcNow, metres, coins);
             result.FinishedRuns++;
             result.LastRunMeters = metres;
             result.BestRunMeters = Mathf.Max(result.BestRunMeters, metres);

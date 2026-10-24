@@ -5,6 +5,9 @@ using UnityEngine.UI;
 using UltimateFootballChase.Backend;
 using UltimateFootballChase.Economy;
 using UltimateFootballChase.Rankings;
+using UltimateFootballChase.Showdown;
+using UltimateFootballChase.Settings;
+using UltimateFootballChase.Characters;
 using System.Text;
 
 namespace UltimateFootballChase.Hub
@@ -16,15 +19,22 @@ namespace UltimateFootballChase.Hub
         private Text header, hint, modalTitle, modalText, interactionLabel;
         private GameObject modal;
         private Button interact, outfitTeal, outfitAmber, outfitViolet;
+        private Button accountNav, wheelNav, settingsNav, missionsNav;
+        private Button[] characterButtons;
         private Button google, apple, gameCenter, signOut;
         private Button storePrevious, storeNext, storeAction, wheelSpin, wheelAd;
         private Button weeklyTab, monthlyTab, hallTab, boardRefresh, boardEntry;
+        private Button[] settingsButtons;
+        private Slider musicSlider, sfxSlider;
+        private Text musicCaption, sfxCaption;
+        private int showdownGeneration;
         private Text wheelStatus;
         private GameObject[] wheelSlots;
-        private bool accountPanel, storePanel, wheelPanel, leaderboardPanel;
+        private bool accountPanel, storePanel, wheelPanel, leaderboardPanel, settingsPanel;
         private int boardGeneration;
         private BoardKind selectedBoard;
         private readonly LeaderboardService boardService = new LeaderboardService(LeaderboardGatewayFactory.Create());
+        private readonly ShowdownService showdownService = new ShowdownService(ShowdownGatewayFactory.Create());
         private string wheelNote = "";
         private int storeIndex;
         private string storeNote = "";
@@ -65,10 +75,16 @@ namespace UltimateFootballChase.Hub
                 new Vector2(215, 105), () => director.PracticeJump());
             Button(safe, "SLIDE", new Vector2(1, 0), new Vector2(-135, 300),
                 new Vector2(215, 105), () => director.PracticeSlide());
-            Button(safe, "ACCOUNT", new Vector2(.85f, .83f), Vector2.zero,
+            accountNav = Button(safe, "ACCOUNT", new Vector2(.85f, .83f), Vector2.zero,
                 new Vector2(260, 95), OpenAccount);
-            Button(safe, "DAILY WHEEL", new Vector2(.16f, .83f), Vector2.zero,
+            wheelNav = Button(safe, "DAILY WHEEL", new Vector2(.16f, .83f), Vector2.zero,
                 new Vector2(285, 95), OpenWheel);
+            settingsNav = Button(safe, "SETTINGS", new Vector2(.50f, .83f), Vector2.zero,
+                new Vector2(245, 95), OpenSettings);
+            missionsNav = Button(safe, "MISSIONS", new Vector2(.5f, .77f), Vector2.zero,
+                new Vector2(245, 85), () => OpenDialogue("DAILY MISSIONS", director.MissionStatus));
+            Button(safe, "PRIVACY", new Vector2(.79f, .77f), Vector2.zero,
+                new Vector2(245, 85), OpenPrivacy);
             BuildJoystick(safe);
             modal = new GameObject("Hub dialogue", typeof(RectTransform), typeof(Image));
             modal.transform.SetParent(root, false);
@@ -86,6 +102,14 @@ namespace UltimateFootballChase.Hub
                 new Vector2(230, 95), () => director.SelectOutfit("amber"));
             outfitViolet = Button(panel, "VIOLET", new Vector2(.72f, .33f), Vector2.zero,
                 new Vector2(230, 95), () => director.SelectOutfit("violet"));
+            characterButtons = new Button[OriginalRoster.Ids.Length];
+            for (int i = 0; i < characterButtons.Length; i++)
+            {
+                int index = i;
+                characterButtons[i] = Button(panel, OriginalRoster.Ids[i].ToUpperInvariant(),
+                    new Vector2(.15f + i * .23f, .47f), Vector2.zero, new Vector2(225, 90),
+                    () => director.SelectCharacter(OriginalRoster.Ids[index]));
+            }
             google = Button(panel, "GOOGLE", new Vector2(.5f, .40f), Vector2.zero,
                 new Vector2(500, 90), () => director.SignIn("google"));
             apple = Button(panel, "APPLE ID", new Vector2(.5f, .32f), Vector2.zero,
@@ -132,6 +156,23 @@ namespace UltimateFootballChase.Hub
             boardEntry = Button(panel, "ENTRY / PRIZES UNAVAILABLE", new Vector2(.5f, .17f), Vector2.zero,
                 new Vector2(720, 85), () => { });
             boardEntry.interactable = false;
+            settingsButtons = new[] {
+                Button(panel, "USE MY MUSIC", new Vector2(.5f, .51f), Vector2.zero, new Vector2(660, 88),
+                    () => ChangeSetting(SettingAction.ToggleMyMusic)),
+                Button(panel, "HAPTICS", new Vector2(.27f, .27f), Vector2.zero, new Vector2(390, 84),
+                    () => ChangeSetting(SettingAction.ToggleHaptics)),
+                Button(panel, "LANGUAGE", new Vector2(.73f, .27f), Vector2.zero, new Vector2(390, 84),
+                    () => ChangeSetting(SettingAction.NextLanguage)),
+                Button(panel, "REGION", new Vector2(.5f, .19f), Vector2.zero, new Vector2(600, 84),
+                    () => ChangeSetting(SettingAction.NextRegion))
+            };
+            musicCaption = Label(panel, "MUSIC", 29, TextAnchor.MiddleCenter,
+                new Vector2(.13f, .47f), new Vector2(.87f, .49f), Vector2.zero, Vector2.zero);
+            sfxCaption = Label(panel, "SFX", 29, TextAnchor.MiddleCenter,
+                new Vector2(.13f, .39f), new Vector2(.87f, .41f), Vector2.zero, Vector2.zero);
+            musicSlider = AudioSlider(panel, .43f, value => director.SetAudioVolume(true, value));
+            sfxSlider = AudioSlider(panel, .35f, value => director.SetAudioVolume(false, value));
+            ToggleSettings(false);
             ToggleLeaderboard(false);
             ToggleAccount(false);
             ToggleStore(false);
@@ -197,7 +238,12 @@ namespace UltimateFootballChase.Hub
             header.text = $"{AccountSession.Instance.Status}\n{zone}  |  {season}  |  {(day ? "DAY" : "NIGHT")}\nStage {profile.CompletedStages + 1} goal {HubStageProgression.NextGoal(profile):0}m • Completed {profile.CompletedStages}";
             hint.text = string.IsNullOrEmpty(nearby) ? "MOVE FREELY • AROUND THE HUB" : "E / INTERACT: " + nearby;
             interact.gameObject.SetActive(!string.IsNullOrEmpty(nearby));
-            interactionLabel.text = nearby == "Run portal" ? "START RUN" : "INTERACT";
+            string lang = profile.Options.Language;
+            accountNav.GetComponentInChildren<Text>().text = GameText.Get("account", lang);
+            wheelNav.GetComponentInChildren<Text>().text = GameText.Get("wheel", lang);
+            settingsNav.GetComponentInChildren<Text>().text = GameText.Get("settings", lang);
+            missionsNav.GetComponentInChildren<Text>().text = GameText.Get("missions", lang);
+            interactionLabel.text = GameText.Get(nearby == "Run portal" ? "run" : "interact", lang);
             if (accountPanel) modalText.text = AccountSession.Instance.Status +
                 "\nHub progress is preview-only; no ranked score, prize or purchase entitlement.";
             if (storePanel) RefreshStore();
@@ -213,22 +259,41 @@ namespace UltimateFootballChase.Hub
             ToggleStore(false);
             ToggleWheel(false);
             ToggleLeaderboard(false);
+            ToggleSettings(false);
             modal.SetActive(true);
         }
         public void OpenWardrobe(string selected)
         {
             modalTitle.text = "ORIGINAL 3D WARDROBE";
-            modalText.text = "Prototype outfits only. Selected: " + selected + ".\nSaved to the active guest or account cache.";
-            modalText.rectTransform.anchorMin = new Vector2(.1f, .40f);
+            modalText.text = "ORIGINAL GREYBOX CHARACTER + COLOUR\n" +
+                "Selected: " + director.CurrentCharacter + " / " + selected + " • preview only";
+            modalText.rectTransform.anchorMin = new Vector2(.1f, .55f);
             ToggleAccount(false);
             ToggleStore(false);
             ToggleWheel(false);
             ToggleLeaderboard(false);
+            ToggleSettings(false);
             ToggleOutfits(true);
             modal.SetActive(true);
         }
         public void OutfitSelected(string selected) =>
-            modalText.text = "Selected: " + selected + ". " + AccountSession.Instance.Status;
+            modalText.text = "Character " + director.CurrentCharacter + " • colour " + selected + "\n" + AccountSession.Instance.Status;
+        public void CharacterSelected(string id) =>
+            modalText.text = "Original character " + id + " • saved to active Hub profile.";
+        public void OpenPrivacy()
+        {
+            OpenDialogue("PRIVACY & ACCOUNT SAFETY",
+                "This prototype stores local guest progress and (if configured) an authenticated Hub preview. " +
+                "Rankings, ads, purchases and prizes are OFF.\n" +
+                "Account deletion, consent withdrawal and purchase restore are UNAVAILABLE until " +
+                "verified backend/store services and a privacy policy exist. Do not enter sensitive data.");
+        }
+        public void OpenLeague()
+        {
+            var listing = new StringBuilder("Original fictional teams • concept kits only");
+            foreach (FictionalTeam team in FictionalLeague.Teams) listing.Append("\n• ").Append(team.Name);
+            OpenDialogue(FictionalLeague.Name.ToUpperInvariant(), listing.ToString());
+        }
         public void OpenAccount()
         {
             accountPanel = true;
@@ -240,6 +305,7 @@ namespace UltimateFootballChase.Hub
             ToggleStore(false);
             ToggleWheel(false);
             ToggleLeaderboard(false);
+            ToggleSettings(false);
             ToggleAccount(true);
             modal.SetActive(true);
         }
@@ -253,6 +319,7 @@ namespace UltimateFootballChase.Hub
             ToggleStore(true);
             ToggleWheel(false);
             ToggleLeaderboard(false);
+            ToggleSettings(false);
             RefreshStore();
             modal.SetActive(true);
         }
@@ -302,6 +369,7 @@ namespace UltimateFootballChase.Hub
             ToggleAccount(false);
             ToggleStore(false);
             ToggleLeaderboard(false);
+            ToggleSettings(false);
             ToggleWheel(true);
             RefreshWheel();
             modal.SetActive(true);
@@ -342,6 +410,84 @@ namespace UltimateFootballChase.Hub
             wheelAd.gameObject.SetActive(enabled);
             modalText.gameObject.SetActive(!enabled);
         }
+        private Slider AudioSlider(RectTransform parent, float y, Action<float> onChanged)
+        {
+            var go = new GameObject("Independent audio volume slider", typeof(RectTransform), typeof(Image), typeof(Slider));
+            go.transform.SetParent(parent, false);
+            var rect = (RectTransform)go.transform;
+            rect.anchorMin = rect.anchorMax = new Vector2(.5f, y);
+            rect.sizeDelta = new Vector2(660, 55);
+            go.GetComponent<Image>().color = new Color(.25f,.31f,.38f);
+            var fill = new GameObject("Level", typeof(RectTransform), typeof(Image)).GetComponent<RectTransform>();
+            fill.SetParent(rect, false); fill.anchorMin = Vector2.zero; fill.anchorMax = Vector2.one;
+            fill.offsetMin = fill.offsetMax = Vector2.zero;
+            fill.GetComponent<Image>().color = new Color(.32f,.82f,.65f);
+            var handleContainer = new GameObject("Handle track", typeof(RectTransform)).GetComponent<RectTransform>();
+            handleContainer.SetParent(rect, false);
+            handleContainer.anchorMin = Vector2.zero; handleContainer.anchorMax = Vector2.one;
+            handleContainer.offsetMin = handleContainer.offsetMax = Vector2.zero;
+            var handle = new GameObject("Handle", typeof(RectTransform), typeof(Image)).GetComponent<RectTransform>();
+            handle.SetParent(handleContainer, false);
+            handle.sizeDelta = new Vector2(65, 78);
+            handle.GetComponent<Image>().color = Color.white;
+            var slider = go.GetComponent<Slider>();
+            slider.minValue = 0f; slider.maxValue = 1f;
+            slider.fillRect = fill; slider.handleRect = handle;
+            slider.targetGraphic = handle.GetComponent<Image>();
+            slider.onValueChanged.AddListener(value => onChanged(value));
+            return slider;
+        }
+        public void OpenSettings()
+        {
+            ToggleOutfits(false); ToggleAccount(false); ToggleStore(false);
+            ToggleWheel(false); ToggleLeaderboard(false); ToggleSettings(true);
+            modalText.rectTransform.anchorMin = new Vector2(.1f, .56f);
+            modalText.rectTransform.anchorMax = new Vector2(.9f, .64f);
+            modalText.fontSize = 33;
+            RefreshSettings(director.CurrentOptions);
+            modal.SetActive(true);
+        }
+        public void RefreshSettings(HubOptions options)
+        {
+            if (!settingsPanel || options == null) return;
+            modalTitle.text = GameText.Get("settings", options.Language);
+            modalText.text = "Music " + Mathf.RoundToInt(options.MusicVolume * 100) + "% • SFX " +
+                Mathf.RoundToInt(options.SfxVolume * 100) + "%\nUse My Music mutes game music ONLY.";
+            musicSlider.SetValueWithoutNotify(options.MusicVolume);
+            sfxSlider.SetValueWithoutNotify(options.SfxVolume);
+            musicCaption.text = GameText.Get("music", options.Language) + " " + Mathf.RoundToInt(options.MusicVolume * 100) + "%";
+            sfxCaption.text = GameText.Get("effects", options.Language) + " " + Mathf.RoundToInt(options.SfxVolume * 100) + "%";
+            settingsButtons[0].GetComponentInChildren<Text>().text = GameText.Get("ownmusic", options.Language) + ": " +
+                GameText.Get(options.UseMyMusic ? "on" : "off", options.Language);
+            settingsButtons[1].GetComponentInChildren<Text>().text = GameText.Get("haptics", options.Language) + ": " +
+                GameText.Get(options.HapticsEnabled ? "on" : "off", options.Language);
+            settingsButtons[2].GetComponentInChildren<Text>().text = GameText.Get("language", options.Language) + ": " +
+                options.Language.ToUpperInvariant();
+            settingsButtons[3].GetComponentInChildren<Text>().text = GameText.Get("region", options.Language) + ": " + options.Region;
+        }
+        private void ChangeSetting(SettingAction action) => director.ChangeSetting(action);
+        private void ToggleSettings(bool enabled)
+        {
+            settingsPanel = enabled;
+            foreach (Button button in settingsButtons) button.gameObject.SetActive(enabled);
+            musicSlider.gameObject.SetActive(enabled);
+            sfxSlider.gameObject.SetActive(enabled);
+            musicCaption.gameObject.SetActive(enabled);
+            sfxCaption.gameObject.SetActive(enabled);
+            if (!enabled) modalText.fontSize = 37;
+        }
+        public void OpenShowdown()
+        {
+            OpenDialogue("SHOWDOWN • SERVER SCHEDULE", "Checking for a published 3–5 day event...");
+            _ = LoadShowdownAsync(++showdownGeneration);
+        }
+        private async System.Threading.Tasks.Task LoadShowdownAsync(int generation)
+        {
+            string result = await showdownService.PublicStatusAsync();
+            if (this != null && HasModal && generation == showdownGeneration &&
+                modalTitle.text == "SHOWDOWN • SERVER SCHEDULE")
+                modalText.text = result;
+        }
         public void OpenLeaderboard(BoardKind kind)
         {
             ToggleOutfits(false);
@@ -349,6 +495,7 @@ namespace UltimateFootballChase.Hub
             ToggleStore(false);
             ToggleWheel(false);
             ToggleLeaderboard(true);
+            ToggleSettings(false);
             modalText.rectTransform.anchorMin = new Vector2(.08f, .38f);
             modalText.rectTransform.anchorMax = new Vector2(.92f, .63f);
             modalText.fontSize = 29;
@@ -419,10 +566,13 @@ namespace UltimateFootballChase.Hub
             outfitTeal.gameObject.SetActive(enabled);
             outfitAmber.gameObject.SetActive(enabled);
             outfitViolet.gameObject.SetActive(enabled);
+            foreach (Button character in characterButtons) character.gameObject.SetActive(enabled);
         }
         public void CloseModal()
         {
+            showdownGeneration++;
             accountPanel = false; storePanel = false; wheelPanel = false;
+            ToggleSettings(false);
             ToggleLeaderboard(false);
             modal.SetActive(false);
         }

@@ -25,10 +25,11 @@ namespace UltimateFootballChase.Editor
             if (!EditorUtility.DisplayDialog("Local guest QA only",
                 "This changes ONLY device-local test progression to five completed stages. It does not grant cloud/leaderboard rewards. Continue?",
                 "Set 5 locally", "Cancel")) return;
-            HubProgress guest = HubGuestProgress.Load();
+            var guestRepository = new LocalGuestHubRepository();
+            HubProgress guest = guestRepository.Load();
             guest.CompletedStages = 5;
             guest.Position = Vector3.zero;
-            HubGuestProgress.Save(guest);
+            guestRepository.Save(guest);
             EditorUtility.DisplayDialog("Test progression saved", "Re-enter Play mode in the Hub to see both gates open.", "OK");
         }
 

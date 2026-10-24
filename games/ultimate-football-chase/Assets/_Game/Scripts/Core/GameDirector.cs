@@ -10,6 +10,7 @@ using UltimateFootballChase.Hub;
 using UltimateFootballChase.Backend;
 using UltimateFootballChase.Economy;
 using UltimateFootballChase.Ads;
+using UltimateFootballChase.Settings;
 using UnityEngine.SceneManagement;
 
 namespace UltimateFootballChase.Core
@@ -60,6 +61,7 @@ namespace UltimateFootballChase.Core
             }
             AccountSession.Ensure(); // direct runner scene opens must also restore the authenticated repository
             AdSession.Ensure();
+            GameAudio.Ensure().Apply(HubGuestProgress.Load().Options);
             powers = new PowerUpState(powerConfig);
             Application.targetFrameRate = 60; // provisional performance target, subject to device QA
             Screen.orientation = ScreenOrientation.Portrait;
@@ -99,7 +101,11 @@ namespace UltimateFootballChase.Core
             lighting.transform.rotation = Quaternion.Euler(50, -30, 0);
             input = gameObject.AddComponent<SwipeInput>();
             input.Initialize(this, powerConfig.DoubleTapWindowSeconds);
-            input.OnAction += action => runner.Queue(action);
+            input.OnAction += action =>
+            {
+                runner.Queue(action);
+                if (action == RunAction.Jump && !runner.IsSliding) GameAudio.Instance.Jump();
+            };
             input.OnDoubleTap += () => powers.TryActivateBoard();
             hud = gameObject.AddComponent<GameHUD>();
             hud.Initialize(this);
@@ -107,12 +113,14 @@ namespace UltimateFootballChase.Core
         private void OnAccountProfileChanged(HubProgress profile)
         {
             if (profile == null || runner == null) return;
+            GameAudio.Ensure().Apply(profile.Options);
             string tint = profile.SelectedOutfit;
             if (AccountSession.Instance != null && !AccountSession.Instance.IsSignedIn)
             {
                 string demoTint = new LocalPracticeStore().Load().SelectedTintId;
                 if (StoreCatalog.IsDemoTint(demoTint)) tint = demoTint;
             }
+            OriginalRoster.Show(runner.Visual, profile.SelectedCharacter);
             Color outfit = HubWorldBuilder.OutfitColor(tint);
             runner.Visual.GetComponent<Renderer>().material.color = outfit;
             foreach (Renderer part in runner.Visual.GetComponentsInChildren<Renderer>())
@@ -190,6 +198,7 @@ namespace UltimateFootballChase.Core
                 if (flying || magnetPull || Mathf.Abs((coin.Lane - 1) * config.LaneWidth - runner.X) <= .85f)
                 {
                     session.CollectCoin();
+                    GameAudio.Instance.Coin();
                     coin.Object.SetActive(false);
                 }
             }
@@ -211,6 +220,7 @@ namespace UltimateFootballChase.Core
                 {
                     if (chaserProximity >= .35f) { Fall(); break; }
                     runner.Stumble();
+                    GameAudio.Instance.Impact();
                     chaserProximity = 1f;
                 }
                 else { Fall(); break; } // direct frontal contact
@@ -219,6 +229,7 @@ namespace UltimateFootballChase.Core
         private void Fall()
         {
             runner.Fall();
+            GameAudio.Instance.Impact();
             chaserCard.material.color = new Color(.95f, .19f, .18f);
             state = RunState.Replay;
             hud.ShowReplay();
@@ -248,7 +259,7 @@ namespace UltimateFootballChase.Core
             if (state != RunState.Decision || AccountSession.Instance.IsBusy) return;
             state = RunState.Ended;
             AdSession.Instance.FinishedAttempt(); // never show in the middle of a run or VAR
-            bool cleared = HubGuestProgress.RecordFinishedRun(session.DistanceMeters, out HubProgress progress);
+            bool cleared = HubGuestProgress.RecordFinishedRun(session.DistanceMeters, out HubProgress progress, session.Coins);
             bool guest = AccountSession.Instance != null && !AccountSession.Instance.IsBusy &&
                 !AccountSession.Instance.IsSignedIn;
             bool demoCredited = new LocalPracticeStore().CreditRun(session.RunId, session.Coins, guest);

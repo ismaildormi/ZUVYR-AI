@@ -6,6 +6,9 @@ using UltimateFootballChase.Gameplay;
 using UltimateFootballChase.Backend;
 using UltimateFootballChase.Economy;
 using UltimateFootballChase.Rankings;
+using UltimateFootballChase.Settings;
+using UltimateFootballChase.Characters;
+using UltimateFootballChase.Missions;
 
 namespace UltimateFootballChase.Hub
 {
@@ -47,6 +50,7 @@ namespace UltimateFootballChase.Hub
             account = AccountSession.Ensure();
             account.ProfileChanged += OnAccountProfileChanged;
             profile = HubGuestProgress.Load();
+            GameAudio.Ensure().Apply(profile.Options);
             bool unlocked = HubStageProgression.IsExtendedHubUnlocked(profile);
             if (!HubLayout.CanWalk(profile.Position, unlocked)) profile.Position = new Vector3(0, 0, -3);
             world = new HubWorldBuilder();
@@ -69,6 +73,7 @@ namespace UltimateFootballChase.Hub
             bodyRenderer = body.GetComponent<Renderer>();
             GreyboxFactory.Primitive("Original character head", PrimitiveType.Sphere, body,
                 new Vector3(0, .57f, 0), new Vector3(.72f, .42f, .72f), new Color(.97f, .80f, .59f));
+            OriginalRoster.AddGreyboxVariants(body);
             ApplyOutfit();
         }
         private void CreateCamera()
@@ -103,6 +108,8 @@ namespace UltimateFootballChase.Hub
             Add("Run portal", new Vector3(0, 0, 8), StartRun);
             Add("Top 10 screen", new Vector3(6, 0, -6),
                 () => hud.OpenLeaderboard(BoardKind.Weekly));
+            Add("Showdown schedule", new Vector3(-6, 0, -6), () => hud.OpenShowdown());
+            Add("World Legends League", new Vector3(9, 0, 5), () => hud.OpenLeague());
             Add("Wardrobe", new Vector3(-30, 0, -6), () => hud.OpenWardrobe(profile.SelectedOutfit));
             Add("Achievement wall", new Vector3(-23, 0, -9), () => hud.OpenDialogue("MY TROPHIES",
                 "Completed stages: " + profile.CompletedStages + ". The 3D shelf updates with real local progress."));
@@ -127,6 +134,14 @@ namespace UltimateFootballChase.Hub
         {
             if (player == null || hud == null) return;
             world.Animate(Time.time);
+            if (!account.IsBusy && (!account.IsSignedIn || account.HasActiveAccountProfile) &&
+                !hud.HasModal && profile.LastStoryChapterShown < HubStory.ChapterFor(profile.CompletedStages))
+            {
+                int chapter = HubStory.ChapterFor(profile.CompletedStages);
+                profile.LastStoryChapterShown = chapter;
+                Flush();
+                hud.OpenDialogue(HubStory.Title(chapter), GameText.Get("story" + chapter, profile.Options.Language));
+            }
             if (Time.unscaledTime >= nextClockCheck)
             {
                 nextClockCheck = Time.unscaledTime + 60f; // seasonal/daylight decoration only
@@ -259,9 +274,39 @@ namespace UltimateFootballChase.Hub
             player.position = profile.Position;
             world.SetUnlocked(unlocked);
             world.SetStageTrophies(profile.CompletedStages);
+            GameAudio.Ensure().Apply(profile.Options);
             ApplyOutfit();
             SnapCamera();
             hud.CloseModal();
+        }
+        public HubOptions CurrentOptions => profile.Options;
+        public string CurrentCharacter => profile.SelectedCharacter;
+        public string MissionStatus => DailyMissions.Status(profile, DateTime.UtcNow);
+        public void ChangeSetting(SettingAction action)
+        {
+            if (account.IsBusy || profile == null) return;
+            profile.Options.Change(action);
+            GameAudio.Ensure().Apply(profile.Options);
+            Flush(); // guest-local OR active authenticated UID, never a shared preferences key
+            hud.RefreshSettings(profile.Options);
+        }
+        public void SetAudioVolume(bool music, float value)
+        {
+            if (account.IsBusy || profile == null) return;
+            if (music) profile.Options.MusicVolume = value;
+            else profile.Options.SfxVolume = value;
+            profile.Options.Normalize();
+            GameAudio.Ensure().Apply(profile.Options);
+            Flush();
+            hud.RefreshSettings(profile.Options);
+        }
+        public void SelectCharacter(string id)
+        {
+            if (!OriginalRoster.Contains(id) || account.IsBusy) return;
+            profile.SelectedCharacter = id;
+            ApplyOutfit();
+            Flush();
+            hud.CharacterSelected(id);
         }
         public void SelectOutfit(string outfit)
         {
@@ -300,6 +345,8 @@ namespace UltimateFootballChase.Hub
             Color tint = HubWorldBuilder.OutfitColor(selected);
             bodyRenderer.material.color = tint;
             world.Mannequin.GetComponent<Renderer>().material.color = tint;
+            OriginalRoster.Show(body, profile.SelectedCharacter);
+            OriginalRoster.Show(world.Mannequin, profile.SelectedCharacter);
         }
         private void ShowGate(string name) => hud.OpenDialogue(name + " LOCKED",
             "Complete 5 stages to open this area. Current: " + profile.CompletedStages + "/5.\nStage targets are provisional and shown at the top.");

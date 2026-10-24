@@ -71,6 +71,16 @@ namespace UltimateFootballChase.Backend
             if (local == null) return Clone(remote);
             HubProgress merged = Clone(remote);
             merged.CompletedStages = Mathf.Max(remote.CompletedStages, local.CompletedStages);
+            merged.LastStoryChapterShown = Mathf.Max(remote.LastStoryChapterShown, local.LastStoryChapterShown);
+            // Daily counters may overlap across devices: never add unverified totals or create spendable rewards.
+            if (local.MissionUtcDayTicks > remote.MissionUtcDayTicks ||
+                (local.MissionUtcDayTicks == remote.MissionUtcDayTicks && local.LastSavedUtcTicks > remote.LastSavedUtcTicks))
+            {
+                merged.MissionUtcDayTicks = local.MissionUtcDayTicks;
+                merged.MissionRuns = local.MissionRuns;
+                merged.MissionCoins = local.MissionCoins;
+                merged.MissionDistanceMetres = local.MissionDistanceMetres;
+            }
             merged.FinishedRuns = Mathf.Max(remote.FinishedRuns, local.FinishedRuns); // not sum: replay-safe
             merged.BestRunMeters = Mathf.Max(remote.BestRunMeters, local.BestRunMeters);
             if (local.LastSavedUtcTicks > remote.LastSavedUtcTicks)
@@ -78,6 +88,8 @@ namespace UltimateFootballChase.Backend
                 merged.Position = local.Position;
                 merged.LastDoor = local.LastDoor;
                 merged.SelectedOutfit = local.SelectedOutfit;
+                merged.Options = local.Options;
+                merged.SelectedCharacter = local.SelectedCharacter;
                 merged.LastRunMeters = local.LastRunMeters;
                 merged.LastSavedUtcTicks = local.LastSavedUtcTicks;
             }

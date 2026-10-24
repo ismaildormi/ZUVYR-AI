@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UltimateFootballChase.Characters;
 using UltimateFootballChase.Gameplay;
 
 namespace UltimateFootballChase.Hub
@@ -54,6 +55,13 @@ namespace UltimateFootballChase.Hub
                 new Vector3(7, 5, .4f), new Color(.06f, .16f, .23f));
             // Never fabricate Top 10 player names or server-validated ranks.
             WorldText("TOP 10 • SERVER BOARD\nNOT AVAILABLE OFFLINE", new Vector3(6, 3.4f, -6.3f), 55, .065f);
+            Block("Showdown noticeboard (server required)", new Vector3(-6, 2.6f, -6),
+                new Vector3(5f, 4f, .35f), new Color(.18f, .22f, .39f));
+            WorldText("SHOWDOWN • 3–5 DAY EVENTS\nNO OPPONENTS OFFLINE",
+                new Vector3(-6, 3f, -6.3f), 37, .06f);
+            Block("World Legends League concept board", new Vector3(9, 2f, 5),
+                new Vector3(3f, 3f, .35f), new Color(.25f,.35f,.44f));
+            WorldText("FICTIONAL LEAGUE\n8 ORIGINAL TEAMS", new Vector3(9, 3f, 4.7f), 35, .06f);
             Block("Original symbolic fountain", new Vector3(0, 1.1f, 0), new Vector3(2.1f, 1.8f, 2.1f),
                 new Color(.30f, .73f, .77f));
         }
@@ -64,6 +72,7 @@ namespace UltimateFootballChase.Hub
             Block("Wardrobe cabinet", new Vector3(-30f, 1.3f, -6), new Vector3(3, 2.6f, 1.2f), new Color(.36f, .21f, .18f));
             Mannequin = GreyboxFactory.Primitive("3D wardrobe mannequin (placeholder)", PrimitiveType.Capsule, Root,
                 new Vector3(-27f, 1f, 3f), new Vector3(.86f, 1f, .86f), new Color(.21f, .88f, .68f));
+            OriginalRoster.AddGreyboxVariants(Mannequin);
             Block("Achievement shelf", new Vector3(-23f, 2.6f, -10.2f), new Vector3(11f, .2f, .75f), new Color(.53f, .38f, .22f));
             for (int i = 0; i < 10; i++)
             {

@@ -1,4 +1,4 @@
-# Ultimate Football Chase — Unity phases 1–8 source prototype
+# Ultimate Football Chase — Unity phases 1–9 source prototype
 
 A **self-contained Unity project** (open this folder, not the ZUVYR-AI root). This is an offline gameplay prototype, deliberately isolated from the existing ZUVYR product; it is **not** a separate GitHub repository yet.
 
@@ -21,6 +21,8 @@ The game starts at 9 m/s, accelerates +3% every 100m and caps after 2000m. Confi
 - Inspect Unity Console for errors, test Android touch and stable framerate over 10+ minutes. Collect 1 coin from the safe lane and check the HUD.
 - Collect magnet, shoes, jetpack and hoverboard beacons; check four independent icon/timer bars at bottom-left and three honest upcoming items above the track. Double tap (H in Editor) for 30-second board protection; see [Phase 3 manual checklist](docs/PHASE3_STATUS.md). Simulator/editor QA cannot substitute for a real phone.
 
-Phase 1–8 tests are under `Assets/_Game/Tests/Editor` (Unity Test Runner; not run in this environment). Original design values and tunables: [docs/DECISIONS.md](docs/DECISIONS.md). Implementation vs. unverified acceptance: [docs/PHASE1_STATUS.md](docs/PHASE1_STATUS.md).
+Phase 1–9 tests are under `Assets/_Game/Tests/Editor` (Unity Test Runner; not run in this environment). Original design values and tunables: [docs/DECISIONS.md](docs/DECISIONS.md). Implementation vs. unverified acceptance: [docs/PHASE1_STATUS.md](docs/PHASE1_STATUS.md).
 
 **Save boundary:** The default build is local guest PlayerPrefs. Phase-5 optional authenticated Firebase UID account cache / cloud preview code is gated behind SDK/provider setup and has not been tested or enabled. Hub stages/scores are never trusted for prizes or ranked results. Phase 6 adds a **guest-only, untrusted local demo** Market for three greybox recolors; phase 7 adds a guest-only daily wheel demo and fail-closed ad pacing. Phase 8 adds a read-only server-published standings boundary and a fail-closed weekly/monthly/Hall UI. Real rankings, prizes, rewarded ads, account wallet, premium goods and IAP are unavailable. See [phase-8 standings boundaries](docs/PHASE8_STATUS.md), [phase-7 wheel/ad boundaries](docs/PHASE7_STATUS.md), [phase-6 economy boundaries](docs/PHASE6_STATUS.md), [phase-5 setup and acceptance](docs/PHASE5_STATUS.md) and [phase-4 Hub checks](docs/PHASE4_STATUS.md).
+
+**Phase 9:** Original playable greybox roster/fictional-league concepts, one-time story panels, UTC daily **preview-only** missions, read-only Showdown schedule, separate audio sliders and persistent Use My Music setting, iOS ambient mixing hook, small three-language UI/story starter and an honest privacy-status panel. No contest entry, commercial entitlements or live services. See [phase 9 implementation and exact missing features](docs/PHASE9_STATUS.md).

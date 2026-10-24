@@ -19,6 +19,11 @@ service cloud.firestore {
       allow get: if viewId in ['weekly_current', 'monthly_current', 'hall_previous'];
       allow list, create, update, delete: if false;
     }
+    // Server-published schedule only; no client Showdown results or rewards.
+    match /eventViews/{viewId} {
+      allow get: if viewId == 'showdown_current';
+      allow list, create, update, delete: if false;
+    }
     match /{document=**} {
       allow read, write: if false;
     }
