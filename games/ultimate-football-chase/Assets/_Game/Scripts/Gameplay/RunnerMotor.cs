@@ -19,6 +19,7 @@ namespace UltimateFootballChase.Gameplay
         public int Lane => lane;
         public Transform Visual => visual;
         public bool IsJumping => jumping;
+        public int AcceptedJumps { get; private set; }
         public bool IsSliding => sliding;
         public bool IsInvulnerable => invulnerableLeft > 0;
         public float FeetHeight => transform.position.y;
@@ -34,6 +35,7 @@ namespace UltimateFootballChase.Gameplay
         public void ResetMotor()
         {
             lane = 1;
+            AcceptedJumps = 0;
             laneStartX = 0;
             laneElapsed = config.LaneChangeSeconds;
             jumping = sliding = falling = flying = superShoes = hasBufferedAction = false;
@@ -65,6 +67,7 @@ namespace UltimateFootballChase.Gameplay
                 case RunAction.Jump:
                     if (sliding) break;
                     jumping = true;
+                    if (AcceptedJumps < 1000000) AcceptedJumps++;
                     verticalElapsed = 0;
                     break;
                 case RunAction.Slide:

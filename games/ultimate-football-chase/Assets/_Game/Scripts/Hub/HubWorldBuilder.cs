@@ -213,6 +213,8 @@ namespace UltimateFootballChase.Hub
             {
                 case "amber": return new Color(.96f, .69f, .23f);
                 case "violet": return new Color(.72f, .45f, .88f);
+                case "storm": return new Color(.29f, .38f, .54f);
+                case "dawn": return new Color(.98f, .52f, .29f);
                 case "cobalt": return new Color(.23f, .52f, .92f);
                 case "coral": return new Color(.98f, .43f, .38f);
                 case "mint": return new Color(.52f, .90f, .71f);

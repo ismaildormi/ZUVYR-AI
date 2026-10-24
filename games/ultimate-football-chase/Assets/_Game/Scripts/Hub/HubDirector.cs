@@ -279,9 +279,29 @@ namespace UltimateFootballChase.Hub
             SnapCamera();
             hud.CloseModal();
         }
+        public bool CanResetGuestData => account != null && !account.IsSignedIn && !account.IsBusy;
+        public void ResetGuestData()
+        {
+            if (!CanResetGuestData) return;
+            // Never call HubGuestProgress.Save on an account-bound repository during a guest reset.
+            new LocalGuestHubRepository().Erase();
+            practiceStore.EraseGuestDemo();
+            GuestClaimMarker.ForgetGuestClaimMarkers();
+            profile = new HubProgress();
+            player.position = profile.Position;
+            world.SetUnlocked(false);
+            world.SetStageTrophies(0);
+            ApplyOutfit();
+            GameAudio.Ensure().Apply(profile.Options);
+            dirty = false;
+            hud.CloseModal();
+            hud.OpenDialogue("LOCAL GUEST RESET", "Guest progress, preview missions, settings and demo wallet were reset. " +
+                "UID-bound account caches/cloud profiles were not touched.");
+        }
         public HubOptions CurrentOptions => profile.Options;
         public string CurrentCharacter => profile.SelectedCharacter;
-        public string MissionStatus => DailyMissions.Status(profile, DateTime.UtcNow);
+        public int CompletedStages => profile.CompletedStages;
+        public string MissionStatus => DailyMissions.Status(profile, DateTime.UtcNow, profile.Options.Language);
         public void ChangeSetting(SettingAction action)
         {
             if (account.IsBusy || profile == null) return;
@@ -310,7 +330,7 @@ namespace UltimateFootballChase.Hub
         }
         public void SelectOutfit(string outfit)
         {
-            if (outfit != "teal" && outfit != "amber" && outfit != "violet") return;
+            if (!OriginalRoster.CanSelectKit(outfit, profile.CompletedStages) || account.IsBusy) return;
             if (!account.IsSignedIn) practiceStore.ClearSelection();
             profile.SelectedOutfit = outfit;
             ApplyOutfit();
@@ -342,7 +362,8 @@ namespace UltimateFootballChase.Hub
                 string demoTint = practiceStore.Load().SelectedTintId;
                 if (StoreCatalog.IsDemoTint(demoTint)) selected = demoTint;
             }
-            Color tint = HubWorldBuilder.OutfitColor(selected);
+            Color tint = StoreCatalog.IsDemoTint(selected) ? HubWorldBuilder.OutfitColor(selected) :
+                OriginalRoster.KitColor(profile.SelectedCharacter, selected);
             bodyRenderer.material.color = tint;
             world.Mannequin.GetComponent<Renderer>().material.color = tint;
             OriginalRoster.Show(body, profile.SelectedCharacter);

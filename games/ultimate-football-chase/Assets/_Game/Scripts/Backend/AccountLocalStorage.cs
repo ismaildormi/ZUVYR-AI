@@ -72,6 +72,13 @@ namespace UltimateFootballChase.Backend
             (!PlayerPrefs.HasKey(PendingKey) || PlayerPrefs.GetString(PendingKey) == AccountLocalStorage.Hash(uid));
         public static bool ReservedFor(string uid) => !WasClaimed &&
             PlayerPrefs.GetString(PendingKey) == AccountLocalStorage.Hash(uid);
+        public static void ForgetGuestClaimMarkers()
+        {
+            // Guest reset only. Never delete a UID-scoped account cache or remote profile here.
+            PlayerPrefs.DeleteKey(ClaimKey);
+            PlayerPrefs.DeleteKey(PendingKey);
+            PlayerPrefs.Save();
+        }
         public static void Reserve(string verifiedFirebaseUid)
         {
             if (!CanClaim(verifiedFirebaseUid)) throw new InvalidOperationException("Guest profile already reserved/claimed");

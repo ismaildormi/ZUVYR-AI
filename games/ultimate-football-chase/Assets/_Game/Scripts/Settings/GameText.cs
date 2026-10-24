@@ -21,6 +21,30 @@ namespace UltimateFootballChase.Settings
                 case "region": return Pick(language, "المنطقة", "RÉGION", "REGION");
                 case "on": return Pick(language, "نعم", "OUI", "ON");
                 case "off": return Pick(language, "لا", "NON", "OFF");
+                case "localScore": return Pick(language, "نتيجة محلية", "SCORE LOCAL", "LOCAL SCORE");
+                case "unverified": return Pick(language, "غير موثق", "non vérifié", "unverified");
+                case "topRun": return Pick(language, "أفضل جولة محلية", "MEILLEURE COURSE", "TOP RUN (local preview)");
+                case "mission": return Pick(language, "مهمة", "MISSION", "MISSION");
+                case "previewCap": return Pick(language, "بلغت الحد التجريبي", "Plafond de démo atteint", "Preview cap reached");
+                case "dodge": return Pick(language, "تفاد", "ÉVITE", "DODGE");
+                case "jump": return Pick(language, "اقفز", "SAUTE", "JUMP");
+                case "coins": return Pick(language, "عملات", "PIÈCES", "COINS");
+                case "testKeys": return Pick(language, "مفاتيح اختبار", "CLÉS TEST", "Test keys");
+                case "stage": return Pick(language, "مرحلة", "ÉTAPE", "Stage");
+                case "completed": return Pick(language, "مكتملة", "terminées", "Completed");
+                case "pause": return Pick(language, "إيقاف مؤقت", "PAUSE", "PAUSED");
+                case "resume": return Pick(language, "استمر", "REPRENDRE", "RESUME");
+                case "restart": return Pick(language, "أعد الجولة", "RECOMMENCER", "RESTART");
+                case "runAgain": return Pick(language, "العب مجددًا", "REJOUER", "RUN AGAIN");
+                case "backHub": return Pick(language, "العودة للمركز", "RETOUR AU HUB", "BACK TO HUB");
+                case "gameOver": return Pick(language, "بطاقة حمراء\nانتهت الجولة", "CARTON ROUGE\nFIN DE COURSE", "RED CARD\nGAME OVER");
+                case "chaser": return Pick(language, "الحكم يقترب!", "LE POURSUIVANT APPROCHE !", "! THE CHASER IS CLOSE !");
+                case "dailyChecklist": return Pick(language, "مهام يومية بتوقيت UTC • تجريبية", "LISTE UTC • DÉMO", "UTC DAILY CHECKLIST • PREVIEW ONLY");
+                case "completeRun": return Pick(language, "أنهِ جولة", "Terminer une course", "Complete a run");
+                case "collectCoins": return Pick(language, "اجمع عملات", "Collecter des pièces", "Collect coins");
+                case "travel": return Pick(language, "اقطع مسافة", "Parcourir", "Travel");
+                case "noRewards": return Pick(language, "لا مكافآت أو عملات قابلة للإنفاق.",
+                    "Aucune récompense ni monnaie dépensable.", "No rewards or account currency issued.");
                 case "story1": return Pick(language,
                     "أنهت بطاقة حمراء ظالمة مباراة واعدة. اعبر المسارات الرمزية لتبحث عن الحقيقة.",
                     "Un carton rouge injuste met fin au match. Traverse les chemins symboliques pour découvrir la vérité.",

@@ -83,13 +83,17 @@ namespace UltimateFootballChase.Backend
             }
             merged.FinishedRuns = Mathf.Max(remote.FinishedRuns, local.FinishedRuns); // not sum: replay-safe
             merged.BestRunMeters = Mathf.Max(remote.BestRunMeters, local.BestRunMeters);
+            merged.BestPreviewScore = Math.Max(remote.BestPreviewScore, local.BestPreviewScore);
             if (local.LastSavedUtcTicks > remote.LastSavedUtcTicks)
             {
                 merged.Position = local.Position;
                 merged.LastDoor = local.LastDoor;
                 merged.SelectedOutfit = local.SelectedOutfit;
-                merged.Options = local.Options;
+                merged.Options = local.Options == null ? null :
+                    JsonUtility.FromJson<UltimateFootballChase.Settings.HubOptions>(JsonUtility.ToJson(local.Options));
                 merged.SelectedCharacter = local.SelectedCharacter;
+                merged.PreviewMissionChain = new UltimateFootballChase.Missions.MissionChain(
+                    local.PreviewMissionChain).Snapshot();
                 merged.LastRunMeters = local.LastRunMeters;
                 merged.LastSavedUtcTicks = local.LastSavedUtcTicks;
             }

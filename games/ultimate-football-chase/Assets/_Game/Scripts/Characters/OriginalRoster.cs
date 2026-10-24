@@ -1,5 +1,6 @@
 using UnityEngine;
 using UltimateFootballChase.Gameplay;
+using UltimateFootballChase.Hub;
 
 namespace UltimateFootballChase.Characters
 {
@@ -8,6 +9,21 @@ namespace UltimateFootballChase.Characters
     {
         public static readonly string[] Ids = { "kivo", "mira", "selo", "nexa" };
         public static readonly string[] Names = { "Kivo the Trickster", "Mira the Guardian", "Selo the Sprinter", "Nexa the Stargazer" };
+        public static readonly string[] KitIds = { "teal", "amber", "violet", "storm", "dawn" };
+        public static bool CanSelectKit(string id, int completedStages) =>
+            id == "teal" || id == "amber" || id == "violet" ||
+            (id == "storm" && completedStages >= 5) ||
+            (id == "dawn" && completedStages >= 10);
+        public static Color KitColor(string characterId, string kitId)
+        {
+            Color tint = HubWorldBuilder.OutfitColor(kitId);
+            int index = System.Array.IndexOf(Ids, characterId);
+            if (index < 0) index = 0;
+            Color personalAccent = index == 0 ? new Color(.96f,.71f,.24f) :
+                index == 1 ? new Color(.36f,.72f,.95f) :
+                index == 2 ? new Color(.97f,.43f,.51f) : new Color(.73f,.53f,.94f);
+            return Color.Lerp(tint, personalAccent, .16f); // 20 original per-character greybox colour treatments
+        }
         public static bool Contains(string id)
         {
             foreach (string candidate in Ids) if (candidate == id) return true;

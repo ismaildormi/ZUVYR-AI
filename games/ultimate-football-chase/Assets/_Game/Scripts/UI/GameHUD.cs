@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using UltimateFootballChase.Core;
 using UltimateFootballChase.Gameplay;
 using UltimateFootballChase.PowerUps;
+using UltimateFootballChase.Settings;
 using System.Collections.Generic;
 
 namespace UltimateFootballChase.UI
@@ -12,7 +13,10 @@ namespace UltimateFootballChase.UI
     /// <summary>Generated greybox HUD. Ads and remotely trusted balances are unavailable.</summary>
     public sealed class GameHUD : MonoBehaviour
     {
-        private Text statistics, chase, title, detail, primaryLabel, secondaryLabel;
+        private Text statistics, missionLabel, bestBadge, chase, title, detail, primaryLabel, secondaryLabel;
+        private long localBest;
+        private string language = "en";
+        private string T(string key) => GameText.Get(key, language);
         private GameObject modal, replaySkip;
         private Button primary, secondary, pause;
         private Font font;
@@ -55,10 +59,14 @@ namespace UltimateFootballChase.UI
             safe.anchorMin = new Vector2(bounds.xMin / Mathf.Max(1, Screen.width), bounds.yMin / Mathf.Max(1, Screen.height));
             safe.anchorMax = new Vector2(bounds.xMax / Mathf.Max(1, Screen.width), bounds.yMax / Mathf.Max(1, Screen.height));
             safe.offsetMin = safe.offsetMax = Vector2.zero;
-            statistics = Label(safe, "Distance / coins / keys", 42, TextAnchor.UpperRight, new Vector2(0, 1), new Vector2(1, 1),
-                new Vector2(24, -185), new Vector2(-35, -35));
+            statistics = Label(safe, "Distance / coins / keys", 31, TextAnchor.UpperRight,
+                new Vector2(.45f, 1), new Vector2(1, 1), new Vector2(0, -185), new Vector2(-35, -35));
+            missionLabel = Label(safe, "Current local mission", 27, TextAnchor.UpperLeft,
+                new Vector2(0, 1), new Vector2(.53f, 1), new Vector2(25, -235), new Vector2(0, -145));
+            bestBadge = Label(safe, "Local best", 30, TextAnchor.MiddleRight,
+                new Vector2(.48f, 1), new Vector2(1, 1), new Vector2(0, -255), new Vector2(-35, -195));
             chase = Label(safe, "Chaser", 35, TextAnchor.MiddleCenter, new Vector2(0, 1), new Vector2(1, 1),
-                new Vector2(140, -265), new Vector2(-140, -215));
+                new Vector2(140, -325), new Vector2(-140, -270));
             pause = MakeButton(safe, "II", new Vector2(0, 1), new Vector2(80, -80), new Vector2(115, 115), () => director.Pause());
             pause.GetComponent<Image>().color = new Color(.03f, .07f, .11f, .85f);
             CreatePowerMeters(safe);
@@ -196,12 +204,24 @@ namespace UltimateFootballChase.UI
             if (firstAction != null) primary.onClick.AddListener(() => firstAction());
             if (secondAction != null) secondary.onClick.AddListener(() => secondAction());
         }
+        public void SetLocalBest(long score) => localBest = Math.Max(0L, score);
+        public void SetLanguage(string selected) => language = selected == "ar" || selected == "fr" ? selected : "en";
         public void UpdateRun(RunSession session, float chaserProximity, float speed, int difficultyTier)
         {
             if (Time.unscaledTime < nextStatisticsRefresh) return;
             nextStatisticsRefresh = Time.unscaledTime + .1f;
-            statistics.text = $"{session.DistanceMeters:0} m    {speed:0.0} m/s    Tier {difficultyTier + 1}\nRun coins {session.Coins} [unverified]    Test keys {session.Keys}";
-            chase.text = chaserProximity > 0 ? "! THE CHASER IS CLOSE !" : "";
+            statistics.text = $"{T("localScore")} {session.PreviewScore:N0}  x{session.Missions.Multiplier} [{T("unverified")}]\n" +
+                $"{session.DistanceMeters:0} m  {speed:0.0} m/s  T{difficultyTier + 1}\n" +
+                $"{T("coins")} {session.Coins} [demo]  {T("testKeys")} {session.Keys}";
+            var chain = session.Missions;
+            missionLabel.text = chain.Multiplier == 30 ? T("mission") + " x30\n" + T("previewCap") :
+                $"{T("mission")} {chain.Group + 1} • x{chain.Multiplier} [LOCAL]\n" +
+                $"{T("jump")} {chain.Jumps}/15  {T("dodge")} {chain.AvoidedTackles}/10\n" +
+                $"{T("coins")} {chain.Coins}/100";
+            bestBadge.text = T("topRun") + " " + Math.Max(localBest, session.PreviewScore).ToString("N0");
+            bestBadge.color = localBest > 0 && session.PreviewScore >= localBest * .9d
+                ? new Color(1f, .79f, .24f) : Color.white;
+            chase.text = chaserProximity > 0 ? T("chaser") : "";
         }
         public void ShowReplay()
         {
@@ -228,16 +248,26 @@ namespace UltimateFootballChase.UI
         public void ShowEnd(RunSession session, string stageOutcome)
         {
             modal.SetActive(true);
-            title.text = "RED CARD\nGAME OVER";
-            detail.text = $"Distance: {session.DistanceMeters:0} m\nRun coins (unverified): {session.Coins}\n{stageOutcome}\nRewarded x2 unavailable.";
-            SetButtons("RUN AGAIN", () => director.Restart(), "BACK TO HUB", () => director.ReturnToHub());
+            title.text = T("gameOver");
+            detail.text = $"Distance: {session.DistanceMeters:0} m • Local score: {session.PreviewScore:N0} x{session.Missions.Multiplier}\n" +
+                $"Run coins (unverified): {session.Coins}\n{stageOutcome}\nRewarded x2 unavailable.";
+            SetButtons(T("runAgain"), () => director.Restart(), T("backHub"), () => director.ReturnToHub());
         }
         public void ShowPaused()
         {
             modal.SetActive(true);
-            title.text = "PAUSED";
+            title.text = T("pause");
             detail.text = "Swipe to change lane, jump or slide.\nDouble tap to use a stocked hoverboard.\nActive power timers pause with your run.";
-            SetButtons("RESUME", () => director.Resume(), "RESTART", () => director.Restart());
+            SetButtons(T("resume"), () => director.Resume(), T("restart"), () => director.Restart());
+        }
+        public void ShowProfileUnavailable()
+        {
+            pause.gameObject.SetActive(false);
+            modal.SetActive(true);
+            title.text = "CLOUD PROFILE UNAVAILABLE";
+            detail.text = "This signed-in profile was not verified or cached. No run can be credited. " +
+                "Return to the Hub and retry online or sign out to play locally.";
+            SetButtons(T("backHub"), () => director.ReturnToHub(), "", null);
         }
         public void ShowRunning()
         {

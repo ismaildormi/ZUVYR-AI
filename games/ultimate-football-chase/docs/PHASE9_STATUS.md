@@ -1,4 +1,6 @@
-# Phase 9 — scope extension and remaining acceptance (source-only)
+# Phase 9 — scope extension (source-only)
+
+**Historical snapshot:** Phase 10 subsequently added a local x1–x30 mission chain, runner route palettes, five greybox colour treatments per character and guest reset. See [current status](PHASE10_STATUS.md) for remaining gaps.
 
 This phase is **source-implemented, not Unity-compiled or device-accepted**. The isolated project remains in this repository. No separate repository was created. Read earlier phase documents for gameplay implementation and their own acceptance gaps.
 

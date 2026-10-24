@@ -18,13 +18,14 @@ namespace UltimateFootballChase.Hub
         private Font font;
         private Text header, hint, modalTitle, modalText, interactionLabel;
         private GameObject modal;
-        private Button interact, outfitTeal, outfitAmber, outfitViolet;
+        private Button interact, outfitTeal, outfitAmber, outfitViolet, outfitStorm, outfitDawn;
         private Button accountNav, wheelNav, settingsNav, missionsNav;
         private Button[] characterButtons;
         private Button google, apple, gameCenter, signOut;
         private Button storePrevious, storeNext, storeAction, wheelSpin, wheelAd;
         private Button weeklyTab, monthlyTab, hallTab, boardRefresh, boardEntry;
         private Button[] settingsButtons;
+        private Button guestReset;
         private Slider musicSlider, sfxSlider;
         private Text musicCaption, sfxCaption;
         private int showdownGeneration;
@@ -102,6 +103,10 @@ namespace UltimateFootballChase.Hub
                 new Vector2(230, 95), () => director.SelectOutfit("amber"));
             outfitViolet = Button(panel, "VIOLET", new Vector2(.72f, .33f), Vector2.zero,
                 new Vector2(230, 95), () => director.SelectOutfit("violet"));
+            outfitStorm = Button(panel, "STORM • STAGE 5", new Vector2(.34f, .245f), Vector2.zero,
+                new Vector2(340, 90), () => director.SelectOutfit("storm"));
+            outfitDawn = Button(panel, "DAWN • STAGE 10", new Vector2(.68f, .245f), Vector2.zero,
+                new Vector2(340, 90), () => director.SelectOutfit("dawn"));
             characterButtons = new Button[OriginalRoster.Ids.Length];
             for (int i = 0; i < characterButtons.Length; i++)
             {
@@ -172,6 +177,9 @@ namespace UltimateFootballChase.Hub
                 new Vector2(.13f, .39f), new Vector2(.87f, .41f), Vector2.zero, Vector2.zero);
             musicSlider = AudioSlider(panel, .43f, value => director.SetAudioVolume(true, value));
             sfxSlider = AudioSlider(panel, .35f, value => director.SetAudioVolume(false, value));
+            guestReset = Button(panel, "RESET LOCAL GUEST DATA", new Vector2(.5f, .20f),
+                Vector2.zero, new Vector2(680, 90), ConfirmGuestReset);
+            guestReset.gameObject.SetActive(false);
             ToggleSettings(false);
             ToggleLeaderboard(false);
             ToggleAccount(false);
@@ -253,6 +261,7 @@ namespace UltimateFootballChase.Hub
         {
             modalTitle.text = title;
             modalText.text = message;
+            guestReset.gameObject.SetActive(false);
             modalText.rectTransform.anchorMin = new Vector2(.1f, .40f);
             ToggleOutfits(false);
             ToggleAccount(false);
@@ -264,7 +273,10 @@ namespace UltimateFootballChase.Hub
         }
         public void OpenWardrobe(string selected)
         {
+            guestReset.gameObject.SetActive(false);
             modalTitle.text = "ORIGINAL 3D WARDROBE";
+            outfitStorm.GetComponentInChildren<Text>().text = director.CompletedStages >= 5 ? "STORM" : "STORM • STAGE 5";
+            outfitDawn.GetComponentInChildren<Text>().text = director.CompletedStages >= 10 ? "DAWN" : "DAWN • STAGE 10";
             modalText.text = "ORIGINAL GREYBOX CHARACTER + COLOUR\n" +
                 "Selected: " + director.CurrentCharacter + " / " + selected + " • preview only";
             modalText.rectTransform.anchorMin = new Vector2(.1f, .55f);
@@ -283,10 +295,24 @@ namespace UltimateFootballChase.Hub
         public void OpenPrivacy()
         {
             OpenDialogue("PRIVACY & ACCOUNT SAFETY",
-                "This prototype stores local guest progress and (if configured) an authenticated Hub preview. " +
+                "Guest data can be reset on this device. Account caches/cloud data are separate. " +
                 "Rankings, ads, purchases and prizes are OFF.\n" +
                 "Account deletion, consent withdrawal and purchase restore are UNAVAILABLE until " +
-                "verified backend/store services and a privacy policy exist. Do not enter sensitive data.");
+                "verified backend/store services and a privacy policy exist.");
+            guestReset.gameObject.SetActive(director.CanResetGuestData);
+            guestReset.GetComponentInChildren<Text>().text = "RESET LOCAL GUEST DATA";
+            guestReset.onClick.RemoveAllListeners();
+            guestReset.onClick.AddListener(ConfirmGuestReset);
+        }
+        private void ConfirmGuestReset()
+        {
+            if (!director.CanResetGuestData) { CloseModal(); return; }
+            modalTitle.text = "CONFIRM GUEST RESET";
+            modalText.text = "Permanently reset this device's guest progress, preview missions, " +
+                "settings and guest demo wallet? This does NOT delete an account or its cloud data.";
+            guestReset.GetComponentInChildren<Text>().text = "YES • RESET GUEST";
+            guestReset.onClick.RemoveAllListeners();
+            guestReset.onClick.AddListener(() => director.ResetGuestData());
         }
         public void OpenLeague()
         {
@@ -296,6 +322,7 @@ namespace UltimateFootballChase.Hub
         }
         public void OpenAccount()
         {
+            guestReset.gameObject.SetActive(false);
             accountPanel = true;
             modalText.rectTransform.anchorMin = new Vector2(.1f, .48f);
             modalTitle.text = "ACCOUNT & CLOUD SAVE";
@@ -311,6 +338,7 @@ namespace UltimateFootballChase.Hub
         }
         public void OpenStore(int initialItem)
         {
+            guestReset.gameObject.SetActive(false);
             storeIndex = Mathf.Clamp(initialItem, 0, StoreCatalog.Items.Length - 1);
             storeNote = "";
             modalText.rectTransform.anchorMin = new Vector2(.1f, .40f);
@@ -364,6 +392,7 @@ namespace UltimateFootballChase.Hub
         }
         public void OpenWheel()
         {
+            guestReset.gameObject.SetActive(false);
             wheelNote = "";
             ToggleOutfits(false);
             ToggleAccount(false);
@@ -439,6 +468,7 @@ namespace UltimateFootballChase.Hub
         }
         public void OpenSettings()
         {
+            guestReset.gameObject.SetActive(false);
             ToggleOutfits(false); ToggleAccount(false); ToggleStore(false);
             ToggleWheel(false); ToggleLeaderboard(false); ToggleSettings(true);
             modalText.rectTransform.anchorMin = new Vector2(.1f, .56f);
@@ -490,6 +520,7 @@ namespace UltimateFootballChase.Hub
         }
         public void OpenLeaderboard(BoardKind kind)
         {
+            guestReset.gameObject.SetActive(false);
             ToggleOutfits(false);
             ToggleAccount(false);
             ToggleStore(false);
@@ -566,12 +597,15 @@ namespace UltimateFootballChase.Hub
             outfitTeal.gameObject.SetActive(enabled);
             outfitAmber.gameObject.SetActive(enabled);
             outfitViolet.gameObject.SetActive(enabled);
+            outfitStorm.gameObject.SetActive(enabled);
+            outfitDawn.gameObject.SetActive(enabled);
             foreach (Button character in characterButtons) character.gameObject.SetActive(enabled);
         }
         public void CloseModal()
         {
             showdownGeneration++;
             accountPanel = false; storePanel = false; wheelPanel = false;
+            guestReset.gameObject.SetActive(false);
             ToggleSettings(false);
             ToggleLeaderboard(false);
             modal.SetActive(false);

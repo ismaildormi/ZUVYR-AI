@@ -159,6 +159,11 @@ namespace UltimateFootballChase.Economy
                     " • guest demo coins only" : " • simulated counter only, NOT spendable");
             return true;
         }
+        public void EraseGuestDemo()
+        {
+            PlayerPrefs.DeleteKey(GuestKey);
+            PlayerPrefs.Save();
+        }
         public void ClearSelection()
         {
             PracticeWallet state = Load();

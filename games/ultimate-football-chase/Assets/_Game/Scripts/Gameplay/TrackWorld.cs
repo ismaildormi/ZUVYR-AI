@@ -3,6 +3,7 @@ using UnityEngine;
 using UltimateFootballChase.Core;
 using UltimateFootballChase.Difficulty;
 using UltimateFootballChase.PowerUps;
+using UltimateFootballChase.Seasons;
 
 namespace UltimateFootballChase.Gameplay
 {
@@ -69,6 +70,7 @@ namespace UltimateFootballChase.Gameplay
         private PowerUpConfig powerConfig;
         private ObstaclePlanner planner;
         private int seed;
+        private int seasonIndex;
         private float nextRowDistance;
         private float totalDistance;
         private float retireBehindMetres;
@@ -79,12 +81,14 @@ namespace UltimateFootballChase.Gameplay
         public IReadOnlyList<Pickup> Pickups => pickups;
         public IReadOnlyList<PowerPickup> PowerPickups => powerPickups;
 
-        public void Initialize(RunConfig settings, DifficultyProfile curve, PowerUpConfig bonuses, int worldSeed = 42)
+        public void Initialize(RunConfig settings, DifficultyProfile curve, PowerUpConfig bonuses,
+            int worldSeed = 42, int season = 0)
         {
             config = settings;
             difficulty = curve;
             powerConfig = bonuses;
             seed = worldSeed; // local greybox repeatability; never trust this seed for real-prize scores
+            seasonIndex = Mathf.Clamp(season, 0, 3); // route geometry/planner never depend on decoration
             planner = new ObstaclePlanner(seed);
             // Keep replay actors alive longer than the whole ring-buffer window at MAX speed.
             retireBehindMetres = difficulty.SpeedAt(DifficultyProfile.SpeedCapMetres,
@@ -111,18 +115,22 @@ namespace UltimateFootballChase.Gameplay
             root.SetParent(transform);
             root.position = new Vector3(0, 0, z);
             GreyboxFactory.Primitive("Asphalt", PrimitiveType.Cube, root, new Vector3(0, -.17f, 0),
-                new Vector3(config.LaneWidth * 3.45f, .3f, TileLength), new Color(.11f, .14f, .23f));
+                new Vector3(config.LaneWidth * 3.45f, .3f, TileLength), RunnerSeasons.Asphalt(seasonIndex));
             for (int i = -1; i <= 1; i++)
             {
                 GreyboxFactory.Primitive("Running lane", PrimitiveType.Cube, root,
                     new Vector3(i * config.LaneWidth, -.006f, 0), new Vector3(config.LaneWidth - .08f, .03f, TileLength),
-                    i == 0 ? new Color(.20f, .32f, .34f) : new Color(.16f, .25f, .30f));
+                    RunnerSeasons.LaneMark(seasonIndex) * (i == 0 ? 1f : .85f));
             }
             for (int side = -1; side <= 1; side += 2)
             {
                 GreyboxFactory.Primitive("Unbranded barrier", PrimitiveType.Cube, root,
                     new Vector3(side * config.LaneWidth * 1.72f, .5f, 0),
-                    new Vector3(.18f, 1f, TileLength), new Color(.19f, .59f, .62f));
+                    new Vector3(.18f, 1f, TileLength), RunnerSeasons.Decor(seasonIndex));
+                // Outside all three lanes; purely decorative, never a collision hazard.
+                GreyboxFactory.Primitive("Original seasonal route banner", PrimitiveType.Cube, root,
+                    new Vector3(side * config.LaneWidth * 1.99f, 1.8f, 0),
+                    new Vector3(.45f, 1.1f, .22f), RunnerSeasons.Decor(seasonIndex));
             }
             return root;
         }

@@ -14,6 +14,7 @@ namespace UltimateFootballChase.Hub
         public int CompletedStages;
         public int FinishedRuns;
         public float BestRunMeters;
+        public long BestPreviewScore; // local/account preview ONLY; never a leaderboard or prize score
         public float LastRunMeters;
         public Vector3 Position = new Vector3(0f, 0f, -3f);
         public string LastDoor = "Central Plaza";
@@ -24,6 +25,7 @@ namespace UltimateFootballChase.Hub
         public long MissionUtcDayTicks;
         public int MissionRuns, MissionCoins;
         public float MissionDistanceMetres;
+        public MissionChainSnapshot PreviewMissionChain = new MissionChainSnapshot();
         public long LastSavedUtcTicks;
     }
 
@@ -52,6 +54,11 @@ namespace UltimateFootballChase.Hub
                 return new HubProgress();
             }
         }
+        public void Erase()
+        {
+            PlayerPrefs.DeleteKey(Key);
+            PlayerPrefs.Save();
+        }
         public void Save(HubProgress progress)
         {
             progress.SchemaVersion = 1;
@@ -69,19 +76,21 @@ namespace UltimateFootballChase.Hub
             profile.CompletedStages = Mathf.Clamp(profile.CompletedStages, 0, 1000);
             profile.FinishedRuns = Mathf.Clamp(profile.FinishedRuns, 0, 1000000);
             profile.BestRunMeters = FiniteDistance(profile.BestRunMeters);
+            profile.BestPreviewScore = Math.Max(0L, Math.Min(1000000000L, profile.BestPreviewScore));
             profile.LastRunMeters = FiniteDistance(profile.LastRunMeters);
             if (float.IsNaN(profile.Position.x) || float.IsNaN(profile.Position.z) ||
                 float.IsInfinity(profile.Position.x) || float.IsInfinity(profile.Position.z))
                 profile.Position = new Vector3(0f, 0f, -3f);
             profile.Position = new Vector3(Mathf.Clamp(profile.Position.x, -42f, 42f), 0f,
                 Mathf.Clamp(profile.Position.z, -16f, 48f));
-            if (profile.SelectedOutfit != "teal" && profile.SelectedOutfit != "amber" &&
-                profile.SelectedOutfit != "violet") profile.SelectedOutfit = "teal";
+            if (!OriginalRoster.CanSelectKit(profile.SelectedOutfit, profile.CompletedStages))
+                profile.SelectedOutfit = "teal";
             if (!OriginalRoster.Contains(profile.SelectedCharacter)) profile.SelectedCharacter = "kivo";
             profile.LastStoryChapterShown = Mathf.Clamp(profile.LastStoryChapterShown, 0, 4);
             profile.MissionRuns = Mathf.Clamp(profile.MissionRuns, 0, 10000);
             profile.MissionCoins = Mathf.Clamp(profile.MissionCoins, 0, 1000000);
             profile.MissionDistanceMetres = FiniteDistance(profile.MissionDistanceMetres);
+            profile.PreviewMissionChain = new MissionChain(profile.PreviewMissionChain).Snapshot();
             if (profile.MissionUtcDayTicks < 0 || profile.MissionUtcDayTicks > DateTime.UtcNow.AddDays(1).Ticks)
                 profile.MissionUtcDayTicks = 0;
             if (profile.Options == null) profile.Options = new HubOptions();
@@ -121,15 +130,20 @@ namespace UltimateFootballChase.Hub
             repository = replacement ?? throw new ArgumentNullException(nameof(replacement));
         public static HubProgress Load() => repository.Load();
         public static void Save(HubProgress progress) => repository.Save(progress);
-        public static bool RecordFinishedRun(float metres, out HubProgress result, int coins = 0)
+        public static bool RecordFinishedRun(float metres, out HubProgress result, int coins = 0,
+            MissionChainSnapshot missionProgress = null, long previewScore = 0)
         {
             result = Load();
             if (float.IsNaN(metres) || float.IsInfinity(metres)) metres = 0f;
             metres = Mathf.Max(0f, metres);
             DailyMissions.RecordRun(result, DateTime.UtcNow, metres, coins);
+            if (missionProgress != null)
+                result.PreviewMissionChain = new MissionChain(missionProgress).Snapshot();
             result.FinishedRuns++;
             result.LastRunMeters = metres;
             result.BestRunMeters = Mathf.Max(result.BestRunMeters, metres);
+            result.BestPreviewScore = Math.Max(result.BestPreviewScore,
+                Math.Max(0L, Math.Min(1000000000L, previewScore)));
             bool completed = HubStageProgression.TryCompleteNextStage(result, metres);
             Save(result);
             return completed;

@@ -11,6 +11,9 @@ using UltimateFootballChase.Backend;
 using UltimateFootballChase.Economy;
 using UltimateFootballChase.Ads;
 using UltimateFootballChase.Settings;
+using UltimateFootballChase.Missions;
+using UltimateFootballChase.Seasons;
+using System;
 using UnityEngine.SceneManagement;
 
 namespace UltimateFootballChase.Core
@@ -37,6 +40,7 @@ namespace UltimateFootballChase.Core
         private float chaserProximity;
         private RunState state;
         private bool transitioning;
+        private int countedJumps;
         public bool IsRunning => state == RunState.Running;
 
         private void Awake()
@@ -67,7 +71,8 @@ namespace UltimateFootballChase.Core
             Screen.orientation = ScreenOrientation.Portrait;
             BuildGreybox();
             AccountSession.Instance.ProfileChanged += OnAccountProfileChanged;
-            session = new RunSession(config.TestOnlyStartingKeys);
+            session = new RunSession(config.TestOnlyStartingKeys,
+                HubGuestProgress.Load().PreviewMissionChain);
             replay = new ReplayRecorder(config, runner, track, chaser);
             replay.Capture(.05f);
             hud.ShowRunning();
@@ -76,7 +81,9 @@ namespace UltimateFootballChase.Core
         private void BuildGreybox()
         {
             track = new GameObject("Endless track - pooled segments").AddComponent<TrackWorld>();
-            track.Initialize(config, difficulty, powerConfig);
+            HubConfig hubConfig = Resources.Load<HubConfig>("HubConfig");
+            int cycle = hubConfig != null ? hubConfig.SeasonCycleMonths : 3;
+            track.Initialize(config, difficulty, powerConfig, 42, RunnerSeasons.At(DateTime.UtcNow, cycle));
             runner = GreyboxActors.CreatePlayer(config);
             // Hub outfit is a guest/account preview; no paid entitlement is inferred.
             OnAccountProfileChanged(HubGuestProgress.Load());
@@ -109,11 +116,20 @@ namespace UltimateFootballChase.Core
             input.OnDoubleTap += () => powers.TryActivateBoard();
             hud = gameObject.AddComponent<GameHUD>();
             hud.Initialize(this);
+            HubProgress initialHudProfile = HubGuestProgress.Load();
+            hud.SetLocalBest(initialHudProfile.BestPreviewScore);
+            hud.SetLanguage(initialHudProfile.Options.Language);
         }
         private void OnAccountProfileChanged(HubProgress profile)
         {
             if (profile == null || runner == null) return;
             GameAudio.Ensure().Apply(profile.Options);
+            if (session != null) session.RestoreMissionsBeforeRun(profile.PreviewMissionChain);
+            if (hud != null)
+            {
+                hud.SetLocalBest(profile.BestPreviewScore);
+                hud.SetLanguage(profile.Options.Language);
+            }
             string tint = profile.SelectedOutfit;
             if (AccountSession.Instance != null && !AccountSession.Instance.IsSignedIn)
             {
@@ -121,7 +137,8 @@ namespace UltimateFootballChase.Core
                 if (StoreCatalog.IsDemoTint(demoTint)) tint = demoTint;
             }
             OriginalRoster.Show(runner.Visual, profile.SelectedCharacter);
-            Color outfit = HubWorldBuilder.OutfitColor(tint);
+            Color outfit = StoreCatalog.IsDemoTint(tint) ? HubWorldBuilder.OutfitColor(tint) :
+                OriginalRoster.KitColor(profile.SelectedCharacter, tint);
             runner.Visual.GetComponent<Renderer>().material.color = outfit;
             foreach (Renderer part in runner.Visual.GetComponentsInChildren<Renderer>())
                 if (part.gameObject.name == "Comic runner arm") part.material.color = outfit;
@@ -134,6 +151,12 @@ namespace UltimateFootballChase.Core
         private void Update()
         {
             if (!IsRunning || AccountSession.Instance.IsBusy) return;
+            if (AccountSession.Instance.IsSignedIn && !AccountSession.Instance.HasActiveAccountProfile)
+            {
+                state = RunState.Paused;
+                hud.ShowProfileUnavailable();
+                return;
+            }
             float remaining = Mathf.Min(Time.deltaTime, .05f); // provisional max step on slow devices
             while (remaining > .000001f && IsRunning)
             {
@@ -153,6 +176,10 @@ namespace UltimateFootballChase.Core
                 runner.SetPowerEffects(powers.Active(PowerKind.SuperShoes), powerConfig.SuperShoesHeightMultiplier,
                     powers.Flying, powerConfig.JetpackFlightHeightMetres, powerConfig.JetpackLandingGraceSeconds);
                 runner.Tick(step);
+                while (countedJumps < runner.AcceptedJumps)
+                {
+                    session.Jump(); countedJumps++;
+                }
                 track.Tick(step, speed);
                 session.Advance(speed * step);
                 chaserProximity = Mathf.Max(0f, chaserProximity - step / config.ChaserNearSeconds);
@@ -211,6 +238,9 @@ namespace UltimateFootballChase.Core
                 if (hazard.Checked || !(hazard.PreviousZ > 0 && hitZ <= 0)) continue;
                 hazard.Checked = true;
                 float dx = Mathf.Abs(hazard.Object.transform.position.x - runner.X);
+                if (hazard.Kind == HazardKind.SlidingTackle && !runner.IsInvulnerable &&
+                    !powers.IsProtected && (dx > 1.12f || runner.FeetHeight > .8f))
+                    session.AvoidTackle();
                 if (dx > 1.12f || runner.IsInvulnerable || powers.IsProtected) continue;
                 if (hazard.Kind == HazardKind.LowBarrier && runner.FeetHeight > .9f) continue;
                 if (hazard.Kind == HazardKind.SlidingTackle && runner.FeetHeight > .8f) continue;
@@ -259,7 +289,10 @@ namespace UltimateFootballChase.Core
             if (state != RunState.Decision || AccountSession.Instance.IsBusy) return;
             state = RunState.Ended;
             AdSession.Instance.FinishedAttempt(); // never show in the middle of a run or VAR
-            bool cleared = HubGuestProgress.RecordFinishedRun(session.DistanceMeters, out HubProgress progress, session.Coins);
+            long bestBefore = HubGuestProgress.Load().BestPreviewScore;
+            bool cleared = HubGuestProgress.RecordFinishedRun(session.DistanceMeters, out HubProgress progress,
+                session.Coins, session.Missions.Snapshot(), session.PreviewScore);
+            hud.SetLocalBest(progress.BestPreviewScore);
             bool guest = AccountSession.Instance != null && !AccountSession.Instance.IsBusy &&
                 !AccountSession.Instance.IsSignedIn;
             bool demoCredited = new LocalPracticeStore().CreditRun(session.RunId, session.Coins, guest);
@@ -269,6 +302,7 @@ namespace UltimateFootballChase.Core
                     (progress.CompletedStages == HubStageProgression.UnlockMarketAndPitchAfterStages ?
                         " • MARKET & PITCH OPEN" : "") :
                 "NEXT PREVIEW STAGE GOAL " + HubStageProgression.NextGoal(progress).ToString("0") + "m";
+            if (session.PreviewScore > bestBefore) result += "\nNEW LOCAL PREVIEW BEST (not ranked)";
             if (demoCredited) result += "\n" + Mathf.Min(session.Coins, LocalPracticeStore.ProvisionalMaxCoinsPerRun) +
                 " LOCAL DEMO COINS (not account currency)";
             hud.ShowEnd(session, result);
@@ -318,7 +352,8 @@ namespace UltimateFootballChase.Core
             chaser.position = new Vector3(0, 0, -6f);
             chaserCard.material.color = new Color(.95f, .19f, .18f);
             chaserProximity = 0;
-            session = new RunSession(config.TestOnlyStartingKeys);
+            session = new RunSession(config.TestOnlyStartingKeys, HubGuestProgress.Load().PreviewMissionChain);
+            countedJumps = 0;
             powers.Reset();
             for (int i = 0; i < effectVisuals.Length; i++) effectVisuals[i].SetActive(false);
             replay.Reset();

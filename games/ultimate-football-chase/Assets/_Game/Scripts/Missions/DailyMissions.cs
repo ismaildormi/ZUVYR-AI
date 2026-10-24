@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UltimateFootballChase.Hub;
+using UltimateFootballChase.Settings;
 
 namespace UltimateFootballChase.Missions
 {
@@ -24,17 +25,17 @@ namespace UltimateFootballChase.Missions
             if (!float.IsNaN(metres) && !float.IsInfinity(metres))
                 profile.MissionDistanceMetres = Mathf.Min(1000000, profile.MissionDistanceMetres + Mathf.Clamp(metres, 0, 1000000));
         }
-        public static string Status(HubProgress profile, DateTime utc)
+        public static string Status(HubProgress profile, DateTime utc, string language = "en")
         {
             bool today = profile.MissionUtcDayTicks == UtcDay(utc);
             int runs = today ? profile.MissionRuns : 0;
             int coins = today ? profile.MissionCoins : 0;
             int metres = today ? Mathf.FloorToInt(profile.MissionDistanceMetres) : 0;
-            return "UTC DAILY CHECKLIST • PREVIEW ONLY\n" +
-                "Complete " + RunGoal + " run: " + Mathf.Min(runs, RunGoal) + "/" + RunGoal + "\n" +
-                "Collect " + CoinGoal + " coins: " + Mathf.Min(coins, CoinGoal) + "/" + CoinGoal + "\n" +
-                "Travel " + DistanceGoal + "m: " + Mathf.Min(metres, DistanceGoal) + "/" + DistanceGoal +
-                "\nNo rewards or account currency issued.";
+            return GameText.Get("dailyChecklist", language) + "\n" +
+                GameText.Get("completeRun", language) + ": " + Mathf.Min(runs, RunGoal) + "/" + RunGoal + "\n" +
+                GameText.Get("collectCoins", language) + ": " + Mathf.Min(coins, CoinGoal) + "/" + CoinGoal + "\n" +
+                GameText.Get("travel", language) + ": " + Mathf.Min(metres, DistanceGoal) + "/" + DistanceGoal + "m" +
+                "\n" + GameText.Get("noRewards", language);
         }
     }
 }
