@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101b27"><title>Ultimate Football Chase · V2 Playtest</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="masthead">
+      <div class="logo"><span class="logo-mark">U<span>✦</span></span><div><strong>ULTIMATE<br>FOOTBALL CHASE</strong><small>THE ORIGINAL RUNNER · V2 PLAYTEST</small></div></div>
+      <div class="build-tag"><span class="status-dot"></span> نسخة تجريبية قابلة للعب <b>V2.0</b></div>
+    </header>
+    <div class="notice"><span>ⓘ</span> هذه <b>نسخة لعب مستقلة في المتصفح</b> لا تُعدّ بناء Unity. النتائج والمشتريات هنا تدريب محلي فقط؛ لا حسابات أو جوائز حقيقية ولا مزامنة مع مشروع Unity.</div>
+    <main class="layout">
+      <section class="intro pane">
+        <div class="eyebrow">01 / قصتك تبدأ هنا</div>
+        <h1>اركض خارج<br><em>الخطوط.</em></h1>
+        <p class="lead">بطاقة حمراء غير عادلة. مدينة لا تنام. ثمانية أبطال أصليين وطريق واحد لإثبات نفسك.</p>
+        <div class="stat-row"><div><strong id="bestValue">0</strong><small>أفضل نتيجة تجريبية</small></div><div><strong id="stageValue">0</strong><small>المراحل المكتملة</small></div></div>
+        <div class="section-title"><span>اختر بطلك</span><small>8 شخصيات أصلية</small></div>
+        <div id="roster" class="roster"></div>
+        <div class="note-mini">الشخصيات والألوان أصلية؛ لا أسماء أو شعارات لأندية ولاعبين حقيقيين.</div>
+        <div class="mission-box"><span class="eyebrow">سلسلة المهام · عرض محلي</span><div id="missionOverview"></div></div>
+      </section>
+      <section class="game-panel">
+        <div class="game-top"><span class="micro">THE CHASE <span>✦</span> V2</span><span class="demo-chip">OFFLINE PLAYTEST</span></div>
+        <div class="playfield" id="playfield">
+          <canvas id="game" width="420" height="720" aria-label="مشهد اللعبة"></canvas>
+          <div class="hud"><div><small>المسافة</small><b id="distance">0 <sup>m</sup></b></div><div><small>النتيجة المحلية</small><b id="score">0</b></div><div><small>عملات الجولة</small><b id="coins">0 <span>◉</span></b></div></div>
+          <div id="overlay" class="overlay">
+            <div class="overlay-card"><span class="eyebrow">V2 / READY TO RUN</span><h2 id="overlayTitle">كل مطاردة<br>لها بداية.</h2><p id="overlayDesc">اجمع العملات، تفادَ العوائق، واختر مسارك. نتيجتك هنا تجريبية فقط.</p><button id="primaryAction" class="primary-action">ابدأ الجري <span>←</span></button></div>
+          </div>
+          <div id="toast" class="toast" role="status"></div>
+          <div class="touch-controls"><button data-action="left" aria-label="يسار">◀</button><button data-action="jump" aria-label="قفز">↑<small>قفز</small></button><button data-action="slide" aria-label="انزلاق">↓<small>انزلاق</small></button><button data-action="right" aria-label="يمين">▶</button></div>
+        </div>
+        <div class="game-bottom"><span>← → تبديل المسار</span><span>↑ قفز</span><span>↓ انزلاق</span><span>اسحب على الشاشة</span></div>
+      </section>
+      <aside class="loadout pane">
+        <div class="eyebrow">02 / تجهيزات المطاردة</div>
+        <h2>شكّل <em>أسلوبك.</em></h2>
+        <div class="wallet"><div><span>◉</span><div><strong id="walletValue">360</strong><small>رصيد تدريب المتصفح فقط</small></div></div><small>لا يمكن إنفاقه في Unity</small></div>
+        <div class="section-title"><span>الملابس والسكينات</span><small>اختَر لونًا</small></div>
+        <div id="skins" class="swatches"></div>
+        <div class="section-title"><span>ألواح أصلية</span><small>تغيير الشكل</small></div>
+        <div id="boards" class="board-grid"></div>
+        <div class="section-title"><span>باقات V2</span><small>عملات تدريب فقط</small></div>
+        <div id="packs" class="pack-list"></div>
+        <div class="reset-line"><button id="resetButton" class="text-button">إعادة ضبط تجربة المتصفح</button><span>التقدم محفوظ محليًا في هذا المتصفح</span></div>
+      </aside>
+    </main>
+    <footer>UNBRANDED. UNVERIFIED. MADE TO PLAYTEST. <span>✦</span> UNITY BUILD REQUIRES EDITOR & DEVICE QA.</footer>
+  </div>
+  <script type="module" src="./main.mjs"></script>
+</body></html>

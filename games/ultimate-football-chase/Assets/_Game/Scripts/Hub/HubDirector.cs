@@ -330,7 +330,13 @@ namespace UltimateFootballChase.Hub
         }
         public void SelectOutfit(string outfit)
         {
-            if (!OriginalRoster.CanSelectKit(outfit, profile.CompletedStages) || account.IsBusy) return;
+            if (account.IsBusy) return;
+            if (!OriginalRoster.CanSelectKit(outfit, profile.CompletedStages))
+            {
+                int at = Array.IndexOf(OriginalRoster.KitIds, outfit);
+                hud.OutfitLocked(outfit, at >= 0 ? OriginalRoster.KitStages[at] : -1);
+                return;
+            }
             if (!account.IsSignedIn) practiceStore.ClearSelection();
             profile.SelectedOutfit = outfit;
             ApplyOutfit();
@@ -366,6 +372,8 @@ namespace UltimateFootballChase.Hub
                 OriginalRoster.KitColor(profile.SelectedCharacter, selected);
             bodyRenderer.material.color = tint;
             world.Mannequin.GetComponent<Renderer>().material.color = tint;
+            world.BoardPreview.material.color = StoreCatalog.BoardColor(!account.IsSignedIn ?
+                practiceStore.Load().SelectedBoardId : "");
             OriginalRoster.Show(body, profile.SelectedCharacter);
             OriginalRoster.Show(world.Mannequin, profile.SelectedCharacter);
         }

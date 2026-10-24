@@ -17,6 +17,9 @@ namespace UltimateFootballChase.Economy
         public int LastWheelSlot = -1;
         public string SelectedTintId = "";
         public string[] OwnedTintIds = Array.Empty<string>();
+        public string SelectedBoardId = "";
+        public string[] OwnedBoardIds = Array.Empty<string>();
+        public string[] OwnedPackIds = Array.Empty<string>();
         public string[] CreditedRunIds = Array.Empty<string>();
     }
 
@@ -48,10 +51,19 @@ namespace UltimateFootballChase.Economy
                     saved.LastWheelSlot = -1;
                 if (saved.OwnedTintIds == null) saved.OwnedTintIds = Array.Empty<string>();
                 if (saved.CreditedRunIds == null) saved.CreditedRunIds = Array.Empty<string>();
+                if (saved.OwnedBoardIds == null) saved.OwnedBoardIds = Array.Empty<string>();
+                if (saved.OwnedPackIds == null) saved.OwnedPackIds = Array.Empty<string>();
                 var owned = new HashSet<string>();
                 foreach (string id in saved.OwnedTintIds) if (StoreCatalog.IsDemoTint(id)) owned.Add(id);
                 saved.OwnedTintIds = new List<string>(owned).ToArray();
                 if (!owned.Contains(saved.SelectedTintId)) saved.SelectedTintId = "";
+                var boards = new HashSet<string>();
+                foreach (string id in saved.OwnedBoardIds) if (StoreCatalog.IsDemoBoard(id)) boards.Add(id);
+                saved.OwnedBoardIds = new List<string>(boards).ToArray();
+                if (!boards.Contains(saved.SelectedBoardId)) saved.SelectedBoardId = "";
+                var packs = new HashSet<string>();
+                foreach (string id in saved.OwnedPackIds) if (StoreCatalog.IsDemoPack(id)) packs.Add(id);
+                saved.OwnedPackIds = new List<string>(packs).ToArray();
                 if (saved.CreditedRunIds.Length > ReceiptWindow)
                     saved.CreditedRunIds = new List<string>(saved.CreditedRunIds).GetRange(
                         saved.CreditedRunIds.Length - ReceiptWindow, ReceiptWindow).ToArray();
@@ -85,8 +97,7 @@ namespace UltimateFootballChase.Economy
         public bool TryBuyOrEquip(string itemId, int completedStages, bool guest, out string message)
         {
             StoreItem item = StoreCatalog.Find(itemId);
-            if (item == null || item.Availability != StoreAvailability.GuestDemoTint ||
-                item.Currency != StoreCurrency.Coins)
+            if (!StoreCatalog.IsGuestDemo(item))
             {
                 message = "PREVIEW ONLY • no real purchase or premium currency is enabled";
                 return false;
@@ -101,8 +112,22 @@ namespace UltimateFootballChase.Economy
                 message = "MARKET LOCKED • finish five separate stages first";
                 return false;
             }
+            bool bundle = item.Availability == StoreAvailability.GuestDemoPack;
+            // Reject malformed/nested bundles before touching a balance.
+            if (bundle && (item.Contents.Length < 2 || item.Contents.Length > 4))
+            {
+                message = "INVALID DEMO PACK"; return false;
+            }
+            if (bundle) foreach (string part in item.Contents)
+                if (!StoreCatalog.IsDemoTint(part) && !StoreCatalog.IsDemoBoard(part))
+                { message = "INVALID DEMO PACK"; return false; }
             PracticeWallet state = Load();
-            if (Array.IndexOf(state.OwnedTintIds, itemId) < 0)
+            bool owned = item.Availability == StoreAvailability.GuestDemoTint ?
+                Array.IndexOf(state.OwnedTintIds, item.Id) >= 0 :
+                item.Availability == StoreAvailability.GuestDemoBoard ?
+                    Array.IndexOf(state.OwnedBoardIds, item.Id) >= 0 :
+                    Array.IndexOf(state.OwnedPackIds, item.Id) >= 0;
+            if (!owned)
             {
                 if (state.DemoCoins < item.ProvisionalCost)
                 {
@@ -110,12 +135,25 @@ namespace UltimateFootballChase.Economy
                     return false;
                 }
                 state.DemoCoins -= item.ProvisionalCost;
-                var owned = new List<string>(state.OwnedTintIds) { itemId };
-                state.OwnedTintIds = owned.ToArray();
+                if (bundle)
+                {
+                    var packs = new HashSet<string>(state.OwnedPackIds) { item.Id };
+                    state.OwnedPackIds = new List<string>(packs).ToArray();
+                }
             }
-            state.SelectedTintId = itemId;
-            Save(state); // balance, ownership and selection are one PlayerPrefs snapshot
-            message = "EQUIPPED • LOCAL GUEST DEMO ONLY";
+            var tints = new HashSet<string>(state.OwnedTintIds);
+            var boards = new HashSet<string>(state.OwnedBoardIds);
+            string[] contents = bundle ? item.Contents : new[] { item.Id };
+            foreach (string part in contents)
+            {
+                if (StoreCatalog.IsDemoTint(part)) { tints.Add(part); state.SelectedTintId = part; }
+                else if (StoreCatalog.IsDemoBoard(part)) { boards.Add(part); state.SelectedBoardId = part; }
+            }
+            state.OwnedTintIds = new List<string>(tints).ToArray();
+            state.OwnedBoardIds = new List<string>(boards).ToArray();
+            Save(state); // pack ownership, contents, selection and balance in ONE local snapshot
+            message = owned ? "EQUIPPED • LOCAL GUEST DEMO ONLY" :
+                "UNLOCKED • LOCAL GUEST DEMO ONLY, never account currency";
             return true;
         }
         public bool TryFreeWheelSpin(DateTime nowUtc, bool guest, int roll,

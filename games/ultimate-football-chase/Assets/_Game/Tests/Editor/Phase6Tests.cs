@@ -26,7 +26,7 @@ namespace UltimateFootballChase.Tests
             else PlayerPrefs.DeleteKey(LocalPracticeStore.GuestKey);
         }
         [Test]
-        public void CatalogIsSixRegularFourPremium_AndOnlyThreeGuestDemoTintsCanBeBought()
+        public void CatalogIsTwelveDemoAndEightUnavailablePremiumConcepts()
         {
             int ordinary = 0, premium = 0, demos = 0;
             var unique = new System.Collections.Generic.HashSet<string>();
@@ -40,9 +40,9 @@ namespace UltimateFootballChase.Tests
                 Assert.AreEqual(StoreCurrency.Coins, item.Currency);
                 Assert.Greater(item.ProvisionalCost, 0);
             }
-            Assert.AreEqual(6, ordinary);
-            Assert.AreEqual(4, premium);
-            Assert.AreEqual(3, demos);
+            Assert.AreEqual(12, ordinary);
+            Assert.AreEqual(8, premium);
+            Assert.AreEqual(6, demos);
         }
         [Test]
         public void RunPayoutIsGuestOnlyBoundedAndIdempotent()
@@ -62,7 +62,7 @@ namespace UltimateFootballChase.Tests
             Assert.IsTrue(store.CreditRun(new RunSession(0).RunId, 200, true));
             int original = store.Load().DemoCoins;
             Assert.IsFalse(store.TryBuyOrEquip("fictional_legend_kit", 5, true, out _));
-            Assert.IsFalse(store.TryBuyOrEquip("comet_board", 5, true, out _));
+            Assert.IsFalse(store.TryBuyOrEquip("premium_celestial_board", 5, true, out _));
             Assert.IsFalse(store.TryBuyOrEquip("cobalt", 5, false, out _));
             Assert.IsFalse(store.TryBuyOrEquip("cobalt", 4, true, out _));
             Assert.IsFalse(store.TryBuyOrEquip("unknown_item", 5, true, out _));

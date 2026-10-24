@@ -76,7 +76,7 @@ namespace UltimateFootballChase.Tests
         [Test]
         public void OriginalRosterAndLeague_AreBoundedPreviewContent()
         {
-            Assert.AreEqual(4, OriginalRoster.Ids.Length);
+            Assert.AreEqual(8, OriginalRoster.Ids.Length);
             Assert.IsTrue(OriginalRoster.Contains("nexa"));
             Assert.IsFalse(OriginalRoster.Contains("not-a-character"));
             Assert.AreEqual(8, FictionalLeague.Teams.Length);

@@ -1,4 +1,4 @@
-# Ultimate Football Chase — Unity phases 1–10 source prototype
+# Ultimate Football Chase — Unity V2 / phases 1–11 source prototype
 
 A **self-contained Unity project** (open this folder, not the ZUVYR-AI root). This is an offline gameplay prototype, deliberately isolated from the existing ZUVYR product; it is **not** a separate GitHub repository yet.
 
@@ -21,10 +21,12 @@ The game starts at 9 m/s, accelerates +3% every 100m and caps after 2000m. Confi
 - Inspect Unity Console for errors, test Android touch and stable framerate over 10+ minutes. Collect 1 coin from the safe lane and check the HUD.
 - Collect magnet, shoes, jetpack and hoverboard beacons; check four independent icon/timer bars at bottom-left and three honest upcoming items above the track. Double tap (H in Editor) for 30-second board protection; see [Phase 3 manual checklist](docs/PHASE3_STATUS.md). Simulator/editor QA cannot substitute for a real phone.
 
-Phase 1–10 tests are under `Assets/_Game/Tests/Editor` (Unity Test Runner; not run in this environment). Original design values and tunables: [docs/DECISIONS.md](docs/DECISIONS.md). Implementation vs. unverified acceptance: [docs/PHASE1_STATUS.md](docs/PHASE1_STATUS.md).
+Phase 1–11 tests are under `Assets/_Game/Tests/Editor` (Unity Test Runner; not run in this environment). Original design values and tunables: [docs/DECISIONS.md](docs/DECISIONS.md). Implementation vs. unverified acceptance: [docs/PHASE1_STATUS.md](docs/PHASE1_STATUS.md).
 
 **Save boundary:** The default build is local guest PlayerPrefs. Phase-5 optional authenticated Firebase UID account cache / cloud preview code is gated behind SDK/provider setup and has not been tested or enabled. Hub stages/scores are never trusted for prizes or ranked results. Phase 6 adds a **guest-only, untrusted local demo** Market for three greybox recolors; phase 7 adds a guest-only daily wheel demo and fail-closed ad pacing. Phase 8 adds a read-only server-published standings boundary and a fail-closed weekly/monthly/Hall UI. Real rankings, prizes, rewarded ads, account wallet, premium goods and IAP are unavailable. See [phase-8 standings boundaries](docs/PHASE8_STATUS.md), [phase-7 wheel/ad boundaries](docs/PHASE7_STATUS.md), [phase-6 economy boundaries](docs/PHASE6_STATUS.md), [phase-5 setup and acceptance](docs/PHASE5_STATUS.md) and [phase-4 Hub checks](docs/PHASE4_STATUS.md).
 
 **Phase 9:** Original playable greybox roster/fictional-league concepts, one-time story panels, UTC daily **preview-only** missions, read-only Showdown schedule, separate audio sliders and persistent Use My Music setting, iOS ambient mixing hook, small three-language UI/story starter and an honest privacy-status panel. No contest entry, commercial entitlements or live services. See [phase 9 implementation and exact missing features](docs/PHASE9_STATUS.md).
 
 **Phase 10:** Persistent *untrusted preview* 15-jump/10-tackle/100-coin mission groups, x1–x30 local HUD multiplier and preview-only score; four visual-only runner seasons; five provisional colour treatments per original character (last two preview-stage gated); confirmed guest-only local data reset and fail-closed unbound-account runner entry. See [Phase 10 status and what remains](docs/PHASE10_STATUS.md).
+
+**V2 playable now:** The [independent browser playtest](playtest-v2/README.md) provides immediate portrait gameplay with original heroes, skins, boards and local training packs. It is **not Unity WebGL** and does not sync to the Unity project. The Unity greybox source now includes eight heroes, expanded wardrobe and guest-only demo packs/boards. Read [V2 verification and missing functionality](docs/V2_PLAYTEST_STATUS.md).

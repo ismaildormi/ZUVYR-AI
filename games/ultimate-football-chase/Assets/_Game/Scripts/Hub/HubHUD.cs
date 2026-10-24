@@ -18,7 +18,8 @@ namespace UltimateFootballChase.Hub
         private Font font;
         private Text header, hint, modalTitle, modalText, interactionLabel;
         private GameObject modal;
-        private Button interact, outfitTeal, outfitAmber, outfitViolet, outfitStorm, outfitDawn;
+        private Button interact;
+        private Button[] outfitButtons;
         private Button accountNav, wheelNav, settingsNav, missionsNav;
         private Button[] characterButtons;
         private Button google, apple, gameCenter, signOut;
@@ -97,23 +98,23 @@ namespace UltimateFootballChase.Hub
                 new Vector2(.1f, .64f), new Vector2(.9f, .77f), Vector2.zero, Vector2.zero);
             modalText = Label(panel, "Dialogue description", 37, TextAnchor.MiddleCenter,
                 new Vector2(.1f, .40f), new Vector2(.9f, .64f), Vector2.zero, Vector2.zero);
-            outfitTeal = Button(panel, "TEAL", new Vector2(.28f, .33f), Vector2.zero,
-                new Vector2(230, 95), () => director.SelectOutfit("teal"));
-            outfitAmber = Button(panel, "AMBER", new Vector2(.5f, .33f), Vector2.zero,
-                new Vector2(230, 95), () => director.SelectOutfit("amber"));
-            outfitViolet = Button(panel, "VIOLET", new Vector2(.72f, .33f), Vector2.zero,
-                new Vector2(230, 95), () => director.SelectOutfit("violet"));
-            outfitStorm = Button(panel, "STORM • STAGE 5", new Vector2(.34f, .245f), Vector2.zero,
-                new Vector2(340, 90), () => director.SelectOutfit("storm"));
-            outfitDawn = Button(panel, "DAWN • STAGE 10", new Vector2(.68f, .245f), Vector2.zero,
-                new Vector2(340, 90), () => director.SelectOutfit("dawn"));
             characterButtons = new Button[OriginalRoster.Ids.Length];
             for (int i = 0; i < characterButtons.Length; i++)
             {
                 int index = i;
                 characterButtons[i] = Button(panel, OriginalRoster.Ids[i].ToUpperInvariant(),
-                    new Vector2(.15f + i * .23f, .47f), Vector2.zero, new Vector2(225, 90),
+                    new Vector2(.15f + (i % 4) * .23f, i < 4 ? .49f : .42f),
+                    Vector2.zero, new Vector2(216, 80),
                     () => director.SelectCharacter(OriginalRoster.Ids[index]));
+            }
+            outfitButtons = new Button[OriginalRoster.KitIds.Length];
+            for (int i = 0; i < outfitButtons.Length; i++)
+            {
+                int index = i;
+                outfitButtons[i] = Button(panel, OriginalRoster.KitIds[i].ToUpperInvariant(),
+                    new Vector2(.15f + (i % 4) * .23f, i < 4 ? .33f : .255f),
+                    Vector2.zero, new Vector2(216, 80),
+                    () => director.SelectOutfit(OriginalRoster.KitIds[index]));
             }
             google = Button(panel, "GOOGLE", new Vector2(.5f, .40f), Vector2.zero,
                 new Vector2(500, 90), () => director.SignIn("google"));
@@ -275,8 +276,14 @@ namespace UltimateFootballChase.Hub
         {
             guestReset.gameObject.SetActive(false);
             modalTitle.text = "ORIGINAL 3D WARDROBE";
-            outfitStorm.GetComponentInChildren<Text>().text = director.CompletedStages >= 5 ? "STORM" : "STORM • STAGE 5";
-            outfitDawn.GetComponentInChildren<Text>().text = director.CompletedStages >= 10 ? "DAWN" : "DAWN • STAGE 10";
+            for (int i = 0; i < outfitButtons.Length; i++)
+            {
+                bool locked = director.CompletedStages < OriginalRoster.KitStages[i];
+                outfitButtons[i].GetComponentInChildren<Text>().text = OriginalRoster.KitIds[i].ToUpperInvariant() +
+                    (locked ? " • " + OriginalRoster.KitStages[i] : "");
+                outfitButtons[i].GetComponent<Image>().color = locked ?
+                    new Color(.17f,.22f,.28f,.95f) : new Color(.11f,.43f,.49f,.95f);
+            }
             modalText.text = "ORIGINAL GREYBOX CHARACTER + COLOUR\n" +
                 "Selected: " + director.CurrentCharacter + " / " + selected + " • preview only";
             modalText.rectTransform.anchorMin = new Vector2(.1f, .55f);
@@ -290,6 +297,10 @@ namespace UltimateFootballChase.Hub
         }
         public void OutfitSelected(string selected) =>
             modalText.text = "Character " + director.CurrentCharacter + " • colour " + selected + "\n" + AccountSession.Instance.Status;
+        public void OutfitLocked(string selected, int stage) =>
+            modalText.text = stage < 0 ? "UNKNOWN SKIN • unavailable" :
+                selected.ToUpperInvariant() + " • preview only until local stage " + stage +
+                ". No paid ownership or verified entitlement.";
         public void CharacterSelected(string id) =>
             modalText.text = "Original character " + id + " • saved to active Hub profile.";
         public void OpenPrivacy()
@@ -367,8 +378,12 @@ namespace UltimateFootballChase.Hub
             StoreItem item = StoreCatalog.Items[storeIndex];
             bool guest = !AccountSession.Instance.IsSignedIn && !AccountSession.Instance.IsBusy;
             PracticeWallet wallet = practiceStore.Load();
-            bool owned = Array.IndexOf(wallet.OwnedTintIds, item.Id) >= 0;
-            bool demo = guest && item.Availability == StoreAvailability.GuestDemoTint;
+            bool owned = item.Availability == StoreAvailability.GuestDemoTint ?
+                Array.IndexOf(wallet.OwnedTintIds, item.Id) >= 0 :
+                item.Availability == StoreAvailability.GuestDemoBoard ?
+                    Array.IndexOf(wallet.OwnedBoardIds, item.Id) >= 0 :
+                    Array.IndexOf(wallet.OwnedPackIds, item.Id) >= 0;
+            bool demo = guest && StoreCatalog.IsGuestDemo(item);
             modalTitle.text = "MARKET • PREVIEW / GUEST DEMO";
             string currency = item.Currency == StoreCurrency.Coins ? "COINS" :
                 item.Currency == StoreCurrency.Gems ? "GEMS (UNAVAILABLE)" : "IAP (UNAVAILABLE)";
@@ -376,19 +391,21 @@ namespace UltimateFootballChase.Hub
                 item.ProvisionalCost + " DEMO COINS (provisional)") : "PREVIEW ONLY • NOT FOR SALE";
             modalText.text = (storeIndex + 1) + "/" + StoreCatalog.Items.Length + "  " + item.Name +
                 "\n" + item.Category + " • " + currency + "\n" + availability +
+                (item.Contents.Length > 0 ? "\nIncludes: " + string.Join(", ", item.Contents) : "") +
                 "\n" + (guest ? "GUEST DEMO BALANCE: " + wallet.DemoCoins :
                     "ACCOUNT WALLET UNAVAILABLE") +
                 (string.IsNullOrEmpty(storeNote) ? "" : "\n" + storeNote);
             storeAction.gameObject.SetActive(demo);
-            if (demo) storeAction.GetComponentInChildren<Text>().text = owned ? "EQUIP DEMO" : "BUY DEMO TINT";
+            if (demo) storeAction.GetComponentInChildren<Text>().text = owned ? "EQUIP DEMO" :
+                item.Availability == StoreAvailability.GuestDemoPack ? "UNLOCK DEMO PACK" : "UNLOCK DEMO ITEM";
         }
         private void ToggleStore(bool enabled)
         {
             storePanel = enabled;
             storePrevious.gameObject.SetActive(enabled);
             storeNext.gameObject.SetActive(enabled);
-            storeAction.gameObject.SetActive(enabled && StoreCatalog.Items[storeIndex].Availability ==
-                StoreAvailability.GuestDemoTint && !AccountSession.Instance.IsSignedIn);
+            storeAction.gameObject.SetActive(enabled && StoreCatalog.IsGuestDemo(StoreCatalog.Items[storeIndex]) &&
+                !AccountSession.Instance.IsSignedIn);
         }
         public void OpenWheel()
         {
@@ -594,11 +611,7 @@ namespace UltimateFootballChase.Hub
         }
         private void ToggleOutfits(bool enabled)
         {
-            outfitTeal.gameObject.SetActive(enabled);
-            outfitAmber.gameObject.SetActive(enabled);
-            outfitViolet.gameObject.SetActive(enabled);
-            outfitStorm.gameObject.SetActive(enabled);
-            outfitDawn.gameObject.SetActive(enabled);
+            foreach (Button outfit in outfitButtons) outfit.gameObject.SetActive(enabled);
             foreach (Button character in characterButtons) character.gameObject.SetActive(enabled);
         }
         public void CloseModal()

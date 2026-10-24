@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UltimateFootballChase.Characters;
+using UltimateFootballChase.Economy;
 using UltimateFootballChase.Gameplay;
 
 namespace UltimateFootballChase.Hub
@@ -12,6 +13,7 @@ namespace UltimateFootballChase.Hub
         public readonly Transform Root;
         public Transform Goalkeeper { get; private set; }
         public Transform Mannequin { get; private set; }
+        public Renderer BoardPreview { get; private set; }
         public Renderer Window { get; private set; }
         public readonly List<Transform> Birds = new List<Transform>();
         private readonly List<Transform> candleFlames = new List<Transform>();
@@ -73,6 +75,8 @@ namespace UltimateFootballChase.Hub
             Mannequin = GreyboxFactory.Primitive("3D wardrobe mannequin (placeholder)", PrimitiveType.Capsule, Root,
                 new Vector3(-27f, 1f, 3f), new Vector3(.86f, 1f, .86f), new Color(.21f, .88f, .68f));
             OriginalRoster.AddGreyboxVariants(Mannequin);
+            BoardPreview = GreyboxFactory.Primitive("Original board preview", PrimitiveType.Cube, Root,
+                new Vector3(-27f, .26f, 3f), new Vector3(1.4f, .12f, .73f), StoreCatalog.BoardColor("")).GetComponent<Renderer>();
             Block("Achievement shelf", new Vector3(-23f, 2.6f, -10.2f), new Vector3(11f, .2f, .75f), new Color(.53f, .38f, .22f));
             for (int i = 0; i < 10; i++)
             {
@@ -215,6 +219,12 @@ namespace UltimateFootballChase.Hub
                 case "violet": return new Color(.72f, .45f, .88f);
                 case "storm": return new Color(.29f, .38f, .54f);
                 case "dawn": return new Color(.98f, .52f, .29f);
+                case "ember": return new Color(.91f, .31f, .27f);
+                case "lagoon": return new Color(.17f, .65f, .74f);
+                case "rose": return new Color(.83f, .47f, .64f);
+                case "aurora": return new Color(.42f, .82f, .85f);
+                case "pearl": return new Color(.89f, .80f, .92f);
+                case "nightfall": return new Color(.25f, .32f, .55f);
                 case "cobalt": return new Color(.23f, .52f, .92f);
                 case "coral": return new Color(.98f, .43f, .38f);
                 case "mint": return new Color(.52f, .90f, .71f);

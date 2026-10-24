@@ -92,6 +92,9 @@ namespace UltimateFootballChase.Core
             effectVisuals[1] = runner.transform.Find("Super shoes effect").gameObject;
             effectVisuals[2] = runner.transform.Find("Jetpack flame").gameObject;
             effectVisuals[3] = runner.transform.Find("Hoverboard effect").gameObject;
+            effectVisuals[3].GetComponent<Renderer>().material.color = StoreCatalog.BoardColor(
+                AccountSession.Instance != null && !AccountSession.Instance.IsSignedIn ?
+                    new LocalPracticeStore().Load().SelectedBoardId : "");
             chaser = GreyboxActors.CreateChaser(out chaserCard);
             GameObject cameraGo = new GameObject("Portrait fixed-behind camera", typeof(UnityEngine.Camera), typeof(AudioListener), typeof(ChaseCamera));
             cameraGo.tag = "MainCamera";
@@ -136,6 +139,9 @@ namespace UltimateFootballChase.Core
                 string demoTint = new LocalPracticeStore().Load().SelectedTintId;
                 if (StoreCatalog.IsDemoTint(demoTint)) tint = demoTint;
             }
+            if (effectVisuals != null) effectVisuals[3].GetComponent<Renderer>().material.color = StoreCatalog.BoardColor(
+                AccountSession.Instance != null && !AccountSession.Instance.IsSignedIn ?
+                    new LocalPracticeStore().Load().SelectedBoardId : "");
             OriginalRoster.Show(runner.Visual, profile.SelectedCharacter);
             Color outfit = StoreCatalog.IsDemoTint(tint) ? HubWorldBuilder.OutfitColor(tint) :
                 OriginalRoster.KitColor(profile.SelectedCharacter, tint);

@@ -1,5 +1,7 @@
 # Phase 10 — local mission loop, seasonal route and guest-data controls
 
+**Historical snapshot:** [V2 playable browser companion and expanded roster/market](V2_PLAYTEST_STATUS.md) came later.
+
 **Source complete, Unity acceptance pending.** This phase builds on phases 1–9 in the isolated Unity project; it does not enable real-money services or authoritative contests.
 
 ## What changed

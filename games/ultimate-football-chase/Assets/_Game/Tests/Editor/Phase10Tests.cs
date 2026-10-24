@@ -56,7 +56,7 @@ namespace UltimateFootballChase.Tests
         [Test]
         public void FiveGreyboxTreatmentsPerCharacter_StageGatesCannotBypassSanitizer()
         {
-            Assert.AreEqual(5, OriginalRoster.KitIds.Length);
+            Assert.AreEqual(8, OriginalRoster.KitIds.Length);
             Assert.IsTrue(OriginalRoster.CanSelectKit("teal", 0));
             Assert.IsFalse(OriginalRoster.CanSelectKit("storm", 4));
             Assert.IsTrue(OriginalRoster.CanSelectKit("storm", 5));
