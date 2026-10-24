@@ -32,3 +32,5 @@ Phase 1–11 tests are under `Assets/_Game/Tests/Editor` (Unity Test Runner; not
 **V2 playable now:** The [independent browser playtest](playtest-v2/README.md) provides immediate portrait gameplay with original heroes, skins, boards and local training packs. It is **not Unity WebGL** and does not sync to the Unity project. The Unity greybox source now includes eight heroes, expanded wardrobe and guest-only demo packs/boards. Read [V2 verification and missing functionality](docs/V2_PLAYTEST_STATUS.md).
 
 **If a live preview link says “Sandbox not found”:** download [V2 Offline ZIP](playtest-v2/Ultimate-Football-Chase-V2-Offline.zip), extract it and open the enclosed `Ultimate-Football-Chase-V2-PLAY.html` in your browser. This self-contained version needs no server and does not use an expiring Arena link.
+
+**Third-party code review:** The suggested Subway Surfers clone/port repositories were audited before reuse. No third-party game or proprietary assets were imported; see [source and license audit](docs/OPEN_SOURCE_REUSE_AUDIT.md). A recolour of a clone is not an original, release-ready game. The browser sketch is not the visual target.
