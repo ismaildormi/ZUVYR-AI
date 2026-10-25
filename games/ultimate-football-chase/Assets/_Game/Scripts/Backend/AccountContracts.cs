@@ -92,6 +92,8 @@ namespace UltimateFootballChase.Backend
                 merged.Options = local.Options == null ? null :
                     JsonUtility.FromJson<UltimateFootballChase.Settings.HubOptions>(JsonUtility.ToJson(local.Options));
                 merged.SelectedCharacter = local.SelectedCharacter;
+                merged.SkinToneId = local.SkinToneId;
+                merged.HeadwearId = local.HeadwearId;
                 merged.PreviewMissionChain = new UltimateFootballChase.Missions.MissionChain(
                     local.PreviewMissionChain).Snapshot();
                 merged.LastRunMeters = local.LastRunMeters;

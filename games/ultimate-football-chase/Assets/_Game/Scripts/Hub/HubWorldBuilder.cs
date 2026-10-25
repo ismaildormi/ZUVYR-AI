@@ -74,7 +74,10 @@ namespace UltimateFootballChase.Hub
             Block("Wardrobe cabinet", new Vector3(-30f, 1.3f, -6), new Vector3(3, 2.6f, 1.2f), new Color(.36f, .21f, .18f));
             Mannequin = GreyboxFactory.Primitive("3D wardrobe mannequin (placeholder)", PrimitiveType.Capsule, Root,
                 new Vector3(-27f, 1f, 3f), new Vector3(.86f, 1f, .86f), new Color(.21f, .88f, .68f));
+            GreyboxFactory.Primitive("Original character head", PrimitiveType.Sphere, Mannequin,
+                new Vector3(0,.57f,0), new Vector3(.72f,.42f,.72f), new Color(.91f,.66f,.47f));
             OriginalRoster.AddGreyboxVariants(Mannequin);
+            OriginalRoster.AddHeadwearOptions(Mannequin);
             BoardPreview = GreyboxFactory.Primitive("Original board preview", PrimitiveType.Cube, Root,
                 new Vector3(-27f, .26f, 3f), new Vector3(1.4f, .12f, .73f), StoreCatalog.BoardColor("")).GetComponent<Renderer>();
             Block("Achievement shelf", new Vector3(-23f, 2.6f, -10.2f), new Vector3(11f, .2f, .75f), new Color(.53f, .38f, .22f));

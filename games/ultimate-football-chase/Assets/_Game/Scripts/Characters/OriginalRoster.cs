@@ -15,6 +15,66 @@ namespace UltimateFootballChase.Characters
         public static readonly string[] KitIds = { "teal", "amber", "violet", "storm", "dawn", "ember", "lagoon", "rose" };
         // Provisional preview-stage unlocks, NEVER verified purchases or account entitlements.
         public static readonly int[] KitStages = { 0, 0, 0, 5, 10, 15, 20, 25 };
+        public static readonly string[] SkinToneIds = { "sunlit", "warm", "bronze", "umber", "deep" };
+        public static readonly string[] HeadwearIds = { "none", "cap", "band", "visor", "crest" };
+        public static bool HasSkinTone(string id) => System.Array.IndexOf(SkinToneIds, id) >= 0;
+        public static bool HasHeadwear(string id) => System.Array.IndexOf(HeadwearIds, id) >= 0;
+        public static string NextSkinTone(string id) => SkinToneIds[(System.Array.IndexOf(SkinToneIds, id) + 1) % SkinToneIds.Length];
+        public static string NextHeadwear(string id) => HeadwearIds[(System.Array.IndexOf(HeadwearIds, id) + 1) % HeadwearIds.Length];
+        public static Color SkinToneColor(string id)
+        {
+            switch (id)
+            {
+                case "sunlit": return new Color(1f,.85f,.68f);
+                case "bronze": return new Color(.73f,.46f,.29f);
+                case "umber": return new Color(.48f,.29f,.20f);
+                case "deep": return new Color(.29f,.17f,.13f);
+                default: return new Color(.91f,.66f,.47f); // warm
+            }
+        }
+        public static void AddHeadwearOptions(Transform body)
+        {
+            foreach (string id in HeadwearIds)
+            {
+                if (id == "none") continue;
+                Transform group = new GameObject("Optional headwear " + id).transform;
+                group.SetParent(body, false);
+                Color accent = new Color(.94f,.76f,.36f);
+                switch (id)
+                {
+                    case "cap":
+                        GreyboxFactory.Primitive("Original cap crown", PrimitiveType.Cube, group,
+                            new Vector3(0,.90f,.03f), new Vector3(.72f,.15f,.64f), accent);
+                        GreyboxFactory.Primitive("Original cap brim", PrimitiveType.Cube, group,
+                            new Vector3(0,.83f,.46f), new Vector3(.67f,.06f,.35f), accent); break;
+                    case "band":
+                        GreyboxFactory.Primitive("Original running band", PrimitiveType.Cylinder, group,
+                            new Vector3(0,.75f,0), new Vector3(.77f,.055f,.76f), accent); break;
+                    case "visor":
+                        GreyboxFactory.Primitive("Original translucent-style visor", PrimitiveType.Cube, group,
+                            new Vector3(0,.59f,.47f), new Vector3(.67f,.16f,.10f), accent); break;
+                    case "crest":
+                        GreyboxFactory.Primitive("Original football crest shape", PrimitiveType.Sphere, group,
+                            new Vector3(0,1.05f,0), new Vector3(.28f,.29f,.25f), accent); break;
+                }
+            }
+        }
+        public static void ApplyAppearance(Transform body, string tone, string headwear)
+        {
+            Transform head = body.Find("Runner head");
+            if (head == null) head = body.Find("Original character head");
+            if (head != null)
+            {
+                Renderer face = head.GetComponent<Renderer>();
+                if (face != null) face.material.color = SkinToneColor(tone);
+            }
+            foreach (string id in HeadwearIds)
+            {
+                if (id == "none") continue;
+                Transform option = body.Find("Optional headwear " + id);
+                if (option != null) option.gameObject.SetActive(id == headwear);
+            }
+        }
         public static bool CanSelectKit(string id, int completedStages)
         {
             int index = System.Array.IndexOf(KitIds, id);

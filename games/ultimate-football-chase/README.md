@@ -34,3 +34,5 @@ Phase 1–11 tests are under `Assets/_Game/Tests/Editor` (Unity Test Runner; not
 **If a live preview link says “Sandbox not found”:** download [V2 Offline ZIP](playtest-v2/Ultimate-Football-Chase-V2-Offline.zip), extract it and open the enclosed `Ultimate-Football-Chase-V2-PLAY.html` in your browser. This self-contained version needs no server and does not use an expiring Arena link.
 
 **Third-party code review:** The suggested Subway Surfers clone/port repositories were audited before reuse. No third-party game or proprietary assets were imported; see [source and license audit](docs/OPEN_SOURCE_REUSE_AUDIT.md). A recolour of a clone is not an original, release-ready game. The browser sketch is not the visual target.
+
+**Further original appearance options (Unity source only):** Five complexion swatches and five independent headwear selections are now exposed in the Hub wardrobe and persisted as preview settings. This is still greybox, not a polished or built mobile game; see [appearance status](docs/PHASE12_APPEARANCE_STATUS.md). No unlicensed runner clone code/assets were copied.

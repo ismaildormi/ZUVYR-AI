@@ -143,6 +143,7 @@ namespace UltimateFootballChase.Core
                 AccountSession.Instance != null && !AccountSession.Instance.IsSignedIn ?
                     new LocalPracticeStore().Load().SelectedBoardId : "");
             OriginalRoster.Show(runner.Visual, profile.SelectedCharacter);
+            OriginalRoster.ApplyAppearance(runner.Visual, profile.SkinToneId, profile.HeadwearId);
             Color outfit = StoreCatalog.IsDemoTint(tint) ? HubWorldBuilder.OutfitColor(tint) :
                 OriginalRoster.KitColor(profile.SelectedCharacter, tint);
             runner.Visual.GetComponent<Renderer>().material.color = outfit;

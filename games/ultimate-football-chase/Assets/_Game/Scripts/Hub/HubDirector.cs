@@ -74,6 +74,7 @@ namespace UltimateFootballChase.Hub
             GreyboxFactory.Primitive("Original character head", PrimitiveType.Sphere, body,
                 new Vector3(0, .57f, 0), new Vector3(.72f, .42f, .72f), new Color(.97f, .80f, .59f));
             OriginalRoster.AddGreyboxVariants(body);
+            OriginalRoster.AddHeadwearOptions(body);
             ApplyOutfit();
         }
         private void CreateCamera()
@@ -301,6 +302,20 @@ namespace UltimateFootballChase.Hub
         public HubOptions CurrentOptions => profile.Options;
         public string CurrentCharacter => profile.SelectedCharacter;
         public int CompletedStages => profile.CompletedStages;
+        public string SkinTone => profile.SkinToneId;
+        public string Headwear => profile.HeadwearId;
+        public void CycleSkinTone()
+        {
+            if (account.IsBusy) return;
+            profile.SkinToneId = OriginalRoster.NextSkinTone(profile.SkinToneId);
+            ApplyOutfit(); Flush(); hud.AppearanceSelected();
+        }
+        public void CycleHeadwear()
+        {
+            if (account.IsBusy) return;
+            profile.HeadwearId = OriginalRoster.NextHeadwear(profile.HeadwearId);
+            ApplyOutfit(); Flush(); hud.AppearanceSelected();
+        }
         public string MissionStatus => DailyMissions.Status(profile, DateTime.UtcNow, profile.Options.Language);
         public void ChangeSetting(SettingAction action)
         {
@@ -376,6 +391,8 @@ namespace UltimateFootballChase.Hub
                 practiceStore.Load().SelectedBoardId : "");
             OriginalRoster.Show(body, profile.SelectedCharacter);
             OriginalRoster.Show(world.Mannequin, profile.SelectedCharacter);
+            OriginalRoster.ApplyAppearance(body, profile.SkinToneId, profile.HeadwearId);
+            OriginalRoster.ApplyAppearance(world.Mannequin, profile.SkinToneId, profile.HeadwearId);
         }
         private void ShowGate(string name) => hud.OpenDialogue(name + " LOCKED",
             "Complete 5 stages to open this area. Current: " + profile.CompletedStages + "/5.\nStage targets are provisional and shown at the top.");

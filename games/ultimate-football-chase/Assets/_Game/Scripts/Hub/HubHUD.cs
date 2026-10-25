@@ -20,6 +20,7 @@ namespace UltimateFootballChase.Hub
         private GameObject modal;
         private Button interact;
         private Button[] outfitButtons;
+        private Button toneButton, headwearButton;
         private Button accountNav, wheelNav, settingsNav, missionsNav;
         private Button[] characterButtons;
         private Button google, apple, gameCenter, signOut;
@@ -116,6 +117,10 @@ namespace UltimateFootballChase.Hub
                     Vector2.zero, new Vector2(216, 80),
                     () => director.SelectOutfit(OriginalRoster.KitIds[index]));
             }
+            toneButton = Button(panel, "TONE", new Vector2(.27f, .17f), Vector2.zero,
+                new Vector2(390, 85), director.CycleSkinTone);
+            headwearButton = Button(panel, "HAT", new Vector2(.73f, .17f), Vector2.zero,
+                new Vector2(390, 85), director.CycleHeadwear);
             google = Button(panel, "GOOGLE", new Vector2(.5f, .40f), Vector2.zero,
                 new Vector2(500, 90), () => director.SignIn("google"));
             apple = Button(panel, "APPLE ID", new Vector2(.5f, .32f), Vector2.zero,
@@ -286,6 +291,7 @@ namespace UltimateFootballChase.Hub
             }
             modalText.text = "ORIGINAL GREYBOX CHARACTER + COLOUR\n" +
                 "Selected: " + director.CurrentCharacter + " / " + selected + " • preview only";
+            RefreshAppearanceButtons();
             modalText.rectTransform.anchorMin = new Vector2(.1f, .55f);
             ToggleAccount(false);
             ToggleStore(false);
@@ -294,6 +300,17 @@ namespace UltimateFootballChase.Hub
             ToggleSettings(false);
             ToggleOutfits(true);
             modal.SetActive(true);
+        }
+        private void RefreshAppearanceButtons()
+        {
+            toneButton.GetComponentInChildren<Text>().text = "SKIN TONE: " + director.SkinTone.ToUpperInvariant();
+            headwearButton.GetComponentInChildren<Text>().text = "HEADWEAR: " + director.Headwear.ToUpperInvariant();
+        }
+        public void AppearanceSelected()
+        {
+            RefreshAppearanceButtons();
+            modalText.text = "Personalisation saved to the active preview profile.\n" +
+                "Face: " + director.SkinTone + " • Headwear: " + director.Headwear;
         }
         public void OutfitSelected(string selected) =>
             modalText.text = "Character " + director.CurrentCharacter + " • colour " + selected + "\n" + AccountSession.Instance.Status;
@@ -612,6 +629,8 @@ namespace UltimateFootballChase.Hub
         private void ToggleOutfits(bool enabled)
         {
             foreach (Button outfit in outfitButtons) outfit.gameObject.SetActive(enabled);
+            toneButton.gameObject.SetActive(enabled);
+            headwearButton.gameObject.SetActive(enabled);
             foreach (Button character in characterButtons) character.gameObject.SetActive(enabled);
         }
         public void CloseModal()

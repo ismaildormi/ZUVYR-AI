@@ -15,6 +15,7 @@ namespace UltimateFootballChase.Characters
             GreyboxFactory.Primitive("Runner head", PrimitiveType.Sphere, body,
                 new Vector3(0, .57f, 0), new Vector3(.75f, .43f, .76f), new Color(.97f, .80f, .59f));
             OriginalRoster.AddGreyboxVariants(body);
+            OriginalRoster.AddHeadwearOptions(body);
             for (int side = -1; side <= 1; side += 2)
                 GreyboxFactory.Primitive("Comic runner arm", PrimitiveType.Cube, body,
                     new Vector3(side * .65f, 0, .06f), new Vector3(.24f, .67f, .32f),

@@ -21,6 +21,8 @@ namespace UltimateFootballChase.Hub
         public string SelectedOutfit = "teal";
         public HubOptions Options = new HubOptions();
         public string SelectedCharacter = "kivo";
+        public string SkinToneId = "warm";
+        public string HeadwearId = "none";
         public int LastStoryChapterShown;
         public long MissionUtcDayTicks;
         public int MissionRuns, MissionCoins;
@@ -86,6 +88,8 @@ namespace UltimateFootballChase.Hub
             if (!OriginalRoster.CanSelectKit(profile.SelectedOutfit, profile.CompletedStages))
                 profile.SelectedOutfit = "teal";
             if (!OriginalRoster.Contains(profile.SelectedCharacter)) profile.SelectedCharacter = "kivo";
+            if (!OriginalRoster.HasSkinTone(profile.SkinToneId)) profile.SkinToneId = "warm";
+            if (!OriginalRoster.HasHeadwear(profile.HeadwearId)) profile.HeadwearId = "none";
             profile.LastStoryChapterShown = Mathf.Clamp(profile.LastStoryChapterShown, 0, 4);
             profile.MissionRuns = Mathf.Clamp(profile.MissionRuns, 0, 10000);
             profile.MissionCoins = Mathf.Clamp(profile.MissionCoins, 0, 1000000);
