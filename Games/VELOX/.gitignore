@@ -1,0 +1,5 @@
+# Unity generated (never commit)
+[Ll]ibrary/ [Tt]emp/ [Oo]bj/ [Bb]uild/ [Bb]uilds/ [Ll]ogs/ [Uu]ser[Ss]ettings/
+*.csproj *.sln *.user *.pidb *.booproj *.svd *.pdb *.mdb *.opendb *.VC.db
+# VELOX local OAuth config (use velox-auth.example.json as template; or VELOX_* env vars)
+Assets/StreamingAssets/velox-auth.json
