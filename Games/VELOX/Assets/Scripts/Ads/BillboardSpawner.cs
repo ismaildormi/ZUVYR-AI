@@ -10,6 +10,7 @@ namespace Velox.Ads
         [SerializeField] private float despawnBehindPlayer = 35f;
         [SerializeField] private Transform player;
         private readonly List<CustomBillboardAd> active = new(); private readonly Stack<CustomBillboardAd> pool = new();
+        private void Awake(){ if(!player){ var pc=FindObjectOfType<Velox.Player.PlayerController>(); if(pc) player=pc.transform; } }
         public void PopulateSegment(float segmentStartZ, float segmentLength)
         {
             if(!billboardPrefab || perSegment==0) return;

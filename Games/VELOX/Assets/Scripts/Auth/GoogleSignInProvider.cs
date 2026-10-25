@@ -12,6 +12,8 @@ namespace Velox.Auth
     {
         [Tooltip("Web OAuth Client ID (also the backend GOOGLE_CLIENT_ID). Not a secret, but keep in one place.")]
         [SerializeField] private string webClientId = "";
+        [SerializeField] private VeloxAuthConfig authConfig; // PR-2: file/env-driven config (wins over the field above)
+        private string EffectiveClientId => authConfig && !string.IsNullOrWhiteSpace(authConfig.GoogleWebClientId) ? authConfig.GoogleWebClientId : webClientId;
         private Action<VeloxUser> ok; private Action<string> fail;
         public bool IsAvailable =>
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -24,7 +26,7 @@ namespace Velox.Auth
             ok=onSuccess; fail=onError;
 #if UNITY_ANDROID && !UNITY_EDITOR
             try { using var cls=new AndroidJavaClass("com.zuvyr.velox.auth.VeloxGoogleAuth");
-                  cls.CallStatic("signIn", webClientId, gameObject.name, "OnNativeToken", "OnNativeError"); }
+                  cls.CallStatic("signIn", EffectiveClientId, gameObject.name, "OnNativeToken", "OnNativeError"); }
             catch(Exception e){ fail?.Invoke("google_plugin_missing: "+e.Message); }
 #elif UNITY_EDITOR || DEVELOPMENT_BUILD
             // Editor/dev-only mock so UI flow is testable without a device. Compiled out of release flow by IsAvailable checks in AuthService.

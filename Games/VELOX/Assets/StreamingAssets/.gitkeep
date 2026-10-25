@@ -1,0 +1,1 @@
+# copy velox-auth.example.json -> velox-auth.json (git-ignored) or set VELOX_* env vars

@@ -3,7 +3,8 @@ namespace Velox.Auth
 {
     public sealed class AuthService : MonoBehaviour
     {
-        [SerializeField] private GoogleSignInProvider google; [SerializeField] private VeloxBackendClient backend;
+        [SerializeField] private GoogleSignInProvider google; [SerializeField] private VeloxBackendClient backend; [SerializeField] private VeloxAuthConfig authConfig;
+        private void Awake(){ authConfig?.ApplyRuntimeOverrides(); } // file (StreamingAssets/velox-auth.json) + VELOX_* env vars
         public VeloxUser CurrentUser { get; private set; } public bool SignedIn => CurrentUser!=null && !string.IsNullOrEmpty(backend.SessionToken);
         public event Action<VeloxUser> SignedInChanged;
         public void SignInWithGoogle(Action<string> onError=null)

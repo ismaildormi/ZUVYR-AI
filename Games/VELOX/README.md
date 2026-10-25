@@ -18,7 +18,7 @@ tracks, trains, audio or UI are used or referenced anywhere.
 
 ## Quick start
 1. Open `Games/VELOX/` in Unity 2022.3 LTS (URP + TMP + Input System are in `Packages/manifest.json`).
-2. Menu **VELOX ▸ Create Main Scene**, then create `VisualCatalog` / `AudioCatalog` assets (Assets ▸ Create ▸ VELOX) and wire the Inspector slots.
+2. Menu **VELOX ▸ Build Main Scene (Automated)** — bakes catalogues, the procedural NEO prefab, city/obstacle/billboard prefabs and a fully-wired scene + Canvas (zero unassigned references). OAuth IDs come from `VeloxAuthConfig` <- `StreamingAssets/velox-auth.json` (copy the example, git-ignored) or `VELOX_*` env vars — never typed into the Inspector.
 3. Backend: run `Backend/schema.sql`, set `GOOGLE_CLIENT_ID` + `VELOX_SESSION_SECRET`, mount `Backend/velox-leaderboard.js` (see `Docs/GOOGLE_SIGNIN_SETUP.md`), point `VeloxBackendClient.baseUrl` at it.
 
 ## Tests

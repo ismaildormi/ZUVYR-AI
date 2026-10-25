@@ -1,14 +1,24 @@
-using UnityEngine; using Velox.Catalogs;
+using UnityEngine; using Velox.Catalogs; using Velox.Player;
 namespace Velox.Core
 {
-    /// <summary>Spawns NEO from the VisualCatalog slot at runtime, so swapping the hero model =
-    /// changing one Inspector reference — the legacy character is never referenced in code.</summary>
+    /// <summary>Spawns NEO: the assigned VisualCatalog prefab when present, otherwise the procedural
+    /// NEO (NeoProceduralFactory + NeoRunnerMotion) — the hero slot is never visually empty.</summary>
     public sealed class SceneBootstrapper : MonoBehaviour
     {
         [SerializeField] private VisualCatalog visualCatalog; [SerializeField] private Transform spawnPoint;
+        public GameObject SpawnedHero { get; private set; }
         private void Awake()
-        { if(!visualCatalog || !visualCatalog.neoCharacterPrefab){ Debug.LogWarning("[VELOX] VisualCatalog.neoCharacterPrefab is empty — assign the original NEO model (Docs/ASSET_LICENSE_CHECKLIST.md)."); return; }
-          var neo=Instantiate(visualCatalog.neoCharacterPrefab, spawnPoint?spawnPoint.position:Vector3.zero, Quaternion.identity);
-          neo.name=GameConstants.HeroName; RenderSettings.fogColor=visualCatalog.fogColor; }
+        {
+            Vector3 pos = spawnPoint ? spawnPoint.position : Vector3.zero;
+            if (visualCatalog && visualCatalog.neoCharacterPrefab)
+                SpawnedHero = Instantiate(visualCatalog.neoCharacterPrefab, pos, Quaternion.identity);
+            else
+            { SpawnedHero = NeoProceduralFactory.Build(); SpawnedHero.transform.position = pos;
+              Debug.Log("[VELOX] No NEO prefab assigned — using procedural NEO (assign an original model in VisualCatalog to replace it)."); }
+            SpawnedHero.name = GameConstants.HeroName;
+            if (!SpawnedHero.GetComponent<PlayerController>()) SpawnedHero.AddComponent<PlayerController>();
+            if (!SpawnedHero.GetComponent<CharacterController>()) SpawnedHero.AddComponent<CharacterController>();
+            if (visualCatalog) RenderSettings.fogColor = visualCatalog.fogColor;
+        }
     }
 }

@@ -9,7 +9,7 @@ namespace Velox.Player
         [SerializeField] private Animator animator; [SerializeField] private VeloxAudioManager audioMgr;
         private CharacterController cc; private int lane=1; private float vy, slideT; private Vector2 touchStart; private bool swiping;
         private static readonly int Run=Animator.StringToHash("Speed"), JumpH=Animator.StringToHash("Jump"), SlideH=Animator.StringToHash("Slide"), Dead=Animator.StringToHash("Dead");
-        private void Awake()=> cc=GetComponent<CharacterController>();
+        private void Awake(){ cc=GetComponent<CharacterController>(); if(!audioMgr) audioMgr=FindObjectOfType<VeloxAudioManager>(); }
         private void Update()
         {
             if(GameManager.Instance==null||GameManager.Instance.State!=GameState.Playing) return;

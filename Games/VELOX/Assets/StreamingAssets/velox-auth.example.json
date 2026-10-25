@@ -1,0 +1,7 @@
+{
+  "googleWebClientId": "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com",
+  "googleAndroidClientId": "YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com",
+  "googleIosClientId": "",
+  "firebaseAuthEndpoint": "https://identitytoolkit.googleapis.com/v1",
+  "backendBaseUrl": "https://api.zuvyr.example/velox"
+}

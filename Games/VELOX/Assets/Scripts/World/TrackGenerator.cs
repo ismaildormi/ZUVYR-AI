@@ -14,7 +14,7 @@ namespace Velox.World
         [SerializeField] private int coinEverySegments = 2;
         private readonly Queue<GameObject> pool = new();
         private float nextZ; private int spawned;
-        private void Start(){ for(int i=0;i<visibleSegments;i++) SpawnSegment(true); }
+        private void Start(){ if(!player){ var pc=FindObjectOfType<Velox.Player.PlayerController>(); if(pc) player=pc.transform; } for(int i=0;i<visibleSegments;i++) SpawnSegment(true); }
         private void Update(){ if(!player) return; while(nextZ - player.position.z < segmentLength*visibleSegments) { RecycleBehind(); SpawnSegment(false); } }
         private void RecycleBehind(){ foreach(Transform s in transform) if(s.position.z + segmentLength < player.position.z - segmentLength) { s.gameObject.SetActive(false); if(!pool.Contains(s.gameObject)) pool.Enqueue(s.gameObject); } }
         private void SpawnSegment(bool initial)
