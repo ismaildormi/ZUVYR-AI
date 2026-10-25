@@ -8,6 +8,7 @@ using UltimateFootballChase.Rankings;
 using UltimateFootballChase.Showdown;
 using UltimateFootballChase.Settings;
 using UltimateFootballChase.Characters;
+using UltimateFootballChase.Visuals;
 using System.Text;
 
 namespace UltimateFootballChase.Hub
@@ -16,6 +17,7 @@ namespace UltimateFootballChase.Hub
     {
         private HubDirector director;
         private Font font;
+        private VisualCatalog visualCatalog;
         private Text header, hint, modalTitle, modalText, interactionLabel;
         private GameObject modal;
         private Button interact;
@@ -50,7 +52,9 @@ namespace UltimateFootballChase.Hub
         public void Initialize(HubDirector owner)
         {
             director = owner;
-            font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            visualCatalog = Resources.Load<VisualCatalog>("VisualCatalog");
+            font = visualCatalog != null && visualCatalog.UiFont != null ? visualCatalog.UiFont :
+                Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (FindFirstObjectByType<EventSystem>() == null)
                 new GameObject("Hub UI events", typeof(EventSystem), typeof(StandaloneInputModule)).transform.SetParent(transform);
             var go = new GameObject("Hub portrait HUD", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
@@ -94,7 +98,8 @@ namespace UltimateFootballChase.Hub
             var panel = (RectTransform)modal.transform;
             panel.anchorMin = Vector2.zero; panel.anchorMax = Vector2.one;
             panel.offsetMin = panel.offsetMax = Vector2.zero;
-            modal.GetComponent<Image>().color = new Color(.02f, .06f, .11f, .9f);
+            modal.GetComponent<Image>().color = visualCatalog != null ? visualCatalog.BackdropColor :
+                new Color(.02f, .06f, .11f, .9f);
             modalTitle = Label(panel, "Dialogue title", 60, TextAnchor.MiddleCenter,
                 new Vector2(.1f, .64f), new Vector2(.9f, .77f), Vector2.zero, Vector2.zero);
             modalText = Label(panel, "Dialogue description", 37, TextAnchor.MiddleCenter,
@@ -238,7 +243,8 @@ namespace UltimateFootballChase.Hub
             var rect = (RectTransform)go.transform;
             rect.anchorMin = rect.anchorMax = anchor;
             rect.anchoredPosition = offset; rect.sizeDelta = size;
-            go.GetComponent<Image>().color = new Color(.11f, .43f, .49f, .95f);
+            go.GetComponent<Image>().color = visualCatalog != null ? visualCatalog.ButtonColor :
+                new Color(.11f, .43f, .49f, .95f);
             Label(rect, caption, 32, TextAnchor.MiddleCenter, Vector2.zero, Vector2.one,
                 Vector2.zero, Vector2.zero);
             var button = go.GetComponent<Button>();

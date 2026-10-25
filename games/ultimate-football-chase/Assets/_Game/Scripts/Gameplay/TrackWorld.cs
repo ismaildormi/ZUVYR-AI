@@ -4,6 +4,7 @@ using UltimateFootballChase.Core;
 using UltimateFootballChase.Difficulty;
 using UltimateFootballChase.PowerUps;
 using UltimateFootballChase.Seasons;
+using UltimateFootballChase.Visuals;
 
 namespace UltimateFootballChase.Gameplay
 {
@@ -68,6 +69,7 @@ namespace UltimateFootballChase.Gameplay
         private RunConfig config;
         private DifficultyProfile difficulty;
         private PowerUpConfig powerConfig;
+        private VisualCatalog visualCatalog;
         private ObstaclePlanner planner;
         private int seed;
         private int seasonIndex;
@@ -82,11 +84,12 @@ namespace UltimateFootballChase.Gameplay
         public IReadOnlyList<PowerPickup> PowerPickups => powerPickups;
 
         public void Initialize(RunConfig settings, DifficultyProfile curve, PowerUpConfig bonuses,
-            int worldSeed = 42, int season = 0)
+            int worldSeed = 42, int season = 0, VisualCatalog art = null)
         {
             config = settings;
             difficulty = curve;
             powerConfig = bonuses;
+            visualCatalog = art;
             seed = worldSeed; // local greybox repeatability; never trust this seed for real-prize scores
             seasonIndex = Mathf.Clamp(season, 0, 3); // route geometry/planner never depend on decoration
             planner = new ObstaclePlanner(seed);
@@ -114,6 +117,11 @@ namespace UltimateFootballChase.Gameplay
             var root = new GameObject("Recycled road segment").transform;
             root.SetParent(transform);
             root.position = new Vector3(0, 0, z);
+            if (visualCatalog != null && visualCatalog.StationTilePrefab != null)
+            {
+                VisualCatalog.AttachArt(visualCatalog.StationTilePrefab, root);
+                return root;
+            }
             GreyboxFactory.Primitive("Asphalt", PrimitiveType.Cube, root, new Vector3(0, -.17f, 0),
                 new Vector3(config.LaneWidth * 3.45f, .3f, TileLength), RunnerSeasons.Asphalt(seasonIndex));
             for (int i = -1; i <= 1; i++)
@@ -171,7 +179,9 @@ namespace UltimateFootballChase.Gameplay
             var modelRoot = new GameObject("Replaceable hazard art").transform;
             modelRoot.SetParent(hazard.Object.transform, false);
             hazard.Model = modelRoot;
-            switch (kind)
+            GameObject prefab = visualCatalog != null ? visualCatalog.HazardPrefab(kind) : null;
+            if (prefab != null) VisualCatalog.AttachArt(prefab, modelRoot);
+            else switch (kind)
             {
                 case HazardKind.LowBarrier:
                     GreyboxFactory.Primitive("JUMP", PrimitiveType.Cube, modelRoot, new Vector3(0, .45f, 0),
@@ -194,9 +204,6 @@ namespace UltimateFootballChase.Gameplay
                     // Fictional, unbranded car crosses from outside edge toward middle lane.
                     GreyboxFactory.Primitive("Fictional patrol car", PrimitiveType.Cube, modelRoot,
                         new Vector3(0, .75f, 0), new Vector3(1.6f, 1.5f, 2.4f), new Color(.32f, .37f, .52f));
-                    GreyboxFactory.Primitive("Crossing path warning", PrimitiveType.Cube, modelRoot,
-                        new Vector3((1 - lane) * config.LaneWidth * .5f, .02f, -5f),
-                        new Vector3(config.LaneWidth + 1.6f, .05f, .8f), new Color(1f, .83f, .08f));
                     break;
                 case HazardKind.Drone:
                     GreyboxFactory.Primitive("Original straight-line drone", PrimitiveType.Sphere, modelRoot,
@@ -207,7 +214,11 @@ namespace UltimateFootballChase.Gameplay
                         new Vector3(0, 1.25f, 0), new Vector3(1.95f, 2.5f, 5f), new Color(.32f, .69f, .47f));
                     break;
             }
-            // Bright visual warning marker: visible in approach, never a surprise spawn.
+            // Warnings are gameplay affordances and must remain visible even with custom art.
+            if (kind == HazardKind.PoliceCar)
+                GreyboxFactory.Primitive("Crossing path warning", PrimitiveType.Cube, modelRoot,
+                    new Vector3((1 - lane) * config.LaneWidth * .5f, .02f, -5f),
+                    new Vector3(config.LaneWidth + 1.6f, .05f, .8f), new Color(1f, .83f, .08f));
             GreyboxFactory.Primitive("Approach warning", PrimitiveType.Cube, modelRoot,
                 new Vector3(0, .01f, -5f), new Vector3(1.6f, .05f, 1f), new Color(1f, .85f, .10f));
             hazards.Add(hazard);

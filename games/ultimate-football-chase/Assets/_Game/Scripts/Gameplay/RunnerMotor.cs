@@ -9,6 +9,16 @@ namespace UltimateFootballChase.Gameplay
     {
         private RunConfig config;
         private Transform visual;
+        private Animator artAnimator;
+        private bool externalArt;
+        private readonly System.Collections.Generic.HashSet<int> artBools = new System.Collections.Generic.HashSet<int>();
+        private readonly System.Collections.Generic.HashSet<int> artFloats = new System.Collections.Generic.HashSet<int>();
+        private static readonly int JumpId = Animator.StringToHash("Jump");
+        private static readonly int SlideId = Animator.StringToHash("Slide");
+        private static readonly int StumbleId = Animator.StringToHash("Stumble");
+        private static readonly int FallId = Animator.StringToHash("Fall");
+        private static readonly int FlyId = Animator.StringToHash("Fly");
+        private static readonly int RunSpeedId = Animator.StringToHash("RunSpeed");
         private int lane = 1;
         private float laneStartX, laneElapsed, verticalElapsed, slideLeft, stumbleLeft, invulnerableLeft, runCycle;
         private bool jumping, sliding, falling, flying, superShoes;
@@ -18,6 +28,27 @@ namespace UltimateFootballChase.Gameplay
 
         public int Lane => lane;
         public Transform Visual => visual;
+        public bool UsesExternalArt => externalArt;
+        /// <summary>The mesh is visual-only: animation cannot move the arcade hit box or change the lane.</summary>
+        public void SetExternalArt(Transform prefabInstance)
+        {
+            if (prefabInstance == null || prefabInstance.parent != transform) return;
+            if (visual != null) visual.gameObject.SetActive(false); // keep greybox as a reversible fallback
+            visual = prefabInstance;
+            externalArt = true;
+            artAnimator = visual.GetComponentInChildren<Animator>();
+            artBools.Clear(); artFloats.Clear();
+            if (artAnimator != null)
+            {
+                artAnimator.applyRootMotion = false;
+                foreach (AnimatorControllerParameter parameter in artAnimator.parameters)
+                {
+                    if (parameter.type == AnimatorControllerParameterType.Bool) artBools.Add(parameter.nameHash);
+                    if (parameter.type == AnimatorControllerParameterType.Float) artFloats.Add(parameter.nameHash);
+                }
+            }
+            AnimateVisual();
+        }
         public bool IsJumping => jumping;
         public int AcceptedJumps { get; private set; }
         public bool IsSliding => sliding;
@@ -117,6 +148,20 @@ namespace UltimateFootballChase.Gameplay
         private void AnimateVisual()
         {
             if (visual == null) return;
+            if (externalArt)
+            {
+                // Humanoid Animator drives its own pose. Never squash a rig for the greybox slide/bob.
+                if (artAnimator != null)
+                {
+                    if (artBools.Contains(JumpId)) artAnimator.SetBool(JumpId, jumping);
+                    if (artBools.Contains(SlideId)) artAnimator.SetBool(SlideId, sliding);
+                    if (artBools.Contains(StumbleId)) artAnimator.SetBool(StumbleId, stumbleLeft > 0f);
+                    if (artBools.Contains(FallId)) artAnimator.SetBool(FallId, falling);
+                    if (artBools.Contains(FlyId)) artAnimator.SetBool(FlyId, flying);
+                    if (artFloats.Contains(RunSpeedId)) artAnimator.SetFloat(RunSpeedId, falling ? 0f : 1f);
+                }
+                return;
+            }
             visual.localPosition = falling ? new Vector3(0, .45f, 0) : sliding ? new Vector3(0, .52f, 0) :
                 new Vector3(0, .95f + (jumping ? 0f : Mathf.Abs(Mathf.Sin(runCycle)) * .06f), 0);
             visual.localScale = sliding ? new Vector3(.85f, .55f, 1.3f) : new Vector3(.85f, 1.6f, .85f);

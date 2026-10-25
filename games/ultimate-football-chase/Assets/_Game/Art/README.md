@@ -1,0 +1,9 @@
+# Visual asset import boundary
+
+No third-party models, code, textures, fonts, clips or logos are imported by this change. Put only original assets or individually verified commercially redistributable assets here; record each source, author, license and proof in `docs/ASSET_PROVENANCE.csv`. A code license does not automatically cover art.
+
+Suggested subfolders when cleared assets arrive: `Models/` (humanoids, fictional station segments, trains, barriers), `Animations/` (clips, Animator Controller), `Materials/` (kit/skin/station materials), `Textures/` (original patterns), `UI/` (original fonts/marks). Do not put proprietary game files or copied brands in these folders.
+
+Run **Tools > Ultimate Football Chase > Build Phases 1–4 Scenes** in Unity to create `Assets/_Game/Resources/VisualCatalog.asset`; the builder preserves an existing catalog. Assign optional cleared prefabs in that asset. Empty slots retain procedural greybox. An original runner prefab should have a feet-level pivot and face +Z; its Animator Controller may use Bool `Jump`, `Slide`, `Stumble`, `Fall`, `Fly` and Float `RunSpeed`. The game turns off root motion and owns lane movement, jump height and collision. Assign only intended shirt and skin renderers in an `AvatarAppearanceSlots` component on the prefab. The Hub mannequin remains greybox until separately integrated.
+
+Station segment art repeats every **24m** and must expose all three lanes; obstacles must fit existing swept hit boxes (notably a ~5m train, low jump barrier, overhead slide gap and cross-lane car warning). Artwork colliders are disabled on instantiated prefabs; warning marks remain authored in game code. Check apparent collision size, touch readability and performance on real devices. A replacement mesh is *not* proof that its animation, replay, visuals or store approval is finished.

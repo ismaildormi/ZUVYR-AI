@@ -6,6 +6,7 @@ using UltimateFootballChase.Core;
 using UltimateFootballChase.Difficulty;
 using UltimateFootballChase.PowerUps;
 using UltimateFootballChase.Hub;
+using UltimateFootballChase.Visuals;
 
 namespace UltimateFootballChase.Editor
 {
@@ -16,6 +17,7 @@ namespace UltimateFootballChase.Editor
         private const string DifficultyPath = "Assets/_Game/Resources/DifficultyProfile.asset";
         private const string PowerPath = "Assets/_Game/Resources/PowerUpConfig.asset";
         private const string HubPath = "Assets/_Game/Resources/HubConfig.asset";
+        private const string VisualPath = "Assets/_Game/Resources/VisualCatalog.asset";
         private const string HubScenePath = "Assets/_Game/Scenes/Hub.unity";
         private const string ScenePath = "Assets/_Game/Scenes/Phase1Runner.unity";
 
@@ -65,7 +67,13 @@ namespace UltimateFootballChase.Editor
                 hub = ScriptableObject.CreateInstance<HubConfig>();
                 AssetDatabase.CreateAsset(hub, HubPath);
             }
-            // Never override owner/playtest tuning after the assets are created.
+            VisualCatalog visuals = AssetDatabase.LoadAssetAtPath<VisualCatalog>(VisualPath);
+            if (visuals == null)
+            {
+                visuals = ScriptableObject.CreateInstance<VisualCatalog>();
+                AssetDatabase.CreateAsset(visuals, VisualPath);
+            }
+            // Never override owner/playtest tuning or referenced artwork after the assets are created.
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var game = new GameObject("Ultimate Football Chase - Phases 1–3");
             GameDirector director = game.AddComponent<GameDirector>();
@@ -73,6 +81,7 @@ namespace UltimateFootballChase.Editor
             serialized.FindProperty("config").objectReferenceValue = config;
             serialized.FindProperty("difficulty").objectReferenceValue = difficulty;
             serialized.FindProperty("powerConfig").objectReferenceValue = power;
+            serialized.FindProperty("visualCatalog").objectReferenceValue = visuals;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             RenderSettings.ambientLight = new Color(.50f, .57f, .66f);
             EditorSceneManager.SaveScene(scene, ScenePath);

@@ -13,6 +13,7 @@ using UltimateFootballChase.Ads;
 using UltimateFootballChase.Settings;
 using UltimateFootballChase.Missions;
 using UltimateFootballChase.Seasons;
+using UltimateFootballChase.Visuals;
 using System;
 using UnityEngine.SceneManagement;
 
@@ -26,6 +27,7 @@ namespace UltimateFootballChase.Core
         [SerializeField] private RunConfig config;
         [SerializeField] private DifficultyProfile difficulty;
         [SerializeField] private PowerUpConfig powerConfig;
+        [SerializeField] private VisualCatalog visualCatalog;
         private PowerUpState powers;
         private TrackWorld track;
         private RunnerMotor runner;
@@ -58,6 +60,7 @@ namespace UltimateFootballChase.Core
                 difficulty = ScriptableObject.CreateInstance<DifficultyProfile>();
             }
             if (powerConfig == null) powerConfig = Resources.Load<PowerUpConfig>("PowerUpConfig");
+            if (visualCatalog == null) visualCatalog = Resources.Load<VisualCatalog>("VisualCatalog");
             if (powerConfig == null)
             {
                 Debug.LogWarning("PowerUpConfig missing; use the scene builder to create it. Temporary defaults are test-only.");
@@ -83,8 +86,16 @@ namespace UltimateFootballChase.Core
             track = new GameObject("Endless track - pooled segments").AddComponent<TrackWorld>();
             HubConfig hubConfig = Resources.Load<HubConfig>("HubConfig");
             int cycle = hubConfig != null ? hubConfig.SeasonCycleMonths : 3;
-            track.Initialize(config, difficulty, powerConfig, 42, RunnerSeasons.At(DateTime.UtcNow, cycle));
+            track.Initialize(config, difficulty, powerConfig, 42, RunnerSeasons.At(DateTime.UtcNow, cycle), visualCatalog);
             runner = GreyboxActors.CreatePlayer(config);
+            if (visualCatalog != null && visualCatalog.RunnerPrefab != null)
+            {
+                GameObject art = VisualCatalog.AttachArt(visualCatalog.RunnerPrefab, runner.transform);
+                runner.SetExternalArt(art.transform);
+                Animator animator = art.GetComponentInChildren<Animator>();
+                if (animator == null || animator.runtimeAnimatorController == null)
+                    Debug.LogWarning("Runner art has no Animator Controller; gameplay works, but humanoid motion is not ready.");
+            }
             // Hub outfit is a guest/account preview; no paid entitlement is inferred.
             OnAccountProfileChanged(HubGuestProgress.Load());
             effectVisuals = new GameObject[4];
@@ -142,13 +153,21 @@ namespace UltimateFootballChase.Core
             if (effectVisuals != null) effectVisuals[3].GetComponent<Renderer>().material.color = StoreCatalog.BoardColor(
                 AccountSession.Instance != null && !AccountSession.Instance.IsSignedIn ?
                     new LocalPracticeStore().Load().SelectedBoardId : "");
-            OriginalRoster.Show(runner.Visual, profile.SelectedCharacter);
-            OriginalRoster.ApplyAppearance(runner.Visual, profile.SkinToneId, profile.HeadwearId);
             Color outfit = StoreCatalog.IsDemoTint(tint) ? HubWorldBuilder.OutfitColor(tint) :
                 OriginalRoster.KitColor(profile.SelectedCharacter, tint);
-            runner.Visual.GetComponent<Renderer>().material.color = outfit;
-            foreach (Renderer part in runner.Visual.GetComponentsInChildren<Renderer>())
-                if (part.gameObject.name == "Comic runner arm") part.material.color = outfit;
+            if (runner.UsesExternalArt)
+            {
+                AvatarAppearanceSlots slots = runner.Visual.GetComponentInChildren<AvatarAppearanceSlots>();
+                if (slots != null) slots.Apply(outfit, profile.SkinToneId, profile.HeadwearId);
+            }
+            else
+            {
+                OriginalRoster.Show(runner.Visual, profile.SelectedCharacter);
+                OriginalRoster.ApplyAppearance(runner.Visual, profile.SkinToneId, profile.HeadwearId);
+                runner.Visual.GetComponent<Renderer>().material.color = outfit;
+                foreach (Renderer part in runner.Visual.GetComponentsInChildren<Renderer>())
+                    if (part.gameObject.name == "Comic runner arm") part.material.color = outfit;
+            }
         }
         private void OnDestroy()
         {

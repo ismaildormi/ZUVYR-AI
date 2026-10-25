@@ -6,6 +6,7 @@ using UltimateFootballChase.Core;
 using UltimateFootballChase.Gameplay;
 using UltimateFootballChase.PowerUps;
 using UltimateFootballChase.Settings;
+using UltimateFootballChase.Visuals;
 using System.Collections.Generic;
 
 namespace UltimateFootballChase.UI
@@ -20,6 +21,7 @@ namespace UltimateFootballChase.UI
         private GameObject modal, replaySkip;
         private Button primary, secondary, pause;
         private Font font;
+        private VisualCatalog visualCatalog;
         private readonly Text[] powerLabels = new Text[4];
         private readonly Image[] powerBars = new Image[4];
         private readonly Text[] previewLabels = new Text[3];
@@ -36,7 +38,9 @@ namespace UltimateFootballChase.UI
         {
             director = owner;
             // Unity 6 built-in legacy font; this does not require external assets.
-            font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            visualCatalog = Resources.Load<VisualCatalog>("VisualCatalog");
+            font = visualCatalog != null && visualCatalog.UiFont != null ? visualCatalog.UiFont :
+                Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (FindFirstObjectByType<EventSystem>() == null)
             {
                 var eventSystem = new GameObject("UI Event System", typeof(EventSystem), typeof(StandaloneInputModule));
@@ -79,7 +83,8 @@ namespace UltimateFootballChase.UI
             RectTransform panel = modal.GetComponent<RectTransform>();
             panel.anchorMin = Vector2.zero; panel.anchorMax = Vector2.one;
             panel.offsetMin = panel.offsetMax = Vector2.zero;
-            modal.GetComponent<Image>().color = new Color(.01f, .04f, .09f, .88f);
+            modal.GetComponent<Image>().color = visualCatalog != null ? visualCatalog.BackdropColor :
+                new Color(.01f, .04f, .09f, .88f);
             title = Label(panel, "", 68, TextAnchor.MiddleCenter, new Vector2(.08f, .57f), new Vector2(.92f, .77f), Vector2.zero, Vector2.zero);
             detail = Label(panel, "", 38, TextAnchor.MiddleCenter, new Vector2(.08f, .38f), new Vector2(.92f, .57f), Vector2.zero, Vector2.zero);
             primary = MakeButton(panel, "", new Vector2(.5f, .29f), new Vector2(0, -15), new Vector2(780, 122), null);
@@ -186,7 +191,8 @@ namespace UltimateFootballChase.UI
             rect.anchorMin = rect.anchorMax = anchor;
             rect.anchoredPosition = position;
             rect.sizeDelta = size;
-            go.GetComponent<Image>().color = new Color(.06f, .43f, .49f, .95f);
+            go.GetComponent<Image>().color = visualCatalog != null ? visualCatalog.ButtonColor :
+                new Color(.06f, .43f, .49f, .95f);
             var text = Label(rect, caption, 38, TextAnchor.MiddleCenter, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             text.raycastTarget = false;
             Button button = go.GetComponent<Button>();
