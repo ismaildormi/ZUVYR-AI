@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZUVYR Studio — Anime Video Pipeline</title>
+<style>
+  :root{--bg:#0b0e1a;--panel:#141a2e;--line:#232c4a;--txt:#e8ecff;--dim:#8b93b8;--acc:#2ec4b6;--acc2:#ffd166;--bad:#ff5d73}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
+  header{display:flex;align-items:center;gap:14px;padding:18px 28px;border-bottom:1px solid var(--line)}
+  header h1{font-size:20px;letter-spacing:.5px}
+  header .tag{color:var(--dim);font-size:12px;border:1px solid var(--line);padding:3px 10px;border-radius:99px}
+  main{display:grid;grid-template-columns:380px 1fr;gap:20px;padding:22px 28px;max-width:1400px;margin:0 auto}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .panel h2{font-size:13px;text-transform:uppercase;letter-spacing:1.4px;color:var(--dim);margin-bottom:12px}
+  textarea{width:100%;height:260px;background:#0d1220;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:12px;font:13px/1.5 ui-monospace,monospace;resize:vertical}
+  select,input[type=text]{background:#0d1220;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+  .row{display:flex;gap:10px;margin:10px 0}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 14px}
+  .chip{border:1px solid var(--line);border-radius:99px;padding:5px 12px;font-size:12px;color:var(--dim);cursor:pointer;user-select:none}
+  .chip.on{border-color:var(--acc);color:var(--acc);background:rgba(46,196,182,.08)}
+  button{background:linear-gradient(135deg,var(--acc),#1b9e93);color:#04110f;border:0;border-radius:10px;padding:11px 18px;font-weight:700;cursor:pointer;width:100%;font-size:15px}
+  button:hover{filter:brightness(1.1)}
+  button:disabled{opacity:.5;cursor:wait}
+  .job{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+  .job .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .job .vid{font-family:ui-monospace;font-size:13px;color:var(--acc2)}
+  .pill{font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid var(--line)}
+  .pill.done{color:#57e39a;border-color:#2b7a55}.pill.running{color:var(--acc2);border-color:#8a6d1d}.pill.error{color:var(--bad);border-color:#7a2b3a}
+  .bar{height:8px;background:#0d1220;border-radius:99px;overflow:hidden;margin:8px 0}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .6s}
+  .scenes{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .scene{border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:12px;min-width:120px}
+  .scene b{display:block;font-size:11px;color:var(--dim)}
+  .scene select{margin-top:6px;font-size:11px;padding:4px}
+  a{color:var(--acc)}
+  .dl{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:13px}
+  .thumbs{display:flex;gap:8px;margin-top:8px}
+  .thumbs img{width:150px;border-radius:8px;border:1px solid var(--line)}
+  .empty{color:var(--dim);font-size:13px;padding:20px;text-align:center}
+  #status{font-size:12px;color:var(--dim);margin-top:8px;min-height:16px}
+</style>
+</head>
+<body>
+<header>
+  <h1>ZUVYR <span style="color:var(--acc)">STUDIO</span></h1>
+  <span class="tag">script → anime video</span>
+  <span class="tag" id="engine-tag">…</span>
+</header>
+<main>
+  <section class="panel">
+    <h2>New video</h2>
+    <textarea id="script" placeholder="Paste your script…&#10;&#10;NARRATOR: On the corner of Maple and Ninth…&#10;MIKA (sad): They can't sell our building!&#10;[Visual: Mika hugging her sketchbook]&#10;&#10;<Song: Rooftop Anthem – hip hop, trap – leads: jayden, zoe>&#10;JAYDEN (rap): We hold the block down…&#10;</Song>"></textarea>
+    <div class="row">
+      <div style="flex:1"><label style="font-size:11px;color:var(--dim)">STYLE</label>
+        <select id="style"><option value="2d_anime">2D anime (MSA)</option><option value="3d_render">3D render</option></select></div>
+      <div style="flex:1"><label style="font-size:11px;color:var(--dim)">FORMAT</label>
+        <select id="format"><option value="long">Long 16:9</option><option value="short">Short 9:16</option></select></div>
+    </div>
+    <label style="font-size:11px;color:var(--dim)">TITLE (optional)</label>
+    <input type="text" id="title" placeholder="The Last Beat">
+    <div style="margin-top:12px"><label style="font-size:11px;color:var(--dim)">CAST (click to include)</label>
+      <div class="chips" id="cast"></div></div>
+    <button id="go">GENERATE VIDEO</button>
+    <div id="status"></div>
+  </section>
+  <section class="panel">
+    <h2>Jobs</h2>
+    <div id="jobs"><div class="empty">No jobs yet.</div></div>
+  </section>
+</main>
+<script>
+const $=q=>document.querySelector(q);
+let CAST=[], activeTimers={};
+async function loadConfig(){
+  const c = await (await fetch('/api/config')).json();
+  CAST = c.characters;
+  $('#engine-tag').textContent = `${CAST.length} characters · ${c.voices.length} voices`;
+  $('#cast').innerHTML = CAST.map(ch=>`<div class="chip on" data-id="${ch.id}" style="--c:${ch.color}">${ch.name}</div>`).join('');
+  document.querySelectorAll('.chip').forEach(el=>el.onclick=()=>el.classList.toggle('on'));
+}
+async function createJob(){
+  const script=$('#script').value.trim();
+  if(!script){$('#status').textContent='Paste a script first.';return;}
+  const characters=[...document.querySelectorAll('.chip.on')].map(e=>e.dataset.id);
+  const body={script, style:$('#style').value, format:$('#format').value,
+              title:$('#title').value||null, characters};
+  $('#go').disabled=true;$('#status').textContent='Starting…';
+  try{
+    const r=await fetch('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const j=await r.json();
+    if(r.ok){$('#status').textContent=`Job ${j.video_id} started.`;poll(j.video_id);}
+    else $('#status').textContent='Error: '+j.error;
+  }catch(e){$('#status').textContent='Error: '+e;}
+  $('#go').disabled=false;
+}
+async function refreshJobs(){
+  const jobs=await (await fetch('/api/jobs')).json();
+  if(!jobs.length){$('#jobs').innerHTML='<div class="empty">No jobs yet.</div>';return;}
+  $('#jobs').innerHTML=jobs.map(j=>jobHtml(j)).join('');
+  for(const j of jobs){ if(['running','queued'].includes(j.status)) poll(j.video_id); }
+}
+function jobHtml(j){
+  const outs=j.outputs||{};
+  const thumbs=(outs.thumbnails||[]).map(t=>`<img src="/api/output/${j.video_id}/${t.split('/').slice(-3).join('/')}" onerror="this.style.display='none'">`).join('');
+  return `<div class="job" id="job-${j.video_id}">
+    <div class="head"><span class="vid">${j.video_id} · ${j.title||''}</span><span class="pill ${j.status}">${j.status}</span></div>
+    <div class="bar"><i style="width:${pct(j)}%"></i></div>
+    <div class="scenes">${(j.scenes||[]).map(s=>`<div class="scene"><b>${s.scene_id}</b>${s.status}${s.duration_s?' · '+s.duration_s.toFixed(1)+'s':''}
+      <select onchange="regen('${j.video_id}','${s.scene_id}',this.value)">
+        <option value="">action…</option>
+        <option value="regen">regenerate</option>
+        <option value="preview">play audio</option>
+      </select></div>`).join('')}</div>
+    <div class="dl">
+      ${outs.video?`<a href="/api/output/${j.video_id}/${outs.video.split('/').slice(-2).join('/')}" download>⬇ MP4</a>`:''}
+      ${outs.srt?`<a href="/api/output/${j.video_id}/${outs.srt.split('/').slice(-2).join('/')}">⬇ captions.srt</a>`:''}
+    </div>
+    <div class="thumbs">${thumbs}</div>
+    ${j.error?`<div style="color:var(--bad);font-size:12px;margin-top:8px">${j.error}</div>`:''}
+  </div>`;
+}
+function pct(j){ if(!j.scenes_total) return 0; return Math.round(100*j.scenes_done/j.scenes_total); }
+async function poll(vid){
+  if(activeTimers[vid]) return;
+  const tick=async()=>{
+    const j=await (await fetch('/api/jobs/'+vid)).json();
+    const el=document.getElementById('job-'+vid);
+    if(el&&j.scenes){ el.outerHTML=jobHtml(j); }
+    if(['done','error'].includes(j.status)){ if(activeTimers[vid]) clearTimeout(activeTimers[vid]); delete activeTimers[vid]; return; }
+    activeTimers[vid]=setTimeout(tick,2500);
+  };
+  tick();
+}
+async function regen(vid,sid,action){
+  if(action==='regen'){
+    await fetch(`/api/jobs/${vid}/scenes/${sid}/regenerate`,{method:'POST'});
+    poll(vid);
+  }else if(action==='preview'){
+    const j=await (await fetch('/api/jobs/'+vid)).json();
+    const s=(j.scenes||[]).find(x=>x.scene_id===sid);
+    if(s&&s.audio) new Audio(s.audio).play();
+  }
+}
+$('#go').onclick=createJob;
+loadConfig();refreshJobs();
+</script>
+</body>
+</html>

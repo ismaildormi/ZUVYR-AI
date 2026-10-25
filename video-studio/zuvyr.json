@@ -1,0 +1,91 @@
+{
+  "product": "ZUVYR Studio",
+  "style": "2d_anime",
+  "narration_language": "en",
+  "fps": 24,
+  "formats": {
+    "long": { "width": 1920, "height": 1080 },
+    "short": { "width": 1080, "height": 1920 }
+  },
+  "thumbnail": { "width": 1280, "height": 720, "variants": 3 },
+  "engines": {
+    "brain": {
+      "mode": "auto",
+      "ollama": {
+        "url": "http://127.0.0.1:11434",
+        "model": "qwen3:8b",
+        "timeout_s": 300,
+        "temperature": 0.2
+      }
+    },
+    "voice": {
+      "mode": "auto",
+      "order": ["chatterbox", "qwen3_tts", "dia", "orpheus", "kokoro", "zsynth"],
+      "takes": 3
+    },
+    "vision": {
+      "mode": "auto",
+      "comfyui": {
+        "url": "http://127.0.0.1:8188",
+        "timeout_s": 900,
+        "sdxl_checkpoint": "sdxl_base_1.0.safetensors",
+        "style_loras": {
+          "2d_anime": "animagine_xl_31.safetensors",
+          "3d_render": "3DRedmond_3DRenderStyle.safetensors"
+        }
+      }
+    },
+    "motion": {
+      "mode": "auto",
+      "animatediff": {
+        "version": "v3",
+        "sdxl_checkpoint": "mm_sdxl_v10_beta.ckpt",
+        "motion_loras": {
+          "pan_left": 0.75, "pan_right": 0.75, "zoom_in": 0.75, "zoom_out": 0.75,
+          "tilt_up": 0.75, "tilt_down": 0.75, "roll": 0.75
+        },
+        "max_animated_ratio": 0.35
+      }
+    },
+    "music": {
+      "mode": "auto",
+      "order": ["comfyui_audio", "procedural"]
+    },
+    "song": {
+      "mode": "auto",
+      "order": ["yue", "procedural"],
+      "yue": {
+        "repo_dir": "external/YuE",
+        "stage1": "m-a-p/YuE-s1-7B-anneal-en-cot",
+        "stage2": "m-a-p/YuE-s2-1B-general"
+      }
+    },
+    "lipsync": {
+      "mode": "auto",
+      "order": ["musetalk", "latentsync", "wav2lip", "procedural"],
+      "musetalk": { "repo_dir": "external/MuseTalk" }
+    },
+    "render": {
+      "mode": "auto",
+      "order": ["remotion", "ffmpeg"],
+      "base_app_dir": "external/Automated-Video-Generator"
+    }
+  },
+  "audio": {
+    "target_lufs": -14.0,
+    "peak_db": -1.5,
+    "duck_db": 10.0,
+    "sample_rate": 44100,
+    "caption_mode": "burn"
+  },
+  "video": { "crf": 27, "preset": "veryfast" },
+  "paths": {
+    "characters": "characters",
+    "voices": "voices",
+    "assets": "assets",
+    "scripts": "scripts",
+    "jobs": "jobs",
+    "output": "output",
+    "external": "external"
+  }
+}

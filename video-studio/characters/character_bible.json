@@ -1,0 +1,199 @@
+{
+  "characters": [
+    {
+      "id": "mika",
+      "name": "Mika Sato",
+      "age": 16,
+      "role": "protagonist — teen girl with a sketchbook and a plan",
+      "gender": "female",
+      "appearance": {
+        "hair": "long dark navy hair with one bright teal streak",
+        "eyes": "large amber eyes",
+        "outfit": "denim jacket over a mustard-yellow t-shirt, dark pleated skirt, white sneakers",
+        "body": "slim, average height",
+        "signature": "always carries a sketchbook"
+      },
+      "token_block": "Mika Sato, 16-year-old Japanese-American girl, long dark navy hair with one bright teal streak, large amber eyes, slim build, denim jacket over a mustard-yellow t-shirt, dark pleated skirt, white sneakers, carrying a sketchbook",
+      "voice_id": "mika",
+      "accent_color": "#2EC4B6",
+      "seed": 1628975950,
+      "reference": "/home/user/ZUVYR-AI/video-studio/characters/mika/reference.png",
+      "sprite": "/home/user/ZUVYR-AI/video-studio/characters/mika/sprite.png",
+      "mouth": {
+        "cx": 0.5,
+        "cy": 0.115,
+        "w": 0.055,
+        "h": 0.03
+      },
+      "height": 1.0,
+      "personality": "kind, artistic, quietly stubborn; carries everyone's hopes in her sketchbook",
+      "tags": [
+        "protagonist",
+        "teen",
+        "lead"
+      ]
+    },
+    {
+      "id": "jayden",
+      "name": "Jayden Cole",
+      "age": 15,
+      "role": "best friend — emcee with golden headphones",
+      "gender": "male",
+      "appearance": {
+        "hair": "short curly black hair",
+        "eyes": "warm brown eyes",
+        "outfit": "oversized green hoodie, gold headphones around neck, khaki cargo pants, red sneakers",
+        "body": "tall, lanky",
+        "signature": "gold wireless headphones around his neck"
+      },
+      "token_block": "Jayden Cole, 15-year-old African-American boy, short curly black hair, warm brown eyes, tall lanky build, oversized green hoodie, gold headphones around his neck, khaki cargo pants, red sneakers",
+      "voice_id": "jayden",
+      "accent_color": "#7CB518",
+      "seed": 1985630048,
+      "reference": "/home/user/ZUVYR-AI/video-studio/characters/jayden/reference.png",
+      "sprite": "/home/user/ZUVYR-AI/video-studio/characters/jayden/sprite.png",
+      "mouth": {
+        "cx": 0.5,
+        "cy": 0.115,
+        "w": 0.055,
+        "h": 0.03
+      },
+      "height": 1.06,
+      "personality": "loyal, quick with a rhyme, keeps the crew laughing",
+      "tags": [
+        "crew",
+        "rapper",
+        "lead-emcee"
+      ]
+    },
+    {
+      "id": "rico",
+      "name": "Rico Vega",
+      "age": 14,
+      "role": "crew — street dancer, hype machine",
+      "gender": "male",
+      "appearance": {
+        "hair": "black curly fade, red cap worn backwards",
+        "eyes": "dark brown eyes",
+        "outfit": "white tank top, open red-and-black flannel, black track pants with white stripe",
+        "body": "small, springy, athletic",
+        "signature": "always mid-dance, one arm up"
+      },
+      "token_block": "Rico Vega, 14-year-old Latino boy, black curly fade haircut, red baseball cap worn backwards, dark brown eyes, small springy athletic build, white tank top, open red-and-black checkered flannel, black track pants with a white stripe, white sneakers",
+      "voice_id": "rico",
+      "accent_color": "#FF6B35",
+      "seed": 1561120006,
+      "reference": "/home/user/ZUVYR-AI/video-studio/characters/rico/reference.png",
+      "sprite": "/home/user/ZUVYR-AI/video-studio/characters/rico/sprite.png",
+      "mouth": {
+        "cx": 0.5,
+        "cy": 0.115,
+        "w": 0.055,
+        "h": 0.03
+      },
+      "height": 0.94,
+      "personality": "hype, fearless, dances before he thinks",
+      "tags": [
+        "crew",
+        "dancer"
+      ]
+    },
+    {
+      "id": "zoe",
+      "name": "Zoe Reyes",
+      "age": 15,
+      "role": "rival-turned-ally emcee",
+      "gender": "female",
+      "appearance": {
+        "hair": "magenta bob with undercut side",
+        "eyes": "sharp violet eyes",
+        "outfit": "black-and-gold varsity jacket over white crop top, gold chain, ripped black jeans",
+        "body": "athletic, confident stance",
+        "signature": "arms crossed, cocky smirk"
+      },
+      "token_block": "Zoe Reyes, 15-year-old girl, magenta pink bob haircut with undercut side, sharp violet eyes, athletic build, black-and-gold varsity jacket over a white crop top, thin gold chain, ripped black jeans, black-and-white sneakers",
+      "voice_id": "zoe",
+      "accent_color": "#D6336C",
+      "seed": 1170927047,
+      "reference": "/home/user/ZUVYR-AI/video-studio/characters/zoe/reference.png",
+      "sprite": "/home/user/ZUVYR-AI/video-studio/characters/zoe/sprite.png",
+      "mouth": {
+        "cx": 0.5,
+        "cy": 0.115,
+        "w": 0.055,
+        "h": 0.03
+      },
+      "height": 1.0,
+      "personality": "sharp, competitive, secretly generous",
+      "tags": [
+        "crew",
+        "rapper",
+        "rival"
+      ]
+    },
+    {
+      "id": "mr_grimm",
+      "name": "Howard Grimm",
+      "age": 52,
+      "role": "antagonist — greedy landlord",
+      "gender": "male",
+      "appearance": {
+        "hair": "greasy brown combover",
+        "eyes": "narrow calculating eyes",
+        "outfit": "rumpled brown suit, loosened red tie, gold rings",
+        "body": "heavyset, slow-moving",
+        "signature": "counts gold coins in one hand"
+      },
+      "token_block": "Mr. Howard Grimm, 52-year-old pale man, greasy brown combover hair, thin mustache, narrow calculating eyes, smug cold smile, rumpled brown suit with a loosened red tie, brown trousers, gold rings, counting gold coins in one cupped hand",
+      "voice_id": "mr_grimm",
+      "accent_color": "#8B5A2B",
+      "seed": 818879497,
+      "reference": "/home/user/ZUVYR-AI/video-studio/characters/mr_grimm/reference.png",
+      "sprite": "/home/user/ZUVYR-AI/video-studio/characters/mr_grimm/sprite.png",
+      "mouth": {
+        "cx": 0.5,
+        "cy": 0.115,
+        "w": 0.055,
+        "h": 0.03
+      },
+      "height": 1.02,
+      "personality": "greedy, patient, never raises his voice while raising the rent",
+      "tags": [
+        "villain",
+        "adult"
+      ]
+    },
+    {
+      "id": "tommy",
+      "name": "Tommy Kim",
+      "age": 10,
+      "role": "neighbor kid — the heart of the block",
+      "gender": "male",
+      "appearance": {
+        "hair": "messy black hair",
+        "eyes": "big worried eyes behind huge round glasses",
+        "outfit": "oversized light-blue sweater with a white star, dark blue shorts, long gray socks",
+        "body": "small, hunched, nervous",
+        "signature": "hands clasped in front of his chest"
+      },
+      "token_block": "Tommy Kim, 10-year-old boy, messy black hair, huge round glasses, big worried innocent eyes, small build, oversized light-blue knitted sweater with a white star, dark blue shorts, long gray socks, worn sneakers, hunched nervous posture",
+      "voice_id": "tommy",
+      "accent_color": "#4D96FF",
+      "seed": 242832307,
+      "reference": "/home/user/ZUVYR-AI/video-studio/characters/tommy/reference.png",
+      "sprite": "/home/user/ZUVYR-AI/video-studio/characters/tommy/sprite.png",
+      "mouth": {
+        "cx": 0.5,
+        "cy": 0.115,
+        "w": 0.055,
+        "h": 0.03
+      },
+      "height": 0.8,
+      "personality": "scared of everything except his friends",
+      "tags": [
+        "kid",
+        "neighbor"
+      ]
+    }
+  ]
+}

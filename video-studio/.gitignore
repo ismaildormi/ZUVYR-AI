@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+external/
+jobs/
+output/
+voices/take_cache/
+*.log
+.DS_Store

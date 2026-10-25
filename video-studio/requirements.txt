@@ -1,0 +1,14 @@
+numpy>=1.26
+scipy>=1.11
+pillow>=10.0
+pydantic>=2.5
+flask>=3.0
+imageio-ffmpeg>=0.4.9
+espeakng-loader>=0.2.3
+
+# ---- optional (full mode / richer engines) ----
+# chatterbox-tts          # Chatterbox / Turbo expressive character voices (MIT)
+# kokoro-onnx             # Kokoro-82M narration (Apache-2.0); models via setup_full_mode.sh
+# edge-tts                # network fallback narration (free, no key)
+# faster-whisper          # take-selection WER gate (needs HF access for the model)
+# matplotlib              # only needed to vendor fonts on machines without DejaVu
