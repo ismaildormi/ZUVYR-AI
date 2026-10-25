@@ -21,7 +21,28 @@ huggingface.co blocked), so all shipped samples were rendered end-to-end by
 the degraded path — itself a complete pipeline with identical output specs
 and guarantees to full mode.
 
-## 2. Fixes made in the reconciliation session
+## 2. Execution-gate session (2026-10-26) — see docs/ACCEPTANCE.md §E
+
+Verified HEAD `b2d6f55` clean and in sync with the remote; deliverables
+present; fresh suite run 29/29. Measured the sandbox environment (2-core
+Debian, 3.8 GB RAM, no GPU, HF blocked — this is a temporary sandbox, **not**
+the user's Windows machine; `scripts/inventory_windows.ps1` added as the
+target-machine gate). Corrected the honest status of the full-mode engines:
+the vision/music/song/lipsync adapters are **not wired into the pipeline
+render path** (NOT BUILT wiring + BLOCKED weights); `job.json.engines` now
+records the engine that actually rendered instead of the configured mode.
+Verified licenses: LTX-2.x weights = custom Community License (free commercial
+use only under $10M revenue); ACE-Step 1.5 = MIT code+weights, <4 GB VRAM —
+recommended over YuE as the full-mode song engine. Added `doctor --json`.
+Mandatory acceptance test re-run on a fresh original 49.5 s pilot
+(`samples/pilot/`): engines truthfully recorded, 1920×1080, I=−14.37/TP=−1.79,
+113/113 words, character identity verified frame-level across scenes, 7/7
+lip-sync envelopes, 3× 1280×720 thumbnails, 2 m 42 s wall. Plan A/B/C compared
+with measured vs. estimated costs; recommendation: CPU path now + small
+validated local-GPU pilot (Kokoro + Chatterbox + SDXL stills) if the inventory
+shows ≥8 GB VRAM.
+
+## 3. Fixes made in the reconciliation session
 
 1. **Unknown speakers were broken** — `SHOPKEEPER: text` fell into narration
    and the label was *spoken aloud* by the narrator. Now: guest characters
@@ -51,7 +72,7 @@ and guarantees to full mode.
    **narration scene** (roles now narration/dialogue/action/song; story
    text unchanged).
 
-## 3. Mandatory tests — all PASS (fresh renders, final code)
+## 4. Mandatory tests — all PASS (fresh renders, final code)
 
 | Test | Result |
 |---|---|
@@ -66,7 +87,7 @@ and guarantees to full mode.
 | Portal end-to-end (upload → progress → download, character selection, regenerate-one-scene, scene preview) | ✅ live |
 | MCP server (initialize/tools/call) | ✅ live |
 
-## 4. Hardware & render performance
+## 5. Hardware & render performance
 
 * Build/test box: 2 CPU cores, 3.8 GB RAM, **no GPU**, Python 3.11.2, 19 GB
   disk free. github.com/pypi.org/npm reachable; **huggingface.co blocked**.
@@ -76,7 +97,7 @@ and guarantees to full mode.
 * Full mode on a ≥12 GB GPU moves the frame stage to SDXL/AnimateDiff
   (minutes per shot); everything else in this report is GPU-independent.
 
-## 5. Executed vs. blocked (honest split)
+## 6. Executed vs. blocked (honest split)
 
 **Executed and verified here:** planning/annotation brain (deterministic
 offline rules), scene-schema validation, casting + guest auto-casting,
@@ -99,7 +120,7 @@ engine and degrades per-component without failing.
 **Not built:** emotion2vec take scoring (no license file at audit time —
 commercial status unclear).
 
-## 6. Known limitations
+## 7. Known limitations
 
 1. Degraded visuals are 2D sprite theatre — consistent and clean, but SDXL
    anime frames require the GPU path.
@@ -112,7 +133,7 @@ commercial status unclear).
    considered complete; `bin/zuvyr thumbs` and portal regenerate cover the
    common re-work cases).
 
-## 7. Deliverables
+## 8. Deliverables
 
 ```
 video-studio/
@@ -125,13 +146,14 @@ video-studio/
   samples/long/                sample_60s_1080p.mp4 + .srt       (63.3 s, −14.5 LUFS)
   samples/short/               sample_short_9x16.mp4 + .srt       (31.3 s, −14.4 LUFS)
   samples/dialogue/            dialogue_test_30s.mp4 + .srt       (31.7 s, −14.4 LUFS)
+  samples/pilot/               pilot_45s_1080p.mp4 + .srt + thumbs (49.5 s, −14.4 LUFS, gate test)
   samples/thumbnails/          thumb_a/b/c.png                    (1280×720)
   characters/  voices/         visual + voice bibles (refs, sprites, token blocks)
   tests/                       29 passing tests
   docs/                        ACCEPTANCE / ARCHITECTURE / VOICE_BIBLE / LICENSES / FULL_MODE / REPORT
 ```
 
-## 8. License summary (full table: `docs/LICENSES.md`)
+## 9. License summary (full table: `docs/LICENSES.md`)
 
 MIT: Chatterbox(-Turbo), MuseTalk, Automated-Video-Generator, Ollama,
 faster-whisper. Apache-2.0: AnimateDiff-Evolved, controlnet_aux, YuE, Dia,

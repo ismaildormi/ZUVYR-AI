@@ -25,12 +25,12 @@ on this machine with the code at the final commit.
 | A3 | Recurring character identity (fixed face/hair/outfit/seed/token block in every prompt) | **VERIFIED** | `characters/<id>/{reference,sprite}.png` + fixed seeds + token blocks (`bibles.py`); sprites byte-identical across all jobs (renderer draws from the same keyed PNGs); `test_chroma_keying_produces_sprites`. |
 | A4 | Narration (English, configurable language) | **VERIFIED** | Narrator voice in every render; `narration_language` config wired through `zsynth._lang_voice` (`test_narration_language_persona`); espeak-ng supports the mapped languages. |
 | A5 | Distinct emotional character voices | **VERIFIED** | 14-voice bible (`voices/`); per-line emotion/intensity/delivery/nonverbal annotation → DSP; distinctness + determinism: `test_voice_engine_deterministic_and_distinct`; dialogue test = 3 characters × 3 emotions incl. `(chuckle)` + trembling/breaking delivery. |
-| A6 | Generated visuals | **PARTIAL** | Degraded renderer executes (sprite compositing, parallax backgrounds, rain/confetti/speed-line FX — all final renders). SDXL/IP-Adapter/ControlNet frames are **BLOCKED** (see B1–B3). |
+| A6 | Generated visuals | **PARTIAL** | Degraded renderer executes (sprite compositing, parallax backgrounds, rain/confetti/speed-line FX — all final renders). SDXL/IP-Adapter/ControlNet frames are **NOT BUILT (wiring)** + **BLOCKED** (see B1–B3). |
 | A7 | Camera motion | **VERIFIED** | 12 camera moves (`_motion_for`, `CameraFlow` in `render/frames.py`); action scene uses whip_pan + zoom_out; plan JSON records shot+movement per scene. |
 | A8 | SFX | **VERIFIED** | 20 procedural generators (`music/procedural.py::synth_sfx`), `[SFX:]` tags + auto-SFX from text; rendered in all samples. AudioGen is BLOCKED (B6). |
 | A9 | Original music (score, ducked under narration) | **VERIFIED** | Procedural per-mood composer + `duck_music` sidechain (`test_duck_music_attenuates_under_speech`); 100% original DSP — no third-party audio anywhere. |
-| A10 | Song vocals (hip-hop/trap, kids rapping) | **VERIFIED** (degraded engine) | `<Song>` block → 3-voice beat-quantized rap over composed trap beat with cheer tail (`song/procedural_song.py`), rendered + lip-synced in sample60 s004. YuE full-quality songs BLOCKED (B7). |
-| A11 | Lip-sync | **VERIFIED** (degraded engine) | Mouth envelopes computed from the **exact final take audio** (`lipsync/procedural.py`) — 6/6 and 4/4 character lines active in final renders; renderer mouth overlay verified (mouth-open frame ≠ mouth-closed frame). MuseTalk BLOCKED (B8). |
+| A10 | Song vocals (hip-hop/trap, kids rapping) | **VERIFIED** (degraded engine) | `<Song>` block → 3-voice beat-quantized rap over composed trap beat with cheer tail (`song/procedural_song.py`), rendered + lip-synced in sample60 s004. YuE/ACE-Step full-quality songs: wiring NOT BUILT + BLOCKED (B7). |
+| A11 | Lip-sync | **VERIFIED** (degraded engine) | Mouth envelopes computed from the **exact final take audio** (`lipsync/procedural.py`) — 6/6 and 4/4 character lines active in final renders; renderer mouth overlay verified (mouth-open frame ≠ mouth-closed frame). MuseTalk: wiring NOT BUILT + BLOCKED (B8). |
 | A12 | Video assembly (FFmpeg) | **VERIFIED** | concat → numpy mix → loudnorm → mux (stream-copy audio); h264/aac 24 fps outputs. |
 | A13 | Subtitles/captions | **VERIFIED** | Speaker-prefixed SRT timed from actual synthesized audio (`write_srt`); verified in all samples. |
 | A14 | Thumbnails ×3, 1280×720, space for text | **VERIFIED** | `thumbnails.py`; 3 variants in `samples/thumbnails/`, size-checked in `test_e2e_thumbnails` and on the final render. |
@@ -41,25 +41,31 @@ on this machine with the code at the final commit.
 | A19 | MCP server | **VERIFIED** | stdio JSON-RPC: initialize → tools/list → tools/call (`zuvyr_list_jobs`) all returned correct payloads this session; write tools gated behind `ALLOW_UNSAFE_MCP_TOOLS=1`. |
 | A20 | Job queue with per-scene progress | **VERIFIED** | `job.json` stages/scenes; portal progress percentages live; `bin/zuvyr jobs`. |
 
-## B. Full-mode (GPU) components — implemented as adapters, **not executing here**
+## B. Full-mode (GPU) components — adapters exist, **pipeline wiring NOT BUILT**
 
-All of these follow the same contract: probe → if unavailable, fall back to the
-degraded engine (never crash the pipeline). None can run on this box.
+**Precise status (gate requirement):** for vision / music / song / lipsync the
+full-mode adapters exist as modules, but the pipeline's render path currently
+calls the offline engines unconditionally — `grep` confirms no import of
+`vision/comfyui`, `music/comfy_audio`, `song/yue`, or `lipsync/generators`
+from `pipeline.py` or `render/`. `job.json.engines` now records the **actual**
+engine used (fixed this session; it previously echoed the configured mode and
+could over-claim). So these rows are **NOT BUILT (wiring)** *and* **BLOCKED
+(weights/hardware)** — an adapter or setup script alone is not a working engine.
 
 | # | Component | Status | Blocker (exact) | Implementation |
 |---|---|---|---|---|
-| B1 | ComfyUI headless :8188 + AnimateDiff-Evolved/IPAdapter_plus/VideoHelperSuite/controlnet_aux/ComfyUI-audio | **BLOCKED** | No GPU; ComfyUI not installed (needs ~20 GB weights + CUDA) | `adapters/vision/comfyui.py` (client, queue/wait/fetch, `sdxl_ipadapter_workflow`, `animatediff_workflow`, image upload); `scripts/setup_full_mode.sh` |
-| B2 | SDXL + anime SDXL LoRA (2D) + 3D-render SDXL | **BLOCKED** | No GPU + huggingface.co blocked from this sandbox (weight download impossible) | style LoRA slots in `zuvyr.json` → `engines.vision.comfyui.style_loras` |
-| B3 | IP-Adapter-FaceID + ControlNet OpenPose/Canny/Depth | **BLOCKED** | same | workflow builder in `comfyui.py` (`sdxl_ipadapter_workflow`) |
-| B4 | AnimateDiff v3+v2 motion LoRAs ~0.75 on key shots; LTX-2 if ≥16 GB | **BLOCKED** | same | `engines.motion.animatediff` config (strengths 0.75, `max_animated_ratio` 0.35); `adapters/motion/ltx2.py` (probe → Ken Burns fallback) |
-| B5 | Kokoro narration (Edge-TTS fallback) | **BLOCKED** | `kokoro-onnx` not installed; ONNX weights unreachable (HF blocked); Edge-TTS needs Microsoft endpoints not reachable from sandbox | `adapters/voice/kokoro.py`, `edge.py` |
-| B6 | MusicGen score + AudioGen SFX via ComfyUI-audio | **BLOCKED** | No GPU/ComfyUI; weights CC-BY-NC anyway (procedural engine is the commercial default) | `adapters/music/comfy_audio.py` |
-| B7 | YuE s1-7B + s2-1B original songs | **BLOCKED** | No GPU (needs ~30 GB VRAM class) + HF blocked | `adapters/song/yue.py` (stage1/stage2 config) |
-| B8 | MuseTalk lip-sync (LatentSync/Wav2Lip fallbacks) | **BLOCKED** | No GPU + model repos unreachable | `adapters/lipsync/generators.py` |
-| B9 | Ollama brain (qwen3-class) for split/prompts/camera/SFX/music cues + JSON validation | **BLOCKED** | Ollama not installed; a qwen3-class model would not fit in 3.8 GB RAM | `adapters/llm/ollama.py` (prompt with "do not rewrite" rule + `_dialogue_guard` that rejects LLM output if it rewrote dialogue; falls back to offline brain) |
-| B10 | Chatterbox/Chatterbox-Turbo expressive voices (exaggeration, [laugh], zero-shot clone) | **BLOCKED** | `chatterbox-tts` not installed; weights unreachable | `adapters/voice/chatterbox.py` (engine order first in config; `test_chatterbox_params_ranges`) |
-| B11 | Dia multi-speaker, Qwen3-TTS voice design, Orpheus tags, Higgs Audio V2 long dialogue | **BLOCKED** | local TTS services not deployable here (no GPU / model weights) | `adapters/voice/http_tts.py` bridge with per-engine payload builders (Dia `[S1]/[S2]` scripts, Qwen3 free-form voice design, Orpheus `<sigh>` tags, Higgs **V2 only** — V3/Fish S2 Pro intentionally unsupported) |
-| B12 | faster-whisper WER take gate | **BLOCKED** | model weights come from HF (blocked) | `takes.py::_wer` — code path + graceful fallback selection VERIFIED (degraded selection is deterministic) |
+| B1 | ComfyUI headless :8188 + custom nodes | **NOT BUILT (wiring)** + **BLOCKED** (weights) | pipeline never calls the ComfyUI client; no GPU; ComfyUI not installed | `adapters/vision/comfyui.py` (client + workflow builders, unit-importable); `scripts/setup_full_mode.sh` |
+| B2 | SDXL + anime SDXL LoRA (2D) + 3D-render SDXL | **NOT BUILT (wiring)** + **BLOCKED** | same; huggingface.co blocked from sandbox (weight download impossible) | style LoRA slots in `zuvyr.json` → `engines.vision.comfyui.style_loras` |
+| B3 | IP-Adapter-FaceID + ControlNet OpenPose/Canny/Depth | **NOT BUILT (wiring)** + **BLOCKED** | same | workflow builder in `comfyui.py` (`sdxl_ipadapter_workflow`) |
+| B4 | AnimateDiff v3+v2 (~0.75 key shots); LTX-2 successor | **NOT BUILT (wiring)** + **BLOCKED** | same. LTX-2 weights are 22B under the **LTX-2.x Community License** (free commercial use only under $10M annual revenue; ≥$10M needs a paid agreement; CUDA 12.7+, 16 GB VRAM min path, int8/NVFP4 quantized variants) — verified 2026-10 | `engines.motion.animatediff` config; `adapters/motion/ltx2.py` (probe → Ken Burns fallback) |
+| B5 | Kokoro narration (Edge-TTS fallback) | **BLOCKED** (wired, weights unreachable) | `kokoro-onnx` not installed; ONNX weights unreachable (HF blocked); Edge-TTS endpoints unreachable from sandbox | `adapters/voice/kokoro.py`, `edge.py` — these ARE wired: `VoiceDirector` probes them first |
+| B6 | MusicGen/AudioGen via ComfyUI-audio | **NOT BUILT (wiring)** + **BLOCKED** | no GPU/ComfyUI; weights CC-BY-NC anyway | `adapters/music/comfy_audio.py` |
+| B7 | Song engine: YuE / ACE-Step | **NOT BUILT (wiring)** + **BLOCKED** | pipeline hard-wires the procedural song engine; YuE needs a ~30 GB VRAM class GPU. **Recommendation (verified this session): ACE-Step 1.5** — MIT code *and* weights, trained on licensed/royalty-free data, full songs with vocals on **<4 GB VRAM** (~3.5B), Mac/AMD/Intel/CUDA — a strictly better fit than YuE for this project; adopt it as the full-mode song engine when wiring B7 | `adapters/song/yue.py` (YuE subprocess adapter, unwired) |
+| B8 | MuseTalk lip-sync (LatentSync/Wav2Lip fallbacks) | **NOT BUILT (wiring)** + **BLOCKED** | no GPU + model repos unreachable | `adapters/lipsync/generators.py` |
+| B9 | Ollama brain (qwen3-class) | **BLOCKED** (wired, engine absent) | Ollama not installed; a qwen3-class model would not fit in 3.8 GB RAM | `adapters/llm/ollama.py` — wired via `Planner` (auto mode probes it; `_dialogue_guard` rejects LLM output that rewrote dialogue) |
+| B10 | Chatterbox/Chatterbox-Turbo expressive voices | **BLOCKED** (wired, weights unreachable) | `chatterbox-tts` not installed; weights unreachable | `adapters/voice/chatterbox.py` — wired: first in the voice engine order |
+| B11 | Dia multi-speaker, Qwen3-TTS voice design, Orpheus tags, Higgs Audio V2 | **BLOCKED** (wired, services absent) | local TTS services not deployable here (no GPU / model weights) | `adapters/voice/http_tts.py` bridge with per-engine payload builders (Higgs **V2 only** — V3/Fish S2 Pro intentionally unsupported) |
+| B12 | faster-whisper WER take gate | **BLOCKED** (wired, weights unreachable) | model weights come from HF (blocked) | `takes.py::_wer` — code path + graceful fallback selection VERIFIED (degraded selection is deterministic) |
 | B13 | emotion2vec take scoring | **NOT BUILT** | no license file at audit time (commercial status unclear) | documented in `docs/LICENSES.md`; take selection works without it |
 
 ## C. Voice-acting addendum
@@ -106,3 +112,98 @@ degraded engine (never crash the pipeline). None can run on this box.
 | pytest suite | **PASS** — 28/28 (schema 8, units 13, e2e 7 incl. guest-speaker render + loudness regression) |
 | Portal end-to-end incl. character selection | **PASS** (live) |
 | MCP stdio server | **PASS** (live) |
+
+---
+
+## E. Execution-gate session (2026-10-26)
+
+### E1. Environment of record — MEASURED
+
+This session ran in a **temporary Linux sandbox, NOT the user's Windows
+machine**. The Windows target inventory is an external gate: run
+`scripts/inventory_windows.ps1` on the real machine and paste the output back.
+
+| Fact | Measured value (sandbox) |
+|---|---|
+| OS | Debian 12 (bookworm), kernel 6.1.158, x86_64 |
+| CPU | 2 × Intel Xeon @ 2.60 GHz |
+| RAM | 3.8 GB total / 3.5 GB available |
+| GPU | **none** (no nvidia-smi, no /dev/nvidia*) |
+| Disk | 18 GB free (of 21 GB) |
+| Python / Node / Git | 3.11.2 / v22.22.3 / 2.39.5 |
+| FFmpeg | 7.0.2 via imageio-ffmpeg wheel (no system ffmpeg, no ffprobe) |
+| Ollama / ComfyUI | not installed (`:11434` / `:8188` connection refused) |
+| Network | github.com 200 · api.github.com 200 · pypi.org 200 · registry.npmjs.org 200 · **huggingface.co FAILED (connection blocked, HTTP 000)** · cdn-lfs.huggingface.co FAILED |
+
+Fresh test-suite run at gate: **29/29 passed** (`pytest tests/ -q`).
+
+### E2. Execution-plan comparison (Phase 4)
+
+Model storage / VRAM figures below are **vendor-published estimates**, not
+measurements — nothing was downloaded (HF blocked; gate rule: no blind downloads).
+
+| Plan | What | Storage | Runtime RAM/VRAM | Cost / video-minute | Verdict |
+|---|---|---|---|---|---|
+| **A. CPU path on the target Windows machine** | the verified degraded pipeline as-is | ~0.3 GB (repo only) | 4 GB RAM | free; ~1–3 min/video-min on a modern 8-core CPU (sandbox measured 3.3 min/min on 2 cores — measurement) | works today; quality = sprite theatre |
+| **B. Local GPU pilot (validated minimum set)** | Kokoro (~0.3 GB, CPU-ok) + Chatterbox (~2 GB) + Ollama qwen3:4b (~3 GB) + SDXL base + anime LoRA + IP-Adapter FaceID (~9 GB) → stills + Ken Burns | **~15 GB disk**, ≥8 GB VRAM (SDXL) | 8–12 GB VRAM, 16 GB RAM | free after hardware; render est. 5–15 min/video-min on a 12 GB card | **recommended first GPU step** — biggest quality jump (voices + frames) for the smallest footprint |
+| B+ (after B passes) | + AnimateDiff (key shots) + MuseTalk + ACE-Step 1.5 songs (<4 GB VRAM, MIT) | +~10 GB | 12–16 GB VRAM | free; est. 15–40 min/video-min | scale only after B pilot passes |
+| **C. GPU cloud worker for generative stages only** | orchestration + data stay on the user's machine; only ComfyUI/TTS jobs run on a rented GPU (RunPod/vast.ai 12–24 GB class) | ~0 local (+20–60 GB on worker) | worker-side | est. $0.30–0.80/hour → **est. $0.50–3 per finished video-minute** (NOT measured; depends on frames-per-shot strategy) | fallback if no local GPU |
+
+**Recommendation:** run Plan A on the Windows machine now (zero risk, zero
+cost), collect the inventory with `scripts/inventory_windows.ps1`; if an
+≥8 GB NVIDIA GPU exists, execute Plan B as a small validated pilot (Kokoro +
+Chatterbox + SDXL stills first — NOT all models); use C only for jobs that
+genuinely need it. LTX-2 only on ≥16 GB VRAM and only if the channel's revenue
+is under the license's $10M threshold. Do not download models before the
+inventory and a disk-space calculation (gate rule).
+
+### E3. Mandatory acceptance test — PILOT (fresh render this session)
+
+Original 49.5 s sample (`scripts/samples/pilot_45s.txt`, story written by the
+build, not the user; 3 scenes: dialogue w/ guest speaker → back-room dialogue
+→ action finale):
+
+| Check | Result |
+|---|---|
+| Engines actually used (job.json, runtime-recorded) | brain=offline, voice=zsynth, vision=offline-sprites, music=procedural, song=procedural, lipsync=procedural-envelope, render=ffmpeg-pillow — **no GPU engine used or claimed** |
+| Dimensions / codec | 1920×1080, 24 fps, h264/aac — PASS |
+| Loudness | I=−14.37 LUFS (target −14±1) PASS · TP=−1.79 dBTP (≤−1.4) PASS |
+| Word preservation | 113/113 spoken words in SRT — PASS |
+| Character identity across scenes | frame-extracted s001 + s003 both contain Rico's red-cap and Zoe's magenta signature colors from the one fixed sprite set — PASS |
+| Lip-sync (where supported) | 7/7 character lines with active envelopes driven by final take audio — PASS (procedural engine; MuseTalk not built/blocked) |
+| Thumbnails | 3 × 1280×720 — PASS |
+| Audio intelligibility | proxies (no ASR available): 9/9 lines audible in the mix, 75% speech-band energy share, 2.4 words/s pacing — within natural narration range |
+| Render cost | 49.5 s video in 2 m 42 s wall on 2 CPU cores (measurement) |
+
+Deliverable: `samples/pilot/pilot_45s_1080p.mp4` + `.srt` + `thumb_{a,b,c}.png`.
+
+### E4. Exact reproduce commands (sandbox or any Linux box)
+
+```bash
+cd video-studio
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt pytest
+.venv/bin/python -m pytest tests/ -q                                  # 29 tests
+.venv/bin/python bin/zuvyr doctor --json                              # engine matrix
+.venv/bin/python bin/zuvyr generate --script scripts/samples/pilot_45s.txt --id pilot45
+# verification battery: see docs/REPORT.md §E and the session transcript;
+# loudness re-check:
+.venv/bin/python - <<'PY'
+import sys; sys.path.insert(0, "src")
+from zuvyr_studio.lib.ffmpeg import measure_lufs, probe
+v = "output/pilot45/pilot45_long.mp4"
+print(probe(v)); print(measure_lufs(v))
+PY
+```
+
+On Windows: `scripts\inventory_windows.ps1` first, then the same commands with
+`.venv\Scripts\python` and `bin\zuvyr`.
+
+### E5. Next recommended task
+
+1. **User action (external gate):** run `scripts/inventory_windows.ps1` on the
+   real target machine and share the output — nothing else about Plan B/C can
+   be decided without it.
+2. **Build action:** wire the full-mode voice engines that need no ComfyUI
+   (Kokoro via `kokoro-onnx`, Chatterbox via pip) into the Plan-B pilot and
+   acceptance-test them on the target machine; wire ComfyUI SDXL stills next
+   (B1–B3), then AnimateDiff/MuseTalk/ACE-Step (B4/B7/B8) after that passes.

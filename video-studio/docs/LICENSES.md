@@ -20,7 +20,7 @@ videos produced with the tool.
 | Stable Diffusion XL base 1.0 | image backbone | OpenRAIL++-M (CreativeML Open RAIL++-M) | ✅ with use restrictions (no harm) — output ownership per license terms |
 | anime SDXL LoRA / 3D-render SDXL | style | must be Apache-2.0/MIT/CC-BY — check each download | ⚠️ pick only commercial-safe weights |
 | IP-Adapter-FaceID | face identity | Apache-2.0 (code); weights — check model card | ⚠️ verify at download |
-| LTX-2 (Lightricks) | key-shot motion (≥16 GB VRAM) | check current model card (LTX family ships permissive + open weights; confirm before commercial) | ⚠️ verify at download |
+| LTX-2.x (Lightricks) | key-shot motion successor | **LTX-2.x Community License** (custom, NOT OSI): free commercial use only under $10M annual revenue; ≥$10M requires a paid agreement; 22B params, CUDA 12.7+, 16 GB VRAM min path (int8/NVFP4 variants) — verified 2026-10 | ⚠️ free for a personal YouTube channel; paid tier needed at ≥$10M revenue |
 
 ## Voice
 
@@ -45,7 +45,8 @@ videos produced with the tool.
 |---|---|---|---|
 | MusicGen / AudioGen weights | score + SFX | **CC-BY-NC** — NOT commercial | ❌ weights |
 | procedural music/SFX engine (`music/procedural.py`, 20 SFX) | degraded-mode score/SFX | this repo | ✅ 100% original DSP |
-| YuE (s1-7B + s2-1B) | original songs | Apache-2.0 | ✅ |
+| YuE (s1-7B + s2-1B) | original songs | Apache-2.0 | ✅ (needs ~30 GB VRAM class) |
+| **ACE-Step 1.5** (recommended song engine) | full songs with vocals, ~3.5B, <4 GB VRAM, Mac/AMD/Intel/CUDA | **MIT (code AND weights)**, trained on licensed/royalty-free data — verified 2026-10 | ✅ best fit for this project |
 
 > **Note on MusicGen/AudioGen:** the *weights* are CC-BY-NC, so full mode
 > defaults to YuE for songs and the procedural engine for score/SFX; MusicGen

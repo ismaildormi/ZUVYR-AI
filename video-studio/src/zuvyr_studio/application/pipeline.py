@@ -55,11 +55,15 @@ class Pipeline:
         job.set("params", {"style": style, "format": fmt, "title": title, "intro_card": intro_card,
                            "characters": characters or None})
         job.set("engines", {
+            # ACTUAL engines used by the render path (not aspiration): the
+            # full-mode adapters (ComfyUI / comfy_audio / YuE / MuseTalk)
+            # exist but are NOT yet wired into this pipeline — see
+            # docs/ACCEPTANCE.md section B for wiring + blocker status.
             "brain": self.planner.engine_name,
             "voice": self.director.engine_name,
-            "vision": "offline-sprites" if self.config.engine_mode("vision") != "comfyui" else "comfyui",
-            "music": "procedural" if self.config.engine_mode("music") != "comfy_audio" else "comfyui_audio",
-            "song": "procedural" if self.config.engine_mode("song") != "yue" else "yue",
+            "vision": "offline-sprites",
+            "music": "procedural",
+            "song": "procedural",
             "lipsync": "procedural-envelope",
             "render": "ffmpeg-pillow",
         })

@@ -15,7 +15,7 @@ adapters on. `scripts/setup_full_mode.sh` automates the install; run
 | Character voices | zsynth | Chatterbox / Chatterbox-Turbo — exaggeration by emotion class, `[laugh]` tags, zero-shot clone from the bible reference clips; Dia `[S1]/[S2]` multi-speaker; Qwen3-TTS designed cast voices; Orpheus tags; Higgs Audio **V2** for long dramatic dialogue (never V3, never Fish S2 Pro) |
 | Take selection | cache hash | 3 takes/line (different seeds) → faster-whisper WER + emotion2vec match |
 | Score/SFX | procedural originals | MusicGen/AudioGen via ComfyUI-audio (weights CC-BY-NC → prefer YuE/procedural for commercial) |
-| Songs | procedural rap-over-beat | YuE s1-7B + s2-1B full original songs from `lyrics.txt` + `genre.txt` |
+| Songs | procedural rap-over-beat | **ACE-Step 1.5** (recommended: MIT code+weights, <4 GB VRAM, full songs with vocals) or YuE s1-7B + s2-1B (Apache-2.0, ~30 GB VRAM class) from `lyrics.txt` + `genre.txt` — pipeline wiring still pending (ACCEPTANCE B7) |
 | Lip-sync | procedural mouth states | MuseTalk driven by the exact final mix (LatentSync / Wav2Lip fallbacks) |
 | Brain | offline deterministic NLP | Ollama qwen3-class (split/annotate only — never rewrites) |
 

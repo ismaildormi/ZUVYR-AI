@@ -19,6 +19,7 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("doctor", help="environment + engines health check")
+    p.add_argument("--json", action="store_true", help="machine-readable engine matrix (for acceptance gates)")
     sub.add_parser("init", help="write default bibles/config and build cast assets")
     p = sub.add_parser("plan", help="script -> scene plan JSON (no render)")
     p.add_argument("--script", required=True)
@@ -55,7 +56,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.cmd == "doctor":
-        return cmd_doctor()
+        return cmd_doctor(args)
     if args.cmd == "init":
         return cmd_init()
     if args.cmd == "plan":
@@ -80,11 +81,69 @@ def main(argv: list[str] | None = None) -> int:
 
 
 # ------------------------------------------------------------------ commands
-def cmd_doctor() -> int:
+def cmd_doctor(args=None) -> int:
     _bootstrap()
+    import json as _json
+
+    want_json = bool(getattr(args, "json", False))
     from .config import Config
     from .lib.fs import ROOT
     from .lib.ffmpeg import ffmpeg_path, probe
+
+    if want_json:
+        # machine-readable engine matrix (acceptance gates / CI)
+        import shutil as _shutil
+
+        cfg = Config()
+        from .application.bibles import CharacterBible, VoiceBible
+        from .application.planner import Planner
+        from .application.takes import VoiceDirector
+
+        cast, voices = CharacterBible(cfg), VoiceBible(cfg)
+        planner = Planner(cfg, cast, voices)
+        try:
+            director = VoiceDirector(cfg, voices)
+            voice_engine = director.engine_name
+        except Exception:
+            voice_engine = "error"
+        try:
+            from .adapters.vision.comfyui import ComfyUIClient
+
+            comfy = ComfyUIClient(cfg).available()
+        except Exception:
+            comfy = False
+        gpu = None
+        try:
+            import subprocess as _sp
+
+            r = _sp.run(["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader"],
+                        capture_output=True, text=True, timeout=10)
+            if r.returncode == 0:
+                gpu = r.stdout.strip()
+        except Exception:
+            pass
+        out = {
+            "root": str(ROOT),
+            "ffmpeg": None,
+            "gpu": gpu,
+            "disk_free_gb": round(_shutil.disk_usage(ROOT).free / 1e9, 1),
+            "cast": [c.id for c in cast.all()],
+            "voices": [v.voice_id for v in voices.all()],
+            "reference_clips": sum(1 for v in voices.all() if Path(v.reference_clip).exists()),
+            "sprites": sum(1 for c in cast.all() if Path(c.sprite).exists()),
+            "engines": {
+                "brain": planner.engine_name,
+                "voice": voice_engine,
+                "vision": "comfyui" if comfy else "offline-sprites",
+                "comfyui_online": comfy,
+            },
+        }
+        try:
+            out["ffmpeg"] = ffmpeg_path()
+        except Exception:
+            pass
+        print(_json.dumps(out, indent=2))
+        return 0
 
     print("ZUVYR Studio doctor")
     print("-" * 60)

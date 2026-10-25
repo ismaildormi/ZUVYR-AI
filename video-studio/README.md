@@ -174,8 +174,19 @@ guest auto-casting, language config, Title handling), DSP/voice/limiter/reverb
 units, loudness regression, and three end-to-end pipeline renders (long +
 short + guest speaker) with loudness verification at 640×360.
 
+## Target-machine inventory (Windows)
+
+Before any full-mode/GPU decision, collect the real machine's facts:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\inventory_windows.ps1
+```
+
+Nothing is installed by the script; it prints OS/CPU/RAM/GPU/CUDA/disk/toolchain/network plus `zuvyr doctor`. `bin/zuvyr doctor --json` gives the machine-readable engine matrix on any platform.
+
 ## Samples
 
+`samples/pilot/pilot_45s_1080p.mp4` (49.5 s gate test),
 `samples/long/sample_60s_1080p.mp4` (63.3 s, 1080p24, I=−14.5 LUFS),
 `samples/short/sample_short_9x16.mp4` (31.3 s, 1080×1920, I=−14.4),
 `samples/dialogue/dialogue_test_30s.mp4` (31.7 s, 3 characters × emotions,
