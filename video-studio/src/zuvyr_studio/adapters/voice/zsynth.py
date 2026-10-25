@@ -31,6 +31,16 @@ class ZSynthEngine:
         self._voice_cache: dict[str, dict] = {}
 
     # ------------------------------------------------------------- espeak
+    @staticmethod
+    def _lang_voice(lang: str) -> str:
+        """Config narration_language -> espeak-ng voice (en default)."""
+        lang = (lang or "en").lower().strip()
+        return {
+            "en": "en-us", "en-us": "en-us", "us": "en-us", "en-gb": "en", "gb": "en", "uk": "en",
+            "fr": "fr", "fr-fr": "fr", "es": "es", "es-es": "es", "de": "de", "it": "it",
+            "pt": "pt", "nl": "nl", "pl": "pl", "ru": "ru", "hi": "hi", "ar": "ar",
+        }.get(lang, "en-us")
+
     def _es(self):
         if self._espeak is None:
             from .espeak_core import Espeak
@@ -40,7 +50,7 @@ class ZSynthEngine:
 
     def _persona(self, voice: VoiceSpec) -> dict:
         p = dict(voice.params or {})
-        p.setdefault("espeak_voice", "en-us")
+        p.setdefault("espeak_voice", self._lang_voice(self.config.language))
         p.setdefault("rate", 170)
         p.setdefault("pitch", 45)
         p.setdefault("range", 40)

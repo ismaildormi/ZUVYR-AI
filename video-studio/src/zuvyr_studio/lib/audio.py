@@ -131,6 +131,24 @@ def limit(arr: np.ndarray, sr: int = SR, ceiling_db: float = -3.0,
     return np.clip(out, -ceiling, ceiling).astype(np.float32)
 
 
+def limit_true_peak(arr: np.ndarray, sr: int = SR, ceiling_db: float = -1.5,
+                    release_ms: float = 200.0) -> np.ndarray:
+    """Look-ahead limiter enforced on the 4x-oversampled signal so the ceiling
+    holds for inter-sample (true) peak, not just sample peak. AAC encoders and
+    the EBU R128 true-peak meter both see the oversampled waveform; limiting
+    only the baseband samples leaves ~1 dB of uncontrolled overshoot on speech.
+    """
+    from scipy.signal import resample_poly
+
+    arr = np.asarray(arr, dtype=np.float32)
+    if arr.size == 0:
+        return arr
+    up = resample_poly(arr, 4, 1).astype(np.float32)
+    lim = limit(up, sr * 4, ceiling_db=ceiling_db, release_ms=release_ms)
+    out = resample_poly(lim, 1, 4).astype(np.float32)
+    return out[: arr.shape[0]]
+
+
 # ---------------------------------------------------------------- analysis
 def envelope(arr: np.ndarray, sr: int = SR, hop_ms: float = 20.0) -> np.ndarray:
     """RMS envelope, one value per hop. Used for lip-sync mouth openness."""
@@ -176,3 +194,38 @@ def smooth(x: np.ndarray, k: int = 5) -> np.ndarray:
         return x
     kernel = np.ones(k, dtype=np.float32) / k
     return np.convolve(x, kernel, mode="same").astype(np.float32)
+
+
+# ------------------------------------------------------------- room reverb
+# per-location reverb (audio-post spec): room -> [(delay_ms, gain), ...]
+REVERB_ROOMS: dict[str, list[tuple[float, float]]] = {
+    "none": [],
+    "small": [(11, 0.22), (19, 0.12)],
+    "hallway": [(28, 0.28), (47, 0.17), (71, 0.09)],
+    "street": [(60, 0.11)],
+    "hall": [(40, 0.32), (68, 0.22), (105, 0.13), (150, 0.08)],
+}
+
+
+def room_reverb(x: np.ndarray, sr: int = SR, room: str = "small") -> np.ndarray:
+    """Deterministic multi-tap room reverb (per-location, mix-time).
+
+    Applied to character dialogue clips before they land on the dialogue bus;
+    narration VO stays dry. Same room -> same result (pure function).
+    """
+    taps = REVERB_ROOMS.get(room, REVERB_ROOMS["small"])
+    x = np.asarray(x, dtype=np.float32)
+    if not taps or x.size == 0:
+        return x
+    n = x.shape[0]
+    last = max(int(sr * d / 1000.0) for d, _ in taps)
+    out = np.zeros(n + last, dtype=np.float32)
+    out[:n] += x
+    for delay_ms, g in taps:
+        d = int(sr * delay_ms / 1000.0)
+        out[d:d + n] += x * g
+        d2 = 2 * d  # soft second-order tap (clipped to buffer)
+        m = min(n, out.shape[0] - d2)
+        if m > 0:
+            out[d2:d2 + m] += x[:m] * (g * g * 0.5)
+    return out

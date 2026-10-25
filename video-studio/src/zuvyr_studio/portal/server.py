@@ -62,20 +62,18 @@ def create_job():
     style = data.get("style") or _CFG.style
     fmt = data.get("format") or "long"
     title = data.get("title") or None
-    chars = data.get("characters") or None
+    chars = [c for c in (data.get("characters") or []) if isinstance(c, str) and c.strip()] or None
     video_id = data.get("video_id") or f"vid-{int(time.time())}"
-    if chars:
-        # restrict cast: comment out characters not selected by tagging scenes is
-        # destructive; instead we simply keep the cast and note the selection.
-        pass
     if video_id in _ACTIVE and _ACTIVE[video_id]["thread"].is_alive():
         return jsonify({"error": "job already running", "video_id": video_id}), 409
 
     def work():
         try:
             pipe = _pipe()
+            # character selection restricts auto-casting (guest speakers are
+            # voiced from the selected cast); named cast keeps its own voice
             pipe.generate(script, video_id=video_id, style=style, fmt=fmt, title=title,
-                          intro_card=True, thumbnails=(fmt == "long"))
+                          characters=chars, intro_card=True, thumbnails=(fmt == "long"))
         except Exception as e:
             from ..application.jobs import JobStore
 

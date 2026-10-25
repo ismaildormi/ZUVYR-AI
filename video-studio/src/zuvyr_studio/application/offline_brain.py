@@ -13,6 +13,7 @@ from ..lib.rng import stable_seed
 from ..lib.styles import STYLE_PREFIXES
 from ..schema import Camera, DialogueLine, MusicCue, Scene, ScenePlan, SongSegment
 from .bibles import CharacterBible, VoiceBible
+from .takes import GUEST_VOICE_POOL
 
 # ---------------------------------------------------------------- lexicons
 EMOTION_LEXICON: dict[str, list[str]] = {
@@ -120,7 +121,7 @@ class OfflineBrain:
     # ------------------------------------------------------------ parse
     def plan(self, script_text: str, video_id: str, title: str | None = None,
              style: str | None = None, fmt: str = "long", lyrics: str | None = None,
-             genre: str | None = None) -> ScenePlan:
+             genre: str | None = None, allowed: list[str] | None = None) -> ScenePlan:
         style = style or self.config.style
         prefix = STYLE_PREFIXES[style]
         title = title or self._guess_title(script_text)
@@ -163,6 +164,15 @@ class OfflineBrain:
 
         if not scenes:
             scenes = [self._narration_scene(0, "Once upon a time, a story was waiting to be told.", prefix, style, "street")]
+
+        # auto-cast guest speakers: stable voice per name (restricted to the
+        # selected cast when the caller passes `allowed` — web UI character
+        # selection). Explicitly named cast characters always keep their voice.
+        pool = [c for c in (allowed or []) if self.voices.get(c)] or list(GUEST_VOICE_POOL)
+        for s in scenes:
+            for ln in s.dialogue:
+                if ln.speaker != "narrator" and not ln.voice_id and self.voices.get(ln.speaker) is None:
+                    ln.voice_id = pool[stable_seed("guest-voice", ln.speaker) % len(pool)]
 
         # renumber
         for i, s in enumerate(scenes, 1):
@@ -255,14 +265,17 @@ class OfflineBrain:
                 flush_narration()
                 blocks.append({"kind": "header", "text": SCENE_RE.match(stripped).group(1).strip()})
                 continue
-            dm = DIALOGUE_RE.match(stripped)
-            if dm and self._resolve_speaker(dm.group(1)):
-                flush_narration()
-                speaker = self._resolve_speaker(dm.group(1))
-                blocks.append({"kind": "dialogue", "speaker": speaker, "qualifier": dm.group(2), "text": dm.group(3).strip()})
-                continue
             if stripped.startswith("Title:"):
                 continue
+            dm = DIALOGUE_RE.match(stripped)
+            if dm:
+                speaker = self._resolve_speaker(dm.group(1))
+                if speaker is None:
+                    speaker = self._guest_speaker(dm.group(1))
+                if speaker is not None:
+                    flush_narration()
+                    blocks.append({"kind": "dialogue", "speaker": speaker, "qualifier": dm.group(2), "text": dm.group(3).strip()})
+                    continue
             current_narration.append(stripped)
         flush_narration()
         return blocks
@@ -273,7 +286,34 @@ class OfflineBrain:
         low = name.strip().lower()
         if low in ("narrator", "voice over", "voiceover", "vo", "n"):
             return "narrator"
-        return self.cast.resolve(low)
+        if self.cast.resolve(low):
+            return self.cast.resolve(low)
+        # voice-bible-only characters (mrs_kim, derek, ...) speak but have no sprite
+        if self.voices.get(low):
+            return low
+        return None
+
+    @staticmethod
+    def _guest_speaker(name: str) -> str | None:
+        """Unknown speaker -> guest character id (slug), else None (narration).
+
+        A guest keeps its original name for captions and is auto-cast a stable
+        voice from the voice bible (see takes.guest_voice). Only plausible
+        speaker labels (1-2 capitalized words) become guests so narration
+        prose containing a colon is left untouched.
+        """
+        name = (name or "").strip()
+        if not name:
+            return None
+        words = name.split()
+        if not (1 <= len(words) <= 2) or len(name) > 20:
+            return None
+        if not all(w[:1].isupper() for w in words):
+            return None
+        if not all(c.isalnum() or c in "_-' " for c in name):
+            return None
+        slug = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
+        return slug or None
 
     def _build_scene(self, idx: int, raw: dict, prefix: str, style: str) -> Scene | None:
         sid = f"s{idx:03d}"

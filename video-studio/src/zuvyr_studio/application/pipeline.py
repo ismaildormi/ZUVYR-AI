@@ -21,7 +21,15 @@ from ..schema import ScenePlan, validate_plan
 from .bibles import CharacterBible, VoiceBible
 from .jobs import JobStore
 from .planner import Planner
-from .takes import VoiceDirector
+from .takes import VoiceDirector, guest_voice
+
+# scene.location -> reverb room (audio-post spec: per-location reverb)
+LOCATION_ROOMS = {
+    "rooftop": "street", "street": "street", "alley": "street", "city": "street", "outside": "street",
+    "hallway": "hallway", "school": "hallway", "corridor": "hallway",
+    "room": "small", "apartment": "small", "home": "small", "bedroom": "small", "store": "small",
+    "hall": "hall", "gym": "hall", "stage": "hall", "arcade": "hall",
+}
 
 
 class Pipeline:
@@ -36,6 +44,7 @@ class Pipeline:
     def generate(self, script_text: str, video_id: str | None = None, *,
                  style: str | None = None, fmt: str = "long", title: str | None = None,
                  lyrics: str | None = None, genre: str | None = None,
+                 characters: list[str] | None = None,
                  intro_card: bool = True, thumbnails: bool = True,
                  job: JobStore | None = None, log=print) -> dict:
         t0 = time.time()
@@ -43,7 +52,8 @@ class Pipeline:
         video_id = video_id or f"vid-{int(time.time())}"
         job = job or JobStore(self.config, video_id)
         job.set("status", "running")
-        job.set("params", {"style": style, "format": fmt, "title": title, "intro_card": intro_card})
+        job.set("params", {"style": style, "format": fmt, "title": title, "intro_card": intro_card,
+                           "characters": characters or None})
         job.set("engines", {
             "brain": self.planner.engine_name,
             "voice": self.director.engine_name,
@@ -62,7 +72,8 @@ class Pipeline:
             plan = validate_plan(__import__("json").loads(plan_path.read_text()))
             log(f"[pipeline] loaded cached plan: {len(plan.scenes)} scenes")
         else:
-            plan, brain = self.planner.plan(script_text, video_id, title, style, fmt, lyrics, genre)
+            plan, brain = self.planner.plan(script_text, video_id, title, style, fmt, lyrics, genre,
+                                            allowed=characters)
             plan_path.write_text(plan.model_dump_json(indent=2), encoding="utf-8")
             log(f"[pipeline] planned {len(plan.scenes)} scenes via {brain}: "
                 f"{[s.role for s in plan.scenes]}")
@@ -97,7 +108,7 @@ class Pipeline:
             videos.append(intro_mp4)
             scene_offsets.append(0.0)
             offset += 2.6
-            g_music = A.mix_at(g_music, self._music_for("hopeful", 2.6, stable_seed("intro", video_id)), 0.0)
+            g_music = A.mix_at(g_music, self._music_for("hopeful", 2.6, stable_seed("intro", "music")), 0.0)
             job.set_stage("intro", "done")
 
         for si, scene in enumerate(plan.scenes):
@@ -148,11 +159,15 @@ class Pipeline:
                               duration_s=scene.duration_s, secs=round(time.time() - ts, 1))
 
             # ------------------------------ 3c. global buses (cached + fresh)
+            room = LOCATION_ROOMS.get((scene.location or "street").lower(), "small")
             for lt in line_times:
                 if not Path(lt["clip"]).exists():
                     continue
                 _, clip = A.read_wav(lt["clip"])
-                g_dialogue = A.mix_at(g_dialogue, A.normalize_peak(clip, -6.0), offset + lt["start_s"])
+                clip = A.normalize_peak(clip, -6.0)
+                if room != "none" and lt.get("speaker") != "narrator":
+                    clip = A.room_reverb(clip, A.SR, room)  # per-location reverb
+                g_dialogue = A.mix_at(g_dialogue, clip, offset + lt["start_s"])
                 srt_entries.append({
                     "start_s": offset + lt["start_s"], "end_s": offset + lt["end_s"],
                     "speaker": lt["speaker"], "text": lt["text"],
@@ -227,7 +242,11 @@ class Pipeline:
 
             voices = {}
             for cid in scene.characters_present:
-                v = self.voices.get(cid) or self.voices.get(self.cast.get(cid).voice_id if self.cast.get(cid) else "narrator")
+                if cid == "narrator":
+                    continue
+                v = self.voices.get(cid)
+                if v is None:
+                    v = guest_voice(self.voices, cid)  # guest speaker in a song
                 if v:
                     voices[cid] = v
             if not voices:

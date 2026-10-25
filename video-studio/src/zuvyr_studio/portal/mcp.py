@@ -22,7 +22,7 @@ TOOLS = [
     {"name": "zuvyr_generate", "description": "Script text -> final MP4 (write tool, needs ALLOW_UNSAFE_MCP_TOOLS=1)",
      "inputSchema": {"type": "object", "properties": {"script": {"type": "string"}, "style": {"type": "string"},
                                                       "format": {"type": "string"}, "title": {"type": "string"},
-                                                      "video_id": {"type": "string"}}, "required": ["script"]}},
+                                                      "video_id": {"type": "string"}, "characters": {"type": "array", "items": {"type": "string"}}}, "required": ["script"]}},
     {"name": "zuvyr_job_status", "description": "Progress of a job", "inputSchema": {"type": "object", "properties": {"video_id": {"type": "string"}}, "required": ["video_id"]}},
     {"name": "zuvyr_list_jobs", "description": "List all jobs", "inputSchema": {"type": "object", "properties": {}}},
     {"name": "zuvyr_regenerate_scene", "description": "Regenerate one scene (write tool)",
@@ -72,7 +72,8 @@ def _handle(name: str, args: dict) -> dict:
         return {"content": [{"type": "text", "text": plan.model_dump_json(indent=1)}], "engine": engine}
     if name == "zuvyr_generate":
         Pipeline(cfg).generate(args["script"], video_id=args.get("video_id"), style=args.get("style"),
-                               fmt=args.get("format", "long"), title=args.get("title"))
+                               fmt=args.get("format", "long"), title=args.get("title"),
+                               characters=args.get("characters"))
         d = read_json(cfg.jobs_dir / (args.get("video_id") or "") / "job.json") or {}
         return {"content": [{"type": "text", "text": json.dumps(d.get("outputs", {}))}]}
     if name == "zuvyr_job_status":

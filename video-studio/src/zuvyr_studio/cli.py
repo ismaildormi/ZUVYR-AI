@@ -187,8 +187,13 @@ def cmd_generate(args) -> int:
     cfg = Config()
     pipe = Pipeline(cfg)
     script = Path(args.script).read_text(encoding="utf-8")
-    lyrics = Path(args.lyrics).read_text(encoding="utf-8") if args.lyrics else None
-    genre = Path(args.genre).read_text(encoding="utf-8").strip() if args.genre else None
+    # explicit flags win; otherwise auto-detect lyrics.txt / genre.txt next to
+    # the script (spec: optional sidecar inputs)
+    sdir = Path(args.script).parent
+    lyrics_path = Path(args.lyrics) if args.lyrics else sdir / "lyrics.txt"
+    genre_path = Path(args.genre) if args.genre else sdir / "genre.txt"
+    lyrics = lyrics_path.read_text(encoding="utf-8") if lyrics_path.exists() else None
+    genre = genre_path.read_text(encoding="utf-8").strip() if genre_path.exists() else None
     result = pipe.generate(
         script, video_id=args.id, style=args.style, fmt=args.format, title=args.title,
         lyrics=lyrics, genre=genre, intro_card=not args.no_intro, thumbnails=not args.no_thumbs,

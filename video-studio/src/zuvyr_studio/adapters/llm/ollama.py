@@ -130,7 +130,7 @@ HARD RULES:
     # ------------------------------------------------------------------ api
     def plan(self, script_text: str, video_id: str, title: str | None = None,
              style: str | None = None, fmt: str = "long", lyrics: str | None = None,
-             genre: str | None = None) -> ScenePlan:
+             genre: str | None = None, allowed: list[str] | None = None) -> ScenePlan:
         style = style or self.config.style
         for attempt in range(3):
             try:
@@ -151,4 +151,4 @@ HARD RULES:
                 raise ValueError("no valid scenes after schema validation")
             except Exception as e:
                 print(f"[ollama-brain] attempt {attempt + 1} failed: {e}; falling back" if attempt == 2 else f"[ollama-brain] attempt {attempt + 1} failed: {e}")
-        return self.offline.plan(script_text, video_id, title, style, fmt, lyrics, genre)
+        return self.offline.plan(script_text, video_id, title, style, fmt, lyrics, genre, allowed)

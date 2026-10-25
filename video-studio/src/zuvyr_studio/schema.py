@@ -50,6 +50,7 @@ class Camera(BaseModel):
 
 class DialogueLine(BaseModel):
     speaker: str  # character id or "narrator"
+    voice_id: Optional[str] = None  # voice override (auto-cast guest speakers)
     text: str
     emotion: str = "neutral"
     intensity: int = Field(default=3, ge=1, le=5)

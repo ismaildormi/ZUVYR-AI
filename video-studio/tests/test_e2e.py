@@ -88,3 +88,30 @@ def test_e2e_short_format(tmp_path_factory):
     info = probe(res["video"])
     assert info["width"] == 360 and info["height"] == 640
     assert abs(info["width"] / info["height"] - 9 / 16) < 0.02
+
+
+def test_e2e_guest_speaker(tmp_path_factory):
+    """Unknown speaker renders end-to-end: label kept for captions, never
+    spoken, auto-cast a non-narrator voice."""
+    from zuvyr_studio.config import Config
+    from zuvyr_studio.application.pipeline import Pipeline
+
+    cfg = Config(data={
+        "formats": {"long": {"width": 640, "height": 360}, "short": {"width": 360, "height": 640}},
+        "fps": 12,
+        "paths": {"jobs": str(tmp_path_factory.mktemp("jobs")), "output": str(tmp_path_factory.mktemp("out"))},
+    })
+    script = ("NARRATOR: The corner store at dusk.\n"
+              "SHOPKEEPER: Hey you kids, out of my store!\n"
+              "MIKA: Sorry, we were just leaving.\n")
+    res = Pipeline(cfg).generate(script, video_id="e2e-guest", intro_card=False, thumbnails=False)
+    srt = Path(res["srt"]).read_text()
+    assert "SHOPKEEPER:" in srt, "guest keeps its name in captions"
+    assert "Hey you kids" in srt
+    # spoken text must not contain the label (checked via the persisted plan)
+    import json as _json
+
+    job_plan = _json.loads((Path(cfg.get("paths", {}).get("jobs", "jobs")) / "e2e-guest" / "plan.json").read_text())
+    shop = [ln for s in job_plan["scenes"] for ln in s["dialogue"] if ln["speaker"] == "shopkeeper"][0]
+    assert shop["text"].startswith("Hey you kids")
+    assert shop["voice_id"] and shop["voice_id"] != "narrator"

@@ -52,8 +52,9 @@ Same cast and voice bible as the long format; rendered natively 1080×1920.
 ```bash
 .venv/bin/python bin/zuvyr portal --port 8787
 # open http://localhost:8787 — script upload, style switch (2d/3d),
-# character/voice browsers, live per-scene progress, scene preview audio,
-# regenerate-one-scene, download MP4 + thumbnails + SRT.
+# character selection (restricts auto-casting; named cast always keeps its
+# voice), live per-scene progress, scene audio preview, regenerate-one-scene,
+# download MP4 + thumbnails + SRT.
 ```
 
 ### MCP server (Claude Desktop / any MCP host)
@@ -103,16 +104,23 @@ NARRATOR: By sunrise, the whole street knew their names.
 ```
 
 * `MIKA:` / `NARRATOR:` — speaker lines (cast lives in `characters/`, voice
-  bible in `voices/`; unknown speakers are auto-cast).
+  bible in `voices/`). Unknown speakers (e.g. `SHOPKEEPER:`) become **guest
+  characters**: the label is never spoken aloud, the original name is kept in
+  the captions, and a stable voice from the voice bible is auto-cast (from
+  your selected characters if you passed a character selection).
 * `[Visual: ...]` — forces the scene's look.
 * `[SFX: ...]` — sound effect cue.
 * Parenthetical delivery notes — mapped to the emotion pipeline
-  (delivery/emotion/intensity/nonverbal).
-* Optional `lyrics.txt` + `genre.txt` next to the script (or in the config)
-  produce an original song scene with lip-synced vocal placements.
+  (delivery/emotion/intensity/nonverbal); stage directions like `(chuckle)`
+  become nonverbal annotations and are never read aloud.
+* Optional `lyrics.txt` + `genre.txt` next to the script (or `--lyrics` /
+  `--genre` flags) produce an original song scene with lip-synced vocal
+  placements.
 
 Style is a config flag (`2d_anime` default, `3d_render` alternative) — the
-cast, prompts and audio chain are identical.
+cast, prompts and audio chain are identical. Narration language is
+configurable too (`"narration_language"` in `zuvyr.json`, or
+`ZUVYR_LANGUAGE`; default `en`).
 
 ## Resuming / regenerating
 
@@ -161,18 +169,20 @@ video-studio/
 .venv/bin/python -m pytest tests/ -q
 ```
 
-23 tests: scene-schema validation, planner/brain units, DSP/voice/limiter
-units, and two end-to-end pipeline renders (long + loudness verification at
-640×360).
+29 tests: scene-schema validation, planner/brain units (word preservation,
+guest auto-casting, language config, Title handling), DSP/voice/limiter/reverb
+units, loudness regression, and three end-to-end pipeline renders (long +
+short + guest speaker) with loudness verification at 640×360.
 
 ## Samples
 
-`samples/long/sample_60s_1080p.mp4` (61.4 s, 1080p24, I=−14.3 LUFS),
-`samples/short/sample_short_9x16.mp4` (31.4 s, 1080×1920, I=−14.6),
+`samples/long/sample_60s_1080p.mp4` (63.3 s, 1080p24, I=−14.5 LUFS),
+`samples/short/sample_short_9x16.mp4` (31.3 s, 1080×1920, I=−14.4),
 `samples/dialogue/dialogue_test_30s.mp4` (31.7 s, 3 characters × emotions,
-I=−15.0) and `samples/thumbnails/thumb_{a,b,c}.png`. All rendered by the
-exact code in this repo on a CPU-only box — see `docs/REPORT.md` for the full
-verification matrix.
+I=−14.4) and `samples/thumbnails/thumb_{a,b,c}.png`. All rendered by the
+exact code in this repo on a CPU-only box; two independent renders of the
+dialogue test produce byte-identical MP4s. Full verification matrix:
+`docs/ACCEPTANCE.md`, details in `docs/REPORT.md`.
 
 ## License notes
 

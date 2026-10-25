@@ -112,9 +112,11 @@ def measure_lufs(path: str | Path) -> dict:
 def normalize_lufs(src: str | Path, dst: str | Path, target_i: float = -14.0, tp: float = -1.5) -> Path:
     """Normalize to ~target LUFS with true-peak control.
 
-    Chain: dynamic loudnorm (raises the sparse mix) -> gain-ride iterations
-    (measured gain into the numpy look-ahead limiter, increasing density until
-    the integrated loudness converges) -> AAC -> measured verify/attenuate guard.
+    Chain: dynamic loudnorm (raises the sparse mix) -> true-peak look-ahead
+    limiter (4x oversampled: the ceiling holds for inter-sample peak, which
+    sample-peak limiting misses by ~1 dB on speech) -> gain-ride iterations
+    (measured gain into the limiter, raising density until the integrated
+    loudness converges) -> AAC -> measured verify/attenuate guard.
     """
     src, dst = Path(src), Path(dst)
     import tempfile
@@ -126,23 +128,29 @@ def normalize_lufs(src: str | Path, dst: str | Path, target_i: float = -14.0, tp
         from . import audio as A
 
         _, x = A.read_wav(ln)
-        x = A.limit(x, 48000, ceiling_db=tp - 0.5, release_ms=200.0)
+        # true-peak ceiling with margins: +~0.7 dB resample/meter filter-shape
+        # offset (measured) + ~0.2 dB AAC overshoot (measured)
+        ceiling = tp - 1.2
+        x = A.limit_true_peak(x, 48000, ceiling_db=ceiling, release_ms=200.0)
         pcm = Path(td) / "lim.wav"
         A.write_wav(pcm, x, 48000)
         # gain-ride: push level into the limiter until loudness converges
-        for _ in range(2):
+        for _ in range(3):
             m = measure_lufs(pcm)
             try:
                 i_now = float(m.get("input_i", "-inf"))
             except Exception:
                 break
-            if i_now == i_now and i_now > -70 and abs(i_now - target_i) <= 0.6:
+            if not (i_now == i_now and i_now > -70):
                 break
-            gain_db = min(4.0, (target_i - 0.2) - i_now) if i_now == i_now and i_now > -70 else 0.0
+            if abs(i_now - target_i) <= 0.5:
+                break
+            gain_db = min(4.0, (target_i - 0.2) - i_now)
             if gain_db <= 0.05:
                 break
             _, x = A.read_wav(pcm)
-            x = A.limit(x * (10 ** (gain_db / 20.0)), 48000, ceiling_db=tp - 0.5, release_ms=200.0)
+            x = A.limit_true_peak(x * (10 ** (gain_db / 20.0)), 48000,
+                                  ceiling_db=ceiling, release_ms=200.0)
             A.write_wav(pcm, x, 48000)
         cur = pcm
         for attempt in range(3):

@@ -33,9 +33,9 @@ class Planner:
 
     def plan(self, script_text: str, video_id: str, title: str | None = None,
              style: str | None = None, fmt: str = "long", lyrics: str | None = None,
-             genre: str | None = None) -> tuple[ScenePlan, str]:
+             genre: str | None = None, allowed: list[str] | None = None) -> tuple[ScenePlan, str]:
         if self.engine_name == "ollama":
-            plan = self._llm.plan(script_text, video_id, title, style, fmt, lyrics, genre)
+            plan = self._llm.plan(script_text, video_id, title, style, fmt, lyrics, genre, allowed)
             return plan, "ollama:" + self._llm.model
-        plan = self.offline.plan(script_text, video_id, title, style, fmt, lyrics, genre)
+        plan = self.offline.plan(script_text, video_id, title, style, fmt, lyrics, genre, allowed)
         return plan, "offline-rules"

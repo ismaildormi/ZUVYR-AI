@@ -13,9 +13,19 @@ import re
 from pathlib import Path
 
 from ..config import Config
-from ..lib.rng import seed_range
+from ..lib.rng import seed_range, stable_seed
 from ..schema import DialogueLine, VoiceSpec
 from .bibles import VoiceBible
+
+# voices used to auto-cast guest speakers (unknown names): stable side
+# characters that are not part of the visual cast
+GUEST_VOICE_POOL = ("mrs_kim", "mr_cole", "ms_chan", "grandma_rosa", "derek", "the_broker", "kid_crowd")
+
+
+def guest_voice(voices: VoiceBible, speaker: str):
+    """Deterministic voice-bible voice for a guest speaker (by name hash)."""
+    vid = GUEST_VOICE_POOL[stable_seed("guest-voice", speaker) % len(GUEST_VOICE_POOL)]
+    return voices.get(vid) or voices.get("narrator")
 
 
 class VoiceDirector:
@@ -121,7 +131,13 @@ class VoiceDirector:
         twice reuses the byte-identical take files, so every character sounds
         exactly the same across runs (espeak has ~0.1% timing jitter otherwise).
         """
-        voice = self.voices.get(line.speaker)
+        voice = None
+        if getattr(line, "voice_id", None):  # plan-time auto-cast (guest speakers)
+            voice = self.voices.get(line.voice_id)
+        if voice is None:
+            voice = self.voices.get(line.speaker)
+        if voice is None and line.speaker not in ("narrator", "none", ""):
+            voice = guest_voice(self.voices, line.speaker)  # auto-cast guest speaker
         if voice is None:
             voice = self.voices.get("narrator")
         out_dir.mkdir(parents=True, exist_ok=True)
