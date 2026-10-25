@@ -19,3 +19,26 @@ frontend/rox-config.local.js
 
 .vercel
 .env*
+
+# Unity generated artifacts
+Library/
+Temp/
+obj/
+Logs/
+MemoryCaptures/
+Recordings/
+Build/
+Builds/
+BuildData/
+UserSettings/
+JetBrains.Unity/
+.idea/
+
+# Unity package cache
+Packages/
+!Packages/manifest.json
+
+# Verification harness build output
+velox-verify/bin/
+velox-verify/obj/
+velox-verify/out/
