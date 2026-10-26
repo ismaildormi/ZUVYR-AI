@@ -37,11 +37,37 @@ POSTs `{ name, score }` to the `submitScore` Cloud Function with
 
 1. verifies the caller's Firebase Auth ID token → stable UID identity;
 2. computes the competition period server-side (UTC, `yyyy-MM`);
-3. rejects writes to a finalized period;
+3. rejects writes to a finalized period (fast-path check on the closure marker);
 4. validates the score (range/positivity) and name (server is authoritative);
-5. writes `leaderboard/{period}/{uid}` keeping the player's **best** score
-   (no silent downgrade) via a **Firebase transaction**, so concurrent
-   lower-score submissions cannot overwrite a higher one (atomic, TOCTOU-safe).
+5. writes the player's **best** score (no silent downgrade) via a Firebase
+   transaction on `leaderboard/{period}` (the **shared transactional parent**
+   with finalization — see §4).
+
+### Finalize-vs-submit race (FIXED at the logic level)
+
+The closure flag lives at `leaderboard/{period}/_closed`, a child of the score
+parent. Both `submitScore` and `finalizeMonth` transact on the **same** node
+`leaderboard/{period}`. RTDB transactions are atomic only at their own path and
+serialize on that path, so the two operations conflict and produce a deterministic
+outcome:
+
+- **submission commits first** → finalization's transaction sees the new score
+  and snapshots it into the closure marker;
+- **finalization commits first** → the submission's transaction sees `_closed`
+  and aborts (the late score is rejected with `403`).
+
+This closes the previous TOCTOU window where the closure check (on
+`competition/{period}/final`) and the score write (on `leaderboard/{period}/{uid}`)
+were on unrelated paths. The pure `mergeSubmission`/`buildClosure` helpers encode
+the serialization logic and are unit-tested; the actual cross-operation atomicity
+comes from the shared-parent transaction and is **BLOCKED from integration
+verification without the Firebase Emulator**.
+
+> SCALING NOTE: the shared-parent transaction reads/writes the whole month node
+> (one transaction per submission). For a month with a very large player count
+> this is O(players) per submit. The month node is bounded (players-per-month,
+> not unbounded), but a future hardening could shard submissions or use a
+> server-side queuing model to avoid large-node transactions.
 
 Because the caller is authenticated, one player cannot overwrite another's
 score. The client-side checks are defense-in-depth only. Scores must be
@@ -74,19 +100,27 @@ Giveaway readiness is gated behind admin operations. All three require the
 caller's UID to be listed in the RTDB `config/adminUids` allowlist and log the
 acting admin for audit.
 
-- **`finalizeMonth`** — snapshots a month's official Top-10 into the
-  **immutable** node `competition/{month}/final` and freezes the ranking.
-  **Atomic + idempotent** (Firebase transaction): an already-finalized month is
-  never overwritten, even under concurrent admin calls. Once finalized,
+- **`finalizeMonth`** — atomically closes a month for finalization. Writes the
+  closure marker `leaderboard/{period}/_closed` (carrying the deterministic
+  Top-10 snapshot) via a transaction on `leaderboard/{period}` (the shared
+  transactional parent with `submitScore`), then writes the public read copy
+  `competition/{period}/final` and the admin-only audit
+  `competition/{period}/_finalizedBy`. **Atomic + idempotent**: an already-closed
+  month is never overwritten, even under concurrent admin calls. Once closed,
   `submitScore` refuses further writes for that period.
 - **`verifyWinners`** — records verification of the Top-3 (from the finalized
   snapshot). `body: { "verified": { "<uid>": { "verified": bool, "note": "" } } }`.
   `verified` must be exactly `true` (truthy strings are rejected). The month is
-  format-validated before any DB read (no path traversal).
+  format-validated before any DB read (no path traversal). Writes the **private**
+  record `competition/{period}/verification` (admin-only read: admin UID, winner
+  UID, notes) AND the **public display** status `competition/{period}/_status`
+  (display fields only — no UIDs, no notes, no admin identity).
 - **`awardPrizes`** — refuses to award unless all Top-3 are verified, then
-  records the award under `competition/{month}/award`. **Atomic + idempotent**:
-  an already-recorded award is never overwritten, so duplicate calls cannot
-  award twice. Prizes are never awarded on client-reported scores alone.
+  records the award under the **private** `competition/{period}/award`
+  (admin-only read) and updates the public `_status` (`awarded: true`).
+  **Atomic + idempotent**: an already-recorded award is never overwritten, so
+  duplicate calls cannot award twice. Prizes are never awarded on client-reported
+  scores alone.
 
 All three are `POST`-only and require an admin UID from `config/adminUids`.
 A request for month X never affects month Y (the month is validated and used
@@ -99,15 +133,18 @@ No unnecessary PII is stored: entries carry `uid`, sanitised `name`, `score`,
 
 ```
 leaderboard/
-  {yyyy-MM}/                 <- live competition period (UTC)
+  {yyyy-MM}/                 <- live competition period (UTC); shared transactional parent
     {firebase-uid}: { id, name, score, month, timestamp }
+    _closed: { closed: true, finalizedAt, entries: [Top-10] }   <- closure marker (no admin UID)
 archive/
   {yyyy-MM}/                 <- immutable historical snapshots (rollover)
 competition/
   {yyyy-MM}/
-    final:        { month, finalizedAt, finalizedBy, entries: [Top-10] }
-    verification: { month, verifiedAt, verifiedBy, winners: [Top-3] }
-    award:        { month, awardedAt, awardedBy, winners: [Top-3] }
+    final:        { month, finalizedAt, entries: [Top-10] }   <- public read copy (no admin UID)
+    _status:      { month, verifiedAt, awardedAt, awarded, verified, winners: [display] }  <- public display
+    _finalizedBy: { finalizedBy }                               <- admin-only audit (admin UID)
+    verification: { month, verifiedAt, verifiedBy, winners: [Top-3] }  <- private (admin-only read)
+    award:        { month, awardedAt, awardedBy, winners: [Top-3] }    <- private (admin-only read)
 config/
   adminUids: { "<uid>": true }   <- admin allowlist (set via admin SDK)
 ```
@@ -116,17 +153,39 @@ config/
 
 - `leaderboard/$period`: `.read: auth != null`, `.write: false` (clients can't
   write anywhere — `$uid` is also `.write: false`). The Cloud Functions are the
-  only writers (via the admin SDK, which bypasses client rules). Ownership is
-  enforced **in the `submitScore` function**: the verified caller's UID is the
-  only node written (`leaderboard/{period}/{uid}`).
+  only writers (via the admin SDK, which bypasses client rules). The closure
+  marker `_closed` inherits this read (it carries no admin UID — only the
+  closure flag, timestamp, and public Top-10 snapshot). Ownership is enforced
+  **in the `submitScore` function**: the verified caller's UID is the only score
+  node written.
 - Per-`$uid` `.validate` documents the schema (`id === $uid`,
   `month === $period`, score in `0..1e12`, name length `0..24`, numeric
   timestamp) and is defense-in-depth if direct writes are ever re-enabled.
-- `archive/$period`, `competition/$period/{final,verification,award}`:
-  read for authenticated users, **write denied** to clients.
+- `competition/$period` has **no parent `.read`** (so reads do not cascade to
+  private children). Reads are granted per-child:
+  - `final`: `.read: auth != null` (public finalized Top-10 for leaderboard/history);
+  - `_status`: `.read: auth != null` (public verification/award display fields);
+  - `verification`, `award`, `_finalizedBy`: `.read: false` (admin-only — read
+    via the admin SDK by the Cloud Functions; never exposed to clients).
+  All `competition/*` children are `.write: false` to clients.
+- `archive/$period`: `.read: auth != null`, `.write: false` (immutable history).
 - `config`: **no client read or write** (`.read: false`, `.write: false`).
   Admin UIDs are NOT client-readable (information-disclosure hardening); the
   Cloud Functions read the allowlist via the admin SDK, which bypasses rules.
+
+### Read/write policy by path (summary)
+
+| Path | Client read | Client write | Notes |
+|---|---|---|---|
+| `leaderboard/{period}` | auth | denied | current leaderboard; `_closed` marker readable (no secrets) |
+| `leaderboard/{period}/{uid}` | auth (via parent) | denied | score entries |
+| `archive/{period}` | auth | denied | immutable history |
+| `competition/{period}/final` | auth | denied | public finalized Top-10 (no admin UID) |
+| `competition/{period}/_status` | auth | denied | public display status (no UIDs/notes) |
+| `competition/{period}/verification` | **denied** | denied | private (admin UID, notes) |
+| `competition/{period}/award` | **denied** | denied | private (admin UID, fulfillment) |
+| `competition/{period}/_finalizedBy` | **denied** | denied | private (admin UID) |
+| `config` | **denied** | denied | admin allowlist |
 
 Deploy:
 
@@ -173,31 +232,41 @@ SDK.
 
 ## 9. Testing
 
-- **Offline C# harness** (`velox-verify/build.sh`): 78 tests covering period
+- **Offline C# harness** (`velox-verify/build.sh`): 80 tests covering period
   math (incl. Dec→Jan boundaries), score validation, name sanitisation
   (incl. Unicode alignment), Top-10/tie-breaking (incl. full-tie name break),
   best-score preservation (no rewrite on lower score), finalize/frozen/
-  idempotent, historical preservation, token expiry, and MiniJson parsing.
-  **GREEN 78/78.**
+  idempotent, historical preservation, token expiry, and MiniJson parsing
+  (incl. `_closed` marker skip). **GREEN 80/80.**
 - **Node pure-logic tests** (`firebase/functions/test/functions.test.js`):
-  51 tests for server-side period/ranking/sanitisation logic, the atomic
-  `keepBest` merge, and idempotent `shouldFinalize`/`shouldAward`.
-  Run `node test/functions.test.js`. **GREEN 51/51.**
+  83 tests for server-side period/ranking/sanitisation logic, the atomic
+  `keepBest`/`mergeSubmission`/`buildClosure` helpers (closure serialization,
+  both race orderings, concurrent submits, immutable finalized history),
+  idempotent `shouldFinalize`/`shouldAward`, and the read-access policy
+  (rules structure: public `final`/`_status` vs private `verification`/`award`/
+  `_finalizedBy`). Run `node test/functions.test.js`. **GREEN 83/83.**
 - **JavaScript syntax + JSON validation**: `node --check` on every function
   file; `JSON.parse` on the rules, firebase.json, and package.json. **GREEN.**
 - **Firebase Emulator Suite**: NOT available in this sandbox. Emulator-driven
   integration tests are **BLOCKED**. Prepared test cases (run when a Firebase
   CLI + project are available via `firebase emulators:start`):
   - rules: unauthorized write rejected; cross-UID write rejected; invalid
-    schema rejected; `config` client-read denied.
+    schema rejected; `config` client-read denied; `competition/{period}/verification`
+    client-read denied; `competition/{period}/award` client-read denied;
+    `competition/{period}/_finalizedBy` client-read denied; `competition/{period}/final`
+    auth-read allowed.
   - `submitScore`: missing/expired/mismatched token → 401; invalid/non-integer
     score → 400; finalized period → 403; concurrent lower-after-higher keeps
-    higher (transaction); replay is idempotent (`updated:false`).
+    higher (transaction); replay is idempotent (`updated:false`); **submit-vs-finalize
+    race: submit-first includes score in snapshot; finalize-first rejects late
+    submit** (shared-parent transaction serialization).
   - `finalizeMonth`/`verifyWinners`/`awardPrizes`: non-admin → 403; invalid
-    month → 400; GET/other method → 405; duplicate finalize → idempotent;
-    award before verification → 400; duplicate award → idempotent (no double).
+    month → 400; GET/other method → 405; duplicate finalize → idempotent
+    (no snapshot overwrite); concurrent finalize → first wins; award before
+    verification → 400; duplicate award → idempotent (no double); `_status`
+    public display has no UIDs/notes/admin identity.
   - `monthlyReset`: Dec→Jan boundary archives the correct prior month;
-    archive-retry does not destroy history.
+    archive-retry does not destroy history; archived month retains `_closed`.
 
 ## 10. Security notes
 
@@ -207,15 +276,21 @@ SDK.
   as a verified global ranking.
 - Writing a rules JSON or a JS file does **not** deploy it — run
   `firebase deploy` and confirm via the console.
-- **Residual race (documented):** `submitScore` checks finalization before the
-  write; an admin `finalizeMonth` firing in the same instant as a score write
-  could let that write land in a period that is being finalized. The window is
-  tiny and admin-gated; closing it fully would require the finalization flag to
-  live under the same node the score transaction locks (a future hardening).
-- **Token storage:** the refresh token is stored in `PlayerPrefs` (plaintext
-  on most platforms). This is a known limitation of the Unity offline harness;
-  a production build should use the OS keychain/Keystore via a secure-storage
-  plugin. The ID token is kept in memory only.
+- **Finalize-vs-submit race (FIXED at the logic level):** the closure flag now
+  lives at `leaderboard/{period}/_closed` (a child of the score parent), and both
+  `submitScore` and `finalizeMonth` transact on the **same** node
+  `leaderboard/{period}`. RTDB transactions serialize on that path, so the two
+  operations produce a deterministic outcome (whichever commits first wins; the
+  other aborts). The pure `mergeSubmission`/`buildClosure` helpers are unit-
+  tested for both race orderings. **The actual cross-operation atomicity is
+  BLOCKED from integration verification without the Firebase Emulator** — the
+  pure-helper tests do not prove the RTDB transaction wiring.
+- **Token storage:** the refresh token was stored in `PlayerPrefs` (plaintext).
+  Part B of this pack introduces a credential-storage abstraction
+  (`ICredentialStore`) with platform-specific secure storage (iOS Keychain,
+  Android Keystore), no plaintext fallback, and safe migration off the legacy
+  `VELOX.Account.*` keys. See the C# `AccountSession` / `ICredentialStore`
+  sources and the status table. The ID token is kept in memory only.
 - **Reads do not auto-refresh:** `GetTopAsync`/`GetFinalizedAsync` use the
   current ID token without a pre-refresh; an expired token yields an empty
   read (fail-safe, no crash). Submissions call `EnsureFreshTokenAsync` first.
@@ -226,12 +301,14 @@ SDK.
 |---|---|
 | Google → Firebase token exchange | VERIFIED (contract implemented; live sign-in test BLOCKED — needs real Google/Firebase creds) |
 | Token refresh / expiry handling | VERIFIED (client logic tested; live refresh BLOCKED) |
-| Score submission (server-authoritative) | VERIFIED (atomic best-score transaction + validation; HTTP integration BLOCKED — emulator) |
-| Concurrent submission safety | VERIFIED (pure `keepBest` logic tested; transaction integration BLOCKED — emulator) |
+| Score submission (server-authoritative) | VERIFIED (atomic best-score merge + validation; HTTP integration BLOCKED — emulator) |
+| Concurrent submission safety | VERIFIED (pure `mergeSubmission` logic tested; transaction integration BLOCKED — emulator) |
+| Finalize-vs-submit race | FIXED (logic) — shared-parent transaction serializes submit vs finalize; pure helpers tested for both orderings; RTDB transaction integration BLOCKED — emulator |
 | Monthly ranking (UTC, consistent month id) | VERIFIED (period math tested, incl. Dec→Jan) |
 | Historical records (archive, immutable) | VERIFIED (archive-before-delete preserves the only copy; rollover integration BLOCKED — emulator) |
-| Server security (rules + functions) | PARTIAL (artifacts hardened: config no client-read, POST-only, month validation, strict bool; rules/functions deployment + emulator tests BLOCKED) |
+| Server security (rules + functions) | PARTIAL (artifacts hardened: config no client-read, POST-only, month validation, strict bool, private verification/award/_finalizedBy not client-readable; rules/functions deployment + emulator tests BLOCKED) |
+| Read-access policy (public vs private) | FIXED (rules: `verification`/`award`/`_finalizedBy` `.read:false`; public `final`/`_status` carry no admin UIDs/notes; structural test GREEN; behavioral rules verification BLOCKED — emulator) |
 | Giveaway readiness (finalize/verify/award) | VERIFIED (atomic idempotent model + pure logic tested; live BLOCKED) |
 | Anti-cheat beyond ownership | NOT BUILT (client can forge own-UID scores — not cheat-proof) |
 | Admin config disclosure | FIXED (`config` no longer client-readable) |
-| Residual finalize-vs-submit race | DOCUMENTED (tiny admin-gated window; future hardening noted) |
+| Refresh-token storage | IN PROGRESS (Part B: `ICredentialStore` abstraction + secure storage; see AccountSession sources) |

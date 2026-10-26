@@ -33,18 +33,25 @@
     },
     "competition": {
       "$period": {
-        ".read": "auth != null",
         ".write": false,
         "final": {
           ".read": "auth != null",
           ".write": false
         },
-        "verification": {
+        "_status": {
           ".read": "auth != null",
           ".write": false
         },
+        "verification": {
+          ".read": false,
+          ".write": false
+        },
         "award": {
-          ".read": "auth != null",
+          ".read": false,
+          ".write": false
+        },
+        "_finalizedBy": {
+          ".read": false,
           ".write": false
         }
       }

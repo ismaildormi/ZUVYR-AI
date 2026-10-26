@@ -106,6 +106,70 @@ function shouldAward(current, award) {
 }
 
 /**
+ * True when the month map carries a committed closure marker. The closure
+ * flag lives at `leaderboard/{period}/_closed` so that score submissions and
+ * finalization share ONE transactional parent (`leaderboard/{period}`) and
+ * therefore serialize deterministically (RTDB transactions are atomic only at
+ * their own path — unrelated paths do NOT serialize).
+ */
+function isClosed(month) {
+  return Boolean(month && month._closed && month._closed.closed === true);
+}
+
+/**
+ * Submit-side transaction update function. Receives the current month map
+ * (all scores + optional `_closed` marker) and a candidate submission. Returns
+ * the updated month map, or undefined to abort:
+ *   - month already closed  -> abort (submission rejected; finalization won)
+ *   - candidate is not a score upgrade -> abort (idempotent replay; no write)
+ * Otherwise merges the candidate with keepBest semantics (no downgrade).
+ *
+ * @param {object|null} currentMonth   current value at leaderboard/{period}
+ * @param {object} candidate           { id, name, score, month, timestamp }
+ * @returns {object|undefined}         updated month map, or undefined to abort.
+ */
+function mergeSubmission(currentMonth, candidate) {
+  if (isClosed(currentMonth)) return undefined; // finalization won the race
+  const month = currentMonth ? Object.assign({}, currentMonth) : {};
+  const best = keepBest(month[candidate.id], candidate);
+  if (best === undefined) return undefined; // no upgrade; idempotent
+  month[candidate.id] = best;
+  return month;
+}
+
+/**
+ * Finalize-side transaction update function. Receives the current month map
+ * and returns it with the closure marker set (including the deterministic
+ * Top-10 snapshot), or undefined to abort if already closed (idempotent).
+ *
+ * The closure marker and the snapshot are written atomically with the month
+ * data because they live under the same transactional parent, so a concurrent
+ * submission cannot slip in after closure.
+ *
+ * @param {object|null} currentMonth
+ * @param {string} period
+ * @param {number} now           epoch ms
+ * @returns {object|undefined}
+ *
+ * IMPORTANT: the _closed marker lives at leaderboard/{period}/_closed, which is
+ * readable by any authenticated client (it inherits the parent .read). It
+ * therefore carries NO admin UID and NO private evidence — only the closure
+ * flag, the timestamp, and the public Top-10 snapshot. The admin UID is written
+ * separately to competition/{period}/_finalizedBy (admin-only read).
+ */
+function buildClosure(currentMonth, period, now) {
+  if (isClosed(currentMonth)) return undefined; // already closed; idempotent
+  const month = currentMonth ? Object.assign({}, currentMonth) : {};
+  const entries = topTen(currentMonth); // snapshot (topTen filters _closed out)
+  month._closed = {
+    closed: true,
+    finalizedAt: now,
+    entries: entries
+  };
+  return month;
+}
+
+/**
  * Authoritative ranking: highest score first; ties broken by earlier
  * timestamp, then name. Returns the Top-10 with rank assigned.
  */
@@ -138,6 +202,9 @@ module.exports = {
   sanitizeName,
   validateScore,
   keepBest,
+  isClosed,
+  mergeSubmission,
+  buildClosure,
   shouldFinalize,
   shouldAward,
   topTen

@@ -133,6 +133,12 @@ internal static class Program
         Check(alice != null && alice.score == 100, "MiniJson extracts entry fields");
         Check(MiniJson.ToEntries(null, "2026-10").Count == 0, "MiniJson handles null node");
 
+        // The server-side closure marker (_closed) must never be treated as a leaderboard entry.
+        string closedNode = @"{""uid1"":{""id"":""uid1"",""name"":""ALICE"",""score"":100,""month"":""2026-10"",""timestamp"":1},""_closed"":true}";
+        var closedEntries = MiniJson.ToEntries(MiniJson.Parse(closedNode), "2026-10");
+        Check(closedEntries.Count == 1, "MiniJson skips server-internal _closed marker");
+        Check(closedEntries[0].name == "ALICE", "MiniJson keeps real entry alongside marker");
+
         Console.WriteLine("== ProceduralVisuals obstacle geometry ==");
         float jumpY = ProceduralVisuals.ObstacleCenterY(Obstacle.Kind.Jumpable);
         float slideY = ProceduralVisuals.ObstacleCenterY(Obstacle.Kind.Slideable);

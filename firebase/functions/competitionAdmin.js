@@ -14,8 +14,7 @@ const functions = require("firebase-functions");
 const {
   monthKey,
   isValidMonthKey,
-  topTen,
-  shouldFinalize,
+  buildClosure,
   shouldAward,
   requireAdmin,
   admin
@@ -29,7 +28,16 @@ function methodGuard(req, res) {
   return true;
 }
 
-/** Snapshots a month's Top-10 and freezes the ranking. Atomic + idempotent. */
+/**
+ * Snapshots a month's Top-10 and freezes the ranking. Atomic + idempotent.
+ *
+ * The closure marker is written at leaderboard/{period}/_closed via a
+ * transaction on leaderboard/{period} (the SAME shared transactional parent
+ * used by submitScore). This serializes finalization against any concurrent
+ * submission, so a score can never land in a month that is being (or has been)
+ * finalized. The snapshot is captured atomically inside the closure marker;
+ * competition/{period}/final is a public read copy written as a follow-up.
+ */
 exports.finalizeMonth = functions.https.onRequest(async (req, res) => {
   if (!methodGuard(req, res)) return;
 
@@ -43,26 +51,42 @@ exports.finalizeMonth = functions.https.onRequest(async (req, res) => {
   }
 
   const db = admin.database().ref();
+  const now = Date.now();
 
-  // Idempotent + atomic: write final only if it does not already exist, so
-  // two concurrent admin calls cannot overwrite a closed month.
-  const finalSnap = await db.child(`/leaderboard/${period}`).once("value");
-  const final = {
-    month: period,
-    finalizedAt: Date.now(),
-    finalizedBy: adminUser.uid,
-    entries: topTen(finalSnap.val())
-  };
-
+  // Atomic + idempotent closure: write the closure marker (with snapshot)
+  // only if the month is not already closed. Two concurrent admin calls
+  // cannot overwrite the first committed snapshot.
   let tx;
   try {
-    tx = await db.child(`/competition/${period}/final`).transaction(
-      (current) => shouldFinalize(current, final)
+    tx = await db.child(`/leaderboard/${period}`).transaction(
+      (current) => buildClosure(current, period, now)
     );
   } catch (e) {
     functions.logger.error(`[finalizeMonth] transaction failed for ${period}: ${e.message}`);
     res.status(500).send({ ok: false, error: "Finalize failed; please retry." });
     return;
+  }
+
+  // Ensure the public read copy exists. Handles both a fresh close (tx just
+  // committed) and an idempotent retry (tx aborted, copy missing from an
+  // earlier failed attempt). The public copy carries NO admin UID — that is
+  // stored separately in competition/{period}/_finalizedBy (admin-only read).
+  let publicSnap = await db.child(`/competition/${period}/final`).once("value");
+  if (!publicSnap.exists()) {
+    const closed = await db.child(`/leaderboard/${period}/_closed`).once("value");
+    if (closed.exists()) {
+      const cv = closed.val();
+      await db.child(`/competition/${period}/final`).set({
+        month: period,
+        finalizedAt: cv.finalizedAt,
+        entries: cv.entries
+      });
+    }
+  }
+
+  // Admin-only audit record for who finalized this month (not exposed publicly).
+  if (tx.committed) {
+    await db.child(`/competition/${period}/_finalizedBy`).set({ finalizedBy: adminUser.uid });
   }
 
   if (!tx.committed) {
@@ -101,22 +125,43 @@ exports.verifyWinners = functions.https.onRequest(async (req, res) => {
 
   const payload = (req.body && req.body.verified) || {};
   const top3 = (fin.val().entries || []).slice(0, 3);
+  const verifiedWinners = top3.map((w) => ({
+    rank: w.rank,
+    id: w.id,
+    name: w.name,
+    score: w.score,
+    // Strict boolean: only exactly `true` counts as verified.
+    verified: Boolean(payload[w.id] && payload[w.id].verified === true),
+    note: payload[w.id] ? payload[w.id].note : ""
+  }));
+
+  // PRIVATE record (admin-only read): full detail incl. admin UID, winner UID,
+  // and verification notes/evidence. Never exposed to public clients.
   const verification = {
     month: period,
     verifiedAt: Date.now(),
     verifiedBy: adminUser.uid,
-    winners: top3.map((w) => ({
+    winners: verifiedWinners
+  };
+  await admin.database().ref(`/competition/${period}/verification`).set(verification);
+
+  // PUBLIC display status (auth read): only display fields — no UIDs, no
+  // notes, no admin identity. Lets clients show "Verified" without exposing
+  // private evidence.
+  await admin.database().ref(`/competition/${period}/_status`).set({
+    month: period,
+    verifiedAt: verification.verifiedAt,
+    awardedAt: null,
+    awarded: false,
+    verified: verifiedWinners.every((w) => w.verified),
+    winners: verifiedWinners.map((w) => ({
       rank: w.rank,
-      id: w.id,
       name: w.name,
       score: w.score,
-      // Strict boolean: only exactly `true` counts as verified.
-      verified: Boolean(payload[w.id] && payload[w.id].verified === true),
-      note: payload[w.id] ? payload[w.id].note : ""
+      verified: w.verified
     }))
-  };
+  });
 
-  await admin.database().ref(`/competition/${period}/verification`).set(verification);
   functions.logger.log(`[verifyWinners] ${period} verified by ${adminUser.uid}`);
   res.status(200).send({ ok: true });
 });
@@ -151,11 +196,13 @@ exports.awardPrizes = functions.https.onRequest(async (req, res) => {
     return;
   }
 
+  const top3 = winners.slice(0, 3);
+  const awardedAt = Date.now();
   const award = {
     month: period,
-    awardedAt: Date.now(),
+    awardedAt: awardedAt,
     awardedBy: adminUser.uid,
-    winners: winners.slice(0, 3)
+    winners: top3
   };
 
   let tx;
@@ -167,6 +214,22 @@ exports.awardPrizes = functions.https.onRequest(async (req, res) => {
     functions.logger.error(`[awardPrizes] transaction failed for ${period}: ${e.message}`);
     res.status(500).send({ ok: false, error: "Award failed; please retry." });
     return;
+  }
+
+  // PRIVATE award record (admin-only read) was written above. Update the
+  // PUBLIC display status to reflect the award (display fields only).
+  if (tx.committed) {
+    const statusRef = admin.database().ref(`/competition/${period}/_status`);
+    const existing = await statusRef.once("value");
+    const prev = existing.exists() ? existing.val() : { month: period, winners: top3.map((w) => ({ rank: w.rank, name: w.name, score: w.score, verified: w.verified })) };
+    await statusRef.set({
+      month: period,
+      verifiedAt: prev.verifiedAt || null,
+      awardedAt: awardedAt,
+      awarded: true,
+      verified: top3.every((w) => w.verified),
+      winners: top3.map((w) => ({ rank: w.rank, name: w.name, score: w.score, verified: w.verified }))
+    });
   }
 
   if (!tx.committed) {

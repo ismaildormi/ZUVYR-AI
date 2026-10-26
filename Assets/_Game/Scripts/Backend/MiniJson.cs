@@ -33,6 +33,9 @@ namespace VELOX.Backend
             {
                 foreach (KeyValuePair<string, object> kv in map)
                 {
+                    // Skip server-internal markers (e.g. leaderboard/{period}/_closed).
+                    if (kv.Key.StartsWith("_", StringComparison.Ordinal)) continue;
+
                     if (kv.Value is Dictionary<string, object> e)
                     {
                         list.Add(new LeaderboardEntry

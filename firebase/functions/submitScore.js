@@ -15,7 +15,14 @@
 // .write=false under leaderboard/. This is the server-side enforcement layer.
 
 const functions = require("firebase-functions");
-const { monthKey, sanitizeName, validateScore, keepBest, requireAuth, admin } = require("./shared");
+const {
+  monthKey,
+  sanitizeName,
+  validateScore,
+  mergeSubmission,
+  requireAuth,
+  admin
+} = require("./shared");
 
 exports.submitScore = functions.https.onRequest(async (req, res) => {
   if (req.method !== "POST") {
@@ -30,9 +37,10 @@ exports.submitScore = functions.https.onRequest(async (req, res) => {
   // Trusted period calculation (UTC) — never taken from the client.
   const period = monthKey(new Date());
 
-  // Finalized periods are frozen: no further writes.
-  const fin = await admin.database().ref(`/competition/${period}/final`).once("value");
-  if (fin.exists()) {
+  // Fast-path rejection: if the closure marker already exists, reject early.
+  // (Authoritative check happens inside the transaction below.)
+  const closed = await admin.database().ref(`/leaderboard/${period}/_closed`).once("value");
+  if (closed.exists() && closed.val().closed === true) {
     res.status(403).send({ ok: false, error: `Period ${period} is finalized.` });
     return;
   }
@@ -54,12 +62,17 @@ exports.submitScore = functions.https.onRequest(async (req, res) => {
     timestamp: Date.now()
   };
 
-  // ATOMIC best-score merge via a Firebase transaction. This prevents a
-  // concurrent lower-score submission from overwriting a higher one (TOCTOU).
+  // ATOMIC submit-vs-finalize serialization: the closure flag lives at
+  // leaderboard/{period}/_closed (a child of the score parent), and the
+  // score write is a transaction on leaderboard/{period} (the shared
+  // transactional parent). Finalization also transacts on leaderboard/{period},
+  // so the two operations conflict and serialize deterministically — RTDB
+  // transactions are atomic only at their own path, so sharing the parent is
+  // what closes the race.
   let tx;
   try {
-    tx = await admin.database().ref(`/leaderboard/${period}/${uid}`).transaction(
-      (current) => keepBest(current, candidate)
+    tx = await admin.database().ref(`/leaderboard/${period}`).transaction(
+      (current) => mergeSubmission(current, candidate)
     );
   } catch (e) {
     functions.logger.error(`[submitScore] transaction failed for uid=${uid}: ${e.message}`);
@@ -71,7 +84,13 @@ exports.submitScore = functions.https.onRequest(async (req, res) => {
     functions.logger.log(`[submitScore] uid=${uid} period=${period} score=${score}`);
     res.status(200).send({ ok: true, updated: true });
   } else {
-    // No downgrade: the existing best was kept. Idempotent replay.
-    res.status(200).send({ ok: true, updated: false });
+    // Transaction aborted: either the month was closed by a concurrent
+    // finalization (race) or the score was not an upgrade (idempotent replay).
+    const closed2 = await admin.database().ref(`/leaderboard/${period}/_closed`).once("value");
+    if (closed2.exists() && closed2.val().closed === true) {
+      res.status(403).send({ ok: false, error: `Period ${period} is finalized.` });
+    } else {
+      res.status(200).send({ ok: true, updated: false }); // idempotent no-upgrade
+    }
   }
 });
