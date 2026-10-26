@@ -606,7 +606,7 @@ namespace VELOX.Editor
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.sizeDelta = Vector2.zero;
 
-            TMP_Text t = go.AddComponent<TMP_Text>();
+            TextMeshProUGUI t = go.AddComponent<TextMeshProUGUI>();
             t.text = text;
             t.fontSize = fontSize;
             t.color = color;

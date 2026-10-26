@@ -124,9 +124,16 @@ fi
 echo "== Mocked: all (full orchestration with mock unity) =="
 if UNITY_EXE="$MOCK" UNITY_PROJECT_ROOT="$WORK" VELX_LOG_DIR="$WORK/logs" \
    bash "$SCRIPT" all >/dev/null 2>&1; then
-    ok "all exits 0 with fake unity (compile+scene+validate+build+test)"
+    rc=0
 else
-    bad "all exits 0 with fake unity (compile+scene+validate+build+test)"
+    rc=$?
+fi
+# The 'all' command must exit non-zero when any test suite fails.
+# With no .NET SDK, do_test_csharp fails, so 'all' must exit non-zero.
+if [ "$rc" -ne 0 ]; then
+    ok "all exits non-zero when test suites fail (fake unity, no .NET SDK)"
+else
+    bad "all exits non-zero when test suites fail (fake unity, no .NET SDK)"
 fi
 if test -f "$WORK/logs/unity-compile.log" && test -f "$WORK/logs/unity-scene.log" \
    && test -f "$WORK/logs/unity-validate.log" && test -f "$WORK/logs/unity-build.log" \

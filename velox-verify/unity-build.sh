@@ -245,18 +245,29 @@ main() {
             do_build
             ;;
         test)
-            do_test_csharp && do_test_editor && do_test_node
+            test_failed=0
+            do_test_csharp || test_failed=1
+            do_test_editor || test_failed=1
+            do_test_node || test_failed=1
+            [ "$test_failed" -eq 0 ]
             ;;
         all)
             detect_unity || { echo "FAIL: no Unity found. Set UNITY_EXE or UNITY_ROOT."; exit 1; }
             check_unity_version || echo "WARN: version mismatch — proceeding anyway."
-            do_compile && \
-            do_scene && do_validate && \
-            do_build && \
-            do_test_csharp && \
-            do_test_editor && \
-            do_test_node
+            do_compile || { echo "FAIL: compile step failed"; exit 1; }
+            do_scene || { echo "FAIL: scene step failed"; exit 1; }
+            do_validate || { echo "FAIL: validate step failed"; exit 1; }
+            do_build || { echo "FAIL: build step failed"; exit 1; }
+            test_failed=0
+            do_test_csharp || test_failed=1
+            do_test_editor || test_failed=1
+            do_test_node || test_failed=1
             echo ""
+            if [ "$test_failed" -ne 0 ]; then
+                echo "== VELOX verification FAILED =="
+                echo "Logs: $LOG_DIR"
+                exit 1
+            fi
             echo "== VELOX verification complete =="
             echo "Logs: $LOG_DIR"
             ;;
