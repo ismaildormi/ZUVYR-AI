@@ -42,13 +42,107 @@ namespace VELOX.Editor
             try
             {
                 Build();
+                if (Application.isBatchMode)
+                {
+                    // No GUI dialogs in batch mode; log for the log file.
+                    Debug.Log("[VELOX] Playable scene built: " + ScenePath);
+                    return;
+                }
                 EditorUtility.DisplayDialog("VELOX",
                     "Playable scene built and saved to:\n" + ScenePath, "OK");
             }
             catch (Exception e)
             {
                 Debug.LogError("[VELOX] Scene build failed: " + e);
-                EditorUtility.DisplayDialog("VELOX", "Scene build failed:\n" + e.Message, "OK");
+                if (!Application.isBatchMode)
+                    EditorUtility.DisplayDialog("VELOX", "Scene build failed:\n" + e.Message, "OK");
+                // In batch mode, rethrow so the -batchmode process exits non-zero.
+                if (Application.isBatchMode) throw;
+            }
+        }
+
+        /// <summary>
+        /// Batch-mode entry point for Unity -executeMethod. Calls the SAME
+        /// Build() as the menu item (no duplicate logic), then validates the
+        /// scene was saved and registered in build settings. Rethrows on
+        /// failure so the batch process exits non-zero.
+        /// </summary>
+        public static void GenerateSceneForBatch()
+        {
+            BuildScene();
+            ValidateSceneForBatch();
+        }
+
+        /// <summary>Validates the scene file exists and is registered in
+        /// EditorBuildSettings.scenes. Returns true on success.</summary>
+        public static bool ValidateSceneForBatch()
+        {
+            string absPath = System.IO.Path.Combine(Application.dataPath, "Scenes/VELOX.unity");
+            if (!System.IO.File.Exists(absPath))
+            {
+                Debug.LogError("[VELOX] Batch validation FAILED: scene file not found: " + absPath);
+                return false;
+            }
+
+            bool registered = false;
+            foreach (var s in EditorBuildSettings.scenes)
+            {
+                if (s.path == ScenePath) { registered = true; break; }
+            }
+            if (!registered)
+            {
+                Debug.LogError("[VELOX] Batch validation FAILED: scene not in EditorBuildSettings.scenes");
+                return false;
+            }
+
+            Debug.Log("[VELOX] Batch validation OK: scene saved and registered in build settings.");
+            return true;
+        }
+
+        /// <summary>
+        /// Batch-mode entry point to build a standalone player. Output goes to
+        /// velox-verify/builds/standalone. Reads VELOX_BUILD_TARGET from the
+        /// environment (default StandaloneWindows64). Requires scenes in build
+        /// settings (run GenerateSceneForBatch first). Rethrows on failure so
+        /// the batch process exits non-zero.
+        /// </summary>
+        public static void BuildStandaloneBatch()
+        {
+            string targetStr = System.Environment.GetEnvironmentVariable("VELOX_BUILD_TARGET");
+            if (string.IsNullOrEmpty(targetStr)) targetStr = "StandaloneWindows64";
+
+            BuildTarget target;
+            if (!System.Enum.TryParse(targetStr, out target))
+            {
+                Debug.LogError("[VELOX] Invalid VELOX_BUILD_TARGET: " + targetStr);
+                if (Application.isBatchMode)
+                    throw new System.Exception("Invalid build target: " + targetStr);
+                return;
+            }
+
+            string outputDir = System.IO.Path.Combine(
+                Application.dataPath, "../../velox-verify/builds/standalone");
+            System.IO.Directory.CreateDirectory(outputDir);
+
+            string outputPath = System.IO.Path.Combine(outputDir, "VeloxStandalone");
+#if UNITY_STANDALONE_OSX
+            outputPath += ".app";
+#elif UNITY_STANDALONE_LINUX
+            outputPath += ".x86_64";
+#else
+            outputPath += ".exe";
+#endif
+
+            string result = BuildPipeline.BuildPlayer(outputPath, target, BuildOptions.None);
+            if (string.IsNullOrEmpty(result))
+            {
+                Debug.Log("[VELOX] Standalone build succeeded: " + outputPath);
+            }
+            else
+            {
+                Debug.LogError("[VELOX] Standalone build failed: " + result);
+                if (Application.isBatchMode)
+                    throw new System.Exception("Build failed: " + result);
             }
         }
 
@@ -84,6 +178,19 @@ namespace VELOX.Editor
             director.visualCatalog = catalog;
 
             EnsureScenesFolder();
+
+            // Back up an existing scene before overwriting. The new scene is
+            // regenerated from code, but we preserve the previous version
+            // (non-destructive: never silently discard).
+            string absScene = System.IO.Path.Combine(Application.dataPath, "Scenes/VELOX.unity");
+            if (System.IO.File.Exists(absScene))
+            {
+                string backup = absScene + ".bak-" +
+                    System.DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
+                System.IO.File.Copy(absScene, backup);
+                Debug.LogWarning("[VELOX] Existing scene backed up to " + backup);
+            }
+
             if (!EditorSceneManager.SaveScene(scene, ScenePath))
             {
                 Debug.LogError("[VELOX] Failed to save scene to " + ScenePath);

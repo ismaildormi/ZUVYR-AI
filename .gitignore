@@ -42,3 +42,6 @@ Packages/
 velox-verify/bin/
 velox-verify/obj/
 velox-verify/out/
+velox-verify/.test-tmp/
+velox-verify/logs/
+velox-verify/builds/

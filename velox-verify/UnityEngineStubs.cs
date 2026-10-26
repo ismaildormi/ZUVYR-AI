@@ -75,6 +75,9 @@ namespace UnityEngine
 
     public static class Application
     {
+        public static bool isBatchMode { get; set; }
+        public static string dataPath =>
+            Path.Combine(AppContext.BaseDirectory, "velox-assets");
         public static string persistentDataPath =>
             Path.Combine(AppContext.BaseDirectory, "velox-data");
     }
@@ -586,6 +589,22 @@ namespace UnityEditor
         public static void CreateAsset(UnityEngine.Object asset, string path) { }
         public static void SaveAssets() { }
         public static void Refresh() { }
+    }
+
+    public enum BuildTarget
+    {
+        NoTarget, StandaloneWindows64, StandaloneWindows, StandaloneOSX,
+        StandaloneLinux64, StandaloneLinux, Android, iOS
+    }
+
+    public enum BuildOptions { None }
+
+    // Minimal mirror of UnityEditor.BuildPipeline for type-checking the
+    // batch build entry point. Returns "" (success) in the stub.
+    public static class BuildPipeline
+    {
+        public static string BuildPlayer(string locationPath,
+            BuildTarget targetPlatform, BuildOptions options) => "";
     }
 }
 
