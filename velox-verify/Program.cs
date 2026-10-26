@@ -221,6 +221,22 @@ internal static class Program
         Check(arr.Count == 2, "MiniJson parses finalized array");
         Check(arr[0].score == 300 && arr[0].name == "ALICE", "array entry fields extracted in order");
 
+        Console.WriteLine("== Name sanitisation (unicode) ==");
+        Check(LeaderboardEntry.SanitiseName("café") == "CAFÉ", "accented letters preserved");
+        Check(LeaderboardEntry.SanitiseName("Héllo Wörld") == "HÉLLO.WÖRLD", "accented + space -> dot");
+        Check(LeaderboardEntry.SanitiseName("   ") == "NEO", "all-spaces -> NEO");
+
+        Console.WriteLine("== Best-score preservation (no rewrite on lower) ==");
+        FreshService(out svc);
+        svc.SubmitScoreAsync("Bob", 100).GetAwaiter().GetResult();
+        var before = svc.GetTopAsync(10).GetAwaiter().GetResult()[0];
+        Thread.Sleep(10);
+        Check(svc.SubmitScoreAsync("Bob", 50).GetAwaiter().GetResult(), "lower-score replay accepted as ok");
+        var after = svc.GetTopAsync(10).GetAwaiter().GetResult()[0];
+        Check(after.score == 100, "lower score does not downgrade the best");
+        Check(after.timestamp == before.timestamp, "no rewrite preserves original timestamp");
+        Check(after.id == before.id, "no rewrite preserves original id");
+
         Console.WriteLine();
         Console.WriteLine("RESULT: " + _pass + " passed, " + _fail + " failed");
         Environment.Exit(_fail == 0 ? 0 : 1);

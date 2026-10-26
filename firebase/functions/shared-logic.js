@@ -35,13 +35,15 @@ function previousMonthKey(period) {
 }
 
 /** Sanitises a display name: uppercase, letters/digits kept, spaces->dots.
- *  Matches the C# LeaderboardEntry.SanitiseName exactly. */
+ *  Matches the C# LeaderboardEntry.SanitiseName (Unicode letter/digit aware,
+ *  all-whitespace -> "NEO"). */
 function sanitizeName(raw) {
   if (typeof raw !== "string" || raw.length === 0) return "NEO";
+  if (raw.trim().length === 0) return "NEO"; // all-whitespace -> NEO (matches C# IsNullOrWhiteSpace)
   let out = "";
   for (const ch of raw) {
     const c = ch.toUpperCase();
-    if (/[A-Z0-9]/.test(c)) out += c;
+    if (/[\p{L}\p{N}]/u.test(c)) out += c; // Unicode letter or digit (matches C# IsLetterOrDigit)
     else if (c === " ") out += ".";
   }
   if (out.length === 0) return "NEO";
@@ -49,12 +51,58 @@ function sanitizeName(raw) {
   return out;
 }
 
-/** Score sanity check (server-authoritative; mirrors RTDB validate rules). */
+/** Score sanity check (server-authoritative; mirrors RTDB validate rules).
+ *  Requires a finite integer within [SCORE_MIN, SCORE_MAX] to match the
+ *  client's int score type. */
 function validateScore(score) {
   return typeof score === "number" &&
     Number.isFinite(score) &&
+    Number.isInteger(score) &&
     score >= SCORE_MIN &&
     score <= SCORE_MAX;
+}
+
+/**
+ * Returns the value to persist for a score submission, or undefined to abort
+ * the write (keep the existing best). Used inside a Firebase transaction so
+ * the read-modify-write is ATOMIC and cannot let a concurrent lower score
+ * overwrite a higher one (TOCTOU race). When upgrading, the existing
+ * timestamp is preserved for tie-break stability.
+ *
+ * @param {object|null} current   existing entry at the uid node (or null)
+ * @param {object} candidate       { id, name, score, month, timestamp }
+ * @returns {object|undefined}     entry to write, or undefined to abort.
+ */
+function keepBest(current, candidate) {
+  const curScore = current && typeof current.score === "number" ? current.score : -Infinity;
+  if (curScore >= candidate.score) {
+    return undefined; // no downgrade; keep existing best (and original timestamp)
+  }
+  return {
+    id: candidate.id,
+    name: candidate.name,
+    score: candidate.score,
+    month: candidate.month,
+    timestamp: current ? current.timestamp : candidate.timestamp
+  };
+}
+
+/**
+ * Returns the finalized snapshot to write, or undefined to abort (already
+ * finalized). Makes finalization atomic + idempotent under a transaction so
+ * two concurrent admin calls cannot overwrite a closed month.
+ */
+function shouldFinalize(current, final) {
+  return current ? undefined : final;
+}
+
+/**
+ * Returns the award record to write, or undefined to abort (already awarded).
+ * Makes prize awarding atomic + idempotent so duplicate calls cannot award
+ * twice or overwrite a prior award.
+ */
+function shouldAward(current, award) {
+  return current ? undefined : award;
 }
 
 /**
@@ -89,5 +137,8 @@ module.exports = {
   previousMonthKey,
   sanitizeName,
   validateScore,
+  keepBest,
+  shouldFinalize,
+  shouldAward,
   topTen
 };

@@ -6,19 +6,33 @@
 // the acting admin for audit. The official Top-10 is snapshotted into an
 // IMMUTABLE node (competition/{month}/final) so ranking cannot be changed
 // after finalization. Winners are verified BEFORE prizes are awarded, and the
-// award only records the (already-verified) Top-3.
+// award only records the (already-verified) Top-3. Finalization and awarding
+// are atomic + idempotent (Firebase transactions), so retries cannot overwrite
+// a closed month or award twice.
 
 const functions = require("firebase-functions");
 const {
   monthKey,
   isValidMonthKey,
   topTen,
+  shouldFinalize,
+  shouldAward,
   requireAdmin,
   admin
 } = require("./shared");
 
-/** Snapshots a month's Top-10 and freezes the ranking. Idempotent. */
+function methodGuard(req, res) {
+  if (req.method !== "POST") {
+    res.status(405).send({ ok: false, error: "POST required." });
+    return false;
+  }
+  return true;
+}
+
+/** Snapshots a month's Top-10 and freezes the ranking. Atomic + idempotent. */
 exports.finalizeMonth = functions.https.onRequest(async (req, res) => {
+  if (!methodGuard(req, res)) return;
+
   const adminUser = await requireAdmin(req, res);
   if (!adminUser) return;
 
@@ -30,22 +44,32 @@ exports.finalizeMonth = functions.https.onRequest(async (req, res) => {
 
   const db = admin.database().ref();
 
-  // Idempotent: do not overwrite an existing finalized snapshot.
-  const existing = await db.child(`/competition/${period}/final`).once("value");
-  if (existing.exists()) {
-    res.status(200).send({ ok: true, idempotent: true });
-    return;
-  }
-
-  const snap = await db.child(`/leaderboard/${period}`).once("value");
+  // Idempotent + atomic: write final only if it does not already exist, so
+  // two concurrent admin calls cannot overwrite a closed month.
+  const finalSnap = await db.child(`/leaderboard/${period}`).once("value");
   const final = {
     month: period,
     finalizedAt: Date.now(),
     finalizedBy: adminUser.uid,
-    entries: topTen(snap.val())
+    entries: topTen(finalSnap.val())
   };
 
-  await db.child(`/competition/${period}/final`).set(final);
+  let tx;
+  try {
+    tx = await db.child(`/competition/${period}/final`).transaction(
+      (current) => shouldFinalize(current, final)
+    );
+  } catch (e) {
+    functions.logger.error(`[finalizeMonth] transaction failed for ${period}: ${e.message}`);
+    res.status(500).send({ ok: false, error: "Finalize failed; please retry." });
+    return;
+  }
+
+  if (!tx.committed) {
+    res.status(200).send({ ok: true, idempotent: true });
+    return;
+  }
+
   functions.logger.log(`[finalizeMonth] ${period} finalized by ${adminUser.uid}`);
   res.status(200).send({ ok: true });
 });
@@ -53,16 +77,19 @@ exports.finalizeMonth = functions.https.onRequest(async (req, res) => {
 /**
  * Records winner verification for a finalized month. Body:
  * { "verified": { "<uid>": { "verified": bool, "note": string } } }
- * Only the Top-3 are recorded. Prizes must not be awarded until all Top-3
- * are verified.
+ * Only the Top-3 (from the immutable finalized snapshot) are recorded.
+ * `verified` must be exactly `true` (not a truthy value). Re-verification
+ * overwrites the prior record (admin may update outcomes before awarding).
  */
 exports.verifyWinners = functions.https.onRequest(async (req, res) => {
+  if (!methodGuard(req, res)) return;
+
   const adminUser = await requireAdmin(req, res);
   if (!adminUser) return;
 
   const period = req.query.month;
-  if (!period) {
-    res.status(400).send({ ok: false, error: "month required." });
+  if (!period || !isValidMonthKey(period)) {
+    res.status(400).send({ ok: false, error: "Invalid month." });
     return;
   }
 
@@ -83,7 +110,8 @@ exports.verifyWinners = functions.https.onRequest(async (req, res) => {
       id: w.id,
       name: w.name,
       score: w.score,
-      verified: Boolean(payload[w.id] && payload[w.id].verified),
+      // Strict boolean: only exactly `true` counts as verified.
+      verified: Boolean(payload[w.id] && payload[w.id].verified === true),
       note: payload[w.id] ? payload[w.id].note : ""
     }))
   };
@@ -95,15 +123,19 @@ exports.verifyWinners = functions.https.onRequest(async (req, res) => {
 
 /**
  * Records prize awarding for a finalized, verified month. Refuses to award
- * unless all Top-3 winners have been verified.
+ * unless all Top-3 winners have been verified. Atomic + idempotent: an
+ * already-recorded award is never overwritten, so duplicate calls cannot
+ * award twice.
  */
 exports.awardPrizes = functions.https.onRequest(async (req, res) => {
+  if (!methodGuard(req, res)) return;
+
   const adminUser = await requireAdmin(req, res);
   if (!adminUser) return;
 
   const period = req.query.month;
-  if (!period) {
-    res.status(400).send({ ok: false, error: "month required." });
+  if (!period || !isValidMonthKey(period)) {
+    res.status(400).send({ ok: false, error: "Invalid month." });
     return;
   }
 
@@ -125,7 +157,23 @@ exports.awardPrizes = functions.https.onRequest(async (req, res) => {
     awardedBy: adminUser.uid,
     winners: winners.slice(0, 3)
   };
-  await admin.database().ref(`/competition/${period}/award`).set(award);
+
+  let tx;
+  try {
+    tx = await admin.database().ref(`/competition/${period}/award`).transaction(
+      (current) => shouldAward(current, award)
+    );
+  } catch (e) {
+    functions.logger.error(`[awardPrizes] transaction failed for ${period}: ${e.message}`);
+    res.status(500).send({ ok: false, error: "Award failed; please retry." });
+    return;
+  }
+
+  if (!tx.committed) {
+    res.status(200).send({ ok: true, idempotent: true });
+    return;
+  }
+
   functions.logger.log(`[awardPrizes] ${period} awarded by ${adminUser.uid}`);
   res.status(200).send({ ok: true });
 });

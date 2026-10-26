@@ -15,9 +15,14 @@
 // .write=false under leaderboard/. This is the server-side enforcement layer.
 
 const functions = require("firebase-functions");
-const { monthKey, sanitizeName, validateScore, requireAuth, admin } = require("./shared");
+const { monthKey, sanitizeName, validateScore, keepBest, requireAuth, admin } = require("./shared");
 
 exports.submitScore = functions.https.onRequest(async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).send({ ok: false, error: "POST required." });
+    return;
+  }
+
   const decoded = requireAuth(req, res);
   if (!decoded) return;
   const uid = decoded.uid;
@@ -41,24 +46,32 @@ exports.submitScore = functions.https.onRequest(async (req, res) => {
     return;
   }
 
-  const now = Date.now();
-  const ref = admin.database().ref(`/leaderboard/${period}/${uid}`);
-  const cur = await ref.once("value");
-
-  if (cur.exists() && cur.val().score >= score) {
-    // Keep the best score; do not downgrade. Timestamp preserved for tie-breaking.
-    res.status(200).send({ ok: true, updated: false });
-    return;
-  }
-
-  await ref.set({
+  const candidate = {
     id: uid,
     name: name,
     score: score,
     month: period,
-    timestamp: cur.exists() ? cur.val().timestamp : now
-  });
+    timestamp: Date.now()
+  };
 
-  functions.logger.log(`[submitScore] uid=${uid} period=${period} score=${score}`);
-  res.status(200).send({ ok: true, updated: true });
+  // ATOMIC best-score merge via a Firebase transaction. This prevents a
+  // concurrent lower-score submission from overwriting a higher one (TOCTOU).
+  let tx;
+  try {
+    tx = await admin.database().ref(`/leaderboard/${period}/${uid}`).transaction(
+      (current) => keepBest(current, candidate)
+    );
+  } catch (e) {
+    functions.logger.error(`[submitScore] transaction failed for uid=${uid}: ${e.message}`);
+    res.status(500).send({ ok: false, error: "Could not record score; please retry." });
+    return;
+  }
+
+  if (tx.committed) {
+    functions.logger.log(`[submitScore] uid=${uid} period=${period} score=${score}`);
+    res.status(200).send({ ok: true, updated: true });
+  } else {
+    // No downgrade: the existing best was kept. Idempotent replay.
+    res.status(200).send({ ok: true, updated: false });
+  }
 });

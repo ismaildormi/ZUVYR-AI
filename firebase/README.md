@@ -40,10 +40,13 @@ POSTs `{ name, score }` to the `submitScore` Cloud Function with
 3. rejects writes to a finalized period;
 4. validates the score (range/positivity) and name (server is authoritative);
 5. writes `leaderboard/{period}/{uid}` keeping the player's **best** score
-   (no silent downgrade), via the admin SDK.
+   (no silent downgrade) via a **Firebase transaction**, so concurrent
+   lower-score submissions cannot overwrite a higher one (atomic, TOCTOU-safe).
 
 Because the caller is authenticated, one player cannot overwrite another's
-score. The client-side checks are defense-in-depth only.
+score. The client-side checks are defense-in-depth only. Scores must be
+finite integers in `0..1e12`; non-integer/out-of-range scores are rejected.
+Only HTTP `POST` is accepted.
 
 > ANTI-CHEAT LIMITATION: the server enforces identity, ownership, schema, and
 > finalization, but it cannot prove a submitted score reflects actual gameplay.
@@ -73,13 +76,21 @@ acting admin for audit.
 
 - **`finalizeMonth`** — snapshots a month's official Top-10 into the
   **immutable** node `competition/{month}/final` and freezes the ranking.
-  Idempotent: an already-finalized month is not overwritten. Once finalized,
+  **Atomic + idempotent** (Firebase transaction): an already-finalized month is
+  never overwritten, even under concurrent admin calls. Once finalized,
   `submitScore` refuses further writes for that period.
 - **`verifyWinners`** — records verification of the Top-3 (from the finalized
   snapshot). `body: { "verified": { "<uid>": { "verified": bool, "note": "" } } }`.
+  `verified` must be exactly `true` (truthy strings are rejected). The month is
+  format-validated before any DB read (no path traversal).
 - **`awardPrizes`** — refuses to award unless all Top-3 are verified, then
-  records the award under `competition/{month}/award`. Prizes are never awarded
-  on client-reported scores alone.
+  records the award under `competition/{month}/award`. **Atomic + idempotent**:
+  an already-recorded award is never overwritten, so duplicate calls cannot
+  award twice. Prizes are never awarded on client-reported scores alone.
+
+All three are `POST`-only and require an admin UID from `config/adminUids`.
+A request for month X never affects month Y (the month is validated and used
+consistently in every DB path).
 
 No unnecessary PII is stored: entries carry `uid`, sanitised `name`, `score`,
 `month`, `timestamp` only.
@@ -111,8 +122,11 @@ config/
 - Per-`$uid` `.validate` documents the schema (`id === $uid`,
   `month === $period`, score in `0..1e12`, name length `0..24`, numeric
   timestamp) and is defense-in-depth if direct writes are ever re-enabled.
-- `archive/$period`, `competition/$period/{final,verification,award}`,
-  `config`: read for authenticated users, **write denied** to clients.
+- `archive/$period`, `competition/$period/{final,verification,award}`:
+  read for authenticated users, **write denied** to clients.
+- `config`: **no client read or write** (`.read: false`, `.write: false`).
+  Admin UIDs are NOT client-readable (information-disclosure hardening); the
+  Cloud Functions read the allowlist via the admin SDK, which bypasses rules.
 
 Deploy:
 
@@ -159,17 +173,31 @@ SDK.
 
 ## 9. Testing
 
-- **Offline C# harness** (`velox-verify/build.sh`): 71 tests covering period
-  math (incl. Dec→Jan boundaries), score validation, name sanitisation,
-  Top-10/tie-breaking, finalize/frozen/idempotent, historical preservation,
-  token expiry, and MiniJson parsing. **GREEN 71/71.**
+- **Offline C# harness** (`velox-verify/build.sh`): 78 tests covering period
+  math (incl. Dec→Jan boundaries), score validation, name sanitisation
+  (incl. Unicode alignment), Top-10/tie-breaking (incl. full-tie name break),
+  best-score preservation (no rewrite on lower score), finalize/frozen/
+  idempotent, historical preservation, token expiry, and MiniJson parsing.
+  **GREEN 78/78.**
 - **Node pure-logic tests** (`firebase/functions/test/functions.test.js`):
-  34 tests for the server-side period/ranking/sanitisation logic.
-  Run `node test/functions.test.js`. **GREEN 34/34.**
+  51 tests for server-side period/ranking/sanitisation logic, the atomic
+  `keepBest` merge, and idempotent `shouldFinalize`/`shouldAward`.
+  Run `node test/functions.test.js`. **GREEN 51/51.**
+- **JavaScript syntax + JSON validation**: `node --check` on every function
+  file; `JSON.parse` on the rules, firebase.json, and package.json. **GREEN.**
 - **Firebase Emulator Suite**: NOT available in this sandbox. Emulator-driven
-  tests (rules enforcement, function HTTP, scheduled rollover) are **BLOCKED**.
-  When a Firebase project/CLI is available, run `firebase emulators:start` and
-  add integration tests against `firebase.json` emulator config.
+  integration tests are **BLOCKED**. Prepared test cases (run when a Firebase
+  CLI + project are available via `firebase emulators:start`):
+  - rules: unauthorized write rejected; cross-UID write rejected; invalid
+    schema rejected; `config` client-read denied.
+  - `submitScore`: missing/expired/mismatched token → 401; invalid/non-integer
+    score → 400; finalized period → 403; concurrent lower-after-higher keeps
+    higher (transaction); replay is idempotent (`updated:false`).
+  - `finalizeMonth`/`verifyWinners`/`awardPrizes`: non-admin → 403; invalid
+    month → 400; GET/other method → 405; duplicate finalize → idempotent;
+    award before verification → 400; duplicate award → idempotent (no double).
+  - `monthlyReset`: Dec→Jan boundary archives the correct prior month;
+    archive-retry does not destroy history.
 
 ## 10. Security notes
 
@@ -179,16 +207,31 @@ SDK.
   as a verified global ranking.
 - Writing a rules JSON or a JS file does **not** deploy it — run
   `firebase deploy` and confirm via the console.
+- **Residual race (documented):** `submitScore` checks finalization before the
+  write; an admin `finalizeMonth` firing in the same instant as a score write
+  could let that write land in a period that is being finalized. The window is
+  tiny and admin-gated; closing it fully would require the finalization flag to
+  live under the same node the score transaction locks (a future hardening).
+- **Token storage:** the refresh token is stored in `PlayerPrefs` (plaintext
+  on most platforms). This is a known limitation of the Unity offline harness;
+  a production build should use the OS keychain/Keystore via a secure-storage
+  plugin. The ID token is kept in memory only.
+- **Reads do not auto-refresh:** `GetTopAsync`/`GetFinalizedAsync` use the
+  current ID token without a pre-refresh; an expired token yields an empty
+  read (fail-safe, no crash). Submissions call `EnsureFreshTokenAsync` first.
 
 ## 11. Status table
 
 | Area | Status |
 |---|---|
 | Google → Firebase token exchange | VERIFIED (contract implemented; live sign-in test BLOCKED — needs real Google/Firebase creds) |
-| Token refresh / expiry handling | BUILT (client refresh; not live-tested) |
-| Score submission (server-authoritative) | BUILT (function + rules + client); live BLOCKED |
-| Monthly ranking (UTC, consistent month id) | VERIFIED (period math tested) |
-| Historical records (archive, immutable) | BUILT (rollover function + rules); live BLOCKED |
-| Server security (rules + functions) | BUILT (artifacts); deployment + emulator tests BLOCKED |
-| Giveaway readiness (finalize/verify/award) | BUILT (admin functions + model); live BLOCKED |
+| Token refresh / expiry handling | VERIFIED (client logic tested; live refresh BLOCKED) |
+| Score submission (server-authoritative) | VERIFIED (atomic best-score transaction + validation; HTTP integration BLOCKED — emulator) |
+| Concurrent submission safety | VERIFIED (pure `keepBest` logic tested; transaction integration BLOCKED — emulator) |
+| Monthly ranking (UTC, consistent month id) | VERIFIED (period math tested, incl. Dec→Jan) |
+| Historical records (archive, immutable) | VERIFIED (archive-before-delete preserves the only copy; rollover integration BLOCKED — emulator) |
+| Server security (rules + functions) | PARTIAL (artifacts hardened: config no client-read, POST-only, month validation, strict bool; rules/functions deployment + emulator tests BLOCKED) |
+| Giveaway readiness (finalize/verify/award) | VERIFIED (atomic idempotent model + pure logic tested; live BLOCKED) |
 | Anti-cheat beyond ownership | NOT BUILT (client can forge own-UID scores — not cheat-proof) |
+| Admin config disclosure | FIXED (`config` no longer client-readable) |
+| Residual finalize-vs-submit race | DOCUMENTED (tiny admin-gated window; future hardening noted) |

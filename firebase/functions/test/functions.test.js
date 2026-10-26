@@ -76,6 +76,47 @@ console.log("== topTen handles null / malformed ==");
 check(L.topTen(null).length === 0, "null -> empty");
 check(L.topTen({ bad: { noScore: true } }).length === 0, "entry without score skipped");
 
+console.log("== topTen full-tie name break ==");
+const tie = {};
+tie["b"] = { id: "b", name: "B", score: 100, timestamp: 1, month: "2026-10" };
+tie["a"] = { id: "a", name: "A", score: 100, timestamp: 1, month: "2026-10" };
+const tied = L.topTen(tie);
+check(tied[0].name === "A", "full tie (score+timestamp) broken by name ordinal");
+
+console.log("== validateScore (integer enforcement) ==");
+check(L.validateScore(100), "integer accepted");
+check(!L.validateScore(100.5), "non-integer rejected");
+check(!L.validateScore(0.1), "fractional rejected");
+check(L.validateScore(0), "zero accepted");
+
+console.log("== sanitizeName (unicode alignment with C#) ==");
+check(L.sanitizeName("café") === "CAFÉ", "accented letters preserved");
+check(L.sanitizeName("Héllo Wörld") === "HÉLLO.WÖRLD", "accented + space -> dot");
+check(L.sanitizeName("  ") === "NEO", "all-spaces -> NEO");
+
+console.log("== keepBest (atomic best-score merge) ==");
+const cNull = L.keepBest(null, { id: "u", name: "N", score: 100, month: "2026-10", timestamp: 1 });
+check(cNull && cNull.score === 100 && cNull.timestamp === 1, "null current -> write candidate");
+const curHigh = { id: "u", name: "N", score: 100, month: "2026-10", timestamp: 5 };
+check(L.keepBest(curHigh, { id: "u", name: "N", score: 50, month: "2026-10", timestamp: 9 }) === undefined,
+  "lower score aborts (no downgrade)");
+check(L.keepBest(curHigh, { id: "u", name: "N", score: 100, month: "2026-10", timestamp: 9 }) === undefined,
+  "equal score aborts (no rewrite, preserves timestamp)");
+const curLow = { id: "u", name: "N", score: 50, month: "2026-10", timestamp: 5 };
+const up = L.keepBest(curLow, { id: "u", name: "N", score: 100, month: "2026-10", timestamp: 9 });
+check(up && up.score === 100, "higher score upgrades");
+check(up && up.timestamp === 5, "upgrade preserves original timestamp (tie-break stability)");
+
+console.log("== shouldFinalize (idempotent finalization) ==");
+check(L.shouldFinalize(null, { month: "2026-10" }) !== undefined, "null current -> write final");
+check(L.shouldFinalize({ month: "2026-10" }, { month: "2026-10" }) === undefined,
+  "existing final -> abort (idempotent, no overwrite)");
+
+console.log("== shouldAward (idempotent awarding) ==");
+check(L.shouldAward(null, { month: "2026-10" }) !== undefined, "null current -> write award");
+check(L.shouldAward({ month: "2026-10" }, { month: "2026-10" }) === undefined,
+  "existing award -> abort (no double award)");
+
 console.log("");
 console.log(`RESULT: ${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);
