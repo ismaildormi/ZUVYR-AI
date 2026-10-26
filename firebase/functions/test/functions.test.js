@@ -140,6 +140,22 @@ check(L.mergeSubmission(openMonth, mk("u1", 50, 9)) === undefined, "open month +
 const closedMonth = { u1: mk("u1", 50, 5), _closed: { closed: true } };
 check(L.mergeSubmission(closedMonth, mk("u2", 999, 9)) === undefined, "closed month + submit -> abort (finalization won)");
 
+// Regression: a submission must NOT drop other players' entries. The RTDB
+// transaction writes the ENTIRE month map back, so if mergeSubmission ever
+// returned a map containing only the candidate, every other player would be
+// silently deleted. This guards that sibling preservation.
+const multiMonth = { u1: mk("u1", 100, 1), u2: mk("u2", 200, 2) };
+const multiMerged = L.mergeSubmission(multiMonth, mk("u3", 50, 3));
+check(multiMerged && multiMerged.u1.score === 100, "merge preserves existing player u1");
+check(multiMerged && multiMerged.u2.score === 200, "merge preserves existing player u2");
+check(multiMerged && multiMerged.u3.score === 50, "merge adds new player u3");
+check(multiMerged._closed === undefined, "merge on open month keeps no closure marker");
+
+const multiUpgraded = L.mergeSubmission(multiMonth, mk("u2", 300, 9));
+check(multiUpgraded && multiUpgraded.u1.score === 100, "upgrade u2 preserves sibling u1");
+check(multiUpgraded && multiUpgraded.u2.score === 300, "upgrade u2 applies new best");
+check(multiUpgraded && multiUpgraded.u2.timestamp === 2, "upgrade u2 preserves original timestamp");
+
 console.log("== buildClosure (finalize transaction update) ==");
 const m1 = { u1: mk("u1", 300, 1), u2: mk("u2", 200, 2) };
 const closed = L.buildClosure(m1, "2026-10", 1000);

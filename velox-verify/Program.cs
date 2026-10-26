@@ -362,6 +362,42 @@ internal static class Program
             Check(PlayerPrefs.GetString("VELOX.Account.RefreshToken", "__NONE__") == "__NONE__",
                 "AccountSession sign-out deletes legacy plaintext refresh token");
         }
+        // 11. Bounded refresh retry: a failing refresh must NOT loop forever and
+        // must NOT silently leave the session authenticated. In the offline
+        // harness UnityWebRequest succeeds but JsonUtility.FromJson returns
+        // null, so Map() throws — exercising the retry/failure path.
+        {
+            PlayerPrefs.Clear();
+            // AccountSession.Awake() refuses a second live instance; reset the
+            // static singleton so this test can construct its own.
+            typeof(AccountSession).GetProperty("Instance",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+                ?.SetValue(null, null);
+            var store = new MemoryCredentialStore { IsSecureStorageAvailable = true };
+            var session = new AccountSession();
+            session.CredentialStore = store;
+            session.firebaseConfig = new FirebaseConfig
+            {
+                enabled = true, webApiKey = "test", projectId = "test",
+                databaseUrl = "https://test.firebaseio.com"
+            };
+            session.MaxRefreshAttempts = 3;
+            session.Awake();
+            session.ApplyTokensAsync(new AuthTokens
+            {
+                refreshToken = "rt-refresh", localId = "u1",
+                idToken = "id-tok", expiresAt = 1 // already expired -> triggers refresh
+            }).GetAwaiter().GetResult();
+
+            bool authErrorFired = false;
+            session.OnAuthError += (msg) => { authErrorFired = true; };
+
+            bool refreshed = session.EnsureFreshTokenAsync().GetAwaiter().GetResult();
+            Check(!refreshed, "failing refresh returns false (not silently authenticated)");
+            Check(authErrorFired, "failing refresh raises OnAuthError (not silent)");
+            Check(session.CurrentIdToken == "id-tok",
+                "old id token retained in memory (no silent replacement on failure)");
+        }
 
         Console.WriteLine();
         Console.WriteLine("RESULT: " + _pass + " passed, " + _fail + " failed");
