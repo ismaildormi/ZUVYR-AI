@@ -22,11 +22,21 @@ while [[ $# -gt 0 ]]; do
         -projectPath)  PROJECT_ROOT="$2"; shift 2 ;;
         -logFile)      LOG_FILE="$2"; shift 2 ;;
         -executeMethod) EXECUTE_METHOD="$2"; shift 2 ;;
-        -batchmode|-quit|-nographics) shift ;;
+        -version)
+            echo "${MOCK_UNITY_VERSION:-2022.3.21f1}"
+            exit 0
+            ;;
+        -batchmode|-quit|-nographics|-accept-apiupdate) shift ;;
         --*) shift ;;
         *) shift ;;
     esac
 done
+
+# No -projectPath given: -version-style invocation already handled above.
+if [[ -z "$LOG_FILE" ]]; then
+    # -version was the only flag; nothing else to do.
+    exit 0
+fi
 
 echo "[mock-unity] project=$PROJECT_ROOT method=$EXECUTE_METHOD" >> "$LOG_FILE"
 
@@ -59,10 +69,15 @@ fi
 
 # Simulate a player build when the build method is called.
 if [[ "$EXECUTE_METHOD" == *"BuildStandaloneBatch"* ]]; then
-    BUILD_DIR="$PROJECT_ROOT/velox-verify/builds/standalone"
-    mkdir -p "$BUILD_DIR"
-    printf '%s\n' "MOCK BUILD ARTIFACT — test double, NOT a real build." > "$BUILD_DIR/VeloxStandalone.exe"
-    echo "[mock-unity] created mock build artifact" >> "$LOG_FILE"
+    if [[ "${MOCK_UNITY_NO_BUILD:-0}" == "1" ]]; then
+        # Simulate Unity exiting 0 but NOT producing a build artifact.
+        echo "[mock-unity] MOCK_UNITY_NO_BUILD=1 — not creating build artifact" >> "$LOG_FILE"
+    else
+        BUILD_DIR="$PROJECT_ROOT/velox-verify/builds/standalone"
+        mkdir -p "$BUILD_DIR"
+        printf '%s\n' "MOCK BUILD ARTIFACT — test double, NOT a real build." > "$BUILD_DIR/VeloxStandalone.exe"
+        echo "[mock-unity] created mock build artifact" >> "$LOG_FILE"
+    fi
 fi
 
 exit 0

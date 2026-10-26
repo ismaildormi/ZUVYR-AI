@@ -70,7 +70,9 @@ namespace VELOX.Editor
         public static void GenerateSceneForBatch()
         {
             BuildScene();
-            ValidateSceneForBatch();
+            if (!ValidateSceneForBatch())
+                throw new System.Exception(
+                    "VELOX scene validation failed: scene file missing or not registered in build settings.");
         }
 
         /// <summary>Validates the scene file exists and is registered in
@@ -125,13 +127,21 @@ namespace VELOX.Editor
             System.IO.Directory.CreateDirectory(outputDir);
 
             string outputPath = System.IO.Path.Combine(outputDir, "VeloxStandalone");
-#if UNITY_STANDALONE_OSX
-            outputPath += ".app";
-#elif UNITY_STANDALONE_LINUX
-            outputPath += ".x86_64";
-#else
-            outputPath += ".exe";
-#endif
+            // Extension must match the REQUESTED build target, not the host platform.
+            // Using #if UNITY_STANDALONE_OSX etc. would produce the wrong extension
+            // when cross-building (e.g. building OSX from a Windows host).
+            switch (target)
+            {
+                case BuildTarget.StandaloneOSX:
+                    outputPath += ".app";
+                    break;
+                case BuildTarget.StandaloneLinux64:
+                    outputPath += ".x86_64";
+                    break;
+                default:
+                    outputPath += ".exe";
+                    break;
+            }
 
             string result = BuildPipeline.BuildPlayer(outputPath, target, BuildOptions.None);
             if (string.IsNullOrEmpty(result))

@@ -59,28 +59,57 @@ detect_unity() {
     return 1
 }
 
+# --- Unity version check (uses -version, no project open required) ----------
+EXPECTED_VERSION="${VELOX_EXPECTED_VERSION:-2022.3.21f1}"
+
+check_unity_version() {
+    local actual
+    actual=$("$UNITY" -version 2>/dev/null | head -1)
+    if [[ -z "$actual" ]]; then
+        echo "WARN: could not determine Unity version (Unity may need activation)."
+        return 1
+    fi
+    if [[ "$actual" == *"$EXPECTED_VERSION"* ]]; then
+        echo "OK: Unity version $actual (matches expected $EXPECTED_VERSION)"
+        return 0
+    fi
+    echo "WARN: Unity version mismatch. Expected $EXPECTED_VERSION, got '$actual'."
+    echo "      Set VELOX_EXPECTED_VERSION to override, or install the expected version."
+    return 1
+}
+
 # --- Compile (batch mode; opening the project compiles it) -----------------
 do_compile() {
     local log="$LOG_DIR/unity-compile.log"
+    local unity_log="$log.unity"
     echo "== Unity compile (batch) ==" | tee "$log"
-    "$UNITY" -batchmode -quit -projectPath "$PROJECT_ROOT" \
-        -logFile "$log" -nographics || {
-        echo "FAIL: Unity compile exited $?" | tee -a "$log"
+    local rc=0
+    "$UNITY" -batchmode -quit -accept-apiupdate \
+        -projectPath "$PROJECT_ROOT" \
+        -logFile "$unity_log" -nographics || rc=$?
+    if [[ -f "$unity_log" ]]; then cat "$unity_log" >> "$log"; fi
+    if [[ $rc -ne 0 ]]; then
+        echo "FAIL: Unity compile exited $rc" | tee -a "$log"
         return 1
-    }
+    fi
     echo "OK: Unity compile" | tee -a "$log"
 }
 
 # --- Scene generation (batch mode; calls the builder via -executeMethod) ---
 do_scene() {
     local log="$LOG_DIR/unity-scene.log"
+    local unity_log="$log.unity"
     echo "== Unity scene generation (batch) ==" | tee "$log"
-    "$UNITY" -batchmode -quit -projectPath "$PROJECT_ROOT" \
+    local rc=0
+    "$UNITY" -batchmode -quit -accept-apiupdate \
+        -projectPath "$PROJECT_ROOT" \
         -executeMethod VELOX.Editor.VeloxSceneBuilder.GenerateSceneForBatch \
-        -logFile "$log" -nographics || {
-        echo "FAIL: Unity scene generation exited $?" | tee -a "$log"
+        -logFile "$unity_log" -nographics || rc=$?
+    if [[ -f "$unity_log" ]]; then cat "$unity_log" >> "$log"; fi
+    if [[ $rc -ne 0 ]]; then
+        echo "FAIL: Unity scene generation exited $rc" | tee -a "$log"
         return 1
-    }
+    fi
     echo "OK: Unity scene generation" | tee -a "$log"
 }
 
@@ -108,15 +137,30 @@ do_validate() {
 # --- Build standalone player (optional; needs the scene in build settings) --
 do_build() {
     local log="$LOG_DIR/unity-build.log"
+    local unity_log="$log.unity"
     local target="${VELOX_BUILD_TARGET:-StandaloneWindows64}"
     echo "== Unity build ($target) ==" | tee "$log"
-    "$UNITY" -batchmode -quit -projectPath "$PROJECT_ROOT" \
+    local rc=0
+    "$UNITY" -batchmode -quit -accept-apiupdate \
+        -projectPath "$PROJECT_ROOT" \
         -executeMethod VELOX.Editor.VeloxSceneBuilder.BuildStandaloneBatch \
-        -logFile "$log" -nographics || {
-        echo "FAIL: Unity build exited $?" | tee -a "$log"
+        -logFile "$unity_log" -nographics || rc=$?
+    if [[ -f "$unity_log" ]]; then cat "$unity_log" >> "$log"; fi
+    if [[ $rc -ne 0 ]]; then
+        echo "FAIL: Unity build exited $rc" | tee -a "$log"
         return 1
-    }
-    echo "OK: Unity build ($target)" | tee -a "$log"
+    fi
+    # Validate build artifact exists (do not report success if output missing).
+    local build_dir="$PROJECT_ROOT/velox-verify/builds/standalone"
+    if [[ ! -d "$build_dir" ]]; then
+        echo "FAIL: build directory not found: $build_dir" | tee -a "$log"
+        return 1
+    fi
+    if [[ -z "$(find "$build_dir" -maxdepth 1 -name 'VeloxStandalone*' 2>/dev/null)" ]]; then
+        echo "FAIL: build artifact not found in $build_dir" | tee -a "$log"
+        return 1
+    fi
+    echo "OK: Unity build ($target) — artifact found" | tee -a "$log"
 }
 
 # --- Existing test suites --------------------------------------------------
@@ -177,7 +221,11 @@ main() {
 
     case "$cmd" in
         detect)
-            if detect_unity; then echo "Unity: $UNITY"; exit 0; fi
+            if detect_unity; then
+                echo "Unity: $UNITY"
+                check_unity_version || echo "WARN: version check failed — proceed with caution."
+                exit 0
+            fi
             echo "FAIL: no Unity Editor found. Set UNITY_EXE or UNITY_ROOT."
             exit 1
             ;;
@@ -201,6 +249,7 @@ main() {
             ;;
         all)
             detect_unity || { echo "FAIL: no Unity found. Set UNITY_EXE or UNITY_ROOT."; exit 1; }
+            check_unity_version || echo "WARN: version mismatch — proceeding anyway."
             do_compile && \
             do_scene && do_validate && \
             do_build && \

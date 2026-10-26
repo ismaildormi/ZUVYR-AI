@@ -137,6 +137,42 @@ else
     bad "all logs created (compile+scene+validate+build+tests)"
 fi
 
+echo "== Mocked: detect with version check (default mock version matches) =="
+if UNITY_EXE="$MOCK" bash "$SCRIPT" detect 2>&1 | grep -q "OK: Unity version"; then
+    ok "detect reports version match"
+else
+    bad "detect reports version match"
+fi
+
+echo "== Mocked: detect with wrong version (warns but still exits 0) =="
+if MOCK_UNITY_VERSION="9999.0.0f1" UNITY_EXE="$MOCK" bash "$SCRIPT" detect 2>&1 | grep -q "WARN: Unity version mismatch"; then
+    ok "detect warns on version mismatch"
+else
+    bad "detect warns on version mismatch"
+fi
+
+echo "== Mocked: build with missing artifact (Unity exits 0 but no file) =="
+# The mock is told to NOT create the build artifact. Unity exits 0,
+# but do_build must detect the missing artifact and fail.
+rm -rf "$WORK/velox-verify/builds"
+if MOCK_UNITY_NO_BUILD=1 UNITY_EXE="$MOCK" UNITY_PROJECT_ROOT="$WORK" VELX_LOG_DIR="$WORK/logs" \
+   bash "$SCRIPT" build >/dev/null 2>&1; then
+    bad "build fails when artifact missing (should exit non-zero)"
+else
+    ok "build fails when artifact missing (exit non-zero)"
+fi
+
+echo "== Mocked: build artifact validation catches stale/empty dir =="
+# Create an empty build dir (no artifact) and confirm build fails.
+rm -rf "$WORK/velox-verify/builds"
+mkdir -p "$WORK/velox-verify/builds/standalone"
+if MOCK_UNITY_NO_BUILD=1 UNITY_EXE="$MOCK" UNITY_PROJECT_ROOT="$WORK" VELX_LOG_DIR="$WORK/logs" \
+   bash "$SCRIPT" build >/dev/null 2>&1; then
+    bad "build fails with empty build dir (should exit non-zero)"
+else
+    ok "build fails with empty build dir (exit non-zero)"
+fi
+
 echo ""
 echo "RESULT: $PASS passed, $FAIL failed"
 [[ $FAIL -eq 0 ]]
