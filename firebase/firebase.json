@@ -1,0 +1,19 @@
+{
+  "firestore": {},
+  "database": {
+    "rules": "rules/leaderboard.rules.json"
+  },
+  "functions": {
+    "source": "functions",
+    "codebase": "default",
+    "runtime": "nodejs20",
+    "timeoutSeconds": 60,
+    "memory": "256MB"
+  },
+  "emulators": {
+    "functions": { "port": 5001 },
+    "database": { "port": 8000 },
+    "auth": { "port": 9099 },
+    "singleProjectTask": true
+  }
+}

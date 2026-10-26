@@ -5,10 +5,53 @@
         ".read": "auth != null",
         ".write": false,
         "$uid": {
-          ".write": "auth != null && auth.uid === $uid",
-          ".validate": "auth != null && auth.uid === $uid && newData.hasChild('id') && newData.hasChild('name') && newData.hasChild('score') && newData.hasChild('month') && newData.hasChild('timestamp')"
+          ".write": false,
+          ".validate": "auth != null && auth.uid === $uid && newData.hasChild('id') && newData.hasChild('name') && newData.hasChild('score') && newData.hasChild('month') && newData.hasChild('timestamp') && newData.child('id').val() === $uid && newData.child('month').val() === $period && newData.child('score').isNumber() && newData.child('score').val() >= 0 && newData.child('score').val() <= 1000000000000 && newData.child('name').val().isString() && newData.child('name').val().length() > 0 && newData.child('name').val().length() <= 24 && newData.child('timestamp').isNumber()",
+          "id": {
+            ".validate": "newData.val() === $uid"
+          },
+          "name": {
+            ".validate": "newData.isString() && newData.val().length() > 0 && newData.val().length() <= 24"
+          },
+          "score": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000000000"
+          },
+          "month": {
+            ".validate": "newData.val() === $period"
+          },
+          "timestamp": {
+            ".validate": "newData.isNumber()"
+          }
         }
       }
+    },
+    "archive": {
+      "$period": {
+        ".read": "auth != null",
+        ".write": false
+      }
+    },
+    "competition": {
+      "$period": {
+        ".read": "auth != null",
+        ".write": false,
+        "final": {
+          ".read": "auth != null",
+          ".write": false
+        },
+        "verification": {
+          ".read": "auth != null",
+          ".write": false
+        },
+        "award": {
+          ".read": "auth != null",
+          ".write": false
+        }
+      }
+    },
+    "config": {
+      ".read": "auth != null",
+      ".write": false
     }
   }
 }

@@ -34,7 +34,8 @@ namespace VELOX.Backend
                 else if (c == ' ') sb.Append('.');
             }
             string result = sb.ToString();
-            if (result.Length > 24) result = result.Substring(0, 24);
+            if (result.Length > CompetitionRules.MaxNameLength)
+                result = result.Substring(0, CompetitionRules.MaxNameLength);
             return result.Length == 0 ? VELOX.Core.GameIdentity.PlayerName : result;
         }
     }
@@ -52,6 +53,8 @@ namespace VELOX.Backend
     {
         public string month = string.Empty;
         public List<LeaderboardEntry> entries = new List<LeaderboardEntry>();
+        /// <summary>Finalization time (epoch ms); 0 for live (non-finalized) buckets.</summary>
+        public long timestamp;
     }
 
     /// <summary>
@@ -78,5 +81,19 @@ namespace VELOX.Backend
 
         /// <summary>Clears the current month's standings (monthly reset).</summary>
         Task ResetCurrentMonthAsync();
+
+        /// <summary>True when the given month has been finalized (ranking frozen).</summary>
+        Task<bool> IsFinalizedAsync(string month);
+
+        /// <summary>
+        /// Requests finalization of a month: an admin-gated operation that
+        /// snapshots the official Top-10 and freezes the ranking for giveaway
+        /// verification. Returns false when finalization is unavailable or
+        /// refused (e.g. already finalized).
+        /// </summary>
+        Task<bool> FinalizeMonthAsync(string month);
+
+        /// <summary>Returns the finalized Top-<paramref name="count"/> snapshot for a month.</summary>
+        Task<IReadOnlyList<LeaderboardEntry>> GetFinalizedAsync(string month, int count);
     }
 }

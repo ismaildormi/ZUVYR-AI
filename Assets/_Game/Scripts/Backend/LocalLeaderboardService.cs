@@ -7,137 +7,293 @@ using UnityEngine;
 
 namespace VELOX.Backend
 {
-    [Serializable]
-    public class LocalLeaderboardSnapshot
-    {
-        public List<MonthBucket> months = new List<MonthBucket>();
-    }
-
     /// <summary>
-    /// Offline monthly leaderboard backed by a JSON file in
-    /// <see cref="Application.persistentDataPath"/>. Fully functional for QA and
-    /// for builds without a backend. Scoped per month; resets are instant.
+    /// Offline, client-authoritative leaderboard used for QA / no-backend builds.
+    /// Scores persist to a local JSON file and month buckets roll over on a
+    /// calendar-month boundary.
+    ///
+    /// SECURITY NOTE: this implementation is client-authoritative and therefore
+    /// CAN be manipulated (a user can edit the JSON file or the service in
+    /// memory). It is only suitable for offline QA. For the official competition
+    /// use <see cref="FirebaseLeaderboardService"/>, which is server-backed.
     /// </summary>
     public class LocalLeaderboardService : ILeaderboardService
     {
-        private readonly string _filePath;
+        [Serializable]
+        private class LocalLeaderboardSnapshot
+        {
+            public List<MonthBucket> months = new List<MonthBucket>();
+            public List<MonthBucket> finalized = new List<MonthBucket>();
+        }
+
+        private static readonly string[] MonthOrder =
+        {
+            "01","02","03","04","05","06","07","08","09","10","11","12"
+        };
+
+        private readonly string _dataFile;
         private readonly Dictionary<string, List<LeaderboardEntry>> _months =
             new Dictionary<string, List<LeaderboardEntry>>();
 
+        // Immutable finalized snapshots, keyed by month. Never cleared by rollover.
+        private readonly Dictionary<string, List<LeaderboardEntry>> _finalized =
+            new Dictionary<string, List<LeaderboardEntry>>();
+        private readonly Dictionary<string, long> _finalizedAt =
+            new Dictionary<string, long>();
+
         public LocalLeaderboardService()
         {
-            _filePath = Path.Combine(Application.persistentDataPath, "velox_leaderboard.json");
+            _dataFile = Path.Combine(Application.persistentDataPath, "velox_leaderboard.json");
+            CurrentMonthKey = CompetitionPeriod.CurrentKey();
             Load();
+            RolloverIfMonthChanged();
         }
-
-        public string CurrentMonthKey => CurrentMonthKeyStatic();
-
-        /// <summary>UTC month key used to scope the competition.</summary>
-        public static string CurrentMonthKeyStatic() => DateTime.UtcNow.ToString("yyyy-MM");
 
         public event Action OnChanged;
 
-        /// <inheritdoc/>
+        public string CurrentMonthKey { get; private set; }
+
+        /// <summary>Current competition month (UTC), for convenience/tests.</summary>
+        public static string CurrentMonthKeyStatic() => CompetitionPeriod.CurrentKey();
+
         public void RaiseChanged() => OnChanged?.Invoke();
 
-        public Task<IReadOnlyList<LeaderboardEntry>> GetTopAsync(int count)
+        public async Task<IReadOnlyList<LeaderboardEntry>> GetTopAsync(int count)
         {
-            List<LeaderboardEntry> list = _months.TryGetValue(CurrentMonthKey, out var bucket)
-                ? new List<LeaderboardEntry>(bucket)
-                : new List<LeaderboardEntry>();
-
-            list.Sort((a, b) =>
-            {
-                int c = b.score.CompareTo(a.score);
-                if (c != 0) return c;
-                int t = a.timestamp.CompareTo(b.timestamp);
-                if (t != 0) return t;
-                return string.CompareOrdinal(a.name, b.name);
-            });
-
-            List<LeaderboardEntry> top = list.Take(Math.Max(1, count)).ToList();
-            return Task.FromResult<IReadOnlyList<LeaderboardEntry>>(top);
+            RolloverIfMonthChanged();
+            var entries = GetEntries(CurrentMonthKey);
+            entries.Sort(CompareEntries);
+            var top = entries.Take(Math.Max(1, count)).ToList();
+            await Task.CompletedTask;
+            return top;
         }
 
-        public Task<bool> SubmitScoreAsync(string name, int score)
+        public async Task<bool> SubmitScoreAsync(string name, int score)
         {
+            RolloverIfMonthChanged();
+
+            // Client-side validation mirrors the server rules (defense-in-depth).
             string safeName = LeaderboardEntry.SanitiseName(name);
-            List<LeaderboardEntry> bucket = EnsureBucket(CurrentMonthKey);
-
-            int existing = bucket.FindIndex(e => string.Equals(e.name, safeName, StringComparison.Ordinal));
-            if (existing >= 0)
+            if (!CompetitionRules.IsValidSubmission(score, safeName, isFinalized: false))
             {
-                if (score > bucket[existing].score) bucket[existing].score = score;
+                Debug.LogError("[VELOX] Local score rejected: invalid score/name (" + score + ").");
+                await Task.CompletedTask;
+                return false;
             }
-            else
+
+            // A finalized period is frozen: no further writes.
+            if (_finalized.ContainsKey(CurrentMonthKey))
             {
-                bucket.Add(new LeaderboardEntry
+                Debug.LogError("[VELOX] Local score rejected: period " + CurrentMonthKey + " is finalized.");
+                await Task.CompletedTask;
+                return false;
+            }
+
+            LeaderboardEntry entry = new LeaderboardEntry
+            {
+                id = string.Empty, // filled after merge
+                name = safeName,
+                score = score,
+                month = CurrentMonthKey,
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            };
+
+            var entries = GetEntries(CurrentMonthKey);
+            bool found = false;
+            for (int i = 0; i < entries.Count; i++)
+            {
+                if (string.Equals(entry.name, entries[i].name, StringComparison.Ordinal))
                 {
-                    id = Guid.NewGuid().ToString("N"),
-                    name = safeName,
-                    score = score,
-                    month = CurrentMonthKey,
-                    timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
-                });
+                    found = true;
+                    // Keep the BEST score per name (no silent downgrade).
+                    if (score > entries[i].score)
+                    {
+                        entry.timestamp = entries[i].timestamp;
+                        entry.id = entries[i].id;
+                        entries[i] = entry;
+                    }
+                    break;
+                }
             }
 
-            Save();
-            OnChanged?.Invoke();
-            return Task.FromResult(true);
-        }
-
-        public Task ResetCurrentMonthAsync()
-        {
-            _months.Remove(CurrentMonthKey);
-            Save();
-            OnChanged?.Invoke();
-            return Task.CompletedTask;
-        }
-
-        private List<LeaderboardEntry> EnsureBucket(string month)
-        {
-            if (!_months.TryGetValue(month, out var bucket))
+            if (!found)
             {
-                bucket = new List<LeaderboardEntry>();
-                _months[month] = bucket;
+                entry.id = Guid.NewGuid().ToString("N").Substring(0, 12);
+                entries.Add(entry);
             }
-            return bucket;
+
+            Save();
+            RaiseChanged();
+            await Task.CompletedTask;
+            return true;
+        }
+
+        /// <summary>
+        /// Finalizes a month: snapshots its Top-10 into an immutable record and
+        /// freezes the ranking. Idempotent — re-finalizing returns true without
+        /// changing the existing snapshot.
+        /// </summary>
+        public async Task<bool> FinalizeMonthAsync(string month)
+        {
+            RolloverIfMonthChanged();
+            month = CompetitionPeriod.IsValidKey(month) ? month : CurrentMonthKey;
+
+            if (_finalized.ContainsKey(month))
+            {
+                await Task.CompletedTask;
+                return true; // idempotent
+            }
+
+            var entries = GetEntries(month);
+            entries.Sort(CompareEntries);
+            var snapshot = entries.Take(10).Select(CopyOf).ToList();
+            _finalized[month] = snapshot;
+            _finalizedAt[month] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            Save();
+            RaiseChanged();
+            await Task.CompletedTask;
+            return true;
+        }
+
+        public async Task<bool> IsFinalizedAsync(string month)
+        {
+            await Task.CompletedTask;
+            return _finalized.ContainsKey(month);
+        }
+
+        public async Task<IReadOnlyList<LeaderboardEntry>> GetFinalizedAsync(string month, int count)
+        {
+            await Task.CompletedTask;
+            if (!_finalized.TryGetValue(month, out var entries))
+                return new List<LeaderboardEntry>();
+
+            // Return an immutable copy so callers cannot mutate the frozen record.
+            var copy = entries.Select(CopyOf).ToList();
+            return copy.Take(Math.Max(1, count)).ToList();
+        }
+
+        public async Task ResetCurrentMonthAsync()
+        {
+            RolloverIfMonthChanged();
+            ClearCurrentMonth();
+            await Task.CompletedTask;
+        }
+
+        /// <summary>Advances to the current UTC month if it has changed.</summary>
+        private void RolloverIfMonthChanged()
+        {
+            string current = CompetitionPeriod.CurrentKey();
+            if (!string.Equals(current, CurrentMonthKey, StringComparison.Ordinal))
+            {
+                CurrentMonthKey = current;
+                ClearCurrentMonth(); // only the new (empty) month; history preserved
+            }
+        }
+
+        /// <summary>
+        /// Clears standings for the current month. Previous months are preserved
+        /// as history (and remain available for finalization), so this is a
+        /// per-period reset, never a global wipe.
+        /// </summary>
+        private void ClearCurrentMonth()
+        {
+            _months[CurrentMonthKey] = new List<LeaderboardEntry>();
+            Save();
+            RaiseChanged();
+        }
+
+        private List<LeaderboardEntry> GetEntries(string month)
+        {
+            if (!_months.TryGetValue(month, out var list))
+            {
+                list = new List<LeaderboardEntry>();
+                _months[month] = list;
+            }
+            return list;
+        }
+
+        private static LeaderboardEntry CopyOf(LeaderboardEntry e) => new LeaderboardEntry
+        {
+            id = e.id,
+            name = e.name,
+            score = e.score,
+            month = e.month,
+            timestamp = e.timestamp
+        };
+
+        private static int CompareEntries(LeaderboardEntry x, LeaderboardEntry y)
+        {
+            // Highest score first; ties broken by earlier submission, then name.
+            if (x.score != y.score) return y.score.CompareTo(x.score);
+            if (x.timestamp != y.timestamp) return x.timestamp.CompareTo(y.timestamp);
+            return string.CompareOrdinal(x.name, y.name);
         }
 
         private void Load()
         {
+            if (!File.Exists(_dataFile)) return;
+
             try
             {
-                if (!File.Exists(_filePath)) return;
-
-                string json = File.ReadAllText(_filePath);
-                LocalLeaderboardSnapshot snapshot = JsonUtility.FromJson<LocalLeaderboardSnapshot>(json);
-                if (snapshot == null || snapshot.months == null) return;
+                string json = File.ReadAllText(_dataFile);
+                var snapshot = JsonUtility.FromJson<LocalLeaderboardSnapshot>(json);
+                if (snapshot == null) return;
 
                 foreach (MonthBucket bucket in snapshot.months)
-                    if (!string.IsNullOrEmpty(bucket.month))
-                        _months[bucket.month] = bucket.entries ?? new List<LeaderboardEntry>();
+                    _months[bucket.month] = bucket.entries ?? new List<LeaderboardEntry>();
+
+                foreach (MonthBucket bucket in snapshot.finalized)
+                {
+                    _finalized[bucket.month] = bucket.entries ?? new List<LeaderboardEntry>();
+                    _finalizedAt[bucket.month] = bucket.timestamp;
+                }
             }
             catch (Exception e)
             {
-                Debug.LogWarning("[VELOX] Failed to load local leaderboard: " + e.Message);
+                Debug.LogError("[VELOX] Failed to load local leaderboard: " + e.Message);
+                _months.Clear();
             }
         }
 
         private void Save()
         {
-            try
-            {
-                LocalLeaderboardSnapshot snapshot = new LocalLeaderboardSnapshot();
-                foreach (KeyValuePair<string, List<LeaderboardEntry>> kv in _months)
-                    snapshot.months.Add(new MonthBucket { month = kv.Key, entries = kv.Value });
+            Directory.CreateDirectory(Application.persistentDataPath);
 
-                File.WriteAllText(_filePath, JsonUtility.ToJson(snapshot));
-            }
-            catch (Exception e)
+            var snapshot = new LocalLeaderboardSnapshot
             {
-                Debug.LogWarning("[VELOX] Failed to save local leaderboard: " + e.Message);
+                months = new List<MonthBucket>(),
+                finalized = new List<MonthBucket>()
+            };
+
+            foreach (KeyValuePair<string, List<LeaderboardEntry>> kv in _months)
+            {
+                // Store the most recent 12 months in chronological order.
+                if (!MonthOrder.Contains(kv.Key.Length >= 7 ? kv.Key.Substring(5) : string.Empty))
+                    continue;
+                snapshot.months.Add(new MonthBucket { month = kv.Key, entries = kv.Value });
             }
+
+            snapshot.months = snapshot.months
+                .OrderBy(b => b.month, StringComparer.Ordinal)
+                .TakeLast(12)
+                .ToList();
+
+            foreach (KeyValuePair<string, List<LeaderboardEntry>> kv in _finalized)
+            {
+                snapshot.finalized.Add(new MonthBucket
+                {
+                    month = kv.Key,
+                    entries = kv.Value,
+                    timestamp = _finalizedAt.TryGetValue(kv.Key, out long t) ? t : 0L
+                });
+            }
+
+            snapshot.finalized = snapshot.finalized
+                .OrderBy(b => b.month, StringComparer.Ordinal)
+                .ToList();
+
+            File.WriteAllText(_dataFile, JsonUtility.ToJson(snapshot));
         }
     }
 }

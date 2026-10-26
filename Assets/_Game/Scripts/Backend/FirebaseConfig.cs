@@ -29,6 +29,22 @@ namespace VELOX.Backend
         /// </summary>
         public string monthlyResetEndpoint = string.Empty;
 
+        /// <summary>
+        /// Secured Cloud Function HTTPS endpoint that submits a score
+        /// (server-authoritative). The client POSTs its name/score with a
+        /// Firebase ID token; the function verifies the caller, computes the
+        /// period, validates, and writes via the admin SDK. Clients never write
+        /// to the Realtime Database directly.
+        /// </summary>
+        public string submitScoreEndpoint = string.Empty;
+
+        /// <summary>
+        /// HTTPS Cloud Function (admin-gated) that finalizes a month: snapshots
+        /// the official Top-10 into an immutable node and freezes ranking for
+        /// giveaway verification.
+        /// </summary>
+        public string finalizeEndpoint = string.Empty;
+
         /// <summary>Disable all remote calls (offline / QA mode).</summary>
         public bool enabled = true;
 

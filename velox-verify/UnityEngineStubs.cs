@@ -490,6 +490,8 @@ namespace UnityEngine.Networking
         public static UnityWebRequest Put(string uri, string body) => new UnityWebRequest();
         public static UnityWebRequest Put(string uri, byte[] body) => new UnityWebRequest();
 
+        public void SetRequestHeader(string name, string value) { }
+
         public UnityWebRequestAsyncOperation SendWebRequest() => new UnityWebRequestAsyncOperation();
         public Result result => Result.Success;
         public string error => "";

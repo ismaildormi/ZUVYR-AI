@@ -147,6 +147,80 @@ internal static class Program
         float slideTop = slideY + ProceduralVisuals.ObstacleHalfSize(Obstacle.Kind.Slideable).y;
         Check(blockTop > slideTop, "block is the tallest obstacle");
 
+        Console.WriteLine("== CompetitionPeriod (month/year boundaries) ==");
+        Check(CompetitionPeriod.IsValidKey("2026-10"), "valid key 2026-10");
+        Check(!CompetitionPeriod.IsValidKey("2026-13"), "invalid month 13 rejected");
+        Check(!CompetitionPeriod.IsValidKey("2026-00"), "invalid month 00 rejected");
+        Check(!CompetitionPeriod.IsValidKey("bad"), "malformed key rejected");
+        Check(CompetitionPeriod.PreviousKey("2026-01") == "2025-12", "Jan -> previous Dec (year boundary)");
+        Check(CompetitionPeriod.PreviousKey("2026-12") == "2026-11", "Dec -> Nov");
+        Check(CompetitionPeriod.PreviousKey("2020-01") == "2019-12", "year rollover 2020->2019");
+        Check(CompetitionPeriod.Timezone == "UTC", "single documented timezone UTC");
+
+        Console.WriteLine("== CompetitionRules (score validation) ==");
+        Check(CompetitionRules.IsValidScore(0), "score 0 valid");
+        Check(CompetitionRules.IsValidScore(1000000), "large score valid");
+        Check(!CompetitionRules.IsValidScore(-1), "negative score rejected");
+        Check(!CompetitionRules.IsValidScore(CompetitionRules.MaxScore + 1), "overflow score rejected");
+        Check(CompetitionRules.IsValidSubmission(100, "NEO", false), "valid submission accepted");
+        Check(!CompetitionRules.IsValidSubmission(100, "NEO", true), "finalized period rejects write");
+
+        Console.WriteLine("== AuthTokens expiry ==");
+        long nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var fresh = new AuthTokens { expiresAt = nowMs + 120000L };
+        Check(!fresh.IsExpired(nowMs), "future token not expired");
+        var old = new AuthTokens { expiresAt = nowMs - 1000L };
+        Check(old.IsExpired(nowMs), "past token expired");
+        var unknown = new AuthTokens { expiresAt = 0L };
+        Check(!unknown.IsExpired(nowMs), "unknown-expiry token not expired");
+
+        Console.WriteLine("== Validation rejection ==");
+        FreshService(out svc);
+        Check(!svc.SubmitScoreAsync("X", -5).GetAwaiter().GetResult(), "negative score rejected");
+        Check(svc.SubmitScoreAsync("", 100).GetAwaiter().GetResult(), "empty name falls back to NEO (accepted)");
+        top = svc.GetTopAsync(10).GetAwaiter().GetResult();
+        Check(top.Count == 1 && top[0].name == "NEO" && top[0].score == 100, "empty-name score stored as NEO");
+
+        Console.WriteLine("== Finalize + frozen + idempotent ==");
+        FreshService(out svc);
+        for (int i = 0; i < 12; i++)
+            svc.SubmitScoreAsync("F" + i, (i + 1) * 100).GetAwaiter().GetResult();
+        Check(!svc.IsFinalizedAsync(svc.CurrentMonthKey).GetAwaiter().GetResult(), "not finalized before");
+        Check(svc.FinalizeMonthAsync(svc.CurrentMonthKey).GetAwaiter().GetResult(), "finalize succeeds");
+        Check(svc.IsFinalizedAsync(svc.CurrentMonthKey).GetAwaiter().GetResult(), "finalized after");
+        var final = svc.GetFinalizedAsync(svc.CurrentMonthKey, 10).GetAwaiter().GetResult();
+        Check(final.Count == 10, "finalized snapshot holds Top-10");
+        Check(final[0].score == 1200, "finalized #1 is highest score");
+        Check(!svc.SubmitScoreAsync("Late", 9999).GetAwaiter().GetResult(), "write to finalized period rejected");
+        Check(svc.FinalizeMonthAsync(svc.CurrentMonthKey).GetAwaiter().GetResult(), "re-finalize idempotent (true)");
+        var final2 = svc.GetFinalizedAsync(svc.CurrentMonthKey, 10).GetAwaiter().GetResult();
+        Check(final2.Count == 10 && final2[0].score == 1200, "snapshot unchanged after re-finalize");
+
+        Console.WriteLine("== Historical preservation ==");
+        FreshService(out svc);
+        var monthsField = typeof(LocalLeaderboardService).GetField("_months", BindingFlags.NonPublic | BindingFlags.Instance);
+        var histMonths = (Dictionary<string, List<LeaderboardEntry>>)monthsField.GetValue(svc);
+        histMonths["2020-01"] = new List<LeaderboardEntry>
+        {
+            new LeaderboardEntry { id = "h1", name = "HIST", score = 9999, month = "2020-01", timestamp = 1 },
+            new LeaderboardEntry { id = "h2", name = "HIST2", score = 1, month = "2020-01", timestamp = 2 }
+        };
+        Check(svc.FinalizeMonthAsync("2020-01").GetAwaiter().GetResult(), "finalize historical month");
+        var hist = svc.GetFinalizedAsync("2020-01", 10).GetAwaiter().GetResult();
+        Check(hist.Count == 2 && hist[0].score == 9999, "historical snapshot preserved & ranked");
+        Check(!svc.IsFinalizedAsync(svc.CurrentMonthKey).GetAwaiter().GetResult(), "current month not finalized by historical finalize");
+        svc.ResetCurrentMonthAsync().GetAwaiter().GetResult();
+        var histAfter = svc.GetFinalizedAsync("2020-01", 10).GetAwaiter().GetResult();
+        Check(histAfter.Count == 2, "reset clears current month but preserves finalized history");
+
+        Console.WriteLine("== MiniJson array (finalized snapshot) ==");
+        string snap = "{\"month\":\"2026-09\",\"entries\":[{\"id\":\"u1\",\"name\":\"ALICE\",\"score\":300,\"month\":\"2026-09\",\"timestamp\":5},{\"id\":\"u2\",\"name\":\"BOB\",\"score\":200,\"month\":\"2026-09\",\"timestamp\":6}]}";
+        var root = MiniJson.Parse(snap) as System.Collections.Generic.Dictionary<string, object>;
+        object entriesNode = root != null && root.TryGetValue("entries", out var en) ? en : null;
+        var arr = MiniJson.ToEntryArray(entriesNode);
+        Check(arr.Count == 2, "MiniJson parses finalized array");
+        Check(arr[0].score == 300 && arr[0].name == "ALICE", "array entry fields extracted in order");
+
         Console.WriteLine();
         Console.WriteLine("RESULT: " + _pass + " passed, " + _fail + " failed");
         Environment.Exit(_fail == 0 ? 0 : 1);

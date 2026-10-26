@@ -49,6 +49,33 @@ namespace VELOX.Backend
             return list;
         }
 
+        /// <summary>
+        /// Converts a Realtime Database finalized-snapshot array (ranked entries)
+        /// into a list of leaderboard entries, preserving order.
+        /// </summary>
+        public static List<LeaderboardEntry> ToEntryArray(object node)
+        {
+            var list = new List<LeaderboardEntry>();
+            if (node is List<object> arr)
+            {
+                foreach (object item in arr)
+                {
+                    if (item is Dictionary<string, object> e)
+                    {
+                        list.Add(new LeaderboardEntry
+                        {
+                            id = AsString(e, "id") ?? string.Empty,
+                            name = AsString(e, "name") ?? string.Empty,
+                            score = AsInt(e, "score"),
+                            month = AsString(e, "month") ?? string.Empty,
+                            timestamp = AsLong(e, "timestamp")
+                        });
+                    }
+                }
+            }
+            return list;
+        }
+
         private static void SkipWs(string s, ref int i)
         {
             while (i < s.Length && char.IsWhiteSpace(s[i])) i++;

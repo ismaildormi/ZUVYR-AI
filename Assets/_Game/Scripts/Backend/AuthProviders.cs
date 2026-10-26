@@ -27,10 +27,13 @@ namespace VELOX.Backend
     {
         public bool success;
         public PlayerProfile profile;
+        public AuthTokens tokens;
         public string error;
 
-        public static AuthResult Ok(PlayerProfile p) => new AuthResult { success = true, profile = p };
-        public static AuthResult Fail(string message) => new AuthResult { success = false, error = message };
+        public static AuthResult Ok(PlayerProfile p, AuthTokens t = null) =>
+            new AuthResult { success = true, profile = p, tokens = t };
+        public static AuthResult Fail(string message) =>
+            new AuthResult { success = false, error = message };
     }
 
     /// <summary>
@@ -46,7 +49,9 @@ namespace VELOX.Backend
     /// <summary>
     /// Minimal Firebase Auth REST client. Exchanges a Google ID token (or a
     /// fresh anonymous sign-up) for a Firebase identity using only
-    /// <see cref="UnityWebRequest"/> — no external plugins required.
+    /// <see cref="UnityWebRequest"/> — no external plugins required. The
+    /// returned <see cref="AuthTokens"/> carry the Firebase ID token (needed to
+    /// authenticate RTDB requests), the refresh token, and the stable UID.
     /// </summary>
     public static class FirebaseAuthClient
     {
@@ -61,6 +66,12 @@ namespace VELOX.Backend
             public bool returnSecureToken = true;
         }
 
+        [Serializable] private class RefreshRequest
+        {
+            public string refreshToken;
+            public bool returnSecureToken = true;
+        }
+
         [Serializable] private class FirebaseAuthResponse
         {
             public string localId = null;
@@ -69,10 +80,15 @@ namespace VELOX.Backend
             public string email = null;
             public string displayName = null;
             public string photoUrl = null;
+            public string expiresIn = null; // seconds, on refresh
         }
 
-        /// <summary>Exchanges a Google ID token for a Firebase user.</summary>
-        public static Task<PlayerProfile> SignInWithGoogleAsync(string googleIdToken, FirebaseConfig config)
+        /// <summary>
+        /// Exchanges a Google ID token for a Firebase identity. Flow:
+        /// Google ID token -> Firebase <c>signInWithIdToken</c> -> Firebase
+        /// ID token (the token RTDB rules authenticate against).
+        /// </summary>
+        public static Task<AuthTokens> SignInWithGoogleAsync(string googleIdToken, FirebaseConfig config)
         {
             string url =
                 "https://identitytoolkit.googleapis.com/v1/accounts/signInWithIdToken" +
@@ -82,17 +98,31 @@ namespace VELOX.Backend
                 idToken = googleIdToken,
                 requestUri = config.requestUri
             });
-            return PostAsync(url, body).ContinueWith(t => Map(t.Result, config));
+            return PostAsync(url, body).ContinueWith(t => Map(t.Result, "google"));
         }
 
         /// <summary>Creates (or signs in) an anonymous Firebase user.</summary>
-        public static Task<PlayerProfile> SignInAnonymousAsync(FirebaseConfig config)
+        public static Task<AuthTokens> SignInAnonymousAsync(FirebaseConfig config)
         {
             string url =
                 "https://identitytoolkit.googleapis.com/v1/accounts:signUp" +
                 "?key=" + Uri.EscapeDataString(config.webApiKey);
             string body = JsonUtility.ToJson(new SignUpRequest { returnSecureToken = true });
-            return PostAsync(url, body).ContinueWith(t => Map(t.Result, config, anonymous: true));
+            return PostAsync(url, body).ContinueWith(t => Map(t.Result, "anonymous"));
+        }
+
+        /// <summary>
+        /// Exchanges a refresh token for a fresh Firebase ID token. Used to keep
+        /// sessions alive without re-prompting the player; expiry/refresh is
+        /// handled here rather than letting expired ID tokens fail silently.
+        /// </summary>
+        public static Task<AuthTokens> RefreshTokenAsync(string refreshToken, FirebaseConfig config)
+        {
+            string url =
+                "https://securetoken.googleapis.com/v1/accounts/refreshToken" +
+                "?key=" + Uri.EscapeDataString(config.webApiKey);
+            string body = JsonUtility.ToJson(new RefreshRequest { refreshToken = refreshToken });
+            return PostAsync(url, body).ContinueWith(t => Map(t.Result, "refresh"));
         }
 
         private static async Task<FirebaseAuthResponse> PostAsync(string url, string body)
@@ -114,18 +144,65 @@ namespace VELOX.Backend
             }
         }
 
-        private static PlayerProfile Map(FirebaseAuthResponse r, FirebaseConfig config, bool anonymous = false)
+        private static AuthTokens Map(FirebaseAuthResponse r, string provider)
         {
-            if (r == null) throw new InvalidOperationException("Empty Firebase Auth response.");
+            if (r == null || string.IsNullOrEmpty(r.idToken))
+                throw new InvalidOperationException("Empty Firebase Auth response.");
 
-            return new PlayerProfile
+            AuthTokens tokens = new AuthTokens
             {
+                idToken = r.idToken,
+                refreshToken = r.refreshToken,
                 localId = r.localId,
                 displayName = r.displayName,
                 email = r.email,
                 photoUrl = r.photoUrl,
-                provider = anonymous ? "anonymous" : "google"
+                provider = provider
             };
+
+            tokens.expiresAt = DecodeExp(r.idToken);
+            if (tokens.expiresAt <= 0L && !string.IsNullOrEmpty(r.expiresIn)
+                && long.TryParse(r.expiresIn, out long seconds))
+                tokens.expiresAt = DateTimeOffset.UtcNow.AddSeconds(seconds).ToUnixTimeMilliseconds();
+
+            if (tokens.expiresAt <= 0L)
+                tokens.expiresAt = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeMilliseconds(); // Firebase ID tokens last ~1h
+
+            return tokens;
+        }
+
+        /// <summary>
+        /// Decodes the JWT <c>exp</c> claim (epoch seconds) from a Firebase ID
+        /// token. Returns 0 when the token cannot be decoded.
+        /// </summary>
+        private static long DecodeExp(string idToken)
+        {
+            try
+            {
+                string[] parts = idToken.Split('.');
+                if (parts.Length < 2) return 0L;
+
+                string payload = Base64UrlDecode(parts[1]);
+                var obj = MiniJson.Parse(payload) as System.Collections.Generic.Dictionary<string, object>;
+                if (obj != null && obj.TryGetValue("exp", out object v) && v is double d)
+                    return (long)d * 1000L; // seconds -> ms
+            }
+            catch
+            {
+                // Fall through; the caller applies the 1-hour default.
+            }
+            return 0L;
+        }
+
+        private static string Base64UrlDecode(string s)
+        {
+            s = s.Replace('-', '+').Replace('_', '/');
+            switch (s.Length % 4)
+            {
+                case 2: s += "=="; break;
+                case 3: s += "="; break;
+            }
+            return System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(s));
         }
     }
 
@@ -196,12 +273,12 @@ namespace VELOX.Backend
                     }
                     else
                     {
-                        PlayerProfile anon = await FirebaseAuthClient.SignInAnonymousAsync(config);
-                        return AuthResult.Ok(anon);
+                        AuthTokens anon = await FirebaseAuthClient.SignInAnonymousAsync(config);
+                        return AuthResult.Ok(anon.ToProfile(), anon);
                     }
 
-                    PlayerProfile profile = await FirebaseAuthClient.SignInWithGoogleAsync(idToken, config);
-                    return AuthResult.Ok(profile);
+                    AuthTokens tokens = await FirebaseAuthClient.SignInWithGoogleAsync(idToken, config);
+                    return AuthResult.Ok(tokens.ToProfile(), tokens);
                 }
                 catch (Exception e)
                 {
