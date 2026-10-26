@@ -479,6 +479,17 @@ namespace UnityEngine.UI
         public FitMode verticalFit { get; set; }
         public FitMode horizontalFit { get; set; }
     }
+
+    // Mirrors UnityEngine.UI.LayoutElement. ignoreLayout=true opts a child out
+    // of its parent LayoutGroup so it keeps its own stretch-to-parent size
+    // (e.g. a full-row background highlight) instead of being positioned by the
+    // layout group.
+    public class LayoutElement : UnityEngine.Behaviour
+    {
+        public bool ignoreLayout { get; set; }
+        public bool flexibleWidth { get; set; }
+        public bool flexibleHeight { get; set; }
+    }
 }
 
 namespace UnityEngine.Networking

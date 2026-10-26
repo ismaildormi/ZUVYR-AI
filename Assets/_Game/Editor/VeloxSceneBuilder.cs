@@ -376,14 +376,14 @@ namespace VELOX.Editor
 
             LeaderboardRow row = go.AddComponent<LeaderboardRow>();
 
-            TMP_Text rank = MakeText(go.transform, "01", 20f, Color.white, TextAlignmentOptions.Left);
-            rank.rectTransform.sizeDelta = new Vector2(56f, 32f);
+            TMP_Text rank = MakeFixedText(go.transform, "01", 20f, Color.white,
+                TextAlignmentOptions.Left, new Vector2(56f, 32f));
 
-            TMP_Text name = MakeText(go.transform, "NAME", 20f, Color.white, TextAlignmentOptions.Left);
-            name.rectTransform.sizeDelta = new Vector2(190f, 32f);
+            TMP_Text name = MakeFixedText(go.transform, "NAME", 20f, Color.white,
+                TextAlignmentOptions.Left, new Vector2(190f, 32f));
 
-            TMP_Text score = MakeText(go.transform, "000000", 20f, Color.white, TextAlignmentOptions.Right);
-            score.rectTransform.sizeDelta = new Vector2(90f, 32f);
+            TMP_Text score = MakeFixedText(go.transform, "000000", 20f, Color.white,
+                TextAlignmentOptions.Right, new Vector2(90f, 32f));
 
             GameObject hi = new GameObject("Highlight");
             hi.transform.SetParent(go.transform);
@@ -395,6 +395,13 @@ namespace VELOX.Editor
             hrt.anchorMin = Vector2.zero;
             hrt.anchorMax = Vector2.one;
             hrt.sizeDelta = Vector2.zero;
+            // Full-row background: opt the highlight OUT of the row's
+            // HorizontalLayoutGroup (ignoreLayout=true) so its stretch-to-parent
+            // rect stays anchored at the row origin instead of being offset to
+            // the far right (by the rank/name/score preferred widths) and
+            // rendered mostly off-screen.
+            LayoutElement le = hi.AddComponent<LayoutElement>();
+            le.ignoreLayout = true;
 
             row.rankText = rank;
             row.nameText = name;
@@ -490,13 +497,39 @@ namespace VELOX.Editor
             return t;
         }
 
+        /// <summary>
+        /// Like <see cref="MakeText"/> but with NON-stretch anchors
+        /// (anchorMin = anchorMax = (0,0)) so the explicit <paramref name="size"/>
+        /// actually applies. <see cref="MakeText"/> uses stretch-both anchors
+        /// (anchorMin=(0,0), anchorMax=(1,1)) which ignore sizeDelta; for a
+        /// fixed-size text slot inside a LayoutGroup (e.g. leaderboard rank /
+        /// name / score) the stretch would make each text fill the whole row
+        /// and the layout group would offset it, pushing the right-aligned score
+        /// off-screen. Non-stretch anchors keep each text at its intended size.
+        /// </summary>
+        private static TMP_Text MakeFixedText(Transform parent, string text, float fontSize,
+            Color color, TextAlignmentOptions alignment, Vector2 size)
+        {
+            TMP_Text t = MakeText(parent, text, fontSize, color, alignment);
+            t.rectTransform.anchorMin = Vector2.zero;
+            t.rectTransform.anchorMax = Vector2.zero;
+            t.rectTransform.sizeDelta = size;
+            return t;
+        }
+
         private static Button MakeButton(Transform parent, string label, Color bg)
         {
             GameObject go = new GameObject("B");
             go.transform.SetParent(parent);
             RectTransform rt = go.AddComponent<RectTransform>();
             rt.anchorMin = Vector2.zero;
-            rt.anchorMax = Vector2.one;
+            // Stretch width only (anchorMax.x=1) and keep a fixed height
+            // (anchorMax.y=0 -> top-anchored, height = sizeDelta.y = 46).
+            // Stretching BOTH axes (anchorMax=(1,1)) ignores sizeDelta and makes
+            // every button fill the entire parent panel height, so the menu /
+            // pause / game-over buttons would all overlap. This is the standard
+            // Unity pattern for a full-width fixed-height button in a layout.
+            rt.anchorMax = new Vector2(1f, 0f);
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.sizeDelta = new Vector2(0f, 46f);
 
