@@ -188,9 +188,21 @@ namespace VELOX.Backend
         {
             _tokens = null;
             _profile = null;
-            _ = ClearPersistedAsync();
+            // Fire profile change events immediately (UI must update without waiting
+            // on async credential cleanup). The cleanup runs in the background; a
+            // failure is logged but does NOT re-authenticate the session.
             OnProfileChanged?.Invoke(null);
             OnLoginChanged?.Invoke();
+            // Attempt credential cleanup; log error if it fails (the refresh token
+            // may still be on disk — the user must re-login on next launch).
+            _ = ClearPersistedAsync().ContinueWith(t =>
+            {
+                if (t.IsFaulted || !t.Result)
+                    Debug.LogError(
+                        "[VELOX] Sign-out credential cleanup failed; refresh token may still " +
+                        "be on disk. The session is signed out in memory, but re-authentication " +
+                        "is required on next launch.");
+            });
         }
 
         private IAuthProvider ResolveProvider()
@@ -279,18 +291,20 @@ namespace VELOX.Backend
                 _ = RefreshSessionAsync();
         }
 
-        internal async Task ClearPersistedAsync()
+        internal async Task<bool> ClearPersistedAsync()
         {
             // Remove the refresh token from secure storage + delete the legacy
             // plaintext key (CredentialPersistence.ClearRefreshTokenAsync), then
-            // clear the profile/localId PlayerPrefs keys.
-            await _credentials.ClearRefreshTokenAsync();
+            // clear the profile/localId PlayerPrefs keys. Returns true only when
+            // the secure store removal succeeded (or was already absent).
+            bool credentialsCleared = await _credentials.ClearRefreshTokenAsync();
             PlayerPrefs.DeleteKey(Prefix + "LocalId");
             PlayerPrefs.DeleteKey(Prefix + "DisplayName");
             PlayerPrefs.DeleteKey(Prefix + "Email");
             PlayerPrefs.DeleteKey(Prefix + "PhotoUrl");
             PlayerPrefs.DeleteKey(Prefix + "Provider");
             PlayerPrefs.Save();
+            return credentialsCleared;
         }
 
         void OnDestroy()

@@ -42,7 +42,8 @@ namespace VELOX.Backend
         /// <summary>
         /// Persist the refresh token in secure storage. Returns true only when
         /// durably persisted. When secure storage is unavailable or the write
-        /// fails, returns false and does NOT write plaintext.
+        /// fails (including a thrown exception), returns false and does NOT
+        /// write plaintext.
         /// </summary>
         public async Task<bool> StoreRefreshTokenAsync(string refreshToken)
         {
@@ -57,7 +58,19 @@ namespace VELOX.Backend
                 return false;
             }
 
-            bool ok = await _store.StoreAsync(StoreKey, refreshToken);
+            bool ok;
+            try
+            {
+                ok = await _store.StoreAsync(StoreKey, refreshToken);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(
+                    "[VELOX] Secure credential store write threw; refresh token NOT persisted: " +
+                    e.Message);
+                return false;
+            }
+
             if (!ok)
             {
                 Debug.LogError(
@@ -70,15 +83,31 @@ namespace VELOX.Backend
         /// Load the refresh token. First tries the secure store; if absent,
         /// attempts to migrate the legacy plaintext PlayerPrefs key into the
         /// verified secure store (then deletes the plaintext). Returns null if
-        /// no token is available, if migration fails, or if secure storage is
-        /// unavailable (blocked — no plaintext fallback).
+        /// no token is available, if migration fails, if the secure store
+        /// throws (corrupted data), or if secure storage is unavailable
+        /// (blocked — no plaintext fallback).
         /// </summary>
         public async Task<string> LoadRefreshTokenAsync()
         {
             // 1. Secure store.
             if (IsSecureStorageAvailable)
             {
-                string secure = await _store.RetrieveAsync(StoreKey);
+                string secure = null;
+                try
+                {
+                    secure = await _store.RetrieveAsync(StoreKey);
+                }
+                catch (Exception e)
+                {
+                    // Corrupted or unreadable secure data. Do NOT fall back to
+                    // plaintext — the secure store may hold a newer token that
+                    // was tampered with, and using the legacy plaintext would
+                    // be a silent plaintext fallback. Return null (forces re-login).
+                    Debug.LogError(
+                        "[VELOX] Secure credential store read threw (corrupted or unreadable " +
+                        "data); refresh token NOT loaded. Re-login required: " + e.Message);
+                    return null;
+                }
                 if (!string.IsNullOrEmpty(secure)) return secure;
             }
 
@@ -122,14 +151,39 @@ namespace VELOX.Backend
         /// <summary>
         /// Remove the refresh token from the secure store and delete the legacy
         /// plaintext key. Safe to call when secure storage is unavailable.
+        /// Returns true only when both the secure store removal and the
+        /// plaintext deletion succeeded (or were already absent). Returns false
+        /// if the secure store removal threw or failed — the caller must not
+        /// claim complete deletion.
         /// </summary>
-        public async Task ClearRefreshTokenAsync()
+        public async Task<bool> ClearRefreshTokenAsync()
         {
+            bool secureOk = true;
             if (IsSecureStorageAvailable)
-                await _store.RemoveAsync(StoreKey);
+            {
+                try
+                {
+                    secureOk = await _store.RemoveAsync(StoreKey);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(
+                        "[VELOX] Secure credential store remove threw during sign-out; " +
+                        "refresh token may still be on disk: " + e.Message);
+                    secureOk = false;
+                }
+            }
 
             PlayerPrefs.DeleteKey(Prefix + RefreshTokenKey);
             PlayerPrefs.Save();
+
+            if (!secureOk)
+            {
+                Debug.LogError(
+                    "[VELOX] Sign-out credential cleanup incomplete: secure store removal failed. " +
+                    "The refresh token may still be on disk.");
+            }
+            return secureOk;
         }
     }
 }

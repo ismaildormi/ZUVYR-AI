@@ -51,11 +51,25 @@ namespace VELOX.Backend
         /// secure-store write failure) without consuming availability.</summary>
         public bool FailNextStore { get; set; }
 
+        /// <summary>Test hook: when true, StoreAsync throws (simulates a
+        /// secure-store crash such as a Keystore exception).</summary>
+        public bool ThrowOnStore { get; set; }
+
+        /// <summary>Test hook: when true, RetrieveAsync throws (simulates
+        /// corrupted or unreadable stored data).</summary>
+        public bool ThrowOnRetrieve { get; set; }
+
+        /// <summary>Test hook: when true, RemoveAsync throws (simulates a
+        /// secure-store delete failure).</summary>
+        public bool ThrowOnRemove { get; set; }
+
         public Dictionary<string, string> Data { get; } = new Dictionary<string, string>();
 
         public Task<bool> StoreAsync(string key, string value)
         {
             if (!IsSecureStorageAvailable) return Task.FromResult(false);
+            if (ThrowOnStore) return Task.FromException<bool>(
+                new Exception("Simulated secure-store crash on store"));
             if (FailNextStore) { FailNextStore = false; return Task.FromResult(false); }
             Data[key] = value;
             return Task.FromResult(true);
@@ -64,12 +78,16 @@ namespace VELOX.Backend
         public Task<string> RetrieveAsync(string key)
         {
             if (!IsSecureStorageAvailable) return Task.FromResult<string>(null);
+            if (ThrowOnRetrieve) return Task.FromException<string>(
+                new Exception("Simulated secure-store crash on retrieve (corrupted data)"));
             return Task.FromResult(Data.TryGetValue(key, out var v) ? v : null);
         }
 
         public Task<bool> RemoveAsync(string key)
         {
             if (!IsSecureStorageAvailable) return Task.FromResult(false);
+            if (ThrowOnRemove) return Task.FromException<bool>(
+                new Exception("Simulated secure-store crash on remove"));
             Data.Remove(key);
             return Task.FromResult(true);
         }

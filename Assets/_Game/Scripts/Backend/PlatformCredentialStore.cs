@@ -94,19 +94,29 @@ namespace VELOX.Backend
 #if UNITY_ANDROID
         private static Task<bool> StoreAndroidAsync(string plaintext)
         {
-            using (var keyStore = new AndroidJavaObject("java.security.KeyStore"))
+            try
             {
-                keyStore.CallStatic("load", (object)null);
-                if (!IsKeyPresent(keyStore))
-                    GenerateKey(keyStore);
+                using (var keyStore = new AndroidJavaObject("java.security.KeyStore"))
+                {
+                    keyStore.CallStatic("load", (object)null);
+                    if (!IsKeyPresent(keyStore))
+                        GenerateKey(keyStore);
 
-                AndroidJavaObject cipher = CreateEncryptCipher(keyStore);
-                byte[] iv = cipher.Call<byte[]>("getIV");
-                byte[] cipherText = cipher.Call<byte[]>("doFinal", Encoding.UTF8.GetBytes(plaintext));
+                    AndroidJavaObject cipher = CreateEncryptCipher(keyStore);
+                    byte[] iv = cipher.Call<byte[]>("getIV");
+                    byte[] cipherText = cipher.Call<byte[]>("doFinal", Encoding.UTF8.GetBytes(plaintext));
 
-                string blob = Android.Runtime.Convert.ToBase64(Concat(iv, cipherText));
-                SetSharedPref(KeyAlias, blob);
-                return Task.FromResult(true);
+                    string blob = Android.Runtime.Convert.ToBase64(Concat(iv, cipherText));
+                    SetSharedPref(KeyAlias, blob);
+                    return Task.FromResult(true);
+                }
+            }
+            catch (Exception e)
+            {
+                // Keystore failure (key unavailable, cipher error, etc.). Do NOT
+                // fall back to plaintext. Log without exposing the token value.
+                Debug.LogError("[VELOX] Android Keystore store failed: " + e.Message);
+                return Task.FromResult(false);
             }
         }
 
@@ -115,29 +125,65 @@ namespace VELOX.Backend
             string blob = GetSharedPref(KeyAlias);
             if (string.IsNullOrEmpty(blob)) return Task.FromResult<string>(null);
 
-            byte[] combined = Android.Runtime.Convert.FromBase64(blob);
-            byte[] iv = new byte[GcmIvLength];
-            byte[] cipherText = new byte[combined.Length - GcmIvLength];
-            Array.Copy(combined, 0, iv, 0, GcmIvLength);
-            Array.Copy(combined, GcmIvLength, cipherText, 0, cipherText.Length);
-
-            using (var keyStore = new AndroidJavaObject("java.security.KeyStore"))
+            try
             {
-                keyStore.CallStatic("load", (object)null);
-                AndroidJavaObject cipher = CreateDecryptCipher(keyStore, iv);
-                byte[] plain = cipher.Call<byte[]>("doFinal", cipherText);
-                return Task.FromResult(Encoding.UTF8.GetString(plain));
+                byte[] combined = Android.Runtime.Convert.FromBase64(blob);
+                if (combined.Length <= GcmIvLength) return Task.FromResult<string>(null);
+
+                byte[] iv = new byte[GcmIvLength];
+                byte[] cipherText = new byte[combined.Length - GcmIvLength];
+                Array.Copy(combined, 0, iv, 0, GcmIvLength);
+                Array.Copy(combined, GcmIvLength, cipherText, 0, cipherText.Length);
+
+                using (var keyStore = new AndroidJavaObject("java.security.KeyStore"))
+                {
+                    keyStore.CallStatic("load", (object)null);
+                    AndroidJavaObject cipher = CreateDecryptCipher(keyStore, iv);
+                    byte[] plain = cipher.Call<byte[]>("doFinal", cipherText);
+                    return Task.FromResult(Encoding.UTF8.GetString(plain));
+                }
+            }
+            catch (Exception e)
+            {
+                // Corrupted blob, wrong key, or tampered ciphertext. Do NOT fall
+                // back to plaintext. Return null (forces re-login).
+                Debug.LogError("[VELOX] Android Keystore decrypt failed (corrupted data?): " + e.Message);
+                return Task.FromResult<string>(null);
             }
         }
 
         private static Task<bool> RemoveAndroidAsync()
         {
-            using (var keyStore = new AndroidJavaObject("java.security.KeyStore"))
+            try
             {
-                keyStore.CallStatic("load", (object)null);
-                keyStore.Call("deleteAlias", KeyAlias);
+                using (var keyStore = new AndroidJavaObject("java.security.KeyStore"))
+                {
+                    keyStore.CallStatic("load", (object)null);
+                    keyStore.Call("deleteAlias", KeyAlias);
+                }
             }
-            SetSharedPref(KeyAlias, "");
+            catch (Exception e)
+            {
+                // Keystore delete failed — the key may already be gone (reinstall)
+                // or the Keystore is in an inconsistent state. Continue to clear
+                // the SharedPreferences blob but report the Keystore failure.
+                Debug.LogError("[VELOX] Android Keystore deleteAlias failed: " + e.Message);
+            }
+
+            // Remove the ciphertext blob from SharedPreferences (use remove(), not
+            // putString(""), so the key is fully deleted rather than left empty).
+            try
+            {
+                AndroidJavaObject activity = GetActivity();
+                AndroidJavaObject prefs = activity.Call<AndroidJavaObject>("getSharedPreferences", "velox_secure", 0);
+                prefs.Call("edit").Call("remove", KeyAlias).Call("commit");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("[VELOX] Android SharedPreferences remove failed: " + e.Message);
+                return Task.FromResult(false);
+            }
+
             return Task.FromResult(true);
         }
 
@@ -219,24 +265,50 @@ namespace VELOX.Backend
 #if UNITY_IOS
         private static Task<bool> StoreIosAsync(string value)
         {
-            byte[] data = Encoding.UTF8.GetBytes(value);
-            int rc = VELOX_KeychainStore(IosService, IosAccount, data, data.Length);
-            return Task.FromResult(rc == 0);
+            try
+            {
+                byte[] data = Encoding.UTF8.GetBytes(value);
+                int rc = VELOX_KeychainStore(IosService, IosAccount, data, data.Length);
+                return Task.FromResult(rc == 0);
+            }
+            catch (Exception e)
+            {
+                // Native plugin missing, Keychain failure, or marshalling error.
+                // Do NOT fall back to plaintext.
+                Debug.LogError("[VELOX] iOS Keychain store failed: " + e.Message);
+                return Task.FromResult(false);
+            }
         }
 
         private static Task<string> RetrieveIosAsync()
         {
-            out byte[] data;
-            out int len;
-            int rc = VELOX_KeychainRetrieve(IosService, IosAccount, out data, out len);
-            if (rc != 0 || data == null || len <= 0) return Task.FromResult<string>(null);
-            return Task.FromResult(Encoding.UTF8.GetString(data, 0, len));
+            try
+            {
+                out byte[] data;
+                out int len;
+                int rc = VELOX_KeychainRetrieve(IosService, IosAccount, out data, out len);
+                if (rc != 0 || data == null || len <= 0) return Task.FromResult<string>(null);
+                return Task.FromResult(Encoding.UTF8.GetString(data, 0, len));
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("[VELOX] iOS Keychain retrieve failed: " + e.Message);
+                return Task.FromResult<string>(null);
+            }
         }
 
         private static Task<bool> RemoveIosAsync()
         {
-            int rc = VELOX_KeychainDelete(IosService, IosAccount);
-            return Task.FromResult(rc == 0);
+            try
+            {
+                int rc = VELOX_KeychainDelete(IosService, IosAccount);
+                return Task.FromResult(rc == 0);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("[VELOX] iOS Keychain delete failed: " + e.Message);
+                return Task.FromResult(false);
+            }
         }
 #endif
     }
