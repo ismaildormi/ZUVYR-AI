@@ -10,6 +10,7 @@
 // ============================================================================
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 
 namespace UnityEngine
@@ -80,12 +81,26 @@ namespace UnityEngine
 
     public static class PlayerPrefs
     {
-        public static int GetInt(string key, int defaultValue = 0) => defaultValue;
-        public static void SetInt(string key, int value) { }
-        public static string GetString(string key, string defaultValue = "") => defaultValue;
-        public static void SetString(string key, string value) { }
-        public static void DeleteKey(string key) { }
+        // In-memory backing so persistence logic (e.g. legacy-key migration) is
+        // testable in the offline harness. Real Unity uses native PlayerPrefs.
+        private static readonly Dictionary<string, string> _strings =
+            new Dictionary<string, string>();
+
+        public static int GetInt(string key, int defaultValue = 0)
+        {
+            return _strings.TryGetValue(key, out var s) && int.TryParse(s, out var i) ? i : defaultValue;
+        }
+        public static void SetInt(string key, int value) { _strings[key] = value.ToString(); }
+        public static string GetString(string key, string defaultValue = "")
+        {
+            return _strings.TryGetValue(key, out var s) ? s : defaultValue;
+        }
+        public static void SetString(string key, string value) { _strings[key] = value; }
+        public static void DeleteKey(string key) { _strings.Remove(key); }
         public static void Save() { }
+
+        /// <summary>Test-only: clear all stored keys.</summary>
+        public static void Clear() { _strings.Clear(); }
     }
 
     public static class Resources

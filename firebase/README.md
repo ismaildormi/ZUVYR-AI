@@ -232,12 +232,15 @@ SDK.
 
 ## 9. Testing
 
-- **Offline C# harness** (`velox-verify/build.sh`): 80 tests covering period
+- **Offline C# harness** (`velox-verify/build.sh`): 103 tests covering period
   math (incl. Dec→Jan boundaries), score validation, name sanitisation
   (incl. Unicode alignment), Top-10/tie-breaking (incl. full-tie name break),
   best-score preservation (no rewrite on lower score), finalize/frozen/
-  idempotent, historical preservation, token expiry, and MiniJson parsing
-  (incl. `_closed` marker skip). **GREEN 80/80.**
+  idempotent, historical preservation, token expiry, MiniJson parsing
+  (incl. `_closed` marker skip), and **secure refresh-token storage**
+  (`ICredentialStore`/`CredentialPersistence`: secure store write, no-plaintext
+  fallback, legacy migration success/failure, blocked-unavailable, sign-out
+  deletion, AccountSession wiring). **GREEN 103/103.**
 - **Node pure-logic tests** (`firebase/functions/test/functions.test.js`):
   83 tests for server-side period/ranking/sanitisation logic, the atomic
   `keepBest`/`mergeSubmission`/`buildClosure` helpers (closure serialization,
@@ -289,8 +292,19 @@ SDK.
   Part B of this pack introduces a credential-storage abstraction
   (`ICredentialStore`) with platform-specific secure storage (iOS Keychain,
   Android Keystore), no plaintext fallback, and safe migration off the legacy
-  `VELOX.Account.*` keys. See the C# `AccountSession` / `ICredentialStore`
-  sources and the status table. The ID token is kept in memory only.
+  `VELOX.Account.*` keys. The ID token is kept in memory only.
+- **Native credential-store integration (UNVERIFIED LIST):** `PlatformCredentialStore`
+  is guarded by `#if UNITY_IOS || UNITY_ANDROID` and is NOT compiled or tested
+  in the offline sandbox. The following require on-device verification before
+  claiming production-ready secure storage:
+  - Android: `Android.Security.Keystore` AES-GCM key generation, encrypt/decrypt
+    round-trip, `SharedPreferences` blob write, key deletion. Verify the key
+    never leaves the Keystore and the blob is useless without it.
+  - iOS: the native `VELOX_KeychainStore/Retrieve/Delete` P/Invoke
+    (`VELOXKeychain` plugin) must be implemented and compiled into the app;
+    verify Keychain item persistence across launches and deletion on sign-out.
+  - The `MemoryCredentialStore` is a test double (in-memory), NOT a production
+    secure store — it verifies the `CredentialPersistence` logic only.
 - **Reads do not auto-refresh:** `GetTopAsync`/`GetFinalizedAsync` use the
   current ID token without a pre-refresh; an expired token yields an empty
   read (fail-safe, no crash). Submissions call `EnsureFreshTokenAsync` first.
@@ -311,4 +325,4 @@ SDK.
 | Giveaway readiness (finalize/verify/award) | VERIFIED (atomic idempotent model + pure logic tested; live BLOCKED) |
 | Anti-cheat beyond ownership | NOT BUILT (client can forge own-UID scores — not cheat-proof) |
 | Admin config disclosure | FIXED (`config` no longer client-readable) |
-| Refresh-token storage | IN PROGRESS (Part B: `ICredentialStore` abstraction + secure storage; see AccountSession sources) |
+| Refresh-token storage | FIXED (logic) — `ICredentialStore` + `CredentialPersistence`: refresh token never in plaintext PlayerPrefs; secure-store write, no-plaintext fallback, legacy migration success/failure, sign-out deletion all unit-tested (C# GREEN). Native iOS Keychain / Android Keystore integration COMPILED-ONLY (guarded `#if`), NOT on-device verified — see `PlatformCredentialStore.cs` unverified list. |

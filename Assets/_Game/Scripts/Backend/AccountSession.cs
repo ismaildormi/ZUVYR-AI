@@ -12,7 +12,18 @@ namespace VELOX.Backend
     ///
     /// Holds the Firebase ID token (authenticates RTDB requests) and refresh
     /// token. Token refresh is handled transparently so expired sessions recover
-    /// instead of failing silently.
+    /// instead of failing silently, with bounded retries (no infinite loop).
+    ///
+    /// CREDENTIAL STORAGE: the Firebase refresh token (a bearer credential) is
+    /// persisted ONLY via <see cref="ICredentialStore"/> (platform secure
+    /// storage — iOS Keychain / Android Keystore) through
+    /// <see cref="CredentialPersistence"/>. It is NEVER written to plaintext
+    /// PlayerPrefs. When secure storage is unavailable, persistence is blocked
+    /// (no silent plaintext fallback); the token lives in memory only for the
+    /// current session. Legacy plaintext PlayerPrefs keys are migrated into the
+    /// verified secure store (then deleted) on restore. Profile display fields
+    /// (name/email/photo/provider) and the localId identifier remain in
+    /// PlayerPrefs — they are not credentials.
     /// </summary>
     public class AccountSession : MonoBehaviour
     {
@@ -50,7 +61,25 @@ namespace VELOX.Backend
         private AuthTokens _tokens;
         private const string Prefix = "VELOX.Account.";
 
-        void Awake()
+        /// <summary>
+        /// Override the credential store (defaults to platform secure storage
+        /// via <see cref="CredentialStoreFactory"/>). Inject a
+        /// <see cref="MemoryCredentialStore"/> in tests.
+        /// </summary>
+        [Tooltip("Override the credential store (defaults to platform secure storage).")]
+        public ICredentialStore CredentialStore;
+
+        private CredentialPersistence _credentials;
+
+        /// <summary>
+        /// Bounded refresh attempts. Default 1 (no retry loop). Set >1 for
+        /// transient-failure resilience; the loop is always finite so a failing
+        /// refresh can never spin forever.
+        /// </summary>
+        [Tooltip("Bounded refresh attempts (finite — never an infinite loop).")]
+        public int MaxRefreshAttempts = 1;
+
+        internal void Awake()
         {
             if (Instance != null && Instance != this)
             {
@@ -61,11 +90,14 @@ namespace VELOX.Backend
 
             Instance = this;
             DontDestroyOnLoad(gameObject);
+
+            ICredentialStore store = CredentialStore ?? CredentialStoreFactory.Create();
+            _credentials = new CredentialPersistence(store);
         }
 
         void Start()
         {
-            RestoreSession();
+            _ = RestoreSessionAsync();
         }
 
         /// <summary>Sign in with the configured Google web client id.</summary>
@@ -84,7 +116,7 @@ namespace VELOX.Backend
                 },
                 cancellationToken);
 
-            return ApplyResult(result);
+            return await ApplyResultAsync(result);
         }
 
         /// <summary>Sign in anonymously (no Google account required).</summary>
@@ -98,7 +130,7 @@ namespace VELOX.Backend
                 },
                 cancellationToken);
 
-            return ApplyResult(result);
+            return await ApplyResultAsync(result);
         }
 
         /// <summary>
@@ -116,7 +148,9 @@ namespace VELOX.Backend
             return true;
         }
 
-        /// <summary>Refreshes the Firebase ID token using the stored refresh token.</summary>
+        /// <summary>Refreshes the Firebase ID token using the stored refresh token.
+        /// Bounded: retried at most <see cref="MaxRefreshAttempts"/> times (finite
+        /// loop — a failing refresh can never spin forever).</summary>
         public async Task<bool> RefreshSessionAsync()
         {
             FirebaseConfig config = firebaseConfig;
@@ -126,26 +160,35 @@ namespace VELOX.Backend
                 return false;
             }
 
-            try
+            int attempts = Math.Max(1, MaxRefreshAttempts);
+            for (int i = 0; i < attempts; i++)
             {
-                AuthTokens refreshed = await FirebaseAuthClient.RefreshTokenAsync(_tokens.refreshToken, config);
-                ApplyTokens(refreshed);
-                Debug.Log("[VELOX] Session token refreshed.");
-                return true;
+                try
+                {
+                    AuthTokens refreshed = await FirebaseAuthClient.RefreshTokenAsync(_tokens.refreshToken, config);
+                    await ApplyTokensAsync(refreshed);
+                    Debug.Log("[VELOX] Session token refreshed.");
+                    return true;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError("[VELOX] Token refresh failed (attempt " + (i + 1) + "/" + attempts + "): " + e.Message);
+                    if (i == attempts - 1)
+                    {
+                        OnAuthError?.Invoke("Session expired and refresh failed: " + e.Message);
+                        return false;
+                    }
+                    await Task.Yield(); // back off before the next bounded attempt
+                }
             }
-            catch (Exception e)
-            {
-                Debug.LogError("[VELOX] Token refresh failed: " + e.Message);
-                OnAuthError?.Invoke("Session expired and refresh failed: " + e.Message);
-                return false;
-            }
+            return false;
         }
 
         public void SignOut()
         {
             _tokens = null;
             _profile = null;
-            ClearPersisted();
+            _ = ClearPersistedAsync();
             OnProfileChanged?.Invoke(null);
             OnLoginChanged?.Invoke();
         }
@@ -158,12 +201,12 @@ namespace VELOX.Backend
             return remoteEnabled ? (IAuthProvider)new FirebaseGoogleAuthProvider() : new LocalAuthProvider();
         }
 
-        private bool ApplyResult(AuthResult result)
+        private async Task<bool> ApplyResultAsync(AuthResult result)
         {
             if (result != null && result.success && result.profile != null)
             {
                 ApplyProfile(result.profile);
-                if (result.tokens != null) ApplyTokens(result.tokens);
+                if (result.tokens != null) await ApplyTokensAsync(result.tokens);
                 return true;
             }
 
@@ -184,12 +227,16 @@ namespace VELOX.Backend
             OnLoginChanged?.Invoke();
         }
 
-        private void ApplyTokens(AuthTokens tokens)
+        internal async Task ApplyTokensAsync(AuthTokens tokens)
         {
             _tokens = tokens;
-            PlayerPrefs.SetString(Prefix + "RefreshToken", tokens.refreshToken ?? string.Empty);
+            // localId is an identifier (not a credential) — kept in PlayerPrefs
+            // for UI restore. The refresh token (a bearer credential) is stored
+            // ONLY via secure storage (CredentialPersistence); it is NEVER
+            // written to PlayerPrefs.
             PlayerPrefs.SetString(Prefix + "LocalId", tokens.localId ?? string.Empty);
             PlayerPrefs.Save();
+            await _credentials.StoreRefreshTokenAsync(tokens.refreshToken ?? string.Empty);
         }
 
         private void Persist(PlayerProfile p)
@@ -202,10 +249,13 @@ namespace VELOX.Backend
             PlayerPrefs.Save();
         }
 
-        private void RestoreSession()
+        internal async Task RestoreSessionAsync()
         {
             string localId = PlayerPrefs.GetString(Prefix + "LocalId", string.Empty);
-            string refreshToken = PlayerPrefs.GetString(Prefix + "RefreshToken", string.Empty);
+            // Load the refresh token from secure storage; this also migrates the
+            // legacy plaintext PlayerPrefs key into the verified secure store
+            // (and deletes the plaintext) when secure storage is available.
+            string refreshToken = await _credentials.LoadRefreshTokenAsync();
 
             if (!string.IsNullOrEmpty(refreshToken))
                 _tokens = new AuthTokens { refreshToken = refreshToken, localId = localId };
@@ -229,14 +279,17 @@ namespace VELOX.Backend
                 _ = RefreshSessionAsync();
         }
 
-        private void ClearPersisted()
+        internal async Task ClearPersistedAsync()
         {
+            // Remove the refresh token from secure storage + delete the legacy
+            // plaintext key (CredentialPersistence.ClearRefreshTokenAsync), then
+            // clear the profile/localId PlayerPrefs keys.
+            await _credentials.ClearRefreshTokenAsync();
             PlayerPrefs.DeleteKey(Prefix + "LocalId");
             PlayerPrefs.DeleteKey(Prefix + "DisplayName");
             PlayerPrefs.DeleteKey(Prefix + "Email");
             PlayerPrefs.DeleteKey(Prefix + "PhotoUrl");
             PlayerPrefs.DeleteKey(Prefix + "Provider");
-            PlayerPrefs.DeleteKey(Prefix + "RefreshToken");
             PlayerPrefs.Save();
         }
 

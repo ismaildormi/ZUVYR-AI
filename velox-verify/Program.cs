@@ -243,6 +243,126 @@ internal static class Program
         Check(after.timestamp == before.timestamp, "no rewrite preserves original timestamp");
         Check(after.id == before.id, "no rewrite preserves original id");
 
+        Console.WriteLine("== Credential storage (secure refresh-token persistence) ==");
+        // 1. Secure available: refresh token stored in store, NOT in PlayerPrefs.
+        {
+            PlayerPrefs.Clear();
+            var store = new MemoryCredentialStore { IsSecureStorageAvailable = true };
+            var cp = new CredentialPersistence(store);
+            bool ok = cp.StoreRefreshTokenAsync("rt-123").GetAwaiter().GetResult();
+            Check(ok, "store refresh token in secure store succeeds");
+            Check(store.Data.TryGetValue("refreshToken", out var v1) && v1 == "rt-123",
+                "refresh token persisted in secure store");
+            Check(PlayerPrefs.GetString("VELOX.Account.RefreshToken", "__NONE__") == "__NONE__",
+                "refresh token NOT written to plaintext PlayerPrefs");
+        }
+        // 2. Secure unavailable: blocked, no plaintext fallback.
+        {
+            PlayerPrefs.Clear();
+            var store = new MemoryCredentialStore { IsSecureStorageAvailable = false };
+            var cp = new CredentialPersistence(store);
+            bool ok = cp.StoreRefreshTokenAsync("rt-123").GetAwaiter().GetResult();
+            Check(!ok, "store blocked when secure storage unavailable");
+            Check(PlayerPrefs.GetString("VELOX.Account.RefreshToken", "__NONE__") == "__NONE__",
+                "no plaintext fallback when secure storage unavailable");
+        }
+        // 3. Secure write fails: blocked, no plaintext fallback.
+        {
+            PlayerPrefs.Clear();
+            var store = new MemoryCredentialStore { IsSecureStorageAvailable = true, FailNextStore = true };
+            var cp = new CredentialPersistence(store);
+            bool ok = cp.StoreRefreshTokenAsync("rt-123").GetAwaiter().GetResult();
+            Check(!ok, "store blocked when secure store write fails");
+            Check(PlayerPrefs.GetString("VELOX.Account.RefreshToken", "__NONE__") == "__NONE__",
+                "no plaintext fallback when secure store write fails");
+        }
+        // 4. Load from secure store.
+        {
+            PlayerPrefs.Clear();
+            var store = new MemoryCredentialStore { IsSecureStorageAvailable = true };
+            store.Data["refreshToken"] = "rt-secure";
+            var cp = new CredentialPersistence(store);
+            string loaded = cp.LoadRefreshTokenAsync().GetAwaiter().GetResult();
+            Check(loaded == "rt-secure", "load refresh token from secure store");
+        }
+        // 5. Load when nothing stored.
+        {
+            PlayerPrefs.Clear();
+            var store = new MemoryCredentialStore { IsSecureStorageAvailable = true };
+            var cp = new CredentialPersistence(store);
+            string loaded = cp.LoadRefreshTokenAsync().GetAwaiter().GetResult();
+            Check(loaded == null, "load returns null when nothing stored");
+        }
+        // 6. Migration: legacy plaintext -> secure store, plaintext deleted.
+        {
+            PlayerPrefs.Clear();
+            PlayerPrefs.SetString("VELOX.Account.RefreshToken", "rt-legacy");
+            var store = new MemoryCredentialStore { IsSecureStorageAvailable = true };
+            var cp = new CredentialPersistence(store);
+            string loaded = cp.LoadRefreshTokenAsync().GetAwaiter().GetResult();
+            Check(loaded == "rt-legacy", "migration returns the legacy token");
+            Check(store.Data.TryGetValue("refreshToken", out var v6) && v6 == "rt-legacy",
+                "migration stores token in secure store");
+            Check(PlayerPrefs.GetString("VELOX.Account.RefreshToken", "__NONE__") == "__NONE__",
+                "migration deletes the plaintext PlayerPrefs key");
+        }
+        // 7. Migration failure (secure write fails): plaintext retained, null returned.
+        {
+            PlayerPrefs.Clear();
+            PlayerPrefs.SetString("VELOX.Account.RefreshToken", "rt-legacy");
+            var store = new MemoryCredentialStore { IsSecureStorageAvailable = true, FailNextStore = true };
+            var cp = new CredentialPersistence(store);
+            string loaded = cp.LoadRefreshTokenAsync().GetAwaiter().GetResult();
+            Check(loaded == null, "migration failure returns null (success not claimed)");
+            Check(PlayerPrefs.GetString("VELOX.Account.RefreshToken", "__NONE__") == "rt-legacy",
+                "migration failure retains the plaintext key");
+        }
+        // 8. Migration blocked (secure unavailable): plaintext NOT used, retained.
+        {
+            PlayerPrefs.Clear();
+            PlayerPrefs.SetString("VELOX.Account.RefreshToken", "rt-legacy");
+            var store = new MemoryCredentialStore { IsSecureStorageAvailable = false };
+            var cp = new CredentialPersistence(store);
+            string loaded = cp.LoadRefreshTokenAsync().GetAwaiter().GetResult();
+            Check(loaded == null, "legacy token blocked when secure storage unavailable");
+            Check(PlayerPrefs.GetString("VELOX.Account.RefreshToken", "__NONE__") == "rt-legacy",
+                "blocked legacy token is retained (not silently used or deleted)");
+        }
+        // 9. Sign-out: clear removes from secure store + deletes plaintext.
+        {
+            PlayerPrefs.Clear();
+            var store = new MemoryCredentialStore { IsSecureStorageAvailable = true };
+            store.Data["refreshToken"] = "rt-123";
+            PlayerPrefs.SetString("VELOX.Account.RefreshToken", "rt-old");
+            var cp = new CredentialPersistence(store);
+            cp.ClearRefreshTokenAsync().GetAwaiter().GetResult();
+            Check(!store.Data.ContainsKey("refreshToken"), "sign-out removes refresh token from secure store");
+            Check(PlayerPrefs.GetString("VELOX.Account.RefreshToken", "__NONE__") == "__NONE__",
+                "sign-out deletes the legacy plaintext refresh token");
+        }
+        // 10. AccountSession wiring: ApplyTokensAsync stores the refresh token in
+        // secure storage (not PlayerPrefs); ClearPersistedAsync removes it.
+        {
+            PlayerPrefs.Clear();
+            var store = new MemoryCredentialStore { IsSecureStorageAvailable = true };
+            var session = new AccountSession();
+            session.CredentialStore = store;
+            session.Awake();
+            session.ApplyTokensAsync(new AuthTokens { refreshToken = "rt-session", localId = "u1" })
+                .GetAwaiter().GetResult();
+            Check(store.Data.TryGetValue("refreshToken", out var vs) && vs == "rt-session",
+                "AccountSession stores refresh token in secure store");
+            Check(PlayerPrefs.GetString("VELOX.Account.RefreshToken", "__NONE__") == "__NONE__",
+                "AccountSession does NOT write refresh token to PlayerPrefs");
+            Check(PlayerPrefs.GetString("VELOX.Account.LocalId", "__NONE__") == "u1",
+                "AccountSession keeps localId (identifier) in PlayerPrefs");
+            session.ClearPersistedAsync().GetAwaiter().GetResult();
+            Check(!store.Data.ContainsKey("refreshToken"),
+                "AccountSession sign-out removes refresh token from secure store");
+            Check(PlayerPrefs.GetString("VELOX.Account.RefreshToken", "__NONE__") == "__NONE__",
+                "AccountSession sign-out deletes legacy plaintext refresh token");
+        }
+
         Console.WriteLine();
         Console.WriteLine("RESULT: " + _pass + " passed, " + _fail + " failed");
         Environment.Exit(_fail == 0 ? 0 : 1);
