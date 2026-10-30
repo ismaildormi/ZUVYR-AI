@@ -339,6 +339,19 @@ assert.equal(sanitized.step_key, 'render');
 assert.equal('secret' in sanitized, false);
 assert.equal('prompt' in sanitized, false);
 
+let inheritedUsageKindRead = false;
+const inheritedMetadata = Object.create(Object.defineProperty({}, 'usage_kind', {
+  enumerable: true,
+  get() {
+    inheritedUsageKindRead = true;
+    return 'inherited_should_not_be_copied';
+  }
+}));
+inheritedMetadata.step_key = 'render';
+const inheritedSanitized = sanitizeNonContentMetadata(inheritedMetadata);
+assert.deepEqual(inheritedSanitized, { step_key: 'render' });
+assert.equal(inheritedUsageKindRead, false, 'inherited metadata getters must not be read');
+
 const easy = candidateLearningValueScore({
   qualityScore: 5000,
   difficulty: 1,
