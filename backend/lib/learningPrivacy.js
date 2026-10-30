@@ -131,7 +131,7 @@ function sanitizeNonContentMetadata(value = {}) {
 
   const clean = {};
   for (const key of allowed) {
-    if (!(key in value)) continue;
+    if (!Object.hasOwn(value, key)) continue;
     const raw = value[key];
     if (
       raw === null ||
