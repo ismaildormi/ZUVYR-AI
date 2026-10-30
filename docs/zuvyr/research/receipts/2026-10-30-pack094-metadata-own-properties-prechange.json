@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "observed_at": "2026-10-30T08:18:09.836Z",
+  "purpose": "Pre-change backup record for PACK094 metadata own-property hardening",
+  "repository": "ismaildormi/ZUVYR-AI",
+  "baseline_main_sha": "0aa8a37547c2171848f44189443b5272f9b40d52",
+  "backup_branch": "backup/pack094-metadata-own-properties-pre-20261030",
+  "implementation_branch": "fix/pack094-metadata-own-properties-20261030",
+  "files": [
+    {
+      "path": "backend/lib/learningPrivacy.js",
+      "blob_sha": "0110067b2452d08e8f9673f139f34a29ae8c1caa",
+      "sha256": "130e8fedf0898b62817f2c6141cf75c20563ce87cdc98fe84bd9fd5bb6d1a854"
+    },
+    {
+      "path": "backend/test-pack094-learning-pipeline.js",
+      "blob_sha": "5738109bb4543df60ac67f6b0ee60b1dd4e9cd4d",
+      "sha256": "f3c7cec0d0f52793166647cdd648049a27f267f7c669569660790a66ae2b5792"
+    }
+  ],
+  "scope": "backend metadata sanitizer and regression test only",
+  "safety": "No production database mutation, paid provider call, model training, billing change, credential access, merge, or deployment."
+}
