@@ -169,7 +169,7 @@
 
 ### لماذا تهم ZUVYR؟
 
-كان في موجز 2026-11-06 توثيق لوجود ترتيب مرشحين ومرشحات صلبة وسجل قرار ومسار بديل في ZUVYR. لذلك لا أوصي ببناء Router جديد. التحسين المحتمل هو **قياس الموجّه الموجود** بحسب التكلفة الفعلية لكل مهمة ناجحة، مع حواجز جودة لكل لغة ونوع مهمة، ومسار fallback عند فشل النموذج الأرخص.
+تحققت من وجود هذه المكونات في `main` الحالي: [routerRanking.js](https://github.com/ismaildormi/ZUVYR-AI/blob/0aa8a37547c2171848f44189443b5272f9b40d52/backend/lib/routerRanking.js)، [routerHardFilters.js](https://github.com/ismaildormi/ZUVYR-AI/blob/0aa8a37547c2171848f44189443b5272f9b40d52/backend/lib/routerHardFilters.js)، [routerDecisionLog.js](https://github.com/ismaildormi/ZUVYR-AI/blob/0aa8a37547c2171848f44189443b5272f9b40d52/backend/lib/routerDecisionLog.js)، [routerCheckpointC.js](https://github.com/ismaildormi/ZUVYR-AI/blob/0aa8a37547c2171848f44189443b5272f9b40d52/backend/lib/routerCheckpointC.js)، واختبار الترتيب [test-pack027-router-ranking.js](https://github.com/ismaildormi/ZUVYR-AI/blob/0aa8a37547c2171848f44189443b5272f9b40d52/backend/test-pack027-router-ranking.js). لذلك لا أوصي ببناء Router جديد. التحسين المحتمل هو **قياس الموجّه الموجود** بحسب التكلفة الفعلية لكل مهمة ناجحة، مع حواجز جودة لكل لغة ونوع مهمة، ومسار fallback عند فشل النموذج الأرخص.
 
 **الربط بالخطة:** MF-09 وMF-15 وMF-19 وMF-20 وMF-21؛ PACK134/135/136/142.
 
