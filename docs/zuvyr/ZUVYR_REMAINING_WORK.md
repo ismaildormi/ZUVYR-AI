@@ -243,7 +243,7 @@ This external incident does not justify leaving internally actionable Supabase e
 
 ---
 
-### RW-018 — Vercel Git build-rate-limit blocks all-green deployment evidence
+### RW-018 — Vercel production deployment and alias identity are not current
 Status: `ACTIVE`
 Previously closed: 2026-09-26
 Reopened: 2026-11-20
@@ -318,6 +318,8 @@ Required before any new runtime feature work:
 - Record one explicit, evidence-backed execution order without renumbering Packs or deleting historical scope.
 - Run `node tools/validate-zuvyr-continuity.cjs` and the applicable readiness/Pack validators on the exact reconciliation head.
 - Until that is complete, do not start PACK090 implementation, PACK094 implementation, or a new Manager/Operator/Model Factory runtime change. Documentation-only research and safe read-only audits may continue.
+
+The five research candidates, their source links, baselines and measurable experiments are recorded in `docs/zuvyr/research/2026-11-20-agent-rnd-brief.md`. They are candidates only, not a new Pack, runtime authorization, or evidence of implementation.
 
 ## Rules for future additions
 
