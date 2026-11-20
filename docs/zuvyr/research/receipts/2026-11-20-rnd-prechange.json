@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "created_at_utc": "2026-11-20T09:09:03Z",
+  "purpose": "Pre-change evidence for the 2026-11-20 ZUVYR R&D brief and remaining-work register update.",
+  "repository": "ismaildormi/ZUVYR-AI",
+  "base_branch": "main",
+  "base_main_commit": "0aa8a37547c2171848f44189443b5272f9b40d52",
+  "backup_branch": "backup/zuvyr-rnd-pre-20261120-run7",
+  "working_branch": "research/agent-rnd-brief-20261120-run7",
+  "preservation": {
+    "existing_files_overwritten": [],
+    "new_target_report_path": "docs/zuvyr/research/2026-11-20-agent-rnd-brief.md",
+    "target_report_existed_on_base": false,
+    "modified_existing_file": "docs/zuvyr/ZUVYR_REMAINING_WORK.md",
+    "original_blob_sha1": "8c40cb6c3dfbc02b850af9f30f84f9e17394e762",
+    "original_sha256": "0e8f4c3c5ab073fa140ddae0cb630c18c36e9010a8be2f4ab08f0fbfe700f82e",
+    "backup_branch_points_to_exact_base_commit": true,
+    "no_runtime_or_database_files_in_scope": true
+  },
+  "source_sha256": {
+    "docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json": "531d875aba0bc221463fff7f6b87e450b46abb7baa1208f2793ac88189c290d2",
+    "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json": "7a523c7ed0dcce5edff168023e286b5a8064e5bac24d4e42ff2edd46a770f1d6",
+    "docs/zuvyr/ROADMAP_150.md": "988145bfcd8e1eb4cf6e62d4fe201019e880110db9074b38b2ee1fa82fd6e855",
+    "docs/zuvyr/ZUVYR_V1_COMPLETE_MASTER_PLAN.md": "caba52a0880087b5b1af42a9ff19ddb68b79ef02748ec580a3b1fee8150612cb",
+    "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md": "0c76f9e5833279fc523b9cc19068f472e7a8b98dd42c331c6dc19add6d8bb350",
+    "docs/zuvyr/continuous-improvement-override.v1.json": "bb9a1fe9975115d8138f1c7bf0ffff3ad1bb3f96599364fc1fcba199a16f84d5",
+    "docs/zuvyr/model-factory-evals-reconciliation-overlay.v1.json": "ab028cb1d961fe7a5a942c26fce6cf353bd814e8bd39ce7ee4726169d7f4b21a",
+    "docs/zuvyr/ZUVYR_REMAINING_WORK.md": "0e8f4c3c5ab073fa140ddae0cb630c18c36e9010a8be2f4ab08f0fbfe700f82e",
+    "zuvyr-pack-evidence/pack-089/2026-09-26-89e-owner-acceptance-locked/receipt.json": "198df7bb4d7f8387872b19b20400d2978d86f8a2bad2f50019735358cfab0808"
+  }
+}
