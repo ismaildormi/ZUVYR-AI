@@ -243,9 +243,10 @@ This external incident does not justify leaving internally actionable Supabase e
 
 ---
 
-### RW-018 — Vercel Git build-rate-limit blocks all-green deployment evidence
-Status: `CLOSED`
-Closed: 2026-09-26
+### RW-018 — Vercel production deployment and alias identity are not current
+Status: `ACTIVE`
+Previously closed: 2026-09-26
+Reopened: 2026-11-20
 Subsystem: `Vercel Git integration / production deployment evidence`
 
 Closure evidence:
@@ -255,8 +256,73 @@ Closure evidence:
 - post-merge Visual QA, Release Quality, Secret History and CodeQL are green on the same main;
 - no integration safety control was disabled to obtain a green status.
 
-Reopen only if a later relevant production deployment again becomes externally blocked or exact-source identity cannot be proven. QH-015 still independently requires final PACK149/150 launch-source reconciliation on the final release SHA.
+### Fresh evidence — 2026-11-20
 
+- Vercel project `prj_P6VddfynJKniiK29clC6Epr9byPk` reports `live=false`.
+- Latest production-target deployment `dpl_GVARAxmVZvYTeQU18ashke1Mbarg` is `ERROR` / `BUILD_FAILED` with `Resource provisioning failed`, on main commit `0aa8a37547c2171848f44189443b5272f9b40d52`.
+- The last READY production deployment remains `dpl_DSjPGX8jWXnJAx3k8dSiCFnWPjC4` on older main `9a1527df295de260777e3a2f73972c1b064858ae`. That deployment lists `rox-ai-sepia.vercel.app` as an alias; the current project domain list does not include that alias.
+- No successful production deployment of current main or live alias verification was obtained. The Vercel build event query returned no detailed events, so the failure is not yet classified as provider-only or repository-caused.
+
+Required before closure:
+- Diagnose the exact Vercel provisioning/build failure using a fresh deployment event/log view.
+- Restore a READY production deployment from the intended main commit after required CI/security gates pass.
+- Verify the alias and exact deployment identity through an authenticated/live request, not only Vercel metadata.
+- Preserve the last known READY deployment for rollback until the new production build is proven.
+
+QH-015 still independently requires final PACK149/150 launch-source reconciliation on the final release SHA.
+
+
+### RW-019 — Main Secret History Gate findings require classification
+Status: `ACTIVE`
+Subsystem: `GitHub secret scanning / credential hygiene`
+
+Fresh evidence:
+- Main workflow run `43426416088` on 2026-11-13 failed the Secret History Gate for main commit `0aa8a37547c2171848f44189443b5272f9b40d52`.
+- The log reported 160 historical matches under the `SUPABASE_ANON_KEY` pattern. Secret values were not exposed during this review.
+- The finding is not yet proven to be either harmless public anon-key history or an actual credential exposure; do not apply a broad allowlist based on the variable name alone.
+
+Required before closure:
+- Enumerate the exact finding paths/commits without printing values.
+- Verify each matched value's key type, current validity and exposure context.
+- Revoke/rotate any actual secret; document why a public client key is public and its server-side RLS/permission boundary.
+- Add only narrow, evidence-backed allowlist rules if appropriate, then rerun the full-history scan on the exact main head.
+- Preserve the scan report and rotation/revocation evidence.
+
+### RW-020 — Backend production dependency audit blocks Backend Quality
+Status: `ACTIVE`
+Subsystem: `Backend dependency/security release gate`
+
+Fresh evidence:
+- Open PR #144 head `af5ab138420eedc480fefc972311398992d88a6a` fails Backend Quality before unit/safety tests at `npm audit --omit=dev --audit-level=high`.
+- The recorded audit contains 15 production dependency findings: 4 moderate, 10 high and 1 critical. Named affected areas include `proxy-addr`, MCP OAuth/cross-origin redirect handling, `ip-address` SSRF, `basic-ftp`, `sharp` and Zod.
+- The inherited-property regression added in PR #144 therefore has not yet run in the required backend CI path.
+
+Required before closure:
+- Resolve findings in a dedicated controlled dependency-hardening change with a reviewed lockfile diff; do not use `npm audit fix --force`.
+- Review breaking-change risk and patch the affected direct/transitive dependency paths.
+- Run backend unit, safety, learning-checkpoint and regression tests.
+- Require `npm audit --omit=dev --audit-level=high` to pass or a narrowly documented, technically justified exception approved through the project gate.
+- Re-run Backend Quality, Release Quality, CodeQL and Continuity Integrity on the exact head before merging PR #144 or a replacement.
+
+### RW-021 — ROADMAP_150 Pack-priority header is stale against the current-state source order
+Status: `ACTIVE`
+Subsystem: `ZUVYR continuity / PACK sequencing`
+
+Evidence and precedence:
+- The continuity manifest's explicit source order places fresh production/receipt evidence and the current-state override above the master plan and ROADMAP_150.
+- The 2026-09-26 current-state capsule and PACK089 receipt establish PACK089 as `LOCKED_VERIFIED`, `pack090_allowed=true`, and the next legal step as a fresh PACK090 Universal Browser gap audit.
+- The 2026-09-19 Model-First Priority Override at the top of `docs/zuvyr/ROADMAP_150.md` still says PACK094 → PACK095 → PACK096 before PACK084–PACK093. It is older and does not supersede the higher-priority current-state capsule, but its active-priority wording is stale and must be reconciled without deleting its history.
+- PR #135 is an open draft based on older main `9029a07e…`; it has not been merged and is not a newer execution-order decision.
+- The current main commit `0aa8a375…` added cross-project continuity documents only; it did not update the PACK order sources.
+
+Required before runtime implementation:
+- Update the ROADMAP_150 priority header and any dependent mirrors with an explicit supersession note pointing to the 2026-09-26 current-state decision; preserve the 2026-09-19 text as historical evidence and do not renumber Packs.
+- Reconcile the manifest/current-state/matrix and PR #135 decision record on one exact main-based change.
+- Run `node tools/validate-zuvyr-continuity.cjs` and the applicable readiness/Pack validators on that exact head.
+- PACK090 remains the next legal Pack, but its required fresh Browser/Automation/Connection authority audit is only PARTIAL in this run: the Railway read connector required interactive confirmation, while current Vercel production evidence is `ERROR / BUILD_FAILED` and the requested live alias was not verified.
+- Until the PACK090 read-only audit and required production authority evidence are complete, do not start PACK090 runtime implementation, PACK094 runtime implementation, or a new Manager/Operator/Model Factory runtime change. Documentation-only research and safe read-only checks may continue.
+
+The five research candidates, their source links, baselines and measurable experiments are recorded in `docs/zuvyr/research/2026-11-20-agent-rnd-brief.md`. They are candidates only, not a new Pack, runtime authorization, or evidence of implementation.
 
 ## Rules for future additions
 
