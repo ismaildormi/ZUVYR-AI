@@ -13,19 +13,20 @@
     "target_report_existed_on_base": false,
     "modified_existing_file": "docs/zuvyr/ZUVYR_REMAINING_WORK.md",
     "original_blob_sha1": "8c40cb6c3dfbc02b850af9f30f84f9e17394e762",
-    "original_sha256": "0e8f4c3c5ab073fa140ddae0cb630c18c36e9010a8be2f4ab08f0fbfe700f82e",
+    "original_sha256": "87b681cccb4101721e8b96b357d6d3ab9968ff57f4c2267707403fb1f7192f08",
     "backup_branch_points_to_exact_base_commit": true,
     "no_runtime_or_database_files_in_scope": true
   },
   "source_sha256": {
-    "docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json": "531d875aba0bc221463fff7f6b87e450b46abb7baa1208f2793ac88189c290d2",
-    "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json": "7a523c7ed0dcce5edff168023e286b5a8064e5bac24d4e42ff2edd46a770f1d6",
-    "docs/zuvyr/ROADMAP_150.md": "988145bfcd8e1eb4cf6e62d4fe201019e880110db9074b38b2ee1fa82fd6e855",
-    "docs/zuvyr/ZUVYR_V1_COMPLETE_MASTER_PLAN.md": "caba52a0880087b5b1af42a9ff19ddb68b79ef02748ec580a3b1fee8150612cb",
-    "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md": "0c76f9e5833279fc523b9cc19068f472e7a8b98dd42c331c6dc19add6d8bb350",
-    "docs/zuvyr/continuous-improvement-override.v1.json": "bb9a1fe9975115d8138f1c7bf0ffff3ad1bb3f96599364fc1fcba199a16f84d5",
-    "docs/zuvyr/model-factory-evals-reconciliation-overlay.v1.json": "ab028cb1d961fe7a5a942c26fce6cf353bd814e8bd39ce7ee4726169d7f4b21a",
-    "docs/zuvyr/ZUVYR_REMAINING_WORK.md": "0e8f4c3c5ab073fa140ddae0cb630c18c36e9010a8be2f4ab08f0fbfe700f82e",
-    "zuvyr-pack-evidence/pack-089/2026-09-26-89e-owner-acceptance-locked/receipt.json": "198df7bb4d7f8387872b19b20400d2978d86f8a2bad2f50019735358cfab0808"
-  }
+    "docs/zuvyr/ZUVYR_CONTINUITY_MANIFEST.json": "b288f774b1fda82b90b46cd505815589232aaaf2f6ed38c4b0b8d673940791ef",
+    "docs/zuvyr/ZUVYR_CURRENT_STATE_OVERRIDE_2026-09-23.json": "b56ad5dd81cadaa8db2a84cd0aec413da932e5c3310049ac5adee193bbd2b999",
+    "docs/zuvyr/ROADMAP_150.md": "9232d5b64a332e8e00687b9a1cfb5fedacd6c484929d7ca2e85377f58e0ecd50",
+    "docs/zuvyr/ZUVYR_V1_COMPLETE_MASTER_PLAN.md": "17c7ef3b151870555ac8f60c81cc1eb06282e0a6e345cc50fdc438b28c086521",
+    "docs/zuvyr/CONTINUOUS_IMPROVEMENT_OVERRIDE_2026-09-23.md": "3a631753ba8dfd9e3a917d1409a3c340e3654deb6d4b8b2e6903e27bc528b936",
+    "docs/zuvyr/continuous-improvement-override.v1.json": "99ffaf9cee39d43b72224763e8393a1015ec6eade707bd4fda26b918c9349c1a",
+    "docs/zuvyr/model-factory-evals-reconciliation-overlay.v1.json": "83e67545d801813f2e4871fab5c4e15eef0569af5afeb5625d384d816dfa9ba0",
+    "docs/zuvyr/ZUVYR_REMAINING_WORK.md": "87b681cccb4101721e8b96b357d6d3ab9968ff57f4c2267707403fb1f7192f08",
+    "zuvyr-pack-evidence/pack-089/2026-09-26-89e-owner-acceptance-locked/receipt.json": "7531ce32f152feadf105563a0f0d2469c2ed3b1714a507b48fc9b0095862cd6c"
+  },
+  "hash_algorithm": "SHA-256, UTF-8 exact file bytes; verified against standard SHA-256 test vector 'abc'."
 }
