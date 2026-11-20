@@ -304,20 +304,23 @@ Required before closure:
 - Require `npm audit --omit=dev --audit-level=high` to pass or a narrowly documented, technically justified exception approved through the project gate.
 - Re-run Backend Quality, Release Quality, CodeQL and Continuity Integrity on the exact head before merging PR #144 or a replacement.
 
-### RW-021 — Canonical PACK execution-order conflict remains unresolved
+### RW-021 — ROADMAP_150 Pack-priority header is stale against the current-state source order
 Status: `ACTIVE`
 Subsystem: `ZUVYR continuity / PACK sequencing`
 
-Conflicting current source statements:
-- The 2026-09-26 continuity manifest/current-state capsule and PACK089 receipt say PACK089 is `LOCKED_VERIFIED`, `pack090_allowed=true`, and the next step is a fresh PACK090 Universal Browser gap audit.
-- The 2026-09-19 Model-First Priority Override at the top of `docs/zuvyr/ROADMAP_150.md` says PACK094 → PACK095 → PACK096 must execute before PACK084–PACK093.
-- Open PR #135 remains the documented reconciliation path and has not been merged. The continuity validator checks manifest/current-state/receipt consistency, but that alone does not decide the separate roadmap-priority conflict.
+Evidence and precedence:
+- The continuity manifest's explicit source order places fresh production/receipt evidence and the current-state override above the master plan and ROADMAP_150.
+- The 2026-09-26 current-state capsule and PACK089 receipt establish PACK089 as `LOCKED_VERIFIED`, `pack090_allowed=true`, and the next legal step as a fresh PACK090 Universal Browser gap audit.
+- The 2026-09-19 Model-First Priority Override at the top of `docs/zuvyr/ROADMAP_150.md` still says PACK094 → PACK095 → PACK096 before PACK084–PACK093. It is older and does not supersede the higher-priority current-state capsule, but its active-priority wording is stale and must be reconciled without deleting its history.
+- PR #135 is an open draft based on older main `9029a07e…`; it has not been merged and is not a newer execution-order decision.
+- The current main commit `0aa8a375…` added cross-project continuity documents only; it did not update the PACK order sources.
 
-Required before any new runtime feature work:
-- Reconcile the legal next Pack using the canonical source hierarchy, latest receipts, relevant PACK acceptance evidence and the existing PR #135 decision record.
-- Record one explicit, evidence-backed execution order without renumbering Packs or deleting historical scope.
-- Run `node tools/validate-zuvyr-continuity.cjs` and the applicable readiness/Pack validators on the exact reconciliation head.
-- Until that is complete, do not start PACK090 implementation, PACK094 implementation, or a new Manager/Operator/Model Factory runtime change. Documentation-only research and safe read-only audits may continue.
+Required before runtime implementation:
+- Update the ROADMAP_150 priority header and any dependent mirrors with an explicit supersession note pointing to the 2026-09-26 current-state decision; preserve the 2026-09-19 text as historical evidence and do not renumber Packs.
+- Reconcile the manifest/current-state/matrix and PR #135 decision record on one exact main-based change.
+- Run `node tools/validate-zuvyr-continuity.cjs` and the applicable readiness/Pack validators on that exact head.
+- PACK090 remains the next legal Pack, but its required fresh Browser/Automation/Connection authority audit is only PARTIAL in this run: the Railway read connector required interactive confirmation, while current Vercel production evidence is `ERROR / BUILD_FAILED` and the requested live alias was not verified.
+- Until the PACK090 read-only audit and required production authority evidence are complete, do not start PACK090 runtime implementation, PACK094 runtime implementation, or a new Manager/Operator/Model Factory runtime change. Documentation-only research and safe read-only checks may continue.
 
 The five research candidates, their source links, baselines and measurable experiments are recorded in `docs/zuvyr/research/2026-11-20-agent-rnd-brief.md`. They are candidates only, not a new Pack, runtime authorization, or evidence of implementation.
 
